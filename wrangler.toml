@@ -1,0 +1,9 @@
+name = "vuon-mua-vui"
+main = "server/worker.mjs"
+compatibility_date = "2026-08-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vuon-mua-vui"
+database_id = "6e8aa63a-fb6e-43a9-975c-78a9a29799c2"
+migrations_dir = "drizzle"

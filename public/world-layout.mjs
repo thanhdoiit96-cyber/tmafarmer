@@ -1,0 +1,259 @@
+import {fenceAt,getLand,homesteadSize,landTypes,lotCount,plotOffset,pondOffset} from './land.mjs';
+import {fishing} from './aqua.mjs';
+import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
+
+export const size = { width: 480, height: 288 };
+const wide={width:720,height:432};
+
+export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,w:148,h:81});
+const baseGarden=(rows)=>[{x:146,y:43,w:59,h:43*(rows-1)+36},{x:249,y:43,w:108,h:43*(rows-1)+36}];
+const basePen={x:82,y:106,w:258,h:95};
+const basePonds=[{x:547,y:125,w:145,h:133,shape:'rect'},{x:548,y:286,w:128,h:50,shape:'rect'}];
+const docks = {
+  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi cá',side:'right'}, {x:583,y:350,type:'pond',index:1,label:'Ao nuôi tôm',side:'up'}],
+  visit:[{x:530,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ao cá',side:'right'}],
+  lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
+};
+const rect = (x, y, w, h) => ({ x, y, w, h });
+const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival, side, type:'exit' });
+export const maps = {
+  field: {
+    name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[236,221], bounds:homesteadSize,
+    paths:[[[0,234],[72,236],[123,219],[182,226],[234,224],[237,155],[229,96],[235,51],[234,0]],[[234,224],[313,230],[367,210],[428,218],[476,232],[530,224],[521,289],[528,358],[530,405],[582,407],[589,382],[583,350]],[[234,224],[236,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[89,188],[79,153],[82,121]],[[389,212],[389,128]],[[236,286],[229,333],[234,409],[234,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
+    trees:[[30,33],[47,75],[14,135],[15,181],[412,46],[448,89],[465,29],[39,271],[91,268],[416,271],[472,265],[487,70],[540,61],[658,49],[702,116],[709,251],[701,375],[655,406],[505,377],[389,351],[295,400],[156,359],[80,388]],
+    water:[rect(21,92,43,106),rect(28,198,24,19),...basePonds],
+    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:70,h:45}, {x:397,y:146,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:91,y:184,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
+    exits:[exit(234,13,'Đường sang chợ','market',[238,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(234,273,'Sang xóm bên','neighbors',[238,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
+  },
+  home: {
+    name:'Nhà vườn', spawn:homeSpawn, water:[], objects:[], trees:[],
+    blocks:[rect(0,0,480,82),rect(0,82,30,18),rect(29,84,106,56),rect(301,74,26,27),
+      rect(336,76,115,74),rect(447,118,33,58),rect(0,190,30,75),rect(447,211,33,43)],
+    hotspots:[{...homeBed,type:'bed',label:'Giường · Nghỉ lấy sức'}],
+    exits:[exit(238,272,'Ra vườn','field',[houseDoor.x,houseDoor.y+18],'down')],
+  },
+  coop: {
+    name:'Chuồng trại', subtitle:'KHU CHĂN NUÔI', spawn:[29,220],
+    paths:[[[0,220],[147,220],[238,220],[238,288]],[[238,220],[397,220],[397,118]]],
+    trees:[[29,52],[66,81],[108,60],[23,144],[419,36],[456,73],[443,149],[426,267],[454,246],[55,265],[101,256]],
+    water:[rect(421,102,50,36)],
+    objects:[{x:239,y:69,type:'coop',label:'Cửa chuồng',w:102,h:47},{x:382,y:161,type:'silo',label:'Máng thức ăn',w:36,h:28}],
+    exits:[exit(16,220,'Về vườn nhà','field',[433,198],'left'),exit(238,273,'Sang xóm bên','neighbors',[442,217],'down')],
+  },
+  market: {
+    name:'Chợ làng', subtitle:'PHIÊN CHỢ MÙA VUI', spawn:[238,260],
+    paths:[[[238,288],[238,206],[238,130]],[[96,138],[238,138],[392,138]],[[105,206],[395,206]]],
+    trees:[[27,47],[58,80],[27,144],[440,69],[452,119],[416,46],[30,254],[69,269],[427,258],[458,241]],
+    water:[rect(410,153,46,59)],
+    objects:[{x:105,y:98,type:'market',style:'red',label:'Quầy vật tư',w:65,h:37}, {x:237,y:89,type:'market',style:'green',label:'Sạp nông sản',w:72,h:37}, {x:380,y:98,type:'market',style:'gold',label:'Quầy bán nhanh',w:65,h:37}, {x:237,y:195,type:'well',label:'Giếng làng',w:27,h:18}],
+    exits:[exit(238,273,'Về vườn nhà','field',[234,34],'down')],
+  },
+  neighbors: {
+    name:'Đường làng', subtitle:'XÓM MÙA VUI', spawn:[238,30],
+    paths:[[[238,0],[238,40],[221,84],[238,125],[242,181],[230,220],[239,252]],[[59,123],[96,128],[145,121],[200,116],[238,125],[300,134],[358,116],[422,123]],[[59,217],[102,205],[165,221],[230,220],[288,215],[376,231],[429,216],[480,217]]],
+    trees:[[27,44],[64,31],[422,47],[453,73],[29,168],[441,165],[25,258],[93,268],[402,261],[450,260]],
+    water:[rect(7,79,32,55),rect(438,78,28,64)],
+    objects:[],
+    exits:[exit(238,14,'Về vườn nhà','field',[234,251],'up'),exit(463,217,'Sang chuồng trại','coop',[238,248],'right')],
+  },
+  lake: {
+    name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:[36,309],bounds:wide,
+    paths:[[[0,308],[66,311],[104,319],[150,308],[208,320],[255,297],[289,290],[289,247]],[[150,308],[169,344],[205,365],[269,369],[326,350],[411,352],[484,324],[541,292],[559,257],[580,213]],[[150,308],[136,267],[124,231],[114,195],[117,160],[102,128]],[[484,324],[564,351],[623,370],[665,371],[719,377]]],
+    trees:[[20,56],[55,93],[21,173],[73,227],[121,267],[197,377],[333,407],[432,413],[561,405],[690,336],[688,264],[685,157],[645,86],[605,51],[525,45],[441,35],[302,37],[194,52]],
+    water:[rect(178,66,448,172)],
+    objects:[{x:101,y:122,type:'pavilion',label:'Chòi nghỉ ven hồ',w:85,h:45}],
+    exits:[exit(16,309,'Về vườn nhà','field',[679,402],'left')],
+  },
+  visit: {
+    name:'Vườn hàng xóm', subtitle:'ĐANG GHÉ THĂM', spawn:[234,249], bounds:homesteadSize,
+    exits:[exit(238,273,'Về đường làng','neighbors',[238,246],'down')],
+  },
+};
+Object.assign(maps.visit,{
+  paths:maps.field.paths,trees:maps.field.trees,water:maps.field.water,
+  objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
+});
+export function plotPosition(index){
+  if(index<plotOffset)return {x:index%3===0?176:index%3===1?276:329,y:63+Math.floor(index/3)*43};
+  const lot=lotRect(Math.floor((index-plotOffset)/3));
+  return {x:lot.x+25+(index%3)*49,y:lot.y+47};
+}
+const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
+const coopPosition = i => ({x:115+i%3*72,y:126+Math.floor(i/3)*48});
+const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
+export function features(id, snapshot, neighbor, page=0) {
+  const map=maps[id];
+  const blocks=map.blocks?.slice()??[];
+  const water=map.water.slice();
+  const ground=[];
+  const actors=[];
+  const hotspots=[...map.exits,...(map.hotspots??[])];
+  const farm=snapshot.me;
+  const owner=id==='visit'?neighbor:farm;
+  for(const obj of map.objects) {
+    if(obj.type==='coop'&&!farm.coop) {
+      actors.push({...obj,type:'foundation',label:'Xây chuồng'});
+      hotspots.push({...obj,type:'coop',y:obj.y+15,label:'Xây chuồng'});
+      continue;
+    }
+    actors.push(obj);
+    const depth=obj.type==='well'?10:14;
+    blocks.push(rect(obj.x-obj.w*.43,obj.y-depth,obj.w*.86,depth+2));
+    if(id!=='visit'||!['house','well'].includes(obj.type))hotspots.push({...obj,y:obj.y+15});
+  }
+  for(const [x,y] of map.trees) {
+    actors.push({x,y,type:'tree'});
+    blocks.push(rect(x-5,y-8,10,11));
+  }
+  if((id==='field'||id==='visit')&&owner) {
+    for(const i of owner.plotIndexes??owner.plots.map((_,index)=>index)) {
+      const data=i<plotOffset?owner.plots[i]:owner.extraPlots?.[i];
+      const pos=plotPosition(i);
+      actors.push({...pos,type:'plot',index:i,data,compactAt:id==='field'?owner.soilCompactsAt?.[i]:undefined,visit:id==='visit'});
+      hotspots.push({...pos,y:pos.y+8,drawY:pos.y,type:'plot',index:i,data,label:'Ô đất '+(i+1)});
+    }
+    const decor=(index,rect)=>{const style=fenceAt(owner,index);if(style)ground.push({...rect,type:'fence',style});};
+    for(const garden of baseGarden(Math.ceil(owner.plots.length/3)))decor(-1,garden);
+    decor(-2,basePonds[0]);decor(-3,basePonds[1]);
+    const land=getLand(owner);
+    for(let i=0;i<lotCount;i++){
+      const lot=land[i], area=lotRect(i), x=area.x+area.w*.5, y=area.y+area.h+7;
+      ground.push({...area,type:'lot',lot,index:i});
+      if(id==='field')hotspots.push({x,y,type:'land',index:i,label:(lot?.kind&&lot.kind!=='empty'?landTypes[lot.kind].name:lot?'Đất trống':'Mua đất')+' · Ô '+(i+1)});
+      if(lot?.fence)ground.push({...area,type:'fence',style:lot.fence});
+      if(lot?.kind==='fish'||lot?.kind==='shrimp'){
+        const section={x:area.x+9,y:area.y+8,w:area.w-18,h:area.h-24,shape:'rect'};
+        water.push(section);
+        const data=owner.ponds?.[pondOffset+i];
+        const dock={x,y:y-12,index:i+pondOffset,side:'up',label:landTypes[lot.kind].name+' · Ô '+(i+1)};
+        actors.push({...dock,type:'dock',data,upgraded:id==='lake'&&(snapshot.fishingLimit??fishing.limit)>fishing.limit});
+        if(id==='field')hotspots.push({...dock,type:'pond'});
+        else if(lot.kind==='fish')hotspots.push({...dock,type:'neighbor-fishing'});
+      }
+      if(lot?.kind==='coop'){
+        actors.push({x:area.x+area.w*.5,y:area.y+37,type:'coop',w:51});
+        const pens=id==='field'?farm.pens:owner.visiblePens??[];
+        pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
+          const point={x:area.x+37+seat*65,y:area.y+57,index,data};
+          actors.push({...point,type:'animal'});
+          if(id==='field')hotspots.push({...point,type:'animal',label:'Chăm vật nuôi'});
+        });
+      }
+    }
+  }
+  if(id==='coop') {
+    if(fenceAt(farm,-4))ground.push({...basePen,type:'fence',style:fenceAt(farm,-4)});
+    let seat=0;
+    for(const [i,data] of farm.pens.entries()) {
+      if(data.lot!==undefined)continue;
+      const pos=coopPosition(seat++);
+      actors.push({...pos,type:'animal',index:i,data});
+      hotspots.push({...pos,type:'animal',index:i,data,label:'Chăm vật nuôi'});
+    }
+  }
+  const built=project=>snapshot.village?.built.some(entry=>entry.id===project);
+  if(id==='lake'&&built('well')){
+    const well={x:217,y:299,type:'well',w:31};
+    actors.push(well);
+    hotspots.push({...well,y:well.y+12,type:'village-well',label:'Uống nước ở giếng công cộng'});
+    blocks.push(rect(well.x-11,well.y-7,22,8));
+  }
+  for(const dock of docks[id]??[]){
+    const batch=id==='field'?farm.ponds?.[dock.index]:id==='visit'?neighbor?.ponds?.[dock.index]:null;
+    actors.push({...dock,type:'dock',data:batch});
+    hotspots.push(dock);
+  }
+  if(id==='field') actors.push({x:124,y:133,type:'wildlife',index:0,data:{kind:'chicken'}});
+  if(id==='market') {
+    const orders=snapshot.orders?.length;
+    const board={x:179,y:170,type:'order-board',label:orders===undefined?'Bảng đơn hàng của làng':'Bảng đơn · '+orders+' đơn còn lại',
+      upgraded:built('notice'),orders};
+    if(snapshot.orders?.some(order=>order.title))actors.push({x:262,y:175,type:'basket-trader'});
+    actors.push(board);
+    hotspots.push({...board,y:board.y+9});
+    blocks.push(rect(board.x-12,board.y-5,24,6));
+    actors.push({x:258,y:111,type:'npc',style:'vendor'}, {x:364,y:115,type:'npc',style:'trader'});
+  }
+  if(id==='neighbors') {
+    if(built('hall')){
+      const hall={x:237,y:174,type:'village-hall',label:'Nhà sinh hoạt',w:81};
+      actors.push(hall);
+      hotspots.push({...hall,y:hall.y+14});
+      blocks.push(rect(201,166,72,10));
+    }
+    for(const [i,data] of snapshot.neighbors.slice(page*6,page*6+6).entries()) {
+      const pos=visitorPosition(i);
+      actors.push({...pos,type:'neighbor',style:i%2?'visit':'home',w:53,h:31});
+      blocks.push(rect(pos.x-20,pos.y-13,40,13));
+      hotspots.push({...pos,y:pos.y+13,type:'neighbor',id:data.id,label:data.name});
+    }
+  }
+  return {actors,hotspots,blocks,water,ground,bounds:map.bounds??size};
+}
+export function walkable(scene,x,y){
+  const bounds=scene.bounds??size;
+  if(x<8||x>bounds.width-8||y<10||y>bounds.height-9||intrudes(x,y,scene.blocks,3))return false;
+  return !(scene.water??[]).some(r=>{
+    const rx=r.w/2, ry=r.h/2;
+    if(r.shape==='rect')return x>r.x-3&&x<r.x+r.w+3&&y>r.y-3&&y<r.y+r.h+3;
+    return ((x-r.x-rx)/(rx+4))**2+((y-r.y-ry)/(ry+4))**2<1;
+  });
+}
+const step=8;
+const columns=scene=>Math.floor(((scene.bounds??size).width-16)/step)+1;
+const lines=scene=>Math.floor(((scene.bounds??size).height-21)/step)+1;
+const node = (c,r) => [8+c*step,12+r*step];
+function nearest(scene,x,y) {
+  const cols=columns(scene),rows=lines(scene);
+  let best=-1, distance=Infinity;
+  for(let r=Math.max(0,Math.floor((y-12)/step)-6);r<Math.min(rows,Math.floor((y-12)/step)+7);r++) {
+    for(let c=Math.max(0,Math.floor((x-8)/step)-6);c<Math.min(cols,Math.floor((x-8)/step)+7);c++) {
+      const [cx,cy]=node(c,r), d=Math.hypot(x-cx,y-cy);
+      if(d<distance&&walkable(scene,cx,cy)){best=r*cols+c;distance=d;}
+    }
+  }
+  return best;
+}
+export function route(scene,from,to) {
+  const cols=columns(scene),rows=lines(scene);
+  const start=nearest(scene,...from), end=nearest(scene,...to);
+  if(start<0||end<0) return null;
+  const queue=[start], visited=new Int16Array(cols*rows).fill(-1);
+  visited[start]=start;
+  for(let i=0;i<queue.length&&visited[end]===-1;i++) {
+    const current=queue[i], c=current%cols, r=Math.floor(current/cols);
+    for(const [dc,dr] of [[1,0],[0,1],[-1,0],[0,-1]]) {
+      const nc=c+dc,nr=r+dr,next=nr*cols+nc;
+      if(nc<0||nc>=cols||nr<0||nr>=rows||visited[next]!==-1||!walkable(scene,...node(nc,nr))) continue;
+      visited[next]=current;
+      queue.push(next);
+    }
+  }
+  if(visited[end]===-1) return null;
+  const path=[];
+  for(let cur=end;cur!==start;cur=visited[cur]) path.push(node(cur%cols,Math.floor(cur/cols)));
+  path.push(node(start%cols,Math.floor(start/cols)));
+  path.reverse();
+  const points=[];
+  let i=0;
+  while(i<path.length) {
+    let far=i;
+    const fromPoint=i===0?from:path[i-1];
+    for(let candidate=i+1;candidate<path.length;candidate++){
+      if(!clearSegment(scene,fromPoint,path[candidate])) break;
+      far=candidate;
+    }
+    points.push(path[far]);
+    i=far+1;
+  }
+  return points;
+}
+function clearSegment(scene,[ax,ay],[bx,by]){
+  const distance=Math.hypot(bx-ax,by-ay);
+  const pieces=Math.max(1,Math.ceil(distance/2));
+  for(let i=0;i<=pieces;i++){
+    const fraction=i/pieces;
+    if(!walkable(scene,ax+(bx-ax)*fraction,ay+(by-ay)*fraction))return false;
+  }
+  return true;
+}

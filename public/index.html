@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f2e7">
+<meta name="description" content="Gieo hạt, nuôi gà và ghé vườn hàng xóm ở Vườn Mùa Vui.">
+<title>Vườn Mùa Vui</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<script type="module" src="/app.mjs"></script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" class="symbols" aria-hidden="true">
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 4c-7 0-13 3-13 9a5 5 0 0 0 5 5c6 0 9-6 8-14Z"/><path d="M4 21c2-5 6-9 11-12"/></symbol>
+  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8m-2-2v12H5V9m4 12v-6h6v6"/><path d="M17 4v4"/></symbol>
+  <symbol id="i-coop" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8m-2-2v12H5V9m3 12v-7h8v7m-5-11h2m-5 4 8 7m0-7-8 7"/></symbol>
+  <symbol id="i-market" viewBox="0 0 24 24"><path d="m3 8 2-4h14l2 4v3a3 3 0 0 1-4 3 3 3 0 0 1-5-1 3 3 0 0 1-5 1 3 3 0 0 1-4-3V8Zm1 12h16M6 15v5m12-5v5M8 8l1-4m7 4-1-4M3 8h18"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m1-15a3 3 0 0 1 0 6m1 3a4 4 0 0 1 4 4v2"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6"/></symbol>
+  <symbol id="i-day" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4m8-4v4m-7 7h6"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M7 8 5 20h14L17 8H7Zm2 2V6a3 3 0 0 1 6 0v4M5 17h14"/></symbol>
+  <symbol id="i-orders" viewBox="0 0 24 24"><path d="M8 5H5v16h14V5h-3"/><rect x="8" y="3" width="8" height="4" rx="1"/><path d="m8 13 2 2 5-5m-7 8h7"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24"><path d="m14 6 4 4 3-3-4-4-3 3Zm1 3L5 19l2 2L17 11M8 7l2-2 2 2-2 2Zm7 9 4 4 2-2-4-4"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 2Zm0 0v13"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-7h4v7"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+  <symbol id="i-fish" viewBox="0 0 24 24"><path d="M17 12c-2-4-6-6-10-4-2 1-3 2-4 4 1 2 2 3 4 4 4 2 8 0 10-4Zm0 0 4-3v6l-4-3M8 11h.01"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3c3 4 7 8 7 12a7 7 0 0 1-14 0c0-4 4-8 7-12Z"/><path d="M9 16a3 3 0 0 0 3 3"/></symbol>
+  <symbol id="i-meal" viewBox="0 0 24 24"><path d="M3 14h18c-1 5-4 7-9 7s-8-2-9-7Zm3-3c0-2 2-4 3-5m3 4c0-2 2-4 3-5m3 6 2-3"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 9-12h-6Z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4m-5 4v4m-4 0h8"/></symbol>
+  <symbol id="i-weather" viewBox="0 0 24 24"><path d="M4 15a4 4 0 0 1 4-4 5 5 0 0 1 9 2 3 3 0 0 1 0 6H8a4 4 0 0 1-4-4Zm6-9 1-2m7 4 2-1M5 9 3 8"/></symbol>
+</svg>
+<header class="top"><div class="top-inner">
+  <button class="brand" data-tab="field"><span class="mark"><svg aria-hidden="true"><use href="#i-leaf"/></svg></span><span>Vườn Mùa Vui</span></button>
+  <div class="top-end">
+    <button id="room" class="room" data-room><svg aria-hidden="true"><use href="#i-users"/></svg><span>Vào làng</span></button>
+  </div>
+</div></header>
+<main class="shell">
+  <div class="workspace">
+    <div class="page-title"><div><p id="sub-title" class="eyebrow">Vườn chơi thử</p><h1 id="title">Vườn nhà</h1><p id="subtitle">Gieo hạt, chăm vườn và thu hoạch theo thời tiết.</p></div><button class="help" type="button" aria-label="Hướng dẫn" data-info><svg aria-hidden="true"><use href="#i-help"/></svg><span>Hướng dẫn</span></button></div>
+    <div class="status-hud">
+      <section id="vital-hud" aria-label="Sức khỏe nhân vật"></section>
+      <section id="task-hud" aria-label="Việc cần làm"></section>
+    </div>
+    <nav id="nav" aria-label="Khu vực"></nav>
+    <div class="layout">
+      <section class="world" id="world" aria-label="Bản đồ nông trại">
+        <div class="world-stage">
+          <canvas tabindex="0" aria-label="Bản đồ vườn nhà" aria-describedby="world-controls"></canvas>
+          <div class="world-hud">
+            <div class="world-stats" role="group" aria-label="Ngày và số xu">
+              <span class="world-stat" id="world-day"><svg aria-hidden="true"><use href="#i-day"/></svg><span id="date">Ngày 1</span></span>
+              <span class="world-stat wallet"><svg aria-hidden="true"><use href="#i-coins"/></svg><span id="coin">— xu</span></span>
+            </div>
+            <div id="world-weather"></div>
+          </div>
+          <div class="map-radar" id="map-radar" aria-hidden="true"><canvas width="104" height="63" data-radar></canvas></div>
+          <div class="world-dpad" aria-label="Điều khiển hướng">
+            <button type="button" data-direction="up" aria-label="Đi lên">↑</button>
+            <button type="button" data-direction="left" aria-label="Đi trái">←</button>
+            <button type="button" data-direction="down" aria-label="Đi xuống">↓</button>
+            <button type="button" data-direction="right" aria-label="Đi phải">→</button>
+          </div>
+        </div>
+        <div class="world-footer">
+          <div class="map-help"><svg aria-hidden="true"><use href="#i-pin"/></svg><div><strong data-world-hint>Chọn một điểm trên bản đồ</strong><small id="world-controls">WASD để đi · Bấm bản đồ để tự tìm đường</small></div></div>
+          <div class="world-buttons">
+            <span data-scene-count hidden></span>
+            <button class="btn" type="button" data-chat-toggle aria-controls="scene-chat" aria-expanded="false" hidden><span>Chat</span></button>
+            <button class="btn primary" type="button" data-world-act disabled><kbd>E</kbd> Tương tác</button>
+          </div>
+        </div>
+        <section id="scene-chat" class="scene-chat" aria-label="Chat khu vực" hidden>
+          <div class="row"><h2>Chat khu vực</h2><button class="btn subtle" type="button" data-chat-close aria-label="Đóng chat">×</button></div>
+          <p data-chat-status>Đang kết nối…</p>
+          <ul data-chat-messages aria-label="Tin nhắn"></ul>
+          <form><input name="message" type="text" maxlength="180" aria-label="Nhập tin nhắn" placeholder="Nhập tin nhắn…" autocomplete="off" required><button type="submit" class="btn primary">Gửi</button></form>
+        </section>
+      </section>
+      <aside class="control-panel" aria-label="Quản lý nông trại">
+        <nav id="panel-nav" aria-label="Công cụ nông trại"></nav>
+        <div class="panel-body">
+          <section id="board" aria-label="Tác vụ trong khu vực"><p>Đang chuẩn bị vườn…</p></section>
+          <section id="tools"></section>
+          <section id="side" aria-label="Thông tin vườn" hidden></section>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+<dialog id="dialog"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

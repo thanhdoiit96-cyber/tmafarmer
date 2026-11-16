@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS farm_rooms (
+  code TEXT PRIMARY KEY,
+  revision INTEGER NOT NULL DEFAULT 0,
+  state TEXT NOT NULL
+);
