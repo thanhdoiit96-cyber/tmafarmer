@@ -35,6 +35,7 @@ const field={
 };
 const scenes={
   home:{decor:[],life:[]},
+  workshop:{decor:[],life:[]},
   field, visit:field,
   market:{
     floor:'meadow',road:'stone',tint:'#e7b97718',

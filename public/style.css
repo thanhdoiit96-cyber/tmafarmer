@@ -84,6 +84,14 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .itemrow>div:first-child{min-width:0;overflow-wrap:anywhere}
 .itemrow strong{font-size:11px}
 .itemrow .btn{flex:none}
+.stock-pager{margin:12px 0 9px;color:var(--muted);font-size:10px}
+.stock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.stock-card{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:7px;min-height:58px;padding:8px;border:1px solid #e8ddc6;border-radius:10px;background:linear-gradient(145deg,#fffaf0,#f4ecd9)}
+.stock-card .stock-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#e5ecd8;font-size:20px}
+.stock-card div{display:grid;gap:2px;min-width:0}.stock-card small{color:#84775e;font-size:8px;text-transform:uppercase;letter-spacing:.05em}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.stock-card>b{color:#526347;font-size:11px}.stock-card .btn{grid-column:2/4;min-height:27px;padding:3px 6px;font-size:9px}
+.workshop-board{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #dfd3b6;border-radius:12px;background:linear-gradient(135deg,#f5ead2,#e6ecd8)}
+.workshop-emblem{display:grid;place-items:center;flex:none;width:50px;height:50px;border-radius:14px;background:#49614f;color:#f4d999;font-size:27px;box-shadow:inset 0 0 0 2px #f5df9d55}
+.workshop-board h2{font-size:22px}.craft-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.craft-slots span{display:grid;place-items:center;min-height:58px;border:1px dashed #c6b78f;border-radius:10px;background:#faf4e6;color:#887858;font-size:10px;font-weight:700}
 .badge{padding:5px 7px;border-radius:20px;background:#efe8d4;color:#615235;font-size:10px;font-weight:800;white-space:nowrap}
 .plot-select{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
 .plot-select .btn{min-height:31px;padding:4px 2px;white-space:nowrap}
@@ -108,6 +116,7 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 #toast.error{background:#8b412f}
 @media(max-width:1100px){.top-inner,.shell{padding-inline:20px}.layout{grid-template-columns:minmax(0,1fr) 276px;gap:12px}}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.shell{max-width:680px;padding-top:13px}.farm-list{max-height:none}.panel-body{padding:13px}.panel-tabs button{flex-direction:row;gap:5px;font-size:10px}.control-panel{max-width:none}.panel-body h2{font-size:22px}#tools .actions{grid-template-columns:repeat(auto-fit,minmax(114px,1fr))}.plot-select{grid-template-columns:repeat(auto-fit,minmax(60px,1fr))}.world-dpad{display:grid}}
+@media(max-width:470px){.stock-grid{grid-template-columns:1fr}.craft-slots{grid-template-columns:1fr}.craft-slots span{min-height:38px}}
 @media(pointer:coarse){.world-dpad{display:grid}}
 @media(max-width:500px){.top-inner,.shell{padding-inline:12px}.top-inner{padding-block:9px}.brand{font-size:19px;gap:6px}.mark{width:32px;height:32px}.mark svg{width:19px;height:19px}.top-end{gap:4px}.world-stat,.room,.help{font-size:10px;padding:6px;gap:3px}.world-stat svg,.room svg,.help svg{width:13px;height:13px}.help span{display:none}.help{padding:8px}.page-title{margin-bottom:13px}.eyebrow{font-size:9px}#subtitle{font-size:11px}#nav{width:100%;justify-content:space-between;gap:1px}#nav button{padding:4px;gap:3px;min-height:30px;font-size:10px}#nav button svg{width:13px;height:13px}.world-weather{font-size:10px;min-height:26px}.world-footer{min-height:46px;padding:6px 8px}.map-help strong{font-size:10px}.map-help small{font-size:9px}.world-dpad{grid-template-columns:repeat(3,28px);grid-template-rows:repeat(2,25px);bottom:5px;left:5px}.panel-tabs svg{width:14px;height:14px}}
 @media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}

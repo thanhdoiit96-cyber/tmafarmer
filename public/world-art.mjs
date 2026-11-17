@@ -239,6 +239,28 @@ export function grass(c,scene,kind,features){
     }
     return;
   }
+  if(kind==='workshop'){
+    box(c,'#6d4c37',0,0,width,height,0);
+    const wall=c.createLinearGradient(0,0,0,72);
+    wall.addColorStop(0,'#4d5f52');wall.addColorStop(1,'#73806a');box(c,wall,0,0,width,72,0);
+    for(let y=72;y<height;y+=18)for(let x=(y/18%2)*15-15;x<width;x+=30){
+      box(c,(x/30+y/18)%2?'#b99464':'#c8a575',x,y,30,18,0);
+      line(c,'#765c4345',.6,[[x,y],[x+30,y]]);
+    }
+    box(c,'#4d382b',35,64,128,65,5);box(c,'#d2ad70',42,70,114,9,2);
+    box(c,'#4d382b',317,64,128,65,5);box(c,'#d2ad70',324,70,114,9,2);
+    for(const [x,y] of [[71,92],[105,93],[351,92],[399,91]]){
+      ellipse(c,'#b89255',x,y,12,12);ellipse(c,'#6b5942',x,y,4,4);
+      for(let i=0;i<8;i++){const angle=i*Math.PI/4;box(c,'#c5a466',x+Math.cos(angle)*13-2,y+Math.sin(angle)*13-3,4,6,1);}
+    }
+    box(c,'#66513b',50,154,100,52,4);box(c,'#ddb871',56,159,88,8,2);
+    box(c,'#66513b',330,154,100,52,4);box(c,'#ddb871',336,159,88,8,2);
+    box(c,'#31483b',198,72,84,63,6);box(c,'#d5c18d',204,78,72,50,4);
+    c.fillStyle='#496250';c.font='700 8px system-ui';c.textAlign='center';c.fillText('BẢNG CÔNG THỨC',240,91);
+    c.fillStyle='#86775a';c.font='6px system-ui';c.fillText('Đang chờ cập nhật',240,108);
+    box(c,'#704b31',211,246,58,42,3);box(c,'#b98653',216,250,48,6,2);
+    return;
+  }
   const landscape=landscapeFor(kind);
   box(c,texture(c,landscape.floor),0,0,width,height,0);
   for(const layer of landscape.terrain)region(c,layer);

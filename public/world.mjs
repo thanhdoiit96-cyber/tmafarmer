@@ -270,7 +270,7 @@ export function createWorld(root, onInteract) {
     for(const mark of marks)if(mark.x>=camera.x&&mark.x<=camera.x+size.width&&mark.y>=camera.y&&mark.y<=camera.y+size.height)drawTask(context,mark.x,mark.y+Math.sin(ambient*2+mark.x)*.65,mark.style);
     drawEffects(now);
     context.restore();
-    if(sceneId!=='home')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
+    if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
     drawRadar();
     requestAnimationFrame(frame);
   }
