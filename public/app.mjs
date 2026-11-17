@@ -618,6 +618,8 @@ function render(arrival) {
   if(priorDecor)baseDecorOpen=priorDecor.open;
   const listScroll=$('#board .farm-list')?.scrollTop??0;
   const farm=state.me, now=currentTime();
+  const workshopUnlocked=(farm.workshop??0)>0;
+  if(tab==='workshop'&&!workshopUnlocked){tab='field';panel='area';}
   if(!farm.plotIndexes.includes(selected)){selected=0;plotGroup=-1;}
   lastPanelTime=now;
   tasks=farmTasks(state,now);
@@ -625,7 +627,7 @@ function render(arrival) {
   const [,title,description]=tabs[tab];
   const selectedNeighbor=tab==='neighbors'?state.neighbors.find(n=>n.id===neighborId):undefined;
   if(!selectedNeighbor)neighborId=null;
-  $('#nav').innerHTML=Object.entries(tabs).filter(([key])=>key!=='workshop').map(([key,[,name]])=>'<button data-tab="'+key+'" class="'+(tab===key?'active':'')+'"'+(tab===key?' aria-current="page"':'')+'>'+icon(areaIcons[key])+name+'</button>').join('');
+  $('#nav').innerHTML=Object.entries(tabs).filter(([key])=>key!=='workshop'||workshopUnlocked).map(([key,[,name]])=>'<button data-tab="'+key+'" class="'+(tab===key?'active':'')+'"'+(tab===key?' aria-current="page"':'')+'>'+icon(areaIcons[key])+name+'</button>').join('');
   $('#coin').textContent=formatCoins(farm.coins)+' xu';
   $('#room span').textContent=session?'Làng '+session.code:'Vào làng';
   $('#sub-title').textContent=session?farm.name+' · '+state.village.name:'Vườn chơi thử';
