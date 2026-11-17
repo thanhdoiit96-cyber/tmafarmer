@@ -4,6 +4,7 @@ import {animals,apply,cropGoal,dayReward,gameDay,growthGoal,mealCooldown,newFarm
 import {homeBed} from '../public/home-rules.mjs';
 import {features,maps,route,walkable} from '../public/world-layout.mjs';
 import {farmTasks} from '../public/tasks.mjs';
+import {restSeconds} from '../public/wellness.mjs';
 
 const start=100000;
 const world=()=>{
@@ -29,11 +30,41 @@ test('new work spends energy once, rejected actions preserve it, and rest blocks
   assert.throws(()=>rest('field'),/gần giường/);
   assert.throws(()=>apply(room,'a',{action:'rest'},start,.5,{area:'home',x:238,y:242}),/gần giường/);
   rest('home');
-  assert.throws(()=>act(room,'water',{index:0},29),/nghỉ xong/);
-  assert.ok(snapshot(room,farm,start+30).me.wellness.stamina>=47);
-  act(room,'water',{index:0},30);
-  assert.ok(farm.wellness.stamina<48);
-  assert.throws(()=>act(room,'drink',{},31),/vừa hồi phục/);
+  assert.throws(()=>act(room,'water',{index:0},59),/nghỉ xong/);
+  assert.equal(snapshot(room,farm,start+60).me.wellness.stamina,76);
+  act(room,'water',{index:0},60);
+  assert.equal(farm.wellness.stamina,73);
+  assert.throws(()=>act(room,'drink',{},61),/vừa hồi phục/);
+});
+
+test('rest grants 75 points after a minute and can start again immediately',()=>{
+  const room=world(), farm=room.farms.a;
+  farm.wellness={water:50,food:50,stamina:0,at:start,until:{},restUntil:0};
+  const rest=offset=>apply(room,'a',{action:'rest'},start+offset,.5,{area:'home',...homeBed});
+  const stamina=offset=>snapshot(room,farm,start+offset).me.wellness.stamina;
+  rest(0);
+  assert.equal(restSeconds,60);
+  assert.equal(farm.wellness.restUntil,start+60);
+  assert.equal(farm.wellness.until.stamina,undefined);
+  assert.throws(()=>rest(59),/đang nghỉ/);
+  assert.equal(stamina(59),0);
+  assert.equal(stamina(60),75);
+  rest(60);
+  assert.equal(farm.wellness.restUntil,start+120);
+  assert.equal(stamina(119),75);
+  assert.equal(stamina(120),100);
+  assert.throws(()=>rest(120),/đã đầy/);
+});
+
+test('previously started rest keeps its reward but its old cooldown does not block a new rest',()=>{
+  const room=world(), farm=room.farms.a;
+  farm.wellness={water:50,food:50,stamina:25,at:start,until:{stamina:start+360},restUntil:start+30};
+  assert.equal(snapshot(room,farm,start+29).me.wellness.stamina,25+29/60);
+  assert.equal(snapshot(room,farm,start+30).me.wellness.stamina,71.5);
+  apply(room,'a',{action:'rest'},start+30,.5,{area:'home',...homeBed});
+  assert.equal(farm.wellness.restUntil,start+90);
+  assert.equal(farm.wellness.until.stamina,undefined);
+  assert.equal(snapshot(room,farm,start+90).me.wellness.stamina,100);
 });
 
 test('workshop recipes consume produce once and meals recover stats under a shared cooldown',()=>{

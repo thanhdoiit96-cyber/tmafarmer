@@ -442,17 +442,21 @@ export function apply(room,id,input,now,catchRoll=0.5,location){
   const recovery=Object.keys(vitals).find(key=>vitals[key].action===input.action);
   if(recovery){
     const info=vitals[recovery];
-    if(recovery==='stamina')check(atHomeBed(location),'Hãy về nhà vườn và tới gần giường để nghỉ.');
+    if(recovery==='stamina'){
+      check(atHomeBed(location),'Hãy về nhà vườn và tới gần giường để nghỉ.');
+      check(!(health.restUntil>now),'Bạn đang nghỉ. Hãy chờ lượt này kết thúc.');
+      check(health.stamina<100,'Thể lực đã đầy.');
+      health.restUntil=now+restSeconds;
+      delete health.until.stamina;
+      farm.wellness=health;
+      return 'Đang nghỉ '+restSeconds+' giây để hồi thể lực.';
+    }
     check((health.until[recovery]??0)<=now,'Bạn vừa hồi phục. Hãy chờ một chút.');
     check(health[recovery]<99,'Chỉ số này đã đầy.');
-    if(recovery==='stamina'){
-      health.restUntil=now+restSeconds;
-    } else {
-      health[recovery]=Math.min(100,health[recovery]+info.gain);
-    }
+    health[recovery]=Math.min(100,health[recovery]+info.gain);
     health.until[recovery]=now+info.cooldown;
     farm.wellness=health;
-    return {water:'Đã uống nước.',food:'Đã ăn cơm nắm.',stamina:'Đang nghỉ 30 giây để hồi thể lực.'}[recovery];
+    return {water:'Đã uống nước.',food:'Đã ăn cơm nắm.'}[recovery];
   }
   const cost=workCost(input.action,weatherAt(room,now).id);
   const blocked=workBlock(health,cost,now);

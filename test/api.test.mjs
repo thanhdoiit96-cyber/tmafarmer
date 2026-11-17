@@ -99,7 +99,8 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const rest={action:'rest',requestId:crypto.randomUUID()};
   const resting=await api('action',rest,a);
   assert.equal(resting.status,200);
-  assert.ok(resting.state.me.wellness.restUntil>resting.state.now);
+  assert.equal(resting.state.me.wellness.restUntil-resting.state.now,60);
+  assert.equal((await send(a,'rest')).status,400);
   const retry=await api('action',rest,a);
   assert.equal(retry.state.me.wellness.restUntil,resting.state.me.wellness.restUntil);
   assert.equal((await send(a,'plant',{item:'wheat',index:0})).status,400);

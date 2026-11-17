@@ -436,7 +436,6 @@ function renderJournal(farm){
 function renderHome(farm,now){
   const health=wellnessAt(farm,now);
   const status=health.restUntil>now?'Đang nghỉ · <span data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</span>':
-    (health.until.stamina??0)>now?'Có thể nghỉ lại sau <span data-until="'+health.until.stamina+'">'+duration(health.until.stamina-now)+'</span>':
     'Thể lực '+Math.floor(health.stamina)+'/100';
   return '<section class="home-guide"><div><h2>Chỗ nghỉ</h2><p>'+status+'</p></div>'+
     '<div class="actions">'+btn('Đến giường','data-bed-go','primary')+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
@@ -454,7 +453,7 @@ function renderRank(me){
 function renderHud(farm,now){
   const health=wellnessAt(farm,now);
   $('#vital-hud').innerHTML=Object.entries(vitals).map(([key,info])=>{
-    const points=Math.floor(health[key]), seconds=Math.max(0,(health.until[key]??0)-now);
+    const points=Math.floor(health[key]), seconds=key==='stamina'?0:Math.max(0,(health.until[key]??0)-now);
     const resting=key==='stamina'&&health.restUntil>now;
     const hint=resting?'Đang nghỉ · '+duration(health.restUntil-now):seconds?'Dùng lại sau '+duration(seconds):{water:'Uống nước',food:'Ăn cơm nắm',stamina:'Về nhà nghỉ sức'}[key];
     return '<button type="button" class="vital" data-vital="'+key+'" data-low="'+(points<25)+'" aria-label="'+info.label+' '+points+'/100. '+hint+'" title="'+hint+'"><span class="vital-icon">'+icon(info.icon)+'</span><span class="vital-text"><span>'+info.label+'</span><strong>'+points+'</strong><i><em style="width:'+Math.max(0,points)+'%"></em></i></span></button>';
@@ -464,7 +463,6 @@ function renderHud(farm,now){
 }
 function showRecovery(key){
   const info=vitals[key], now=currentTime(), health=wellnessAt(state.me,now);
-  const remaining=Math.max(0,(health.until[key]??0)-now);
   const meals=Object.keys(recipes).filter(item=>recipes[item].gain[key]&&(state.me.inventory[item]??0)>0);
   const mealTime=health.until.meal??0;
   const options=meals.length?'<div class="recovery-meals"><h3>Đồ ăn và thức uống trong túi</h3>'+
@@ -473,19 +471,19 @@ function showRecovery(key){
       btn('Dùng','data-meal="'+item+'" aria-label="Dùng '+escape(goods[item].name)+'"','',!!mealRequirement(state.me,item,health,now))+'</div>').join('')+'</div>':'';
   if(key==='stamina'){
     if(health.restUntil>now){
-      modal('Đang nghỉ','<p>Hồi thể lực sau <strong data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</strong>.</p>');
+      modal('Đang nghỉ','<p>Hồi thể lực sau <strong data-rest-countdown data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</strong>.</p>');
       return;
     }
     const inHome=tab==='home', atBed=atHomeBed({area:tab,...world.position()});
     const instruction=atBed?'Bạn đã đến giường.':inHome?'Đến giường ở bên phải hoặc bấm vào giường trên bản đồ.':
       'Về vườn và vào nhà mái ngói ở góc trên bên trái. Trong nhà, đến gần giường và chọn Nghỉ lấy sức.';
-    const action=atBed?btn('Nghỉ lấy sức','data-recover="rest"','primary',remaining>0||health.stamina>=99):
+    const action=atBed?btn('Nghỉ lấy sức','data-recover="rest"','primary',health.stamina>=100):
       btn(inHome?'Đến giường':'Chỉ đường về nhà',inHome?'data-bed-go':'data-home-go','primary');
     modal('Thể lực','<p>'+instruction+'</p><p>Nghỉ '+restSeconds+' giây để hồi tối đa '+info.gain+' điểm thể lực.</p>'+
-      (remaining?'<p>Có thể nghỉ lại sau <span data-until="'+health.until.stamina+'">'+duration(remaining)+'</span>.</p>':
-        health.stamina>=99?'<p>Thể lực đang đầy.</p>':'')+'<div class="actions">'+action+'</div>'+options+'<p id="dialog-error" role="status"></p>');
+      (health.stamina>=100?'<p>Thể lực đang đầy.</p>':'')+'<div class="actions">'+action+'</div>'+options+'<p id="dialog-error" role="status"></p>');
     return;
   }
+  const remaining=Math.max(0,(health.until[key]??0)-now);
   const copy={water:'Uống nước để hồi tối đa 48 điểm. Mỗi lượt cách nhau 90 giây.',food:'Ăn cơm nắm để hồi tối đa 52 điểm. Mỗi lượt cách nhau 5 phút.'};
   const actions={water:'Uống nước',food:'Ăn cơm nắm'};
   modal(info.label,'<p>'+copy[key]+'</p>'+(remaining?'<p>Lượt hồi phục tiếp theo sau '+duration(remaining)+'.</p>':'')+
@@ -1116,6 +1114,10 @@ setInterval(()=>{
     if(session)void refresh();
     else {updateDemo();render();}
   }
+  const restEnds=state.me.wellness.restUntil;
+  if(!busy&&restEnds>lastPanelTime&&restEnds<=now)render();
+  const restCountdown=dialog.querySelector('[data-rest-countdown]');
+  if(dialog.open&&restCountdown&&Number(restCountdown.dataset.until)<=now)showRecovery('stamina');
   document.querySelectorAll('[data-until]').forEach(node=>node.textContent=duration(Number(node.dataset.until)-now));
   document.querySelectorAll('[data-clock]').forEach(node=>node.textContent=duration((node.dataset.clock==='day'?state.dayEnds:state.next)-now));
 },1000);
