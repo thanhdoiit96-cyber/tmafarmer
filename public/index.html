@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2e7">
 <meta name="description" content="Gieo hạt, nuôi gà và ghé vườn hàng xóm ở Vườn Mùa Vui.">
 <title>Vườn Mùa Vui</title>
@@ -33,18 +33,22 @@
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4m-5 4v4m-4 0h8"/></symbol>
   <symbol id="i-weather" viewBox="0 0 24 24"><path d="M4 15a4 4 0 0 1 4-4 5 5 0 0 1 9 2 3 3 0 0 1 0 6H8a4 4 0 0 1-4-4Zm6-9 1-2m7 4 2-1M5 9 3 8"/></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="15" rx="2" transform="rotate(30 12 14)"/><path d="M4 7a8 8 0 0 1 12-4m0-3v3h-3"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
 </svg>
 <header class="top"><div class="top-inner">
   <button class="brand" data-tab="field"><span class="mark"><svg aria-hidden="true"><use href="#i-leaf"/></svg></span><span>Vườn Mùa Vui</span></button>
   <div class="top-end">
     <button class="avatar-menu music-menu" type="button" data-music-menu aria-label="Nhạc nền"><svg aria-hidden="true"><use href="#i-music"/></svg><span>Nhạc nền</span></button>
-    <button class="avatar-menu" type="button" data-avatar-menu><svg aria-hidden="true"><use href="#i-users"/></svg><span>Nhân vật</span></button>
+    <button class="avatar-menu" type="button" data-avatar-menu aria-label="Nhân vật"><svg aria-hidden="true"><use href="#i-users"/></svg><span>Nhân vật</span></button>
     <button id="room" class="room" data-room><svg aria-hidden="true"><use href="#i-users"/></svg><span>Vào làng</span></button>
+    <button class="help landscape-only" type="button" aria-label="Hướng dẫn" data-info><svg aria-hidden="true"><use href="#i-help"/></svg></button>
   </div>
 </div></header>
 <main class="shell">
   <div class="workspace">
     <div class="page-title"><div><p id="sub-title" class="eyebrow">Vườn chơi thử</p><h1 id="title">Vườn nhà</h1><p id="subtitle">Gieo hạt, chăm vườn và thu hoạch theo thời tiết.</p></div><button class="help" type="button" aria-label="Hướng dẫn" data-info><svg aria-hidden="true"><use href="#i-help"/></svg><span>Hướng dẫn</span></button></div>
+    <p class="rotate-hint"><svg aria-hidden="true"><use href="#i-rotate"/></svg>Xoay ngang điện thoại để mở rộng bản đồ.</p>
     <div class="status-hud">
       <section id="vital-hud" aria-label="Sức khỏe nhân vật"></section>
       <section id="task-hud" aria-label="Việc cần làm"></section>
@@ -63,18 +67,19 @@
           </div>
           <div class="map-radar" id="map-radar" aria-hidden="true"><canvas width="104" height="63" data-radar></canvas></div>
           <div class="world-dpad" aria-label="Điều khiển hướng">
-            <button type="button" data-direction="up" aria-label="Đi lên">↑</button>
-            <button type="button" data-direction="left" aria-label="Đi trái">←</button>
-            <button type="button" data-direction="down" aria-label="Đi xuống">↓</button>
-            <button type="button" data-direction="right" aria-label="Đi phải">→</button>
+            <button type="button" data-direction="up" aria-label="Đi lên"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
+            <button type="button" data-direction="left" aria-label="Đi trái"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
+            <button type="button" data-direction="down" aria-label="Đi xuống"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
+            <button type="button" data-direction="right" aria-label="Đi phải"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
           </div>
         </div>
         <div class="world-footer">
-          <div class="map-help"><svg aria-hidden="true"><use href="#i-pin"/></svg><div><strong data-world-hint>Chọn một điểm trên bản đồ</strong><small id="world-controls">WASD để đi · Bấm bản đồ để tự tìm đường</small></div></div>
+          <div class="map-help"><svg aria-hidden="true"><use href="#i-pin"/></svg><div><strong data-world-hint>Chọn một điểm trên bản đồ</strong><small id="world-controls">Chạm bản đồ hoặc dùng WASD và các nút mũi tên để đi.</small></div></div>
           <div class="world-buttons">
             <span data-scene-count hidden></span>
             <button class="btn" type="button" data-chat-toggle aria-controls="scene-chat" aria-expanded="false" hidden><span>Chat</span></button>
             <button class="btn primary" type="button" data-world-act disabled><kbd>E</kbd> Tương tác</button>
+            <button class="btn landscape-only" type="button" data-panel-toggle aria-controls="farm-panel" aria-expanded="false"><svg aria-hidden="true"><use href="#i-bag"/></svg>Công cụ</button>
           </div>
         </div>
         <section id="scene-chat" class="scene-chat" aria-label="Chat ở gần" hidden>
@@ -84,7 +89,11 @@
           <form><input name="message" type="text" maxlength="180" aria-label="Nhập tin nhắn" placeholder="Nhập tin nhắn…" autocomplete="off" required><button type="submit" class="btn primary">Gửi</button></form>
         </section>
       </section>
-      <aside class="control-panel" aria-label="Quản lý nông trại">
+      <aside class="control-panel" id="farm-panel" aria-label="Quản lý nông trại">
+        <div class="panel-mobile-header landscape-only">
+          <strong data-panel-title>Vườn nhà</strong>
+          <button class="btn subtle" type="button" data-panel-close aria-label="Đóng công cụ">×</button>
+        </div>
         <nav id="panel-nav" aria-label="Công cụ nông trại"></nav>
         <div class="panel-body">
           <section id="board" aria-label="Tác vụ trong khu vực"><p>Đang chuẩn bị vườn…</p></section>

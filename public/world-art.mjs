@@ -92,12 +92,12 @@ function speechLayout(c,text){
   }
   return {lines,width:Math.max(29,Math.ceil(Math.max(...lines.map(value=>c.measureText(value).width)))+12)};
 }
-export function drawSpeech(c,bubble,x,y,left,top){
+export function drawSpeech(c,bubble,x,y,left,top,viewWidth=size.width){
   c.font='700 8px system-ui';
   c.textAlign='left';c.textBaseline='top';
   bubble.layout??=speechLayout(c,bubble.text);
   const {lines,width}=bubble.layout, height=lines.length*10+9;
-  const px=snapPixel(Math.min(left+size.width-width-4,Math.max(left+4,x-width/2)));
+  const px=snapPixel(Math.min(left+viewWidth-width-4,Math.max(left+4,x-width/2)));
   const py=snapPixel(Math.max(top+4,y-height-5));
   const tail=Math.max(px+7,Math.min(px+width-7,x));
   c.fillStyle='#fff5da';c.strokeStyle='#426349';c.lineWidth=1;
@@ -911,7 +911,7 @@ export function gate(c,a,t){
   line(c,'#4e6544',1.3,[[-2.8,-.3+d],[0,-3+d],[2.8,-.3+d]]);
   c.restore();
 }
-export function atmosphere(c,t,w,reduce,daylight=0){
+export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
   if(w==='rain'||w==='storm'){
     const storm=w==='storm';
     const veil=c.createLinearGradient(0,0,0,height);

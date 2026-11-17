@@ -21,7 +21,7 @@ const effectStyle={
   buy:['#dcaf57','#f7e797'],list:['#dcaf57','#f7e797'],order:['#dcaf57','#f7e797'],craft:['#c69357','#f9dea2'],
 };
 
-export function createWorld(root, onInteract) {
+export function createWorld(root, onInteract, landscape) {
   const canvas=root.querySelector('canvas'), context=canvas.getContext('2d');
   const scale=pixelViewport.width/size.width;
   canvas.width=pixelViewport.width;
@@ -33,11 +33,12 @@ export function createWorld(root, onInteract) {
   const ctx=terrain.getContext('2d');
   void artReady.then(()=>{if(sceneId)paintTerrain();});
   const keys=new Set();
+  const touchKeys=new Map();
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   const interacted=root.querySelector('[data-world-act]');
   const hint=root.querySelector('[data-world-hint]');
   const radar=root.querySelector('[data-radar]'), mini=radar.getContext('2d');
-  let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, activePage, marks=[];
+  let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, view=size, activePage, marks=[];
   let observedAt=performance.now(), terrainKey='', peers=new Map(), speech=new Map(), scenery=[];
   let pointer=null, routeMarker=null;
 
@@ -48,17 +49,40 @@ export function createWorld(root, onInteract) {
     ctx.imageSmoothingEnabled=false;
     grass(ctx,maps[sceneId],sceneId,scene);
   }
+  function sizeCanvas(){
+    let width=pixelViewport.width, height=pixelViewport.height;
+    if(landscape.matches){
+      const rect=canvas.getBoundingClientRect();
+      if(!rect.width||!rect.height)return;
+      const aspect=rect.width/rect.height;
+      width=Math.max(1,Math.round(Math.min(bounds.width,size.height*aspect)*scale));
+      height=Math.max(1,Math.min(pixelViewport.height,Math.round(width/aspect)));
+    }
+    if(canvas.width===width&&canvas.height===height)return;
+    canvas.width=width;
+    canvas.height=height;
+    context.setTransform(scale,0,0,scale,0,0);
+    context.imageSmoothingEnabled=false;
+    view={width:width/scale,height:height/scale};
+    pointer=null;
+    shiftCamera();
+  }
+  new ResizeObserver(sizeCanvas).observe(canvas);
+  landscape.addEventListener('change',sizeCanvas);
+
   function shiftCamera(){
-    camera.x=Math.min(bounds.width-size.width,Math.max(0,x-size.width*.5));
     const anchor=(sceneId==='field'||sceneId==='visit') ? .87 : .71;
-    camera.y=Math.min(bounds.height-size.height,Math.max(0,y-size.height*anchor));
+    const left=Math.max(0,Math.min(bounds.width-view.width,x-view.width*.5));
+    const top=Math.max(0,Math.min(bounds.height-view.height,y-view.height*anchor));
+    camera.x=Math.round(left*scale)/scale;
+    camera.y=Math.round(top*scale)/scale;
   }
   function drawRadar(){
-    if(bounds.width===size.width)return;
+    if(root.dataset.wide==='false')return;
     const sx=radar.width/bounds.width,sy=radar.height/bounds.height;
     mini.drawImage(terrain,0,0,radar.width,radar.height);
     mini.strokeStyle='#f8e8aa';mini.lineWidth=1;
-    mini.strokeRect(camera.x*sx,camera.y*sy,size.width*sx,size.height*sy);
+    mini.strokeRect(camera.x*sx,camera.y*sy,view.width*sx,view.height*sy);
     for(const actor of scene.actors){
       if(actor.type!=='dock')continue;
       mini.fillStyle='#b3eef1';mini.fillRect(actor.x*sx-1,actor.y*sy-1,3,3);
@@ -81,7 +105,10 @@ export function createWorld(root, onInteract) {
     active=closest();
     const text=active?active.label:'Chọn một điểm trên bản đồ';
     if(hint.textContent!==text) hint.textContent=text;
-    interacted.disabled=!active;
+    if(interacted.disabled===Boolean(active)){
+      interacted.disabled=!active;
+      root.toggleAttribute('data-interactable',Boolean(active));
+    }
   }
   function sync(id,data,{neighbor,selection,page=0,arrival,tasks=[]}={}){
     const visitChanged=neighbor?.id!==currentVisit;
@@ -94,6 +121,7 @@ export function createWorld(root, onInteract) {
       bounds=maps[id].bounds??size;
       root.dataset.wide=String(bounds.width>size.width);
       setPosition(arrival??maps[id].spawn);
+      sizeCanvas();
       shiftCamera();
       peers.clear();
       speech.clear();
@@ -135,7 +163,7 @@ export function createWorld(root, onInteract) {
   }
   function pointerLocation(event){
     const bounds=canvas.getBoundingClientRect();
-    return {x:(event.clientX-bounds.left)*size.width/bounds.width,y:(event.clientY-bounds.top)*size.height/bounds.height};
+    return {x:(event.clientX-bounds.left)*view.width/bounds.width,y:(event.clientY-bounds.top)*view.height/bounds.height};
   }
   function targetAt(px,py){
     return scene.hotspots.reduce((best,p)=>{
@@ -232,8 +260,9 @@ export function createWorld(root, onInteract) {
     if(!scene||document.hidden){requestAnimationFrame(frame);return;}
     walking=false;
     if(!document.querySelector('dialog[open]')){
-      if(keys.size) {
-        const [dx,dy]=[...keys].reduce(([a,b],key)=>[a+deltas[key][0],b+deltas[key][1]],[0,0]);
+      if(keys.size||touchKeys.size) {
+        const held=new Set([...keys,...touchKeys.values()]);
+        const [dx,dy]=[...held].reduce(([a,b],key)=>[a+deltas[key][0],b+deltas[key][1]],[0,0]);
         move(dx*100,dy*100,dt);
       } else if(waypoints.length) {
         while(waypoints.length&&Math.hypot(waypoints[0][0]-x,waypoints[0][1]-y)<1.1){
@@ -257,9 +286,9 @@ export function createWorld(root, onInteract) {
     refreshHint();
     const t=now/1000, ambient=reduce.matches?0:t;
     shiftCamera();
-    const cameraX=Math.round(camera.x*scale)/scale;
-    const cameraY=Math.round(camera.y*scale)/scale;
-    context.drawImage(terrain,Math.round(cameraX*scale),Math.round(cameraY*scale),pixelViewport.width,pixelViewport.height,0,0,size.width,size.height);
+    const {x:cameraX,y:cameraY}=camera;
+    const frameX=Math.round(cameraX*scale),frameY=Math.round(cameraY*scale);
+    context.drawImage(terrain,frameX,frameY,canvas.width,canvas.height,0,0,view.width,view.height);
     context.save();context.translate(-cameraX,-cameraY);
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
@@ -307,7 +336,7 @@ export function createWorld(root, onInteract) {
     const fishingHere=cast&&cast.expires>=gameNow&&(sceneId==='lake'&&cast.source==='public'||sceneId==='visit'&&cast.source==='pond'&&cast.target===currentVisit);
     const dock=fishingDock??(fishingHere&&nearestFishingDock(cast.index));
     for(const a of sprites) {
-      if(a.x<camera.x-75||a.y<camera.y-28||a.x>camera.x+size.width+75||a.y>camera.y+size.height+95)continue;
+      if(a.x<cameraX-75||a.y<cameraY-28||a.x>cameraX+view.width+75||a.y>cameraY+view.height+95)continue;
       if(a.type==='player'){
         const elapsed=(now-poseStarted)/1000;
         const action=!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
@@ -348,20 +377,20 @@ export function createWorld(root, onInteract) {
     for(const item of scene.hotspots)if(item.type==='exit')gate(context,item,ambient);
     for(const {point,style} of marks){
       const pos=point.type==='plot'?cropTaskPosition({...point,y:point.drawY}):{x:point.x,y:point.y-(point.type==='animal'?32:22)};
-      if(pos.x>=camera.x&&pos.x<=camera.x+size.width&&pos.y>=camera.y&&pos.y<=camera.y+size.height){
+      if(pos.x>=cameraX&&pos.x<=cameraX+view.width&&pos.y>=cameraY&&pos.y<=cameraY+view.height){
         drawTask(context,pos.x,pos.y+(point.type==='plot'?0:Math.sin(ambient*2+pos.x)*.65),style);
       }
     }
     drawEffects(now);
     context.restore();
-    if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
+    if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight,view);
     if(speech.size){
       context.save();context.translate(-cameraX,-cameraY);
       for(const person of [...peers.values(),player]){
         const bubble=speech.get(person.player);
         if(!bubble||bubble.deadline<=now||distance(person,x,y)>speechRange)continue;
-        if(person.x<cameraX||person.x>cameraX+size.width||person.y<cameraY||person.y>cameraY+size.height)continue;
-        drawSpeech(context,bubble,person.x,person.y-(person.type==='peer'?56:49),cameraX,cameraY);
+        if(person.x<cameraX||person.x>cameraX+view.width||person.y<cameraY||person.y>cameraY+view.height)continue;
+        drawSpeech(context,bubble,person.x,person.y-(person.type==='peer'?56:49),cameraX,cameraY,view.width);
       }
       context.restore();
     }
@@ -382,8 +411,13 @@ export function createWorld(root, onInteract) {
   };
   window.addEventListener('keydown',down);
   window.addEventListener('keyup',e=>keys.delete(directions[e.key.length===1?e.key.toLowerCase():e.key]));
-  window.addEventListener('blur',()=>keys.clear());
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
+  function releaseControls(){
+    keys.clear();
+    touchKeys.clear();
+    root.querySelectorAll('[data-held]').forEach(button=>delete button.dataset.held);
+  }
+  window.addEventListener('blur',releaseControls);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseControls();});
   canvas.addEventListener('pointermove',event=>{
     if(event.pointerType!=='touch')pointer=pointerLocation(event);
   });
@@ -402,11 +436,11 @@ export function createWorld(root, onInteract) {
     const direction=button.dataset.direction;
     button.addEventListener('pointerdown',event=>{
       if(event.button!==0)return;
-      button.setPointerCapture(event.pointerId);button.dataset.held='true';stop();routeMarker=null;keys.add(direction);
+      button.setPointerCapture(event.pointerId);button.dataset.held='true';stop();routeMarker=null;touchKeys.set(event.pointerId,direction);
     });
-    for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>{
-      delete button.dataset.held;
-      keys.delete(direction);
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,event=>{
+      touchKeys.delete(event.pointerId);
+      if(!Array.from(touchKeys.values()).includes(direction))delete button.dataset.held;
     });
   });
   interacted.addEventListener('click',()=>use());
