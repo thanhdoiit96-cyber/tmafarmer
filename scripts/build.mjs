@@ -12,12 +12,17 @@ await cp('public/home-rules.mjs','dist/server/home-rules.mjs');
 await cp('public/village.mjs','dist/server/village.mjs');
 await writeFile('dist/server/engine.mjs',"export * from './game.mjs';\n");
 await cp('public','dist/client',{recursive:true});
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png'};
 const assets={};
-for(const name of await readdir('public')) {
-  const type=mime[extname(name)];
-  if(type) assets['/'+name]=[type,(await readFile('public/'+name)).toString('base64')];
+async function collect(directory,prefix=''){
+  for(const entry of await readdir(directory,{withFileTypes:true})){
+    const relative=prefix+entry.name,path=directory+'/'+entry.name;
+    if(entry.isDirectory()){await collect(path,relative+'/');continue;}
+    const type=mime[extname(entry.name)];
+    if(type)assets['/'+relative]=[type,(await readFile(path)).toString('base64')];
+  }
 }
+await collect('public');
 await writeFile('dist/server/assets.mjs','export default '+JSON.stringify(assets)+';\n');
 await writeFile('dist/server/index.js',`import game from './worker.mjs';
 import assets from './assets.mjs';
@@ -29,7 +34,7 @@ export default { fetch(request, env) {
   if(!entry || !Array.isArray(entry)) return new Response('Not found',{status:404});
   const [type,encoded]=entry;
   const data=request.method==='HEAD'?null:Uint8Array.from(atob(encoded),ch=>ch.charCodeAt(0));
-  return new Response(data,{headers:{'content-type':type,'cache-control':pathname.endsWith('.webp')?'public, max-age=86400':'no-cache'}});
+  return new Response(data,{headers:{'content-type':type,'cache-control':/\.(webp|png)$/.test(pathname)?'public, max-age=86400':'no-cache'}});
 }};
 `);
 if(process.env.SITES_MANAGED_LINUX_CONTAINER==='1') {
