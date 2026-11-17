@@ -96,9 +96,13 @@ export function createSceneChat({api,world,showToast,context}){
     toggle.setAttribute('aria-expanded',String(!drawer.hidden));
     if(!drawer.hidden){unread.clear();updateCount(present);input.focus();}
   });
-  drawer.querySelector('[data-chat-close]').addEventListener('click',()=>{
-    drawer.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();
-  });
+  function close(restoreFocus=true){
+    if(drawer.hidden)return;
+    drawer.hidden=true;
+    toggle.setAttribute('aria-expanded','false');
+    if(restoreFocus)toggle.focus();
+  }
+  drawer.querySelector('[data-chat-close]').addEventListener('click',()=>close());
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(!stamp||!input.value.trim())return;
@@ -118,5 +122,5 @@ export function createSceneChat({api,world,showToast,context}){
   });
   setInterval(()=>{if(!busy)void refresh();},1200);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});
-  return {sessionChanged};
+  return {sessionChanged,close};
 }
