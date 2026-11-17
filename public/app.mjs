@@ -14,7 +14,7 @@ const store={
   read(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
   write(key,value) { try { localStorage.setItem(key,JSON.stringify(value)); } catch {} },
 };
-const sessionKey='mua-vui-session:1', previousKey='mua-vui-previous:1', demoKey='mua-vui-demo:2';
+const sessionKey='mua-vui-session:1', previousKey='mua-vui-previous:1', demoKey='mua-vui-demo:2', accountKey='mua-vui-account:1';
 const tabs={
   field:['🌱','Vườn nhà','Gieo hạt, chăm vườn và thu hoạch theo thời tiết.'],
   home:['🏠','Nhà vườn','Vào nhà để nghỉ sức và xem Sổ việc hôm nay.'],
@@ -24,6 +24,7 @@ const tabs={
   neighbors:['🏘️','Hàng xóm','Ghé vườn, kho và ao cá của hàng xóm.'],
 };
 let session=store.read(sessionKey);
+let accountSession=store.read(accountKey);
 let demo;
 let state, tab='field', selected=0, neighborId, busy=false, toastTimer, inviteCode='';
 let revision=-1, receivedAt=Date.now(), villagePage=0, panel='area', marketPane='orders', pondTab=0, selectedLot=0, plotGroup=-1, visitPond=0, baseDecorOpen=false, showTomorrow=false;
@@ -114,6 +115,24 @@ async function api(path, payload, credentials=session) {
   const result=await response.json().catch(()=>null);
   if(!result||!response.ok) {
     const error=new Error(result?.error||'Máy chủ làng chưa sẵn sàng.');
+    error.status=response.status;
+    throw error;
+  }
+  return result;
+}
+async function apiAccount(path,payload) {
+  const headers={};
+  if(accountSession?.token) headers.authorization='Bearer '+accountSession.token;
+  let response;
+  try {
+    if(payload) headers['content-type']='application/json';
+    response=await fetch('/api/account/'+path,{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store',signal:AbortSignal.timeout(8500)});
+  } catch {
+    throw new Error('Không thể kết nối tài khoản. Kiểm tra mạng rồi thử lại.');
+  }
+  const result=await response.json().catch(()=>null);
+  if(!result||!response.ok) {
+    const error=new Error(result?.error||'Tài khoản chưa sẵn sàng.');
     error.status=response.status;
     throw error;
   }
@@ -604,15 +623,24 @@ function modal(title,html) {
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
   if(!dialog.open) dialog.showModal();
 }
+function showAccountModal(mode='login') {
+  const room= session?.code || inviteCode || '';
+  const formMode=mode==='register'?'register':'login';
+  const title=formMode==='register'?'Tạo tài khoản':'Đăng nhập';
+  modal(title,'<div class="actions">'+btn('Đăng nhập','data-account-mode="login"',''+(formMode==='login'?'primary':'subtle'))+btn('Tạo tài khoản','data-account-mode="register"',''+(formMode==='register'?'primary':'subtle'))+'</div><form data-form="account" data-account-mode="'+formMode+'"><label>Tên tài khoản<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" placeholder="Ví dụ: demo_user"></label><label>Mật khẩu<input type="password" name="password" required minlength="6" maxlength="128" placeholder="Ít nhất 6 ký tự"></label>'+(room?'<p class="small">Room hiện tại sẽ được gắn vào tài khoản: '+room+'</p>':'')+'<button class="btn primary">'+(formMode==='register'?'Tạo tài khoản':'Đăng nhập')+'</button></form><p id="dialog-error" role="status"></p>');
+}
 function showRoom() {
   if(session) {
-    modal('Làng của bạn','<p>Chia sẻ mã '+session.code+' hoặc gửi đường dẫn cho hàng xóm. Làng có tối đa 12 vườn.</p><div class="actions">'+
-      btn('Sao chép liên kết','data-copy','primary')+btn('Về vườn chơi thử','data-back-demo','subtle')+'</div>');
+    const accountSummary = accountSession ? '<p>Tài khoản: <strong>'+escape(accountSession.username)+'</strong></p>' : '';
+    modal('Làng của bạn','<p>Chia sẻ mã '+session.code+' hoặc gửi đường dẫn cho hàng xóm. Làng có tối đa 12 vườn.</p>'+accountSummary+'<div class="actions">'+
+      btn('Sao chép liên kết','data-copy','primary')+
+      (accountSession?btn('Đăng xuất','data-account-logout','subtle'):'')+
+      btn('Về vườn chơi thử','data-back-demo','subtle')+'</div>');
     return;
   }
   const previous=store.read(previousKey);
   const rejoin=previous&&!inviteCode?'<div class="actions">'+btn('Tiếp tục làng '+previous.code,'data-resume','gold')+'</div>':'';
-  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p><form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label><button class="btn primary">Bắt đầu chơi online</button></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
+  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p><div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+btn('Chơi nhanh','data-close','subtle')+'</div><form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label><button class="btn primary">Bắt đầu chơi online</button></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
 }
 function showShop(key,sell) {
   const farm=state.me, info=goods[key], price=sell?info.sell:info.buy;
@@ -757,6 +785,12 @@ document.addEventListener('click',async e=>{
   else if('villageFund' in d) showVillageFund();
   else if('weather' in d) showWeather();
   else if('room' in d) showRoom();
+  else if('account' in d) showAccountModal('login');
+  else if('accountMode' in d) showAccountModal(d.accountMode==='register'?'register':'login');
+  else if('accountLogout' in d) {
+    accountSession=null; store.write(accountKey,null); showToast('Đã đăng xuất tài khoản.');
+    dialog.close();
+  }
   else if('info' in d) help();
   else if('plot' in d) {
     selected=Number(d.plot); render();
@@ -857,6 +891,28 @@ dialog.addEventListener('submit',async e=>{
       dialog.close();
       render();
       showToast('Bạn đã vào làng '+session.code+'.');
+    } catch(error) {
+      const inline=$('#dialog-error');
+      if(inline) inline.textContent=error.message;
+    } finally { busy=false; }
+  } else if(mode==='account') {
+    busy=true;
+    try {
+      const method=form.dataset.accountMode==='register'?'register':'login';
+      const result=await apiAccount(method,{username:values.username,password:values.password,roomCode:session?.code||inviteCode||'',farmId:state?.me?.id||''});
+      accountSession={token:result.token,username:result.account.username,accountId:result.account.id};
+      store.write(accountKey,accountSession);
+      const resumeRoom=(result.rooms&&result.rooms.length?result.rooms[0].roomCode:session?.code||inviteCode||'');
+      if(resumeRoom) {
+        session={code:resumeRoom,token:result.token};
+        store.write(sessionKey,session);
+        revision=-1;
+        if(state) setState(state);
+      }
+      dialog.close();
+      render();
+      showToast(method==='register'?'Đã tạo tài khoản thành công.':'Đăng nhập tài khoản thành công.');
+      if(resumeRoom) await refresh(true);
     } catch(error) {
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;

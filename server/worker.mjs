@@ -9,9 +9,81 @@ const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const random=length=>hex(crypto.getRandomValues(new Uint8Array(length)));
 const authToken=request=>request.headers.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
 const authId=async token=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token)))).slice(0,32);
+const hashPassword=async password=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(password+'@vuon-mua-vui'))));
 const save=(db,code,revision,state)=>db.prepare('UPDATE farm_rooms SET state = ?, revision = revision + 1 WHERE code = ? AND revision = ?')
   .bind(JSON.stringify(state),code,revision).run();
 const codePattern=/^[A-F0-9]{8}$/;
+const accountSessionLifetime=30*24*60*60;
+const runSql=async(db,statement,params=[] )=>{
+  const prepared=db.prepare(statement);
+  if(typeof prepared.run==='function') return await prepared.run(...params);
+  return await prepared.bind(...params).run();
+};
+const ensureAccountTables=async db=>{
+  const sql=[
+    `CREATE TABLE IF NOT EXISTS farm_accounts (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS farm_account_sessions (
+      id TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      device_id TEXT,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      FOREIGN KEY(account_id) REFERENCES farm_accounts(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS farm_account_links (
+      id TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      room_code TEXT NOT NULL,
+      farm_id TEXT NOT NULL,
+      is_primary INTEGER NOT NULL DEFAULT 0,
+      last_used_at INTEGER NOT NULL,
+      UNIQUE(account_id, room_code, farm_id),
+      FOREIGN KEY(account_id) REFERENCES farm_accounts(id)
+    )`,
+  ];
+  for(const statement of sql) await runSql(db,statement);
+};
+const lookupAccountSession=async(db,token)=>{
+  if(!token) return null;
+  const now=unixNow();
+  return await db.prepare(`SELECT s.token, s.account_id, a.username
+    FROM farm_account_sessions s
+    JOIN farm_accounts a ON a.id = s.account_id
+    WHERE s.token = ? AND s.expires_at > ?`).bind(token,now).first();
+};
+const lookupOwnedRoom=async(db,accountId,roomCode)=>{
+  if(!accountId||!roomCode) return null;
+  return await db.prepare(`SELECT room_code, farm_id, is_primary, last_used_at
+    FROM farm_account_links
+    WHERE account_id = ? AND room_code = ?
+    ORDER BY last_used_at DESC, is_primary DESC
+    LIMIT 1`).bind(accountId,roomCode).first();
+};
+const ensurePrimaryRoom=async(db,accountId,roomCode,farmId)=>{
+  const now=unixNow();
+  const existing=await db.prepare(`SELECT id FROM farm_account_links WHERE account_id = ? AND room_code = ? AND farm_id = ?`).bind(accountId,roomCode,farmId).first();
+  if(existing) {
+    await db.prepare(`UPDATE farm_account_links SET last_used_at = ?, is_primary = 1 WHERE id = ?`).bind(now,existing.id).run();
+    await db.prepare(`UPDATE farm_account_links SET is_primary = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE account_id = ?`).bind(existing.id,accountId).run();
+    return;
+  }
+  const linkId=random(16);
+  await db.prepare(`INSERT INTO farm_account_links(id,account_id,room_code,farm_id,is_primary,last_used_at)
+    VALUES (?,?,?,?,1,?)`).bind(linkId,accountId,roomCode,farmId,now).run();
+  await db.prepare(`UPDATE farm_account_links SET is_primary = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE account_id = ?`).bind(linkId,accountId).run();
+};
+const accountRooms=async(db,accountId)=>db.prepare(`SELECT room_code, farm_id, is_primary, last_used_at
+  FROM farm_account_links WHERE account_id = ? ORDER BY last_used_at DESC, is_primary DESC`).bind(accountId).all();
+const serializeAccountRooms=rows=>{
+  const list=Array.isArray(rows)?rows:(rows?.results ?? []);
+  return list.map(room=>({roomCode:room.room_code ?? room.roomCode, farmId:room.farm_id ?? room.farmId, isPrimary:Boolean(room.is_primary ?? room.isPrimary), lastUsedAt:room.last_used_at ?? room.lastUsedAt}));
+};
 function validPayload(value) {
   return value&&typeof value==='object'&&!Array.isArray(value);
 }
@@ -35,6 +107,58 @@ async function body(request) {
     if(validPayload(parsed)) return parsed;
   } catch {}
   throw new GameError('Dữ liệu không hợp lệ.');
+}
+async function registerAccount(db,request) {
+  const data=await body(request);
+  const username=typeof data.username==='string'?data.username.trim():'';
+  const password=typeof data.password==='string'?data.password:'';
+  const roomCode=typeof data.roomCode==='string'?data.roomCode.trim().toUpperCase():'';
+  const farmId=typeof data.farmId==='string'&&data.farmId?data.farmId:'';
+  if(username.length<3||username.length>20||!/^[A-Za-z0-9_-]+$/.test(username)) return reply({error:'Tên tài khoản từ 3 đến 20 ký tự, chỉ chữ, số, gạch dưới hoặc gạch ngang.'},400);
+  if(password.length<6||password.length>128) return reply({error:'Mật khẩu phải từ 6 đến 128 ký tự.'},400);
+  const existing=await db.prepare('SELECT id FROM farm_accounts WHERE username = ?').bind(username).first();
+  if(existing) return reply({error:'Tên tài khoản đã tồn tại.'},409);
+  const accountId=random(16), now=unixNow();
+  const passwordHash=await hashPassword(password);
+  await db.prepare('INSERT INTO farm_accounts(id,username,password_hash,created_at) VALUES (?,?,?,?)').bind(accountId,username,passwordHash,now).run();
+  const token=random(32);
+  const sessionId=random(16);
+  await db.prepare('INSERT INTO farm_account_sessions(id,account_id,token,device_id,created_at,expires_at) VALUES (?,?,?,?,?,?)')
+    .bind(sessionId,accountId,token,null,now,now+accountSessionLifetime).run();
+  if(roomCode) {
+    const row=await readRoom(db,roomCode);
+    if(row) {
+      const roomState=JSON.parse(row.state);
+      const resolvedFarmId=farmId||Object.keys(roomState.farms)[0]||'';
+      if(resolvedFarmId && roomState.farms[resolvedFarmId]) await ensurePrimaryRoom(db,accountId,roomCode,resolvedFarmId);
+    }
+  }
+  const rooms=await accountRooms(db,accountId);
+  return reply({account:{id:accountId,username},token,rooms:serializeAccountRooms(rooms)},200);
+}
+async function loginAccount(db,request) {
+  const data=await body(request);
+  const username=typeof data.username==='string'?data.username.trim():'';
+  const password=typeof data.password==='string'?data.password:'';
+  if(!username||!password) return reply({error:'Tên tài khoản và mật khẩu không được để trống.'},400);
+  const account=await db.prepare('SELECT id, username, password_hash FROM farm_accounts WHERE username = ?').bind(username).first();
+  if(!account) return reply({error:'Tên tài khoản hoặc mật khẩu không đúng.'},401);
+  const passwordHash=await hashPassword(password);
+  if(account.password_hash!==passwordHash) return reply({error:'Tên tài khoản hoặc mật khẩu không đúng.'},401);
+  const now=unixNow();
+  const token=random(32);
+  const sessionId=random(16);
+  await db.prepare('INSERT INTO farm_account_sessions(id,account_id,token,device_id,created_at,expires_at) VALUES (?,?,?,?,?,?)')
+    .bind(sessionId,account.id,token,null,now,now+accountSessionLifetime).run();
+  const rooms=await accountRooms(db,account.id);
+  return reply({account:{id:account.id,username:account.username},token,rooms:serializeAccountRooms(rooms)},200);
+}
+async function accountProfile(db,request) {
+  const token=authToken(request);
+  const session=token?await lookupAccountSession(db,token):null;
+  if(!session) return reply({error:'Phiên đăng nhập tài khoản không hợp lệ.'},401);
+  const rooms=await accountRooms(db,session.account_id);
+  return reply({account:{id:session.account_id,username:session.username},rooms:serializeAccountRooms(rooms)},200);
 }
 async function join(db,request) {
   const data=await body(request);
@@ -73,14 +197,23 @@ export default {
     if(!pathname.startsWith('/api/')) return env.ASSETS?.fetch(request)??new Response('Not found',{status:404});
     if(pathname==='/api/health') return reply({ok:!!db},db?200:503);
     if(!db) return reply({error:'Máy chủ chưa kết nối cơ sở dữ liệu.'},503);
+    await ensureAccountTables(db);
     try {
+      if(pathname==='/api/account/register'&&method==='POST') return await registerAccount(db,request);
+      if(pathname==='/api/account/login'&&method==='POST') return await loginAccount(db,request);
+      if(pathname==='/api/account/me'&&method==='GET') return await accountProfile(db,request);
       if(pathname==='/api/join'&&method==='POST') return await join(db,request);
       const socialAction=pathname==='/api/scene'?'scene':pathname==='/api/chat'?'chat':null;
       if(!socialAction&&!['/api/state','/api/action'].includes(pathname)) return reply({error:'Đường dẫn không tồn tại.'},404);
       if(pathname==='/api/state'&&method!=='GET'||(socialAction||pathname==='/api/action')&&method!=='POST') return reply({error:'Phương thức không hợp lệ.'},405);
       const token=authToken(request), code=request.headers.get('x-room-code');
       if(!token||!codePattern.test(code)) return reply({error:'Phiên chơi không hợp lệ.'},401);
-      const id=await authId(token);
+      const accountSession=token?await lookupAccountSession(db,token):null;
+      let id=await authId(token);
+      if(accountSession) {
+        const room=await lookupOwnedRoom(db,accountSession.account_id,code.toUpperCase());
+        if(room) id=room.farm_id;
+      }
       const input=method==='POST'?await body(request):null;
       if(socialAction){
         const row=await readRoom(db,code);

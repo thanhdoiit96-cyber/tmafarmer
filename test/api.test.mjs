@@ -112,3 +112,30 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal(receipts[0].state.me.coins,receipts[1].state.me.coins);
   db.close();
 });
+
+test('registered account can attach to a room and persist its session', async()=>{
+  const db=new DatabaseSync(':memory:');
+  for(const migration of ['0000_rooms','0001_scene_social'])db.exec(readFileSync(new URL('../drizzle/'+migration+'.sql',import.meta.url),'utf8'));
+  const DB={prepare(sql){
+    const query=db.prepare(sql);
+    return {bind(...params){return {first:async()=>query.get(...params),all:async()=>({results:query.all(...params)}),run:async()=>({meta:query.run(...params)})};}};
+  }};
+  const api=async(path,data,session)=>{
+    const headers={};
+    if(session?.token) headers.authorization='Bearer '+session.token;
+    if(session?.code) headers['x-room-code']=session.code;
+    const response=await worker.fetch(new Request('https://farm.example/api/'+path,{method:data?'POST':'GET',headers,body:data?JSON.stringify(data):undefined}),{DB});
+    return {status:response.status,...await response.json()};
+  };
+  const guest=await api('join',{name:'Tài khoản test'});
+  assert.equal(guest.status,201);
+  const registered=await api('account/register',{username:'demo-user',password:'secret123',roomCode:guest.code,farmId:guest.state.me.id});
+  assert.equal(registered.status,200);
+  assert.equal(registered.account.username,'demo-user');
+  const login=await api('account/login',{username:'demo-user',password:'secret123'});
+  assert.equal(login.status,200);
+  const me=await api('account/me',null,{token:login.token});
+  assert.equal(me.status,200);
+  assert.ok(me.rooms.some(room=>room.roomCode===guest.code));
+  db.close();
+});
