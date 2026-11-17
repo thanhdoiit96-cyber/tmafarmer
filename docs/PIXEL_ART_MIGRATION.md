@@ -96,6 +96,7 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 
 - Cuốc đất dùng lại sáu khung hình công việc có sẵn. Gieo hạt dùng túi hạt và các hạt rơi xuống luống; câu cá vẽ cần, dây, phao và gợn nước theo từng trạng thái thả, chờ, kéo. Các hiệu ứng dùng lại Canvas Pixel và có trạng thái tĩnh khi bật giảm chuyển động.
 - Vật nuôi có tỷ lệ theo từng loài và độ trưởng thành trên bản đồ chuồng chính, ô đất mở rộng và vườn ghé thăm.
+- Dê sữa và cừu có minh họa riêng trong `public/pixel/livestock-v1.png`. Hai ô 56 × 48 dùng chung đường chân, mỗi loài có đường cắt chân riêng cho chuyển động trên bản đồ. Giao diện chuồng và mua vật nuôi dùng cùng atlas. Chạy `python3 scripts/normalize-livestock.py` để xuất lại từ ảnh nguồn trong `docs/assets/`.
 - Nhân vật nam mặc áo xanh, khăn vàng và nón lá. Hai atlas `public/pixel/farmer-male-walk.png` và `public/pixel/farmer-male-poses.png` dùng ô 48 × 64, bốn hướng và cùng điểm neo chân với nhân vật nữ. Atlas tư thế gồm đứng yên, chuẩn bị cuốc, nâng cuốc và bổ xuống. Chạy `python3 scripts/normalize-male-character.py` để xuất lại atlas từ ảnh nguồn trong `docs/assets/`.
 - Bong bóng chat dùng màu kem và xanh lá của giao diện, tự xuống dòng, đặt trên tên người chơi và chỉ xuất hiện khi ở gần nhân vật gửi.
 - Atlas `public/pixel/crop-stages.png` thêm bốn giai đoạn cho cà chua, hướng dương, dâu, nho, trà và nấm truffle. Hình ở luống và trong bảng giống dùng chung sprite 48 × 48. Chạy `python3 scripts/normalize-crop-stages.py` để xuất lại atlas và tọa độ từ hai ảnh nguồn trong `docs/assets/`.

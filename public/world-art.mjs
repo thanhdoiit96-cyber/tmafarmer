@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {cropStagesAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {cropStagesAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -22,6 +22,7 @@ const malePoses=load(maleCharacter.poses);
 const maleWalk=load(maleCharacter.walk);
 const pixelObjects=load(pixelSlice.source);
 const moreCropArt=load(cropStagesAtlas.source);
+const livestockArt=load(livestockAtlas.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -578,11 +579,13 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
-const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[30,25],sheep:[33,24]};
+const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[36,31],sheep:[38,33]};
 function critter(c,a,t){
-  if(!dim(atlas))return;
   const {data,index=0}=a;
-  const visual={duck:'chicken',goat:'cow',sheep:'cow'}[data.kind]??data.kind;
+  const visual=data.kind==='duck'?'chicken':data.kind;
+  const livestockFrame=livestockAtlas.frames[visual];
+  const art=livestockFrame?livestockArt:atlas;
+  if(!dim(art))return;
   const large=visual!=='chicken';
   const motion=animalMotion(t,index,large?11:15,large?'graze':'peck');
   const walking=motion.state==='walk';
@@ -593,31 +596,29 @@ function critter(c,a,t){
   const size=animalScale(data),[width,height]=animalSizes[data.kind];
   const w=width*size,h=height*size;
   const x=snapPixel(a.x+motion.offset),y=snapPixel(a.y);
-  const [sx,sy,sw,sh]=frames[visual];
-  const cut=Math.round(sh*(large?.72:.79)), body=h*cut/sh;
+  const [sx,sy,sw,sh]=livestockFrame??frames[visual];
+  const cut=Math.round(sh*(livestockAtlas.legStart[visual]??(large?.72:.79))), body=h*cut/sh;
   const half=Math.floor(sw/2), split=w*half/sw;
   const bob=Math.abs(step)*(large?.48:.7)*size;
   shade(c,x,y,w*.48,walking?3.2:3.8);
   c.save();
   if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
-  if(data.kind==='goat')c.filter='grayscale(.42) sepia(.22) brightness(1.12)';
-  if(data.kind==='sheep')c.filter='grayscale(.78) brightness(1.38)';
   c.translate(x,y);
   if(spriteFlip(motion.facing,1))c.scale(-1,1);
   if(walking){
     // Keep one leg group on the ground while the other group lifts and swings.
     const backLift=Math.max(0,step)*1.3*size,frontLift=Math.max(0,-step)*1.3*size;
     const swing=step*1.4*size;
-    c.drawImage(atlas,sx,sy+cut,half,sh-cut,-w/2+swing,-h+body-bob,split,h-body+bob-backLift);
-    c.drawImage(atlas,sx+half,sy+cut,sw-half,sh-cut,-w/2+split-swing,-h+body-bob,w-split,h-body+bob-frontLift);
-    c.drawImage(atlas,sx,sy,sw,cut,-w/2,-h-bob,w,body+.2);
+    c.drawImage(art,sx,sy+cut,half,sh-cut,-w/2+swing,-h+body-bob,split,h-body+bob-backLift);
+    c.drawImage(art,sx+half,sy+cut,sw-half,sh-cut,-w/2+split-swing,-h+body-bob,w-split,h-body+bob-frontLift);
+    c.drawImage(art,sx,sy,sw,cut,-w/2,-h-bob,w,body+.2);
   } else if(bend){
-    c.drawImage(atlas,sx,sy+cut,sw,sh-cut,-w/2,-h+body,w,h-body);
+    c.drawImage(art,sx,sy+cut,sw,sh-cut,-w/2,-h+body,w,h-body);
     c.translate(0,-h+body);
     c.rotate(bend*(large?.12:.29));
-    c.drawImage(atlas,sx,sy,sw,cut,-w/2,-body,w,body+.4);
+    c.drawImage(art,sx,sy,sw,cut,-w/2,-body,w,body+.4);
   } else {
-    c.drawImage(atlas,sx,sy,sw,sh,-w/2,-h,w,h);
+    c.drawImage(art,sx,sy,sw,sh,-w/2,-h,w,h);
   }
   c.restore();
 }
