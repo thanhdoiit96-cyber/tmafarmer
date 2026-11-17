@@ -113,5 +113,3 @@ Trình duyệt gọi `/api/*` trên tên miền Vercel. Vercel chuyển tiếp s
 - [Cloudflare D1 Getting Started](https://developers.cloudflare.com/d1/get-started/)
 - [Cloudflare Worker D1 API](https://developers.cloudflare.com/d1/worker-api/)
 - [Vercel Rewrites](https://vercel.com/docs/routing/rewrites)
-#   t m a f a r m e r  
- 
