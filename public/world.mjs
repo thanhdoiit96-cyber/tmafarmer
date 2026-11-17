@@ -302,13 +302,13 @@ export function createWorld(root, onInteract) {
         const elapsed=(now-poseStarted)/1000;
         let action='';
         if(!walking)action=elapsed<.75&&pose ? pose : fishingHere ? 'cast' : '';
-        drawPerson(context,x,y,facing,ambient,{pixel,walking,walkDistance:reduce.matches?0:walkDistance,action,elapsed:reduce.matches?0:elapsed});
+        drawPerson(context,x,y,facing,ambient,{pixel,walking:walking&&!reduce.matches,walkDistance,action,elapsed:reduce.matches?0:elapsed});
       }
       else if(a.type==='peer'){
         drawPerson(context,a.x,a.y,a.facing,ambient,{pixel,walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
         context.font='500 6px sans-serif';context.textAlign='center';
         const name=a.name.slice(0,24), width=context.measureText(name).width+7;
-        const labelY=a.y-(pixel?52:38);
+        const labelY=a.y-52;
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,labelY,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);

@@ -5,7 +5,7 @@ import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
-import {animalMotion,playerStride,spriteFlip,walkFrame,walkPose} from './world-motion.mjs';
+import {animalMotion,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -17,6 +17,7 @@ const landscapeArt=load('/canh-quan.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homeArt=load('/nha-vuon.webp');
 const pixelCharacters=load(pixelCharacter.source);
+const farmerWalk=load(pixelCharacter.states.walk.source);
 const pixelObjects=load(pixelSlice.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
@@ -39,7 +40,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),pixelObjects.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -517,26 +518,13 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   const profile=direction==='left'||direction==='right';
   const kind=direction==='up'?'back':profile?'profile':'front';
   const scale=style==='player'?1:.83,h=31*scale,w=(profile?11:14)*scale;
-  const pose=moving?walkPose(walkDistance,playerStride):null;
-  const bob=pose?pose.rise*.75:Math.sin(t*2.15)*.32;
-  const lean=pose?pose.left.reach*.017:Math.sin(t*.85)*.006;
-  shade(c,x,y,11*scale*(moving ? .92 : 1),moving?3.35:4);
-  if(style==='player') {
-    c.strokeStyle='#f5df9dcc';c.lineWidth=.65;c.beginPath();c.ellipse(x,y-.1,7.5,2.5,0,0,Math.PI*2);c.stroke();
-  }
-  if(dim(atlas)) {
-    const [sx,sy,sw,sh]=frames[kind];
-    const cut=Math.ceil(sh*.75),top=h*.75;
-    c.save();c.translate(x,y-bob);if(direction==='left')c.scale(-1,1);
-    if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
-    if(style!=='player'&&style!=='vendor')c.filter='hue-rotate(26deg) saturate(.82)';
-    c.save();c.translate(0,-h+top);c.rotate(lean);c.drawImage(atlas,sx,sy,sw,cut,-w/2,-top,w,top+.16);c.restore();
-    const half=Math.floor(sw/2),right=sw-half;
-    const reach=profile?2.1:.4, left=pose?.left,rightFoot=pose?.right;
-    c.drawImage(atlas,sx,sy+cut,half,sh-cut,-w/2+(left?.reach??0)*reach,-h+top,w/2,h-top+bob-(left?.lift??0)*2);
-    c.drawImage(atlas,sx+half,sy+cut,right,sh-cut,(rightFoot?.reach??0)*reach,-h+top,w/2,h-top+bob-(rightFoot?.lift??0)*2);
-    c.restore();
-  }
+  const bob=moving?Math.abs(Math.sin(walkDistance/playerStride*Math.PI*2))*.65:Math.sin(t*2.15)*.32;
+  shade(c,x,y,11*scale,3.8);
+  c.save();
+  if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
+  if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
+  sprite(c,kind,x,y-bob,w,h,direction==='left');
+  c.restore();
 }
 function personTool(c,x,y,direction,t,action){
   if(action==='cast'||action==='reel'){
@@ -553,60 +541,30 @@ function personTool(c,x,y,direction,t,action){
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
-function pixelLeg(c,hipX,hipY,footX,footY,toe,far){
-  const trouser=far?'#433229':'#564031', light=far?'#654733':'#785737';
-  for(let y=hipY;y<footY-3;y++){
-    const progress=(y-hipY)/(footY-3-hipY);
-    const x=Math.round(hipX+(footX-hipX)*progress)-3;
-    c.fillStyle=trouser;c.fillRect(x,y,6,1);
-    c.fillStyle=light;c.fillRect(x+1,y,3,1);
-  }
-  c.fillStyle=trouser;c.fillRect(footX-3,footY-5,6,3);
-  c.fillStyle=far?'#80502e':'#a36436';
-  c.fillRect(footX-3,footY-4,6,3);
-  c.fillRect(footX-3+(toe<0?-2:0),footY-2,toe?8:6,2);
-  c.fillStyle='#492f25';c.fillRect(footX-3+(toe<0?-2:0),footY-1,toe?8:6,1);
-  c.fillStyle=far?'#a46c3c':'#dc9f59';c.fillRect(footX+(toe<0?-4:0),footY-3,3,1);
-}
-function pixelWalk(c,px,py,unit,row,direction,distance,stride){
-  const motion=walkPose(distance,stride),{cellWidth,cellHeight,states}=pixelCharacter;
-  const frame=states.walk.first+walkFrame(distance,stride,states.walk.frames);
-  const side=direction==='left'?-1:direction==='right'?1:0;
-  const depth=direction==='up'?-1:1;
-  const hipY=43-Math.round(motion.rise*1.8);
-  const parts=[motion.left,motion.right].map(({reach,lift},i)=>{
-    const hipX=side?23+i*2:20+i*8;
-    return {hipX,x:hipX+Math.round(side*reach*10),y:59+Math.round(side?i*2-1-lift*6:depth*reach*4-lift*6),far:i===0};
-  });
-  c.translate(snapPixel(px-24*unit),snapPixel(py-59*unit));c.scale(unit,unit);
-  parts.sort((a,b)=>a.y-b.y);
-  for(const {hipX,x,y,far} of parts)pixelLeg(c,hipX,hipY,x,y,side,far);
-  const rock=side?0:Math.round(motion.left.reach);
-  c.drawImage(pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,45,rock,hipY-43,cellWidth,45);
-}
 export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
-  if(!pixel||!dim(pixelCharacters)){
+  if(!dim(pixelCharacters)){
     legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
     personTool(c,x,y,direction,elapsed,action);
     return;
   }
   const work=action==='till';
-  const row=pixelCharacter.directions[direction]??0;
-  const px=snapPixel(x),py=snapPixel(y),standing=style==='player'||style==='peer';
+  const moving=walking&&!work&&dim(farmerWalk);
+  const {cellWidth,cellHeight,directions,states}=pixelCharacter;
+  const anim=states[work?'work':moving?'walk':'idle'];
+  const step=moving?walkFrame(walkDistance,stride,anim.frames):Math.floor((work?elapsed:t)*anim.fps);
+  const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
+  const row=directions[direction]??0;
+  const px=pixel?snapPixel(x):x,py=pixel?snapPixel(y):y;
+  const standing=style==='player'||style==='peer';
   const scale=standing?1:.875;
   shade(c,px,py,10.5*scale,walking?3.2:3.8);
   c.save();c.imageSmoothingEnabled=false;
   if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
   if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
   const unit=pixelStep*scale;
-  if(walking&&!work)pixelWalk(c,px,py,unit,row,direction,walkDistance,stride);
-  else{
-    const anim=pixelCharacter.states[work?'work':'idle'];
-    const step=Math.floor((work?elapsed:t)*anim.fps);
-    const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
-    const {cellWidth,cellHeight}=pixelCharacter;
-    c.drawImage(pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,snapPixel(px-24*unit),snapPixel(py-59*unit),cellWidth*unit,cellHeight*unit);
-  }
+  const left=px-cellWidth/2*unit,top=py-59*unit;
+  c.drawImage(moving?farmerWalk:pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
+    pixel?snapPixel(left):left,pixel?snapPixel(top):top,cellWidth*unit,cellHeight*unit);
   c.restore();
   if(!work)personTool(c,px,py,elapsed,action);
 }

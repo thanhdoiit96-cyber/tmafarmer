@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
-import {animalMotion,facingFromDelta,playerSpeed,playerStride,spriteFlip,walkFrame,walkPose} from '../public/world-motion.mjs';
+import {animalMotion,facingFromDelta,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
 
-test('the farmer holds each walk frame for one sixth of the traveled stride',()=>{
+test('the farmer steps through four walk poses per distance cycle and loops at the end',()=>{
   const {frames}=pixelCharacter.states.walk;
   const duration=playerStride/playerSpeed;
-  assert.equal(duration,1);
   const walk=Array.from({length:frames},(_,i)=>walkFrame((i+.5)/frames*playerSpeed*duration,playerStride,frames));
-  assert.deepEqual(walk,[0,1,2,3,4,5]);
+  assert.deepEqual(walk,[0,1,2,3]);
   assert.equal(walkFrame(playerStride,playerStride,frames),0);
   assert.equal(facingFromDelta(0,2),'down');
   assert.equal(facingFromDelta(-2,0),'left');
@@ -29,19 +29,12 @@ test('the chicken faces its direction of travel in both walking legs and while p
   }
 });
 
-test('the farmer keeps one grounded foot while the other swings',()=>{
-  for(let i=0;i<100;i++){
-    const phase=i/100;
-    const pose=walkPose(phase*playerStride,playerStride);
-    assert.ok(pose.left.lift===0||pose.right.lift===0);
-    for(const foot of [pose.left,pose.right]){
-      assert.ok(Math.abs(foot.reach)<=1&&foot.lift>=0&&foot.lift<=1);
-    }
-  }
-  const first=walkPose(playerStride*.33,playerStride);
-  const second=walkPose(playerStride*.83,playerStride);
-  assert.ok(first.right.lift>.9&&second.left.lift>.9);
-  assert.deepEqual(walkPose(playerStride,playerStride),walkPose(0,playerStride));
+test('the farmer walk atlas has a full sized sprite for every frame and direction',()=>{
+  const {cellWidth,cellHeight,directions,states}=pixelCharacter;
+  const png=readFileSync(new URL('../public'+states.walk.source,import.meta.url));
+  assert.equal(png.toString('ascii',12,16),'IHDR');
+  assert.equal(png.readUInt32BE(16),cellWidth*states.walk.frames);
+  assert.equal(png.readUInt32BE(20),cellHeight*Object.keys(directions).length);
 });
 
 test('animals pause inside their pen and honor reduced motion',()=>{

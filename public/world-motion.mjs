@@ -1,19 +1,8 @@
 export const playerSpeed=76;
-export const playerStride=76;
+export const playerStride=64;
 
 export function walkFrame(distance,stride,frames){
   return Math.floor((distance%stride)/stride*frames);
-}
-
-export function walkPose(distance,stride){
-  const phase=(distance%stride)/stride;
-  const stance=.62;
-  function foot(cycle){
-    if(cycle<stance)return {reach:1-2*cycle/stance,lift:0};
-    const swing=(cycle-stance)/(1-stance);
-    return {reach:-Math.cos(swing*Math.PI),lift:Math.sin(swing*Math.PI)};
-  }
-  return {left:foot(phase),right:foot((phase+.5)%1),rise:Math.abs(Math.sin(phase*Math.PI*2))};
 }
 
 export function facingFromDelta(dx,dy){

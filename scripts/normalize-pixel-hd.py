@@ -1,7 +1,7 @@
-"""Regenerate the 2× runtime atlases from the original V2 illustrations."""
+"""Regenerate the 2× runtime atlases from the original illustrations."""
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "docs" / "assets"
@@ -32,6 +32,33 @@ def place(atlas, image, x, y, width, height):
     atlas.paste(sprite, (x * DENSITY, y * DENSITY), mask)
 
 
+def normalize_walk():
+    poses = source("farmer-walk-v4-source.png")
+    frame_width, frame_height = 48, 64
+    atlas = Image.new("RGBA", (frame_width * 4, frame_height * 4))
+    # The source sheet has front, right profile, and back views.
+    for direction, (row, mirror) in enumerate(((0, False), (2, False), (1, True), (1, False))):
+        for index in range(4):
+            pose = cell(poses, index, row, 4, 3)
+            mask = pose.getchannel("A").point(lambda value: 255 if value >= 192 else 0)
+            silhouette = mask.getbbox()
+            if silhouette is None:
+                raise ValueError(f"Empty walk pose in row {row}, column {index}")
+            sprite = pose.crop(silhouette)
+            # The second front/back pose shows the opposite support leg in the source.
+            if mirror or (row != 1 and index == 1):
+                sprite = ImageOps.mirror(sprite)
+            # A single scale preserves boot proportions and avoids size changes between poses.
+            scale = 54 / 320
+            sprite = sprite.resize((round(sprite.width * scale), round(sprite.height * scale)), Image.Resampling.LANCZOS)
+            mask = sprite.getchannel("A").point(lambda value: 255 if value >= ALPHA_CUTOFF else 0)
+            sprite.putalpha(mask)
+            x = index * frame_width + 26 - sprite.width // 2
+            y = direction * frame_height + 59 - sprite.height
+            atlas.paste(sprite, (x, y), mask)
+    atlas.save(OUTPUT / "farmer-walk-v4.png", optimize=True)
+
+
 def main():
     characters = source("character-atlas-v2-source.png")
     character_atlas = Image.new("RGBA", (384 * DENSITY, 128 * DENSITY))
@@ -39,6 +66,7 @@ def main():
         for col in range(16):
             place(character_atlas, cell(characters, col, row, 16, 4), col * 24, row * 32, 24, 32)
     character_atlas.save(OUTPUT / "characters-v2-hd.png", optimize=True)
+    normalize_walk()
 
     objects = Image.new("RGBA", (384 * DENSITY, 128 * DENSITY))
     place(objects, source("farmhouse-v2-source.png"), 0, 0, 96, 80)
