@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {cropStagesAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -21,6 +21,7 @@ const farmerWalk=load(pixelCharacter.states.walk.source);
 const malePoses=load(maleCharacter.poses);
 const maleWalk=load(maleCharacter.walk);
 const pixelObjects=load(pixelSlice.source);
+const moreCropArt=load(cropStagesAtlas.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -726,9 +727,10 @@ function drawAtlasActor(c,a,t,state){
   }
   if(a.type==='plot'){
     const crop=cropPlacement(a);
-    if(crop){
+    const source=crop?.source===cropStagesAtlas.source?moreCropArt:pixelObjects;
+    if(crop&&dim(source)){
       plot(c,a,t,state,false);
-      c.drawImage(pixelObjects,crop.sx,crop.sy,crop.w,crop.h,crop.x,crop.y,crop.width,crop.height);
+      c.drawImage(source,crop.sx,crop.sy,crop.w,crop.h,crop.x,crop.y,crop.width,crop.height);
       return true;
     }
   }

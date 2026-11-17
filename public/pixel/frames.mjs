@@ -1,3 +1,5 @@
+import moreCrops from './crop-stages-frames.mjs';
+
 export const pixelViewport={width:640,height:384};
 export const pixelCharacter={
   source:'/pixel/characters-v2-hd.png',cellWidth:48,cellHeight:64,columns:16,
@@ -16,7 +18,7 @@ export const maleCharacter={
 export const pixelSlice={
   source:'/pixel/vertical-slice-v2-hd.png',house:{x:0,y:0,w:192,h:160},
   crops:{
-    cell:48,
+    cell:48,x:192,
     // Bounds of the main silhouette in each cell, including its soil base.
     wheat:{y:0,bounds:[[13,25,42,41],[10,20,39,41],[6,12,38,41],[1,8,40,41]]},
     carrot:{y:48,bounds:[[13,18,42,34],[9,12,39,34],[5,9,39,34],[2,3,41,34]]},
@@ -30,3 +32,4 @@ export const pixelSlice={
     },
   },
 };
+export const cropStagesAtlas={source:'/pixel/crop-stages.png',cell:48,crops:moreCrops};

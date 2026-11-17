@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {farmTasks} from '../public/tasks.mjs';
-import { gameDay, slotLength, apply, cropYield, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot } from '../public/game.mjs';
+import { gameDay, slotLength, apply, cropYield, farmProgress, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, xpUnlocks } from '../public/game.mjs';
 
 const start=10_000;
 function world() {
@@ -72,6 +72,19 @@ test('experience and workshop levels unlock new crops and animals',()=>{
   action(r,'a','plant',{item:'strawberry',index:1});
   assert.equal(farm.plots[1].kind,'strawberry');
   assert.throws(()=>action(r,'a','buy',{item:'grapeSeed'}),/Xưởng máy cấp 2/);
+});
+test('farm progression shows real XP thresholds and upgrades never spend XP',()=>{
+  const room=world(), farm=room.farms.a;
+  assert.equal(farmProgress(farm).rank.name,'Tân nông');
+  assert.equal(farmProgress(farm).next.xp,20);
+  assert.deepEqual(xpUnlocks.map(unlock=>unlock.xp),[20,25,40,50,70,100,130,180,350]);
+  farm.coins=150;
+  farm.xp=40;
+  assert.match(action(room,'a','upgrade',{item:'workshop'}),/\+10 XP/);
+  assert.equal(farm.xp,50);
+  assert.equal(farm.coins,30);
+  assert.equal(farmProgress(farm).next.xp,70);
+  assert.equal(farmProgress({xp:350}).next,null);
 });
 test('garden and barn theft keep reserves, share caps, reset daily, and respect upgrades',()=>{
   const r=world(), b=r.farms.b;

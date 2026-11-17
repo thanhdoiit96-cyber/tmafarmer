@@ -8,6 +8,13 @@ Dùng **WASD** hoặc **phím mũi tên** để đi. Tới gần lối ra, ô đ
 
 Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vườn hàng xóm. Nhân vật, công trình và vật nuôi dùng sprites minh họa WebP. Canvas 2D vẽ các lớp cảnh, cây trồng và hiệu ứng thời tiết. Dùng các tab bên cạnh bản đồ để mở tác vụ trong khu, đơn hàng, kho, xây dựng hoặc nhật ký. Bấm thời tiết trên bản đồ để xem dự báo. Tọa độ nhân vật chỉ dùng trên thiết bị đang chơi. Trạng thái ruộng, chuồng, kho, sạp và lượt ghé vẫn dùng chung trong làng online.
 
+## Tiến độ và âm thanh
+
+- XP tích lũy theo vườn. Thu hoạch, thu sản phẩm vật nuôi, giao đơn, xây công trình và hoàn thành Sổ việc hôm nay đều có thưởng XP. Tab **Tổng quan → Tiến độ** hiển thị danh hiệu, cách kiếm XP và các mốc.
+- Các mốc XP dùng để mở điều kiện mua hoặc gieo giống, đón vật nuôi và xây Xưởng máy. Xưởng máy cấp 1, 2 và 3 cần lần lượt 40, 100 và 180 XP. Nấm truffle cần Xưởng máy cấp 3 và 350 XP. XP được giữ khi mở khóa.
+- Nút **Nhạc nền** cho phép chỉnh âm lượng và tắt tiếng. Bản nhạc Vườn sớm lặp khoảng 53 giây, được xuất từ `scripts/compose-vuon-som.py` với NumPy và FFmpeg.
+- Chọn **4 giai đoạn** trên luống hoặc mở chi tiết giống trong chợ để xem hình từng giai đoạn. Cây có thể thu hoạch khi tiến độ đạt 100%.
+
 ## Lịch và thủy sản
 
 - Một ngày game kéo dài 8 giờ thực. Thời tiết thay đổi mỗi 2 giờ gồm nắng nhẹ, mưa rào, nhiều mây, nắng nóng, gió mạnh, sương và dông. Dữ liệu làng cũ ghi nhận thời điểm chuyển lịch khi vào lại. Vườn có sẵn cá giống, tôm giống và thức ăn khởi đầu.

@@ -12,7 +12,7 @@ await cp('public/home-rules.mjs','dist/server/home-rules.mjs');
 await cp('public/village.mjs','dist/server/village.mjs');
 await writeFile('dist/server/engine.mjs',"export * from './game.mjs';\n");
 await cp('public','dist/client',{recursive:true});
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg'};
 const assets={};
 async function collect(directory,prefix=''){
   for(const entry of await readdir(directory,{withFileTypes:true})){

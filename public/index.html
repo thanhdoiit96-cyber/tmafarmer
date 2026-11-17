@@ -32,10 +32,12 @@
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 9-12h-6Z"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4m-5 4v4m-4 0h8"/></symbol>
   <symbol id="i-weather" viewBox="0 0 24 24"><path d="M4 15a4 4 0 0 1 4-4 5 5 0 0 1 9 2 3 3 0 0 1 0 6H8a4 4 0 0 1-4-4Zm6-9 1-2m7 4 2-1M5 9 3 8"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/></symbol>
 </svg>
 <header class="top"><div class="top-inner">
   <button class="brand" data-tab="field"><span class="mark"><svg aria-hidden="true"><use href="#i-leaf"/></svg></span><span>Vườn Mùa Vui</span></button>
   <div class="top-end">
+    <button class="avatar-menu music-menu" type="button" data-music-menu aria-label="Nhạc nền"><svg aria-hidden="true"><use href="#i-music"/></svg><span>Nhạc nền</span></button>
     <button class="avatar-menu" type="button" data-avatar-menu><svg aria-hidden="true"><use href="#i-users"/></svg><span>Nhân vật</span></button>
     <button id="room" class="room" data-room><svg aria-hidden="true"><use href="#i-users"/></svg><span>Vào làng</span></button>
   </div>
@@ -94,6 +96,7 @@
   </div>
 </main>
 <dialog id="dialog"></dialog>
+<audio id="farm-music" src="/audio/vuon-som.mp3" preload="none" loop></audio>
 <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

@@ -212,8 +212,26 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .panel-shortcuts,.panel-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .panel-shortcuts button{min-height:28px;font-size:11px;white-space:nowrap}
 .panel-subtabs{margin-top:5px;padding-top:5px;border-top:1px solid #e5dcc7}
+.panel-subtabs[data-count="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
 .panel-subtabs button{min-height:37px;flex-direction:row;font-size:10px}
 .panel-subtabs svg{width:14px;height:14px}
+.panel-subtabs[data-count="4"] button{gap:2px;white-space:normal;padding-inline:2px}
+.xp-summary .row{margin-top:8px;color:#31503a;font-size:11px}
+.xp-list{list-style:none;margin:2px 0;padding:0}
+.xp-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #e9dfca;color:#435b44;font-size:11px}
+.xp-list li:last-child{border:0}
+.xp-list small{display:block;color:var(--muted);margin-top:2px}
+.xp-list li>span:last-child{white-space:nowrap}
+.xp-list [data-ready="true"]{color:#2c6b3a;font-weight:800}
+dialog .music-volume{grid-template-columns:1fr auto;align-items:center}
+dialog .music-volume input{grid-column:1/-1;padding:0;accent-color:#376044}
+.music-volume output{color:#31503a;font-variant-numeric:tabular-nums}
+.crop-growth-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;list-style:none;margin:12px 0 4px;padding:0}
+.crop-growth-strip li{display:grid;justify-items:center;align-content:start;min-width:0;padding:3px 4px 7px;border:1px solid #e5dbc2;border-radius:8px;color:#425942;background:#f4efdf;text-align:center}
+.crop-growth-strip li[aria-current]{background:#e6eed8;border-color:#79a269}
+.crop-growth-strip strong{font-size:10px}
+.crop-growth-sprite{display:block;width:48px;height:48px;margin:2px 0 4px;background-repeat:no-repeat;image-rendering:pixelated}
+@media(max-width:470px){.music-menu span{display:none}.music-menu svg{display:block}}
 @media(max-width:760px){.status-hud{grid-template-columns:1fr;gap:7px}.task-summary{min-height:43px}.status-hud{margin-bottom:9px}}
 @media(max-width:470px){.vital{gap:4px;padding:5px;min-height:43px}.vital-icon{width:23px;height:26px}.vital-icon svg{width:15px;height:15px}.vital-text{font-size:9px}.vital-text strong{font-size:10px}.status-hud{margin-top:-2px}}
 
@@ -237,7 +255,7 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .journal-status{font-size:10px;font-weight:700;white-space:nowrap}
 .journal-reward small{color:#726446;font-weight:700}
 @media(max-width:370px){#nav{display:grid;grid-template-columns:repeat(3,1fr)}}
-@media(max-width:390px){.avatar-menu{padding:6px}.avatar-menu svg{display:none}.top-end{gap:4px}}
+@media(max-width:390px){.avatar-menu{padding:6px}.avatar-menu svg{display:none}.music-menu svg{display:block}.top-end{gap:4px}}
 
 .village-ladder{display:flex;flex-wrap:wrap;gap:5px;list-style:none;margin:8px 0 13px;padding:0}
 .village-ladder li{padding:4px 7px;border:1px solid #e8e0cb;border-radius:12px;color:#665d49;font-size:10px;font-weight:700}
