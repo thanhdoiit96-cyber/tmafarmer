@@ -19,10 +19,10 @@ const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival
 export const maps = {
   field: {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[236,221], bounds:homesteadSize,
-    paths:[[[0,234],[72,236],[123,219],[182,226],[234,224],[237,155],[229,96],[235,51],[234,0]],[[234,224],[313,230],[367,210],[428,218],[476,232],[530,224],[521,289],[528,358],[530,405],[582,407],[589,382],[583,350]],[[234,224],[236,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[89,188],[79,153],[82,121]],[[389,212],[389,128]],[[236,286],[229,333],[234,409],[234,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
+    paths:[[[0,234],[72,236],[123,219],[182,226],[234,224],[237,155],[229,96],[235,51],[234,0]],[[234,224],[313,230],[367,210],[428,218],[476,232],[530,224],[521,289],[528,358],[530,405],[582,407],[589,382],[583,350]],[[234,224],[236,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[89,188],[79,153],[82,121],[98,116],[houseDoor.x,110],[houseDoor.x,houseDoor.y]],[[389,212],[389,128]],[[236,286],[229,333],[234,409],[234,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
     trees:[[30,33],[47,75],[14,135],[15,181],[412,46],[448,89],[465,29],[39,271],[91,268],[416,271],[472,265],[487,70],[540,61],[658,49],[702,116],[709,251],[701,375],[655,406],[505,377],[389,351],[295,400],[156,359],[80,388]],
     water:[rect(21,92,43,106),rect(28,198,24,19),...basePonds],
-    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:70,h:45}, {x:397,y:146,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:91,y:184,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
+    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:397,y:146,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:91,y:184,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
     exits:[exit(234,13,'Đường sang chợ','market',[238,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(234,273,'Sang xóm bên','neighbors',[238,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
   home: {
@@ -106,7 +106,10 @@ export function features(id, snapshot, neighbor, page=0) {
     actors.push(obj);
     const depth=obj.type==='well'?10:14;
     blocks.push(rect(obj.x-obj.w*.43,obj.y-depth,obj.w*.86,depth+2));
-    if(id!=='visit'||!['house','well'].includes(obj.type))hotspots.push({...obj,y:obj.y+15});
+    if(id!=='visit'||!['house','well'].includes(obj.type)){
+      const drawY=obj.type==='house'?obj.y-obj.h/2:undefined;
+      hotspots.push({...obj,y:obj.y+15,drawY});
+    }
   }
   for(const [x,y] of map.trees) {
     actors.push({x,y,type:'tree'});

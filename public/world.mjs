@@ -4,7 +4,7 @@ import {pixelViewport} from './pixel/frames.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {facingFromDelta, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, pixelActor, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -22,49 +22,35 @@ const effectStyle={
 
 export function createWorld(root, onInteract) {
   const canvas=root.querySelector('canvas'), context=canvas.getContext('2d');
+  const scale=pixelViewport.width/size.width;
+  canvas.width=pixelViewport.width;
+  canvas.height=pixelViewport.height;
+  context.setTransform(scale,0,0,scale,0,0);
+  context.imageSmoothingEnabled=false;
   canvas.style.cursor=createMapCursor();
   const terrain=document.createElement('canvas');
-  const resolution=2;
   const ctx=terrain.getContext('2d');
   void artReady.then(()=>{if(sceneId)paintTerrain();});
   const keys=new Set();
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   const interacted=root.querySelector('[data-world-act]');
-  const pixelToggle=root.querySelector('[data-pixel-toggle]');
   const hint=root.querySelector('[data-world-hint]');
   const radar=root.querySelector('[data-radar]'), mini=radar.getContext('2d');
   let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, activePage, marks=[];
   let observedAt=performance.now(), terrainKey='', peers=new Map(), scenery=[];
-  let pixelPreview=localStorage.getItem('mua-vui-pixel-preview')!=='false';
-  let terrainScale=resolution, pointer=null, routeMarker=null;
-
-  function syncPixelToggle(){
-    const pixel=Boolean(sceneId)&&pixelPreview;
-    pixelToggle.hidden=!sceneId;
-    pixelToggle.textContent='Pixel: '+(pixelPreview?'Bật':'Tắt');
-    pixelToggle.setAttribute('aria-pressed',String(pixelPreview));
-    root.dataset.pixel=String(pixel);
-
-    const width=pixel?pixelViewport.width:size.width*resolution;
-    const height=pixel?pixelViewport.height:size.height*resolution;
-    if(canvas.width!==width||canvas.height!==height){
-      canvas.width=width;
-      canvas.height=height;
-      context.setTransform(width/size.width,0,0,height/size.height,0,0);
-    }
-  }
+  let pointer=null, routeMarker=null;
 
   function paintTerrain(){
-    terrainScale=pixelPreview?pixelViewport.width/size.width:resolution;
-    terrain.width=Math.ceil(bounds.width*terrainScale);
-    terrain.height=Math.ceil(bounds.height*terrainScale);
-    ctx.scale(terrainScale,terrainScale);
-    ctx.imageSmoothingEnabled=!pixelPreview;
+    terrain.width=Math.ceil(bounds.width*scale);
+    terrain.height=Math.ceil(bounds.height*scale);
+    ctx.scale(scale,scale);
+    ctx.imageSmoothingEnabled=false;
     grass(ctx,maps[sceneId],sceneId,scene);
   }
   function shiftCamera(){
     camera.x=Math.min(bounds.width-size.width,Math.max(0,x-size.width*.5));
-    camera.y=Math.min(bounds.height-size.height,Math.max(0,y-size.height*(sceneId==='field'||sceneId==='visit'?.78:.71)));
+    const anchor=(sceneId==='field'||sceneId==='visit') ? .87 : .71;
+    camera.y=Math.min(bounds.height-size.height,Math.max(0,y-size.height*anchor));
   }
   function drawRadar(){
     if(bounds.width===size.width)return;
@@ -128,7 +114,6 @@ export function createWorld(root, onInteract) {
     canvas.dataset.map=id;
     canvas.setAttribute('aria-label','Bản đồ '+(id==='visit'&&neighbor?neighbor.name:maps[id].name));
     refreshHint();
-    syncPixelToggle();
     if(!frameStarted){frameStarted=true;requestAnimationFrame(frame);}
   }
   function use(target=closest()){
@@ -151,9 +136,11 @@ export function createWorld(root, onInteract) {
   }
   function targetAt(px,py){
     return scene.hotspots.reduce((best,p)=>{
-      const distance=Math.hypot(px-p.x,py-(p.drawY??(p.type==='exit'?p.y:p.y-10)));
+      const dx=px-p.x,dy=py-(p.drawY??(p.type==='exit'?p.y:p.y-10));
+      const distance=Math.hypot(dx,dy);
       const radius=p.type==='plot'?23:p.type==='exit'?16:p.w?Math.min(p.w*.5,32):20;
-      return distance<=radius&&(!best||distance<best.distance)?{p,distance}:best;
+      const hit=p.type==='house'?Math.abs(dx)<=p.w/2&&Math.abs(dy)<=p.h/2+8:distance<=radius;
+      return hit&&(!best||distance<best.distance)?{p,distance}:best;
     },null)?.p;
   }
   function approach(type,index,callback){
@@ -240,14 +227,10 @@ export function createWorld(root, onInteract) {
     refreshHint();
     const t=now/1000, ambient=reduce.matches?0:t;
     shiftCamera();
-    const pixel=pixelPreview;
-    const scale=pixelViewport.width/size.width;
-    const cameraX=pixel?Math.round(camera.x*scale)/scale:camera.x;
-    const cameraY=pixel?Math.round(camera.y*scale)/scale:camera.y;
-    context.imageSmoothingEnabled=!pixel;
-    context.drawImage(terrain,cameraX*terrainScale,cameraY*terrainScale,size.width*terrainScale,size.height*terrainScale,0,0,size.width,size.height);
+    const cameraX=Math.round(camera.x*scale)/scale;
+    const cameraY=Math.round(camera.y*scale)/scale;
+    context.drawImage(terrain,Math.round(cameraX*scale),Math.round(cameraY*scale),pixelViewport.width,pixelViewport.height,0,0,size.width,size.height);
     context.save();context.translate(-cameraX,-cameraY);
-    if(pixel)context.imageSmoothingEnabled=false;
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
     const hovered=pointer?targetAt(cameraX+pointer.x,cameraY+pointer.y):null;
@@ -302,17 +285,17 @@ export function createWorld(root, onInteract) {
         const elapsed=(now-poseStarted)/1000;
         let action='';
         if(!walking)action=elapsed<.75&&pose ? pose : fishingHere ? 'cast' : '';
-        drawPerson(context,x,y,facing,ambient,{pixel,walking:walking&&!reduce.matches,walkDistance,action,elapsed:reduce.matches?0:elapsed});
+        drawPerson(context,x,y,facing,ambient,{walking:walking&&!reduce.matches,walkDistance,action,elapsed:reduce.matches?0:elapsed});
       }
       else if(a.type==='peer'){
-        drawPerson(context,a.x,a.y,a.facing,ambient,{pixel,walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
+        drawPerson(context,a.x,a.y,a.facing,ambient,{walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
         context.font='500 6px sans-serif';context.textAlign='center';
         const name=a.name.slice(0,24), width=context.measureText(name).width+7;
         const labelY=a.y-52;
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,labelY,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
-      else if(!(pixel&&pixelActor(context,a,ambient,snapshot))) actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot,pixel);
+      else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');
@@ -332,7 +315,7 @@ export function createWorld(root, onInteract) {
     } else if(!reduce.matches)landscapeLife(context,sceneId,ambient);
     for(const item of scene.hotspots)if(item.type==='exit')gate(context,item,ambient);
     for(const {point,style} of marks){
-      const pos=point.type==='plot'?cropTaskPosition({...point,y:point.drawY},pixel):{x:point.x,y:point.y-(point.type==='animal'?32:22)};
+      const pos=point.type==='plot'?cropTaskPosition({...point,y:point.drawY}):{x:point.x,y:point.y-(point.type==='animal'?32:22)};
       if(pos.x>=camera.x&&pos.x<=camera.x+size.width&&pos.y>=camera.y&&pos.y<=camera.y+size.height){
         drawTask(context,pos.x,pos.y+(point.type==='plot'?0:Math.sin(ambient*2+pos.x)*.65),style);
       }
@@ -385,12 +368,6 @@ export function createWorld(root, onInteract) {
     });
   });
   interacted.addEventListener('click',()=>use());
-  pixelToggle.addEventListener('click',()=>{
-    pixelPreview=!pixelPreview;
-    localStorage.setItem('mua-vui-pixel-preview',String(pixelPreview));
-    syncPixelToggle();
-    if(sceneId)paintTerrain();
-  });
   function setPeers(players){
     const next=new Map();
     for(const player of players){

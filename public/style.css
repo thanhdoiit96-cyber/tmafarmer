@@ -37,7 +37,7 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .world{min-width:0;overflow:hidden;border:1px solid #314d39;border-radius:16px;background:#243e2d;box-shadow:0 6px 19px #35483122}
 .world-stage{position:relative;background:#7c9f61}
 .world canvas{display:block;width:100%;height:auto;aspect-ratio:5/3;touch-action:manipulation;cursor:crosshair}
-.world[data-pixel="true"]>.world-stage>canvas{image-rendering:pixelated}
+.world-stage>canvas{image-rendering:pixelated}
 .world-weather{min-height:30px;display:flex;align-items:center;gap:6px;border:1px solid #efe7c3;border-radius:8px;padding:5px 9px;color:#284430;background:#faf5ddec;font-size:11px;font-weight:800;box-shadow:0 2px 6px #314a333e}
 .world-weather:hover{background:#fff6db}
 .world-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 11px;min-height:48px;background:#253e2e;color:#f7f0d8}

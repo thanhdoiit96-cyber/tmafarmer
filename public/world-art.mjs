@@ -21,7 +21,7 @@ const farmerWalk=load(pixelCharacter.states.walk.source);
 const pixelObjects=load(pixelSlice.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
-const terrainColors={meadow:'#74954c',forest:'#3c633f',stone:'#bfa57e',lakebank:'#537a61',wood:'#9a643e',slate:'#677769',straw:'#b78c56',gravel:'#c7a574'};
+const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
 
 function mirrorTile(image,index,name){
   const cell=128;
@@ -36,7 +36,7 @@ function mirrorTile(image,index,name){
     context.drawImage(image,sx,sy,cell,cell,0,0,cell,cell);
     context.restore();
   }
-  context.globalAlpha=['meadow','forest','lakebank'].includes(name)?.38:.22;
+  context.globalAlpha=['meadow','forest','lakebank'].includes(name)?.49:.29;
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
@@ -77,9 +77,9 @@ function sprite(c,name,x,y,w,h,flip=false,angle=0){
   c.restore();
 }
 const roads={
-  earth:{width:21,colors:['#527349','#ad9866','#d0af7c'],floor:'gravel'},
-  stone:{width:20,colors:['#7b6d58','#b29466','#e0c38c'],floor:'stone'},
-  trail:{width:16,colors:['#3f674e','#8e9060','#ceac77'],floor:'gravel'},
+  earth:{width:21,bank:'#63824c',rim:'#a79868',core:'#c5ac7e',floor:'gravel'},
+  stone:{width:20,bank:'#758454',rim:'#a6926d',core:'#d8bc8c',floor:'stone'},
+  trail:{width:16,bank:'#5e8058',rim:'#989467',core:'#c1ac80',floor:'gravel'},
 };
 function texture(c,floor){
   if(!surfaces[floor])return terrainColors[floor];
@@ -90,10 +90,11 @@ function texture(c,floor){
 function region(c,layer){
   const {floor,points}=layer;
   const tissue=texture(c,floor);
+  const [first,last]=[points[0],points.at(-1)];
   c.save();
-  c.beginPath();c.moveTo(...points[0]);
-  for(let i=1;i<=points.length;i++){
-    const current=points[i%points.length],next=points[(i+1)%points.length];
+  c.beginPath();c.moveTo((first[0]+last[0])/2,(first[1]+last[1])/2);
+  for(let i=0;i<points.length;i++){
+    const current=points[i],next=points[(i+1)%points.length];
     c.quadraticCurveTo(current[0],current[1],(current[0]+next[0])/2,(current[1]+next[1])/2);
   }
   c.closePath();
@@ -102,25 +103,41 @@ function region(c,layer){
   c.restore();
 }
 function pathSet(c,paths,style){
-  const {width,colors,floor}=roads[style];
-  for(let i=0;i<colors.length;i++){
-    for(const path of paths)line(c,colors[i],width+8-i*4,path);
-  }
+  const {width,bank,rim,core,floor}=roads[style];
+  for(const path of paths)line(c,bank,width+9,path);
+  for(const path of paths)line(c,rim,width+3,path);
+  for(const path of paths)line(c,core,width,path);
   c.save();c.globalAlpha=.64;
   const fill=texture(c,floor);
-  for(const path of paths)line(c,fill,width-3,path);
+  for(const path of paths)line(c,fill,width-1,path);
   c.restore();
   for(const path of paths)for(let i=1;i<path.length;i++){
     const [a,b]=[path[i-1],path[i]];
     const length=Math.hypot(b[0]-a[0],b[1]-a[1]);
     for(let n=7;n<length;n+=11){
       const t=n/length,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;
-      const s=seed(Math.round(x),Math.round(y)),d=(s>.5?1:-1)*(width*.48+s*3);
+      const s=seed(Math.round(x),Math.round(y)),d=(s>.5?1:-1)*(width*.53+s*3);
       const xx=x-(b[1]-a[1])/length*d,yy=y+(b[0]-a[0])/length*d;
-      ellipse(c,'#57483470',xx,yy,1.5+s,.65+s*.3);
-      ellipse(c,'#ead6a9b5',xx-.3,yy-.6,1.15+s,.5);
+      if(s>.32)grassClump(c,xx,yy,s);
+      else pebble(c,xx,yy,1.45);
     }
   }
+}
+function grassClump(c,x,y,s){
+  const px=snapPixel(x),py=snapPixel(y),u=pixelStep;
+  c.fillStyle='#506d43';
+  c.fillRect(px-2*u,py-u,5*u,2*u);
+  c.fillRect(px-u,py-3*u,3*u,2*u);
+  c.fillRect(px+2*u,py-(s>.5?4:3)*u,u,3*u);
+  c.fillStyle='#96ad62';
+  c.fillRect(px-2*u,py-2*u,u,2*u);
+  c.fillRect(px,py-(s>.6?5:4)*u,u,3*u);
+  c.fillRect(px+2*u,py-3*u,u,u);
+}
+function pebble(c,x,y,r){
+  ellipse(c,'#59644b',x,y+.5,r+.55,r*.62);
+  ellipse(c,'#b2ac87',x-.2,y-.15,r,r*.55);
+  ellipse(c,'#d2c394',x-.4,y-.52,r*.55,r*.27);
 }
 function decorativeSprite(c,item,t=0,dusk=0){
   const {kind,x,y,w,h,flip}=item;
@@ -182,10 +199,11 @@ function drawLot(c,a){
 function pond(c,r){
   const {x,y,w,h}=r, mx=x+w/2,my=y+h/2;
   const grad=c.createLinearGradient(x,y,x+w,y+h);
-  grad.addColorStop(0,'#76b9a0');grad.addColorStop(.45,'#489e9a');grad.addColorStop(1,'#356c79');
+  grad.addColorStop(0,'#80b5a2');grad.addColorStop(.45,'#559994');grad.addColorStop(1,'#396977');
   if(r.shape==='rect'){
-    box(c,'#5c6948',x-3,y-3,w+6,h+6,4);
-    box(c,'#b8a675',x-1.5,y-1.5,w+3,h+3,3.5);
+    box(c,'#63824e',x-6,y-5,w+12,h+11,7);
+    box(c,'#42684e',x-3,y-3,w+6,h+6,4);
+    box(c,'#a6a176',x-1.5,y-1.5,w+3,h+3,3.5);
     box(c,grad,x,y,w,h,2);
     for(let i=2;i<w-2;i+=5){
       ellipse(c,i%3?'#aea980':'#d4bf90',x+i,y-.7,1.75,.7);
@@ -195,10 +213,19 @@ function pond(c,r){
       ellipse(c,'#c4b384',x-.5,y+i,.68,1.55);
       ellipse(c,'#a3a783',x+w+.5,y+i,.78,1.45);
     }
+    for(let dx=9;dx<w-6;dx+=14){
+      const s=seed(x+dx,y);
+      grassClump(c,x+dx,y+(s>.45?h+5:-4),s);
+    }
+    for(const dy of [8,h*.5,h-6]){
+      grassClump(c,x-4,y+dy,.7);
+      pebble(c,x+w+4,y+dy,1.6);
+    }
     return;
   }
-  ellipse(c,'#687654',mx,my,w/2+4,h/2+4);
-  ellipse(c,'#b3a972',mx,my,w/2+2,h/2+2);
+  ellipse(c,'#668752',mx,my,w/2+7,h/2+7);
+  ellipse(c,'#4e7455',mx,my,w/2+4,h/2+4);
+  ellipse(c,'#a8a078',mx,my,w/2+2,h/2+2);
   ellipse(c,'#91a679',mx,my,w/2+.4,h/2+.3);
   ellipse(c,grad,mx,my,w/2-1,Math.max(1,h/2-1));
   if(w>90){
@@ -222,6 +249,9 @@ function pond(c,r){
     const angle=i*2.399, rx=w/2*Math.cos(angle),ry=h/2*Math.sin(angle);
     const px=mx+rx*.95,py=my+ry*.95;
     ellipse(c,i%4?'#c2bd91':'#dfcb9d',px,py,1.25+(i%3)*.4,.7,angle);
+    const bx=mx+rx+5*Math.cos(angle),by=my+ry+5*Math.sin(angle);
+    if(i%4===0)pebble(c,bx,by,1.45);
+    else if(i%3!==0)grassClump(c,bx,by,seed(i,w));
   }
   for(let i=0;i<8;i++){
     const px=x+w*(.32+seed(i,42)*.34),py=y+h*(.26+seed(i,111)*.49);
@@ -238,9 +268,40 @@ function flower(c,x,y,type){
   ellipse(c,'#d69250',x+1.7,y-4,.43,.38);
 }
 function pad(c,{floor,x,y,w,h}){
-  box(c,'#2f4b3770',x-2,y-1,w+4,h+5,6);
-  box(c,'#e8ce946f',x-1,y-1,w+2,h+2,5);
-  box(c,texture(c,floor),x,y,w,h,5);
+  box(c,'#38533b50',x-2,y-1,w+4,h+5,9);
+  box(c,'#68834e',x-1,y-1,w+2,h+3,8);
+  box(c,texture(c,floor),x,y,w,h,8);
+  if(floor==='meadow')return;
+  for(let dx=7;dx<w-5;dx+=12){
+    const s=seed(x+dx,y);
+    if(s>.37)grassClump(c,x+dx+s*2,y+(s>.65?1:h+1),s);
+  }
+  for(let dy=6;dy<h-5;dy+=12){
+    const s=seed(x,y+dy);
+    if(s>.42)grassClump(c,x+(s>.68?-1:w+1),y+dy,s);
+  }
+}
+function gardenBed(c,area){
+  pad(c,{...area,floor:'meadow'});
+  for(const x of [area.x+2,area.x+area.w-2]){
+    for(let dy=4;dy<area.h;dy+=9){
+      const s=seed(x,area.y+dy);
+      if(s>.2)grassClump(c,x,area.y+dy,s);
+    }
+  }
+  for(let dx=9;dx<area.w-5;dx+=14)pebble(c,area.x+dx,area.y+area.h-1,1);
+}
+function landscapeGround(c,decor){
+  for(const item of decor){
+    if(!['banyan','bamboo','flowers','rocks'].includes(item.kind))continue;
+    const {x,y,w,kind}=item;
+    const woody=kind==='banyan'||kind==='bamboo';
+    const r=w*(woody?.51:.44);
+    ellipse(c,'#385b3b52',x,y-1,r,r*(woody?.23:.20));
+    ellipse(c,'#86965754',x-2,y-2,r*.78,r*.16);
+    grassClump(c,x+r*.82,y+1,seed(x,y));
+    if(woody)grassClump(c,x-r*.64,y+2,seed(y,x));
+  }
 }
 function homeFloor(c){
   if(dim(homeArt))c.drawImage(homeArt,0,0,width,height);
@@ -334,18 +395,23 @@ export function grass(c,scene,kind,features){
   box(c,texture(c,landscape.floor),0,0,width,height,0);
   for(const layer of landscape.terrain)region(c,layer);
   box(c,landscape.tint,0,0,width,height,0);
+  landscapeGround(c,landscape.decor);
   for(const item of landscape.pads??[])pad(c,item);
-  for(const area of features.ground)if(area.type==='garden-bed')pad(c,{...area,floor:'straw'});
   pathSet(c,scene.paths,landscape.road);
+  for(const area of features.ground)if(area.type==='garden-bed')gardenBed(c,area);
   for(const area of features.ground)if(area.type==='lot')drawLot(c,area);
   for(const point of features.water){
     pond(c,point);
     if(point.w<95)continue;
     const mx=point.x+point.w/2,my=point.y+point.h/2;
-    for(const i of [0,1,2,3,4,5,6,7,8,9]){
-      const angle=i*2.399, r=.85+seed(i,point.x)*.13;
-      sprite(c,'reeds',mx+Math.cos(angle)*point.w/2*r,my+Math.sin(angle)*point.h/2*r,8+i%4*2,11+i%4*2,i%2===0);
-    }
+    const shore=point.shape==='rect'
+      ?[[point.x+7,point.y+11],[mx+10,point.y+6],[point.x+point.w-10,point.y+14],
+        [point.x+point.w-7,my+6],[point.x+point.w-19,point.y+point.h-5],[point.x+12,point.y+point.h-4]]
+      :Array.from({length:10},(_,i)=>{
+        const angle=i*2.399,r=.85+seed(i,point.x)*.13;
+        return [mx+Math.cos(angle)*point.w/2*r,my+Math.sin(angle)*point.h/2*r];
+      });
+    shore.forEach(([x,y],i)=>sprite(c,'reeds',x,y,8+i%4*2,11+i%4*2,i%2===0));
   }
   for(let i=0;i<(width*height/3250);i++){
     const x=10+seed(i,39)*(width-20),y=8+seed(i,123)*(height-20);
@@ -473,7 +539,7 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
-function critter(c,a,t,pixel){
+function critter(c,a,t){
   if(!dim(atlas))return;
   const {data,index=0}=a;
   const visual={duck:'chicken',goat:'cow',sheep:'cow'}[data.kind]??data.kind;
@@ -485,7 +551,7 @@ function critter(c,a,t,pixel){
   const foraging=motion.state==='graze'||motion.state==='peck';
   const bend=foraging ? .5-.5*Math.cos(motion.elapsed*(large?4.7:9.3)) : 0;
   const size=animalScale(data),w=(large?29:14)*size,h=(visual==='cow'?22:visual==='pig'?19:16)*size;
-  const x=pixel?snapPixel(a.x+motion.offset):a.x+motion.offset,y=pixel?snapPixel(a.y):a.y;
+  const x=snapPixel(a.x+motion.offset),y=snapPixel(a.y);
   const [sx,sy,sw,sh]=frames[visual];
   const cut=Math.round(sh*(large?.72:.79)), body=h*cut/sh;
   const half=Math.floor(sw/2), split=w*half/sw;
@@ -541,7 +607,7 @@ function personTool(c,x,y,direction,t,action){
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
-export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
+export function drawPerson(c,x,y,direction,t,{walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
   if(!dim(pixelCharacters)){
     legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
     personTool(c,x,y,direction,elapsed,action);
@@ -554,7 +620,7 @@ export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDist
   const step=moving?walkFrame(walkDistance,stride,anim.frames):Math.floor((work?elapsed:t)*anim.fps);
   const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
   const row=directions[direction]??0;
-  const px=pixel?snapPixel(x):x,py=pixel?snapPixel(y):y;
+  const px=snapPixel(x),py=snapPixel(y);
   const standing=style==='player'||style==='peer';
   const scale=standing?1:.875;
   shade(c,px,py,10.5*scale,walking?3.2:3.8);
@@ -564,22 +630,22 @@ export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDist
   const unit=pixelStep*scale;
   const left=px-cellWidth/2*unit,top=py-59*unit;
   c.drawImage(moving?farmerWalk:pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
-    pixel?snapPixel(left):left,pixel?snapPixel(top):top,cellWidth*unit,cellHeight*unit);
+    snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
   c.restore();
   if(!work)personTool(c,px,py,elapsed,action);
 }
-function pixelHouse(c,x,y,w){
-  const frame=pixelSlice.house,scale=w/frame.w;
-  c.drawImage(pixelObjects,frame.x,frame.y,frame.w,frame.h,snapPixel(x-w/2),snapPixel(y-frame.h*scale),w,frame.h*scale);
+function pixelHouse(c,x,y,w,h=w*pixelSlice.house.h/pixelSlice.house.w){
+  const frame=pixelSlice.house;
+  c.drawImage(pixelObjects,frame.x,frame.y,frame.w,frame.h,snapPixel(x-w/2),snapPixel(y-h),w,h);
 }
-export function pixelActor(c,a,t,state){
+function drawAtlasActor(c,a,t,state){
   if(!dim(pixelObjects))return false;
   const px=snapPixel(a.x),py=snapPixel(a.y);
   if(a.type==='house'){
-    shade(c,px+3,py,36,6);
+    shade(c,px,py,a.w*.5,5);
     c.save();
     if(a.style==='visit')c.filter='hue-rotate(12deg) saturate(.9)';
-    pixelHouse(c,px,py,144);
+    pixelHouse(c,px,py,a.w,a.h);
     c.restore();
     return true;
   }
@@ -609,7 +675,7 @@ export function pixelActor(c,a,t,state){
   }
   return false;
 }
-function neighborHouse(c,a,t,pixel){
+function neighborHouse(c,a,t){
   const {x,y,name='',tier=0,selected=false}=a;
   const width=52+tier*3.2,height=width*1.02;
   shade(c,x+3,y,width*.58,5.5+tier*.35);
@@ -621,7 +687,7 @@ function neighborHouse(c,a,t,pixel){
   }
   c.save();
   c.filter=['saturate(.86) brightness(.96)','sepia(.08) saturate(.94)','saturate(1.02) brightness(1.02)','hue-rotate(8deg) saturate(.92) brightness(1.04)','hue-rotate(13deg) saturate(1.02) brightness(1.07)'][tier];
-  if(pixel&&dim(pixelObjects))pixelHouse(c,x,y,snapPixel(width));
+  if(dim(pixelObjects))pixelHouse(c,x,y,snapPixel(width));
   else sprite(c,'house',x,y,width,height);
   c.restore();
 
@@ -656,7 +722,8 @@ function neighborHouse(c,a,t,pixel){
     c.strokeStyle='#e9cf8c';c.lineWidth=.65;c.beginPath();c.roundRect(x-labelWidth*.5,labelY,labelWidth,11,4);c.stroke();c.restore();
   }
 }
-export function actor(c,a,t,state,pixel){
+export function actor(c,a,t,state){
+  if(drawAtlasActor(c,a,t,state))return;
   const {x,y,type,w,style}=a;
   if(type==='dock'){
     const angle=a.side==='left'?-Math.PI/2:a.side==='right'?Math.PI/2:0;
@@ -677,7 +744,7 @@ export function actor(c,a,t,state,pixel){
     shade(c,x-10,y+3,7,2);
     sprite(c,'basket',x-13,y+1,10,9);
     sprite(c,'basket',x+12,y+3,9,8,true);
-    return drawTownsperson(c,x,y,t,'trader',pixel);
+    return drawTownsperson(c,x,y,t,'trader');
   }
   if(type==='order-board'){
     const width=a.upgraded?30:24;
@@ -717,14 +784,14 @@ export function actor(c,a,t,state,pixel){
     return;
   }
   if(type==='plot')return plot(c,a,t,state);
-  if(type==='animal'||type==='wildlife')return critter(c,a,t,pixel);
-  if(type==='npc')return drawTownsperson(c,x,y,t,style,pixel);
+  if(type==='animal'||type==='wildlife')return critter(c,a,t);
+  if(type==='npc')return drawTownsperson(c,x,y,t,style);
   if(type==='tree'){
     const spread=27+seed(x,y)*12, tall=spread*.98;
     shade(c,x+5,y-1,spread*.57,6);
     return sprite(c,'tree',x,y,spread,tall,seed(y,x)>.5,Math.sin(t*1.5+y)*(state.weather.id==='wind'||state.weather.id==='storm'?.055:.022));
   }
-  if(type==='neighbor')return neighborHouse(c,a,t,pixel);
+  if(type==='neighbor')return neighborHouse(c,a,t);
   if(type==='foundation'){
     shade(c,x,y+6,41,7);box(c,'#9a855a',x-38,y-12,76,24,4);box(c,'#c2a978',x-36,y-11,72,20,3);
     for(let i=0;i<4;i++)line(c,'#9c7957a5',.65,[[x-34,y-8+i*5],[x+33,y-8+i*5]]);
@@ -739,18 +806,19 @@ export function actor(c,a,t,state,pixel){
     return;
   }
   const name=type;
-  const spriteWidth=type==='house'?w*.96:type==='coop'?w*.78:type==='well'?w*1.05:w;
+  const spriteWidth=type==='coop'?w*.78:type==='well'?w*1.05:w;
   const ratio=type==='well'?1.45:type==='house'||type==='neighbor'?1.02:type==='coop'?1.03:type==='barn'?.94:.84;
+  const spriteHeight=type==='house'?a.h:spriteWidth*ratio;
   shade(c,x+3,y,spriteWidth*.61,6);
   if(type==='market'&&style!=='green'||style==='visit'){
     c.save();c.filter=style==='red'?'hue-rotate(-40deg) saturate(.88)':style==='gold'?'sepia(.42) saturate(1.2)':'hue-rotate(18deg) saturate(.85)';
-    sprite(c,name,x,y,spriteWidth,spriteWidth*ratio);c.restore();
-  } else sprite(c,name,x,y,spriteWidth,spriteWidth*ratio);
+    sprite(c,name,x,y,spriteWidth,spriteHeight);c.restore();
+  } else sprite(c,name,x,y,spriteWidth,spriteHeight);
 }
-function drawTownsperson(c,x,y,t,style,pixel){
+function drawTownsperson(c,x,y,t,style){
   const motion=animalMotion(t,style==='vendor'?0:1,5);
   drawPerson(c,x+motion.offset,y,motion.facing===1?'right':'left',t,{
-    pixel,style,walking:motion.state==='walk',walkDistance:motion.distance,stride:10,
+    style,walking:motion.state==='walk',walkDistance:motion.distance,stride:10,
   });
 }
 export function gate(c,a,t){

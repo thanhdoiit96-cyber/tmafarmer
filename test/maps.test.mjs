@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {newFarm} from '../public/game.mjs';
+import {houseDoor} from '../public/home-rules.mjs';
+import {pixelSlice} from '../public/pixel/frames.mjs';
 import {features,maps,neighborHouseTier,route,walkable} from '../public/world-layout.mjs';
 
 const neighbors=Array.from({length:11},(_,i)=>({id:String(i),name:'Vườn '+i,plots:Array(12).fill(null)}));
@@ -43,6 +45,25 @@ test('waypoints route around water and can reach neighbors on a second page',()=
   assert.equal(first.hotspots.find(h=>h.type==='own-house')?.id,me.id);
   const next=features('neighbors',data,undefined,1);
   assert.deepEqual(next.hotspots.filter(h=>h.type==='neighbor').map(h=>h.id),['5','6','7','8','9','10']);
+});
+
+test('the farmhouse sprite clears every garden bed and its doorstep connects to the path',()=>{
+  for(const id of ['field','visit']){
+    const scene=features(id,data,id==='visit'?neighbors[0]:undefined);
+    const house=scene.actors.find(a=>a.type==='house');
+    assert.equal(house.w/house.h,pixelSlice.house.w/pixelSlice.house.h);
+    assert.ok(house.y-house.h>=20);
+    for(const bed of scene.ground.filter(a=>a.type==='garden-bed')){
+      assert.ok(house.x+house.w/2+4<=bed.x,id+' house needs clearance from the garden');
+    }
+    assert.ok(maps[id].paths.some(path=>path.some(([x,y])=>x===houseDoor.x&&y===houseDoor.y)));
+  }
+  const field=features('field',data);
+  assert.ok(walkable(field,houseDoor.x,houseDoor.y));
+  assert.ok(route(field,maps.field.spawn,[houseDoor.x,houseDoor.y]));
+  const homeExit=maps.home.exits[0];
+  assert.equal(homeExit.arrival[0],houseDoor.x);
+  assert.ok(walkable(field,...homeExit.arrival));
 });
 
 test('expanded maps expose reachable pond docks and keep shoreline water impassable',()=>{

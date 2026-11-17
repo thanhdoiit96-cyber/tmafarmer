@@ -7,7 +7,7 @@ Tài liệu này là nguồn theo dõi chính cho việc chuyển phần thế g
 - Chuyển thế giới trong Canvas sang pixel art; giữ UI HTML sắc nét để chữ tiếng Việt dễ đọc.
 - Hướng nghệ thuật: cozy pixel art Việt Nam, mái ngói, tre, gỗ màu mật ong, cây nhiệt đới và ánh sáng ấm.
 - Tỷ lệ khung hình giữ ở `5:3`.
-- Vườn nhà ở chế độ Pixel render trực tiếp ở `640 × 384`. Tỷ lệ từ gameplay `480 × 288` là `4/3`. Sprite 2× giữ nguyên kích thước trên bản đồ và tăng số điểm ảnh thể hiện chi tiết.
+- Tất cả các cảnh dùng Canvas Pixel `640 × 384`. Tỷ lệ từ gameplay `480 × 288` là `4/3`. Renderer căn camera và sprite theo lưới điểm ảnh.
 - Gameplay tiếp tục dùng hệ tọa độ `480 × 288`; lớp render chịu trách nhiệm quy đổi.
 - Sprite production phải có nền alpha thật, cạnh pixel cứng, không anti-alias và cùng hướng sáng.
 - Animation production dùng frame animation/state machine thay cho biến dạng ảnh liên tục.
@@ -35,16 +35,18 @@ Trạng thái:
 - [x] Thay nhà, lúa mì, cà rốt, bắp và gà bằng atlas thiết kế chi tiết `public/pixel/vertical-slice-v2.png`; giữ v1 để so sánh.
 - [x] Thêm skill `.agents/skills/game-pixel-art/SKILL.md` để các asset sau giữ cùng art direction và chuẩn atlas.
 - [x] Chuẩn hóa trực tiếp từ hình gốc V2 thành `characters-v2-hd.png` và `vertical-slice-v2-hd.png`. Tái tạo bằng `python3 scripts/normalize-pixel-hd.py` với Pillow.
-- [x] Thay bước thu nhỏ bản đồ cuối mỗi frame bằng Canvas `640 × 384`. Nút Pixel dùng cùng lựa chọn đã lưu trước đây.
+- [x] Thay bước thu nhỏ bản đồ cuối mỗi frame bằng Canvas Pixel `640 × 384` và bỏ nút chuyển renderer thử nghiệm.
 - [x] Dùng cùng renderer và atlas nhân vật ở Vườn nhà, Nhà vườn, Chuồng, Chợ, Hàng xóm, Hồ làng, vườn ghé thăm và Xưởng máy. Nhà hàng xóm dùng chung sprite với nhà vườn, có chi tiết riêng theo cấp.
 - [x] Thay nền ở cả tám cảnh bằng bộ vật liệu V3. Tách màu Vườn nhà và vườn ghé thăm, lát quảng trường chợ, thêm thảm sân rơm ở chuồng, đường ven hồ, ván và chiếu trong nhà, sàn đá trong xưởng. Mặt bằng chơi và điểm tương tác vẫn lấy từ dữ liệu bản đồ.
 - [x] Căn lúa, cà rốt và bắp theo phần hình nhìn thấy, đặt biểu tượng công việc trên tán cây. Thêm con trỏ và vòng đánh dấu đích tự tìm đường.
+- [x] Dùng chính kích thước nhà `72 × 60` trên bản đồ để vẽ sprite và xác định vùng bấm. Vườn nhà và vườn ghé thăm chia sẻ mặt bằng nhà. Mép mái cách vùng luống ít nhất 4 đơn vị gameplay; hiên đá nối thẳng với đường đi đến cửa.
+- [x] Vẽ bờ cỏ, đá rìa đường, bụi cây và dải đất ẩm bằng cùng bảng màu nền; các chi tiết trang trí dùng cùng atlas cảnh vật và không thêm va chạm mới.
 
 Ảnh vật liệu gốc ở `docs/assets/terrain-materials-v3-source.png`. Tấm chất liệu tạo từ concept Vườn Mùa Vui theo lưới 4 × 2, nhìn thẳng từ trên xuống, gồm cỏ vườn, cỏ rợp, đá lát, bờ hồ, ván gỗ, đá phiến, sân rơm và sỏi đường. Atlas chạy game là `public/pixel/terrain-materials-v3.png` với tám ô 128 × 128. Renderer lật đối xứng từng ô khi lặp texture để liền mép.
 
 ## Nhịp di chuyển và hướng sprite
 
-- Nhân vật có bốn khung toàn thân cho mỗi hướng đi, gồm hai tư thế chạm gót và hai tư thế chuyển chân. Canvas vẽ nguyên khung với cùng kích thước ô và mốc chân; nhịp đi tính theo quãng đường. Người chơi, người cùng khu và NPC dùng cùng bộ bước ở cả hai chế độ hiển thị.
+- Nhân vật có bốn khung toàn thân cho mỗi hướng đi, gồm hai tư thế chạm gót và hai tư thế chuyển chân. Canvas vẽ nguyên khung với cùng kích thước ô và mốc chân; nhịp đi tính theo quãng đường. Người chơi, người cùng khu và NPC dùng cùng bộ bước.
 - Mẫu bước đi theo thiết kế nón lá, khăn xanh và áo nâu ở `docs/assets/farmer-walk-v4-source.png`. Lệnh `python3 scripts/normalize-pixel-hd.py` xuất atlas `public/pixel/farmer-walk-v4.png` theo bốn hướng, dùng chung tỷ lệ và mốc chân (ô `48 × 64`).
 - Gà bước, dừng và mổ theo trạng thái. Các khung đứng/đi trong atlas quay trái, khung mổ quay phải. Hướng gốc khai báo riêng cho từng trạng thái; chân bám mốc đất của nhóm khung.
 - Vật nuôi dùng các nhịp đi và nghỉ ngắn theo từng con. Bò, lợn và các vật nuôi dùng atlas cũ luân phiên nhấc chân khi đi và cúi khi ăn. Thao tác cuốc chạy từ khung đầu, các công cụ tưới, thu hoạch và câu cá vẽ theo hành động.
@@ -90,7 +92,7 @@ public/pixel/
 
 Concept và tài liệu tham chiếu không dùng ở runtime được lưu trong `docs/assets/` để không làm tăng kích thước bundle game.
 
-`world.mjs` giữ camera và gameplay. Một renderer pixel mới sẽ đọc atlas/metadata và vẽ vào virtual canvas. Renderer hiện tại được giữ trong quá trình chuyển đổi để so sánh và rollback.
+`world.mjs` giữ camera và gameplay. Renderer đọc atlas/metadata và vẽ trực tiếp vào Canvas Pixel; các sprite cũ còn được dùng cho đạo cụ, vật nuôi và dự phòng khi tải asset.
 
 ## Tiêu chí nghiệm thu vertical slice
 
@@ -99,7 +101,7 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 - Tất cả sprite dùng cùng mật độ pixel và hướng sáng.
 - Mưa, sương và bóng không làm mất silhouette.
 - FPS không giảm so với renderer hiện tại.
-- Bật/tắt renderer không làm thay đổi trạng thái game.
+- Cảnh nào cũng khởi tạo cùng kích thước Canvas và dùng cùng renderer.
 
 ## Các bước kế tiếp
 

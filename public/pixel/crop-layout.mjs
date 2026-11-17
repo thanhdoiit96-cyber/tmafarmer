@@ -16,8 +16,8 @@ export function cropPlacement({x,y,data,visit}){
     x:snap(x-w*unit/2),y:snap(y+6-h*unit),width:w*unit,height:h*unit};
 }
 
-export function cropTaskPosition(plot,pixel){
+export function cropTaskPosition(plot){
   const {x,y,data}=plot;
-  const art=pixel?cropPlacement(plot):null;
+  const art=cropPlacement(plot);
   return {x:x+(data?17:0),y:Math.min(y-(data?27:23),(art?.y??y-17)-8)};
 }
