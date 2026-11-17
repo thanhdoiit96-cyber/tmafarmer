@@ -248,7 +248,7 @@ export function createWorld(root, onInteract) {
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,a.y-38,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,a.y-31.6);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
-      else actor(context,a,ambient,snapshot);
+      else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');

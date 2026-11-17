@@ -185,7 +185,7 @@ export function features(id, snapshot, neighbor, page=0) {
     for(const [i,data] of snapshot.neighbors.slice(page*6,page*6+6).entries()) {
       const pos=visitorPosition(i);
       const tier=neighborHouseTier(data.wealth??0);
-      actors.push({...pos,type:'neighbor',name:data.name,tier,w:53+tier*3,h:31+tier*2});
+      actors.push({...pos,type:'neighbor',id:data.id,name:data.name,tier,w:53+tier*3,h:31+tier*2});
       blocks.push(rect(pos.x-22-tier,pos.y-15-tier,44+tier*2,15+tier));
       hotspots.push({...pos,y:pos.y+13,type:'neighbor',id:data.id,label:data.name});
     }

@@ -412,45 +412,50 @@ export function person(c,x,y,direction,t,moving,style='player',action=''){
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
 function neighborHouse(c,a,t){
-  const {x,y,name='',tier=0}=a;
-  const width=51+tier*3,height=30+tier*2;
-  const walls=['#dfc68f','#e4c590','#e0bd83','#d7b276','#d9b67a'][tier];
-  const trim=['#f5e5bc','#f7e7bd','#f7e4b5','#f5dca6','#ffe8ae'][tier];
-  const roof=['#8b5d45','#805944','#6e5546','#536052','#485c53'][tier];
-  shade(c,x+2,y+2,width*.55,5+tier*.35);
+  const {x,y,name='',tier=0,selected=false}=a;
+  const width=52+tier*3.2,height=width*1.02;
+  shade(c,x+3,y,width*.58,5.5+tier*.35);
 
-  // Each wealth tier adds a clearer silhouette and more crafted details.
-  box(c,walls,x-width*.42,y-height*.58,width*.84,height*.58,2);
-  if(tier>=2)box(c,trim,x-width*.44,y-height*.61,width*.88,3,1);
-  c.fillStyle=roof;c.beginPath();
-  c.moveTo(x-width*.52,y-height*.54);c.lineTo(x,y-height);c.lineTo(x+width*.52,y-height*.54);
-  c.lineTo(x+width*.43,y-height*.48);c.lineTo(x-width*.43,y-height*.48);c.closePath();c.fill();
-  line(c,trim,.65,[[x-width*.47,y-height*.53],[x,y-height*.94],[x+width*.47,y-height*.53]]);
-  box(c,'#755038',x-4,y-13,8,13,1);
-  box(c,tier>=3?'#a9d8d5':'#9bc3c1',x-width*.29,y-13,7,7,1);
-  box(c,tier>=3?'#a9d8d5':'#9bc3c1',x+width*.29-7,y-13,7,7,1);
-  line(c,trim,.65,[[x-width*.29+3.5,y-13],[x-width*.29+3.5,y-6]]);
-  line(c,trim,.65,[[x+width*.29-3.5,y-13],[x+width*.29-3.5,y-6]]);
-  if(tier>=1)box(c,'#695047',x-width*.31,y-height*.90,4,9,1);
+  // Keep the painted house from the main farm and enrich it with matching details.
+  if(tier>=1){
+    box(c,'#71523d',x-width*.29,y-height*.82,5,14,1);
+    box(c,'#9b744e',x-width*.31,y-height*.84,9,4,1);
+  }
+  c.save();
+  c.filter=['saturate(.86) brightness(.96)','sepia(.08) saturate(.94)','saturate(1.02) brightness(1.02)','hue-rotate(8deg) saturate(.92) brightness(1.04)','hue-rotate(13deg) saturate(1.02) brightness(1.07)'][tier];
+  sprite(c,'house',x,y,width,height);
+  c.restore();
+
+  if(tier>=1){
+    box(c,'#a97748',x-width*.31,y-8,12,3,1);
+    for(let i=0;i<3;i++)ellipse(c,i===1?'#f2cf70':'#d98b67',x-width*.27+i*3.5,y-10,1.4,1.8);
+  }
   if(tier>=2){
-    ellipse(c,'#cf9c54',x-width*.50,y-2,4,2.2);ellipse(c,'#70945e',x-width*.50,y-5,4,3);
-    ellipse(c,'#d3a057',x+width*.50,y-2,4,2.2);ellipse(c,'#6d925c',x+width*.50,y-5,4,3);
+    ellipse(c,'#526f47',x-width*.48,y-3,5.5,5);ellipse(c,'#719253',x-width*.50,y-6,4,4);
+    ellipse(c,'#526f47',x+width*.48,y-3,5.5,5);ellipse(c,'#83a35c',x+width*.50,y-6,4,4);
+    line(c,'#f1d59b',1.1,[[x-width*.40,y-height*.49],[x,y-height*.78],[x+width*.40,y-height*.49]]);
   }
   if(tier>=3){
-    box(c,'#eee1bd',x-width*.54,y-height*.44,3,height*.45,1);
-    box(c,'#eee1bd',x+width*.54-3,y-height*.44,3,height*.45,1);
+    box(c,'#55705b',x-width*.43,y-5,4,8,1);box(c,'#55705b',x+width*.43-4,y-5,4,8,1);
+    ellipse(c,'#ffd98a',x-width*.43+2,y-8,2.5,3.2);ellipse(c,'#ffd98a',x+width*.43-2,y-8,2.5,3.2);
+    for(let i=-1;i<=1;i++)ellipse(c,'#f2d38b',x+i*7,y-height*.73-Math.abs(i)*2,1.1,1.1);
   }
   if(tier>=4){
-    const glint=.35+Math.sin(t*2.1+x)*.12;
-    ellipse(c,`rgba(255,226,132,${glint})`,x,y-height*.82,3.3,3.3);
-    line(c,'#f0d184',1,[[x,y-height*.87],[x,y-height*.77]]);
+    const glow=.28+Math.sin(t*2+x)*.06;
+    ellipse(c,`rgba(255,226,145,${glow})`,x,y-height*.80,6,5);
+    ellipse(c,'#e6bd5f',x,y-height*.80,2.6,2.6);
+    line(c,'#fff0b0',.75,[[x,y-height*.84],[x,y-height*.76]]);
+    line(c,'#fff0b0',.75,[[x-4,y-height*.80],[x+4,y-height*.80]]);
   }
 
-  const fullName=String(name),label=fullName.length>13?fullName.slice(0,12)+'…':fullName;
-  c.save();c.font='700 5.5px system-ui';c.textAlign='center';
-  const labelWidth=Math.min(width-4,c.measureText(label).width+8);
-  box(c,'#344c3be8',x-labelWidth*.5,y-height*.75,labelWidth,9,3);
-  c.fillStyle='#fff3d2';c.fillText(label,x,y-height*.75+6.3);c.restore();
+  if(selected){
+    const fullName=String(name),label=fullName.length>15?fullName.slice(0,14)+'…':fullName;
+    c.save();c.font='700 6px system-ui';c.textAlign='center';
+    const labelWidth=Math.min(65,c.measureText(label).width+12),labelY=y-height-8;
+    box(c,'#2f493ce8',x-labelWidth*.5,labelY,labelWidth,11,4);
+    c.fillStyle='#f9edc8';c.fillText(label,x,labelY+7.5);
+    c.strokeStyle='#e9cf8c';c.lineWidth=.65;c.beginPath();c.roundRect(x-labelWidth*.5,labelY,labelWidth,11,4);c.stroke();c.restore();
+  }
 }
 export function actor(c,a,t,state){
   const {x,y,type,w,style}=a;
