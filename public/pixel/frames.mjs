@@ -33,3 +33,8 @@ export const pixelSlice={
   },
 };
 export const cropStagesAtlas={source:'/pixel/crop-stages.png',cell:48,crops:moreCrops};
+export const livestockAtlas={
+  source:'/pixel/livestock-v1.png',
+  frames:{goat:[0,0,56,48],sheep:[56,0,56,48]},
+  legStart:{goat:.73,sheep:.8},
+};

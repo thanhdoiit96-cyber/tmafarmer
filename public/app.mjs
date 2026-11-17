@@ -7,6 +7,7 @@ import {aquatic,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mj
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
 import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
+import {livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
 import {advanceVillage, animalRequirement, animals, apply, avatarOf, avatars, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, growthGoal, mealCooldown, mealRequirement, productGoal, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, xpRewards, xpUnlocks} from './game.mjs';
@@ -278,6 +279,12 @@ function upgrade(farm,key) {
   return '<div class="row itemrow"><div><strong>'+definition.icon+' '+definition.name+(level?' · Cấp '+level:'')+'</strong><p>'+escape(locked||definition.notes[index])+'</p></div>'+
     (cost?act((level?'Nâng':'Xây')+' · '+cost+' xu','upgrade',key,'','',farm.coins<cost||!!locked):'<span class="badge">Tối đa</span>')+'</div>';
 }
+function animalIllustration(kind){
+  const frame=livestockAtlas.frames[kind];
+  if(!frame)return '<span class="animal-icon" aria-hidden="true">'+animals[kind].icon+'</span>';
+  const [x]=frame;
+  return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+livestockAtlas.source+');background-position:-'+x*.75+'px 0"></span>';
+}
 function renderCoop(farm,now,lot){
   const pens=farm.pens.map((pen,i)=>({pen,i})).filter(entry=>entry.pen.lot===lot);
   const limit=coopCapacity(farm,lot);
@@ -291,13 +298,14 @@ function renderCoop(farm,now,lot){
       const ref=' data-target="'+(pen.id??i)+'" data-index="'+i+'"';
       const feed=btn('Cho ăn · '+info.food,'data-action="feed"'+ref,'',pen.fedUntil>now||farm.inventory.feed<info.food);
       const collect=btn(label,'data-action="collect"'+ref,'primary');
-      return '<article data-pen="'+i+'"><div class="row"><div class="row"><span class="animal-icon">'+info.icon+'</span><div><h3>'+info.name+' '+(i+1)+'</h3><p>'+status+
+      return '<article data-pen="'+i+'"><div class="row"><div class="row">'+animalIllustration(pen.kind)+'<div><h3>'+info.name+' '+(i+1)+'</h3><p>'+status+
         (ready?'':' · '+duration(grown?targetProduct-pen.progress:targetAge-pen.age)+' cơ sở · '+(pen.fedUntil>now?'Còn thức ăn '+duration(pen.fedUntil-now):'Đói'))+
         '</p></div></div><div class="actions">'+(ready?(info.oneTime?'':feed)+collect:feed)+'</div></div>'+valueBar(grown?pen.progress:pen.age,grown?targetProduct:targetAge)+'</article>';
     }).join('')+
     (limit?'<article><h3>Đón vật nuôi</h3><div class="actions">'+Object.entries(animals).map(([key,info])=>{
       const locked=animalRequirement(farm,key,lot);
-      return act(info.icon+' '+info.name+(locked?' · 🔒 '+locked:' · '+info.cost+' xu'),'animal',key,lot??'','gold',!!locked||farm.coins<info.cost||pens.length>=limit);
+      const label=info.name+(locked?' · 🔒 '+locked:' · '+info.cost+' xu');
+      return act(animalIllustration(key)+'<span>'+label+'</span>','animal',key,lot??'','gold',!!locked||farm.coins<info.cost||pens.length>=limit);
     }).join('')+'</div></article>':'')+'</div>';
 }
 function renderMarket(farm) {
@@ -471,9 +479,35 @@ function renderTasks(farm){
   return journal+'<h2>Việc cần làm</h2><div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+taskStyles[task.type].mark+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>';
 }
 function renderRank(me){
-  if(!session)return '<h2>Tài sản trong làng</h2><p>Vào làng để xem thứ hạng tài sản của các vườn cùng chơi.</p><div class="actions">'+btn('Vào làng','data-room','primary')+'</div>';
-  const format=n=>n.toLocaleString('vi-VN');
-  return '<h2>Tài sản trong làng</h2><p>Tính bằng xu, gồm tiền mặt, hàng trong kho và trên sạp, đất, công trình và vật nuôi.</p><ol class="wealth-list">'+state.wealth.map((row,i)=>'<li'+(row.id===me.id?' class="is-me"':'')+'><span class="rank-no">'+(i+1)+'</span><div><strong>'+escape(row.name)+(row.id===me.id?' · Bạn':'')+'</strong><small>'+format(row.coins)+' tiền mặt · '+format(row.inventory)+' hàng hóa · '+format(row.property)+' tài sản xây dựng và vật nuôi</small></div><b>'+format(row.total)+' xu</b></li>').join('')+'</ol>';
+  const ranking=state.wealth;
+  const index=ranking.findIndex(row=>row.id===me.id);
+  if(index<0)return '<h2>Xếp hạng tài sản</h2><p>Chưa có dữ liệu xếp hạng.</p>';
+  const own=ranking[index], above=ranking[index-1], next=ranking[1];
+  const goal=above?above.total+1:0;
+  const lead=next?own.total-next.total:0;
+  const race=above?'Thêm <strong>'+formatCoins(goal-own.total)+' xu</strong> tài sản để chắc chắn vượt hạng '+index+'.':
+    !next?'Bạn đang chờ thêm vườn tham gia.':lead>0?'Hơn hạng 2 <strong>'+formatCoins(lead)+' xu</strong> tài sản.':
+      'Đồng tổng tài sản với hạng 2.';
+  const open=new Set(Array.from(document.querySelectorAll('#side .wealth-entry[open] summary'),summary=>summary.dataset.rankFarm));
+  const rows=ranking.map((row,i)=>{
+    const mine=row.id===own.id, rank=i+1;
+    const id=escape(row.id);
+    const title=rank===1?'Dẫn đầu':'Hạng '+rank;
+    return '<li data-rank="'+rank+'"'+(mine?' class="is-me"':'')+'><details class="wealth-entry"'+(open.has(row.id)?' open':'')+'>'+
+      '<summary data-rank-farm="'+id+'"><span class="rank-no" aria-label="'+title+'">'+rank+'</span>'+
+      '<span class="wealth-farm"><strong>'+escape(row.name)+'</strong>'+
+      (mine||rank===1?'<small>'+(mine?'Bạn':'Dẫn đầu')+'</small>':'')+'</span>'+
+      '<span class="wealth-amount"><strong>'+formatCoins(row.total)+'</strong><small>xu</small></span>'+
+      '<span class="wealth-arrow" aria-hidden="true">⌄</span></summary>'+
+      '<dl class="wealth-breakdown">'+[['Tiền mặt',row.coins],['Kho & sạp',row.inventory],['Đất, nhà & vật nuôi',row.property]].map(([label,amount])=>
+        '<div><dt>'+label+'</dt><dd>'+formatCoins(amount)+' xu</dd></div>').join('')+'</dl></details></li>';
+  }).join('');
+  const demoNote=session?'':'<div class="wealth-demo"><p>Bảng của làng chơi thử</p>'+btn('Vào làng','data-room','subtle')+'</div>';
+  return '<section class="wealth-board" aria-label="Xếp hạng tài sản">'+
+    '<header class="wealth-hero"><div class="wealth-hero-icon">'+icon('trophy')+'</div><div><h2>Xếp hạng tài sản</h2><p>'+ranking.length+' vườn · Tổng tài sản tính theo xu</p></div></header>'+
+    '<section class="wealth-personal" aria-label="Thứ hạng của bạn"><div class="row"><strong>Hạng '+(index+1)+' / '+ranking.length+'</strong><b>'+formatCoins(own.total)+' xu</b></div><p>'+race+'</p>'+
+      (above?valueBar(own.total,goal):'')+'</section>'+demoNote+
+    '<ol class="wealth-list">'+rows+'</ol><p class="wealth-rules">Nếu bằng tổng tài sản, vườn có nhiều tiền mặt hơn xếp trước.</p></section>';
 }
 function renderProgress(farm){
   const {xp,rank,next}=farmProgress(farm);
@@ -644,7 +678,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-home-go],[data-bed-go],[data-home-exit],[data-village-fund],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-crop-growth]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-home-go],[data-bed-go],[data-home-exit],[data-village-fund],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-crop-growth],[data-rank-farm]';
 function focusKey(element) {
   if(!element?.matches(focusSelector)) return '';
   return Object.entries(element.dataset).map(([key,value])=>key+'='+value).join('|')+
@@ -662,6 +696,7 @@ function render(arrival) {
   const priorDecor=$('.base-decor');
   if(priorDecor)baseDecorOpen=priorDecor.open;
   const listScroll=$('#board .farm-list')?.scrollTop??0;
+  const wealthScroll=$('.wealth-list')?.scrollTop??0;
   const panelScroll=panelBody.scrollTop;
   const farm=state.me, now=currentTime();
   const workshopUnlocked=(farm.workshop??0)>0;
@@ -703,6 +738,8 @@ function render(arrival) {
   $('#tools').hidden=panel!=='area'||tab!=='field';
   $('#side').hidden=panel==='area';
   $('#side').innerHTML=panel==='area'?'':renderPanel(farm,now);
+  const wealthList=$('.wealth-list');
+  if(wealthList)wealthList.scrollTop=wealthScroll;
   const panelContext=tab+'/'+(neighborId??'')+'/'+panel;
   panelBody.scrollTop=panelBody.dataset.context===panelContext?panelScroll:0;
   panelBody.dataset.context=panelContext;
