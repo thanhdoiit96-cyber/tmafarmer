@@ -632,9 +632,11 @@ function showAccountModal(mode='login') {
 function showRoom() {
   if(session) {
     const accountSummary = accountSession ? '<p>Tài khoản: <strong>'+escape(accountSession.username)+'</strong></p>' : '';
-    modal('Làng của bạn','<p>Chia sẻ mã '+session.code+' hoặc gửi đường dẫn cho hàng xóm. Làng có tối đa 12 vườn.</p>'+accountSummary+'<div class="actions">'+
+    const accountActions = accountSession ?
+      '<div class="actions">'+btn('Đăng nhập khác','data-account','primary')+btn('Tạo tài khoản mới','data-account-mode="register"','subtle')+btn('Đăng xuất','data-account-logout','subtle')+'</div>' :
+      '<div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+btn('Tạo tài khoản','data-account-mode="register"','subtle')+'</div>';
+    modal('Làng của bạn','<p>Chia sẻ mã '+session.code+' hoặc gửi đường dẫn cho hàng xóm. Làng có tối đa 12 vườn.</p>'+accountSummary+accountActions+'<div class="actions">'+
       btn('Sao chép liên kết','data-copy','primary')+
-      (accountSession?btn('Đăng xuất','data-account-logout','subtle'):'')+
       btn('Về vườn chơi thử','data-back-demo','subtle')+'</div>');
     return;
   }
