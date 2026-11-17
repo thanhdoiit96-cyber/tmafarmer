@@ -926,7 +926,7 @@ dialog.addEventListener('submit',async e=>{
 const requested=new URL(location.href).searchParams.get('lang')?.toUpperCase();
 if(requested&&/^[A-F0-9]{8}$/.test(requested)) inviteCode=requested;
 await refresh(true);
-if(inviteCode&&!session) showRoom();
+if(!session) showRoom();
 setInterval(()=>{
   if(!state||document.hidden) return;
   const now=currentTime();
