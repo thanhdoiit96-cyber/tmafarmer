@@ -107,6 +107,11 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(x-5,y-8,10,11));
   }
   if((id==='field'||id==='visit')&&owner) {
+    if((owner.workshop??0)>0){
+      const workshop={x:476,y:151,type:'workshop',level:owner.workshop,w:48,h:34,label:'Xưởng máy cấp '+owner.workshop};
+      actors.push(workshop);blocks.push(rect(456,139,40,13));
+      if(id==='field')hotspots.push({...workshop,y:workshop.y+12});
+    }
     for(const i of owner.plotIndexes??owner.plots.map((_,index)=>index)) {
       const data=i<plotOffset?owner.plots[i]:owner.extraPlots?.[i];
       const pos=plotPosition(i);
@@ -182,12 +187,14 @@ export function features(id, snapshot, neighbor, page=0) {
       hotspots.push({...hall,y:hall.y+14});
       blocks.push(rect(201,166,72,10));
     }
-    for(const [i,data] of snapshot.neighbors.slice(page*6,page*6+6).entries()) {
+    const ownWealth=snapshot.wealth?.find(entry=>entry.id===farm.id)?.total??farm.coins;
+    const homes=[{id:farm.id,name:farm.name,wealth:ownWealth,mine:true},...snapshot.neighbors];
+    for(const [i,data] of homes.slice(page*6,page*6+6).entries()) {
       const pos=visitorPosition(i);
       const tier=neighborHouseTier(data.wealth??0);
       actors.push({...pos,type:'neighbor',id:data.id,name:data.name,tier,w:53+tier*3,h:31+tier*2});
       blocks.push(rect(pos.x-22-tier,pos.y-15-tier,44+tier*2,15+tier));
-      hotspots.push({...pos,y:pos.y+13,type:'neighbor',id:data.id,label:data.name});
+      hotspots.push({...pos,y:pos.y+13,type:data.mine?'own-house':'neighbor',id:data.id,label:data.name+(data.mine?' · Nhà của bạn':'')});
     }
   }
   return {actors,hotspots,blocks,water,ground,bounds:map.bounds??size};

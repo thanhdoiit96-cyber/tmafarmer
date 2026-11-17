@@ -39,8 +39,10 @@ test('waypoints route around water and can reach neighbors on a second page',()=
     }
     from=stop;
   }
+  const first=features('neighbors',data);
+  assert.equal(first.hotspots.find(h=>h.type==='own-house')?.id,me.id);
   const next=features('neighbors',data,undefined,1);
-  assert.deepEqual(next.hotspots.filter(h=>h.type==='neighbor').map(h=>h.id),['6','7','8','9','10']);
+  assert.deepEqual(next.hotspots.filter(h=>h.type==='neighbor').map(h=>h.id),['5','6','7','8','9','10']);
 });
 
 test('expanded maps expose reachable pond docks and keep shoreline water impassable',()=>{

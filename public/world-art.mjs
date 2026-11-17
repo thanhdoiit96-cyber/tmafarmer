@@ -353,10 +353,21 @@ function plot(c,a,t,state){
       } else if(data.kind==='carrot'){
         ellipse(c,'#c17038',px,py-1.3,1.85,2.2,-.32);
         ellipse(c,'#efa956',px-.3,py-1.55,1,1.5,-.32);
-      } else {
+      } else if(data.kind==='corn'){
         ellipse(c,'#577335',px+sway,py-grow*.65,1.91,2.8,.25);
         ellipse(c,'#e6b758',px+sway-.15,py-grow*.79,1.49,2.85,.25);
         ellipse(c,'#f6d478',px+sway-.34,py-grow*.9,.73,1.55,.25);
+      } else if(data.kind==='tomato'){
+        ellipse(c,'#c94f3f',px+sway-1.4,py-grow*.58,1.8,1.8);
+        ellipse(c,'#e06a4d',px+sway+1.4,py-grow*.72,1.7,1.7);
+      } else if(data.kind==='sunflower'){
+        ellipse(c,'#e8bd48',px+sway,py-grow,3.1,3.1);ellipse(c,'#765038',px+sway,py-grow,1.4,1.4);
+      } else if(data.kind==='strawberry'){
+        ellipse(c,'#d85355',px+sway-1,py-grow*.48,1.5,2);ellipse(c,'#ee7770',px+sway+1.5,py-grow*.62,1.4,1.8);
+      } else if(data.kind==='grape'){
+        for(let n=0;n<5;n++)ellipse(c,n%2?'#79548d':'#9670a5',px+sway+(n%2)*1.5,py-grow*.72+n*.75,1.25,1.25);
+      } else {
+        ellipse(c,'#66834e',px+sway,py-grow*.65,3.2,1.3,.2);ellipse(c,'#91a766',px+sway,py-grow*.82,2.7,1.1,-.2);
       }
     }
   }
@@ -368,13 +379,19 @@ function plot(c,a,t,state){
 }
 function critter(c,a,t){
   const {data,index}=a;
-  const large=data.kind!=='chicken',phase=t*.97+index*1.75;
+  const visual={duck:'chicken',goat:'cow',sheep:'cow'}[data.kind]??data.kind;
+  const large=!['chicken','duck'].includes(data.kind),phase=t*.97+index*1.75;
   const x=a.x+Math.sin(phase)*(large?11:14),y=a.y+Math.sin(phase*.86)*4;
   const walking=Math.abs(Math.cos(phase));
   const gait=Math.abs(Math.sin(t*(large?9:15)+index))*1.7*walking;
   shade(c,x,y,large?13:8,3.8);
   const size=(data.age===undefined||data.age>=growthGoal(data))?1:.72+.28*data.age/growthGoal(data);
-  sprite(c,data.kind,x,y-gait,(large?29:14)*size,(data.kind==='cow'?22:data.kind==='pig'?19:16)*size,Math.cos(phase)<0,Math.sin(t*10)*.055*walking);
+  c.save();
+  if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
+  if(data.kind==='goat')c.filter='grayscale(.42) sepia(.22) brightness(1.12)';
+  if(data.kind==='sheep')c.filter='grayscale(.78) brightness(1.38)';
+  sprite(c,visual,x,y-gait,(large?29:14)*size,(visual==='cow'?22:visual==='pig'?19:16)*size,Math.cos(phase)<0,Math.sin(t*10)*.055*walking);
+  c.restore();
 }
 export function person(c,x,y,direction,t,moving,style='player',action=''){
   const profile=direction==='left'||direction==='right';
@@ -506,6 +523,18 @@ export function actor(c,a,t,state){
     c.fillText('NHÀ SINH HOẠT',x,y-8);
     return;
   }
+  if(type==='workshop'){
+    const level=a.level??1;
+    shade(c,x+2,y,22+level*2,5);
+    c.save();c.filter='sepia(.20) saturate(.86)';sprite(c,'barn',x,y,45+level*3,37+level*3);c.restore();
+    box(c,'#52685a',x-16,y-19,32,6,2);
+    c.fillStyle='#f2dfaa';c.font='700 4.5px system-ui';c.textAlign='center';c.fillText('XƯỞNG MÁY '+level,x,y-14.5);
+    const spin=t*(.5+level*.16);
+    c.save();c.translate(x+15,y-25);c.rotate(spin);
+    for(let i=0;i<8;i++){c.rotate(Math.PI/4);box(c,'#d4b56c',-1,-6,2,3,.5);}
+    ellipse(c,'#e3c77f',0,0,4.4,4.4);ellipse(c,'#6d6048',0,0,1.6,1.6);c.restore();
+    return;
+  }
   if(type==='plot')return plot(c,a,t,state);
   if(type==='animal'||type==='wildlife')return critter(c,a,t);
   if(type==='npc'){
@@ -595,12 +624,24 @@ export function atmosphere(c,t,w,reduce,daylight=0){
       }
     }
   } else if(w==='fog'){
-    box(c,'#d5e4c435',0,0,width,height,0);
-    for(let i=0;i<5;i++){
-      const y=24+i*61+Math.sin(t*.7+i)*17;
-      const mist=c.createLinearGradient(0,y-31,0,y+31);
-      mist.addColorStop(0,'#dfefd300');mist.addColorStop(.52,'#d7edda69');mist.addColorStop(1,'#dfefd300');
-      box(c,mist,0,y-31,width,62,0);
+    const cool=c.createLinearGradient(0,0,0,height);
+    cool.addColorStop(0,'#bcd7cf24');cool.addColorStop(.52,'#dbe8d80d');cool.addColorStop(1,'#9fbfb51f');
+    box(c,cool,0,0,width,height,0);
+    c.save();
+    for(let i=0;i<7;i++){
+      const drift=reduce?0:Math.sin(t*(.18+i%3*.035)+i*1.7)*28;
+      const x=(i*89+34+drift)%(width+100)-50;
+      const y=78+(i*47)%190+(reduce?0:Math.sin(t*.31+i)*7);
+      c.save();c.translate(x,y);c.scale(1.9+i%2*.55,.42+i%3*.06);
+      const bank=c.createRadialGradient(0,0,2,0,0,38);
+      bank.addColorStop(0,i%2?'#e5eee0a0':'#d8e9e18c');
+      bank.addColorStop(.48,i%2?'#deeadc5e':'#d0e2dc52');bank.addColorStop(1,'#d9e8df00');
+      ellipse(c,bank,0,0,38,38);c.restore();
+    }
+    c.restore();
+    if(!reduce)for(let i=0;i<9;i++){
+      const glow=.28+.18*Math.sin(t*1.25+i*2.3);
+      ellipse(c,`rgba(238,244,205,${glow})`,26+(i*61)%width,42+(i*37)%210,.65,.65);
     }
   } else if(w==='heat'||w==='cloud'){
     box(c,w==='heat'?'#f4b35f20':'#63818a26',0,0,width,height,0);

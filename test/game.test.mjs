@@ -51,6 +51,28 @@ test('feeding and better shelter matter for growth and producing goods',()=>{
   const pen={kind:'chicken',at:start+6*slotLength,age:0,progress:0,fedUntil:start+6*slotLength+110};
   assert.ok(projectAnimal(r,{coop:2},pen,start+6*slotLength+60).age>projectAnimal(r,{coop:1},pen,start+6*slotLength+60).age);
 });
+test('experience and workshop levels unlock new crops and animals',()=>{
+  const r=world(),farm=r.farms.a;
+  farm.coins=2000;
+  farm.inventory.tomatoSeed=1;
+  assert.throws(()=>action(r,'a','plant',{item:'tomato',index:0}),/25 XP/);
+  farm.xp=25;
+  action(r,'a','plant',{item:'tomato',index:0});
+  assert.equal(farm.plots[0].kind,'tomato');
+
+  farm.xp=0;
+  action(r,'a','upgrade',{item:'coop'});
+  assert.throws(()=>action(r,'a','animal',{item:'duck'}),/20 XP/);
+  farm.xp=20;
+  action(r,'a','animal',{item:'duck'});
+  farm.xp=40;
+  action(r,'a','upgrade',{item:'workshop'});
+  assert.equal(farm.workshop,1);
+  action(r,'a','buy',{item:'strawberrySeed'});
+  action(r,'a','plant',{item:'strawberry',index:1});
+  assert.equal(farm.plots[1].kind,'strawberry');
+  assert.throws(()=>action(r,'a','buy',{item:'grapeSeed'}),/Xưởng máy cấp 2/);
+});
 test('garden and barn theft keep reserves, share caps, reset daily, and respect upgrades',()=>{
   const r=world(), b=r.farms.b;
   b.inventory.carrot=5;
