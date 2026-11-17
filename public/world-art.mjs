@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {pixelCharacter,pixelSlice} from './pixel/frames.mjs';
+import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 
 const load = source => {
   const image = new Image();
@@ -39,6 +39,8 @@ export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),s
 });
 const dim = image => image.complete && image.naturalWidth > 0;
 const {width,height}=size;
+const pixelStep=width/pixelViewport.width;
+const snapPixel=value=>Math.round(value/pixelStep)*pixelStep;
 const seed=(x,y)=>((Math.imul(x+153,3577289)^Math.imul(y+5,137591))>>>0)%997/997;
 function box(c,color,x,y,w,h,r=2) {
   c.fillStyle=color;
@@ -479,7 +481,7 @@ export function pixelPerson(c,x,y,direction,t,moving,action=''){
   const working=!!action&&!['cast'].includes(action),state=working?'work':moving?'walk':'idle';
   const animation=pixelCharacter.states[state],frame=animation.first+Math.floor(t*animation.fps)%animation.frames;
   const row=pixelCharacter.directions[direction]??0,sx=frame*pixelCharacter.cellWidth,sy=row*pixelCharacter.cellHeight;
-  const px=Math.round(x/1.5)*1.5,py=Math.round(y/1.5)*1.5;
+  const px=snapPixel(x),py=snapPixel(y);
   shade(c,px,py,10.5,moving?3.2:3.8);
   c.save();c.imageSmoothingEnabled=false;
   c.drawImage(pixelCharacters,sx,sy,pixelCharacter.cellWidth,pixelCharacter.cellHeight,px-18,py-48,36,48);
@@ -492,7 +494,7 @@ export function pixelPerson(c,x,y,direction,t,moving,action=''){
 }
 export function pixelActor(c,a,t,state){
   if(!dim(pixelObjects))return false;
-  const px=Math.round(a.x/1.5)*1.5,py=Math.round(a.y/1.5)*1.5;
+  const px=snapPixel(a.x),py=snapPixel(a.y);
   if(a.type==='house'){
     const frame=pixelSlice.house;
     shade(c,px+3,py,36,6);
@@ -523,7 +525,7 @@ export function pixelActor(c,a,t,state){
     const animation=info.states[stateName];
     const frame=animation.first+Math.floor(t*animation.fps)%animation.frames;
     const sx=info.x+(frame%info.columns)*info.cell,sy=info.y+Math.floor(frame/info.columns)*info.cell;
-    const chickenX=Math.round((a.x+offset)/1.5)*1.5;
+    const chickenX=snapPixel(a.x+offset);
     shade(c,chickenX,py,8,stateName==='walk'?3.2:3.8);
     c.save();c.imageSmoothingEnabled=false;
     c.translate(chickenX,0);c.scale(facing,1);

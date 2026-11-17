@@ -1,5 +1,6 @@
 import {features, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
+import {pixelViewport} from './pixel/frames.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actor, artReady, atmosphere, drawTask, gate, grass, landscapeEntity, landscapeLife, person, pixelActor, pixelPerson, water} from './world-art.mjs';
 
@@ -20,14 +21,8 @@ const effectStyle={
 export function createWorld(root, onInteract) {
   const canvas=root.querySelector('canvas'), context=canvas.getContext('2d');
   const terrain=document.createElement('canvas');
-  const pixelBuffer=document.createElement('canvas'),pixelContext=pixelBuffer.getContext('2d');
   const resolution=2;
-  canvas.width=size.width*resolution;
-  canvas.height=size.height*resolution;
   const ctx=terrain.getContext('2d');
-  context.scale(resolution,resolution);
-  pixelBuffer.width=320;pixelBuffer.height=192;
-  pixelContext.imageSmoothingEnabled=false;
   void artReady.then(()=>{if(sceneId)paintTerrain();});
   const keys=new Set();
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
@@ -41,19 +36,19 @@ export function createWorld(root, onInteract) {
 
   function syncPixelToggle(){
     const available=sceneId==='field';
+    const pixel=available&&pixelPreview;
     pixelToggle.hidden=!available;
     pixelToggle.textContent='Pixel: '+(pixelPreview?'Bật':'Tắt');
     pixelToggle.setAttribute('aria-pressed',String(pixelPreview));
-    root.dataset.pixel=String(available&&pixelPreview);
-  }
-  function applyPixelPreview(){
-    if(sceneId!=='field'||!pixelPreview)return;
-    pixelContext.clearRect(0,0,pixelBuffer.width,pixelBuffer.height);
-    pixelContext.drawImage(canvas,0,0,canvas.width,canvas.height,0,0,pixelBuffer.width,pixelBuffer.height);
-    context.save();context.setTransform(1,0,0,1,0,0);context.imageSmoothingEnabled=false;
-    context.clearRect(0,0,canvas.width,canvas.height);
-    context.drawImage(pixelBuffer,0,0,pixelBuffer.width,pixelBuffer.height,0,0,canvas.width,canvas.height);
-    context.restore();
+    root.dataset.pixel=String(pixel);
+
+    const width=pixel?pixelViewport.width:size.width*resolution;
+    const height=pixel?pixelViewport.height:size.height*resolution;
+    if(canvas.width!==width||canvas.height!==height){
+      canvas.width=width;
+      canvas.height=height;
+      context.setTransform(width/size.width,0,0,height/size.height,0,0);
+    }
   }
 
   function paintTerrain(){
@@ -225,8 +220,12 @@ export function createWorld(root, onInteract) {
     refreshHint();
     const t=now/1000, ambient=reduce.matches?0:t;
     shiftCamera();
-    context.drawImage(terrain,camera.x*resolution,camera.y*resolution,size.width*resolution,size.height*resolution,0,0,size.width,size.height);
-    context.save();context.translate(-camera.x,-camera.y);
+    const pixel=sceneId==='field'&&pixelPreview;
+    const scale=pixelViewport.width/size.width;
+    const cameraX=pixel?Math.round(camera.x*scale)/scale:camera.x;
+    const cameraY=pixel?Math.round(camera.y*scale)/scale:camera.y;
+    context.drawImage(terrain,cameraX*resolution,cameraY*resolution,size.width*resolution,size.height*resolution,0,0,size.width,size.height);
+    context.save();context.translate(-cameraX,-cameraY);
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
     const highlight=active?.type==='plot'?active:null;
@@ -265,7 +264,7 @@ export function createWorld(root, onInteract) {
       if(a.x<camera.x-75||a.y<camera.y-28||a.x>camera.x+size.width+75||a.y>camera.y+size.height+95)continue;
       if(a.type==='player'){
         const action=now<poseUntil?pose:fishingHere&&!walking?'cast':'';
-        if(sceneId==='field'&&pixelPreview)pixelPerson(context,x,y,facing,reduce.matches?0:t,walking,action);
+        if(pixel)pixelPerson(context,x,y,facing,reduce.matches?0:t,walking,action);
         else person(context,x,y,facing,reduce.matches?0:t,walking,undefined,action);
       }
       else if(a.type==='peer'){
@@ -275,7 +274,7 @@ export function createWorld(root, onInteract) {
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,a.y-38,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,a.y-31.6);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
-      else if(!(sceneId==='field'&&pixelPreview&&pixelActor(context,a,ambient,snapshot))) actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
+      else if(!(pixel&&pixelActor(context,a,ambient,snapshot))) actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');
@@ -298,7 +297,6 @@ export function createWorld(root, onInteract) {
     drawEffects(now);
     context.restore();
     if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
-    applyPixelPreview();
     drawRadar();
     requestAnimationFrame(frame);
   }
