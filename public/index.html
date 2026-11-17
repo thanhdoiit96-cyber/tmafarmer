@@ -42,16 +42,17 @@
     <button class="avatar-menu music-menu" type="button" data-music-menu aria-label="Nhạc nền"><svg aria-hidden="true"><use href="#i-music"/></svg><span>Nhạc nền</span></button>
     <button class="avatar-menu" type="button" data-avatar-menu aria-label="Nhân vật"><svg aria-hidden="true"><use href="#i-users"/></svg><span>Nhân vật</span></button>
     <button id="room" class="room" data-room><svg aria-hidden="true"><use href="#i-users"/></svg><span>Vào làng</span></button>
-    <button class="help landscape-only" type="button" aria-label="Hướng dẫn" data-info><svg aria-hidden="true"><use href="#i-help"/></svg></button>
   </div>
 </div></header>
 <main class="shell">
   <div class="workspace">
     <div class="page-title"><div><p id="sub-title" class="eyebrow">Vườn chơi thử</p><h1 id="title">Vườn nhà</h1><p id="subtitle">Gieo hạt, chăm vườn và thu hoạch theo thời tiết.</p></div><button class="help" type="button" aria-label="Hướng dẫn" data-info><svg aria-hidden="true"><use href="#i-help"/></svg><span>Hướng dẫn</span></button></div>
     <p class="rotate-hint"><svg aria-hidden="true"><use href="#i-rotate"/></svg>Xoay ngang điện thoại để mở rộng bản đồ.</p>
-    <div class="status-hud">
-      <section id="vital-hud" aria-label="Sức khỏe nhân vật"></section>
-      <section id="task-hud" aria-label="Việc cần làm"></section>
+    <div id="status-slot">
+      <div class="status-hud">
+        <section id="vital-hud" aria-label="Sức khỏe nhân vật"></section>
+        <section id="task-hud" aria-label="Việc cần làm"></section>
+      </div>
     </div>
     <nav id="nav" aria-label="Khu vực"></nav>
     <div class="layout">
@@ -64,6 +65,7 @@
               <span class="world-stat wallet"><svg aria-hidden="true"><use href="#i-coins"/></svg><span id="coin">— xu</span></span>
             </div>
             <div id="world-weather"></div>
+            <button class="btn landscape-only mobile-menu" type="button" data-mobile-menu aria-haspopup="dialog"><svg aria-hidden="true"><use href="#i-pin"/></svg>Khu vực</button>
           </div>
           <div class="map-radar" id="map-radar" aria-hidden="true"><canvas width="104" height="63" data-radar></canvas></div>
           <div class="world-dpad" aria-label="Điều khiển hướng">
