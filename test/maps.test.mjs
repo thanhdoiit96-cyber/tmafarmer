@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {newFarm} from '../public/game.mjs';
-import {features,maps,route,walkable} from '../public/world-layout.mjs';
+import {features,maps,neighborHouseTier,route,walkable} from '../public/world-layout.mjs';
 
 const neighbors=Array.from({length:11},(_,i)=>({id:String(i),name:'Vườn '+i,plots:Array(12).fill(null)}));
 const me=newFarm('me','Vườn nhà',0);
 me.plots=Array(12).fill(null);
 const data={me,neighbors};
+test('neighbor houses advance through the five wealth milestones',()=>{
+  assert.deepEqual([0,500,501,1000,1001,5000,5001,20000,20001].map(neighborHouseTier),[0,0,1,1,2,2,3,3,4]);
+});
 test('all map entries and interaction points are reachable',()=>{
   for(const [id,map] of Object.entries(maps)){
     const scene=features(id,data,id==='visit'?neighbors[0]:undefined);

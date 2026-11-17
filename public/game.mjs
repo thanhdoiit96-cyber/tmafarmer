@@ -311,8 +311,10 @@ export function snapshot(room, farm, time) {
   delete me.soilAt;
   delete me.soilSince;
   const fulfilled=townOrdersAt(room,day);
+  const wealth=wealthRanking(room);
+  const wealthByFarm=new Map(wealth.map(entry=>[entry.id,entry.total]));
   return {me,day,now:time,weather:weatherAt(room,time),forecast:weatherAt(room,next),next,afterRainUntil:afterRainUntil(room,time),
-    dayEnds, dayLength:plan.dayLength, wealth:wealthRanking(room),
+    dayEnds, dayLength:plan.dayLength, wealth,
     orders:orderList(day).filter(order=>!fulfilled.done.includes(order.slot)), nextOrders:orderList(day+1),
     village:{...villageSnapshot(room,day),theftsLeft:villageTheftsLeft(room,day)},
     fishingLimit:publicFishingLimit(room),
@@ -330,7 +332,7 @@ export function snapshot(room, farm, time) {
         return p?.available?[{kind:p.kind,index}]:[];
       });
       const ponds=Object.fromEntries(Object.entries(pondsAt(room,f,time)).map(([i,batch])=>[i,batch?{kind:batch.kind,ripe:pondReady(batch),available:batch.kind!=='prawn'&&!!pondReady(batch)&&pondYield(batch)>=3}:null]));
-      return {ponds,land:getLand(f),decor:f.decor,plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),
+      return {ponds,land:getLand(f),decor:f.decor,plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),wealth:wealthByFarm.get(f.id)??0,
         visiblePens:f.pens.map(p=>({kind:p.kind,lot:p.lot})),id:f.id,name:f.name,field:f.field,coop:f.coop,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
         available:Math.max(0,3-f.fence-dailyAt(room,f,time).lost)};
     })};

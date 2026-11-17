@@ -79,6 +79,7 @@ export function plotPosition(index){
   return {x:lot.x+25+(index%3)*49,y:lot.y+47};
 }
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
+export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
 const coopPosition = i => ({x:115+i%3*72,y:126+Math.floor(i/3)*48});
 const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
 export function features(id, snapshot, neighbor, page=0) {
@@ -183,8 +184,9 @@ export function features(id, snapshot, neighbor, page=0) {
     }
     for(const [i,data] of snapshot.neighbors.slice(page*6,page*6+6).entries()) {
       const pos=visitorPosition(i);
-      actors.push({...pos,type:'neighbor',style:i%2?'visit':'home',w:53,h:31});
-      blocks.push(rect(pos.x-20,pos.y-13,40,13));
+      const tier=neighborHouseTier(data.wealth??0);
+      actors.push({...pos,type:'neighbor',name:data.name,tier,w:53+tier*3,h:31+tier*2});
+      blocks.push(rect(pos.x-22-tier,pos.y-15-tier,44+tier*2,15+tier));
       hotspots.push({...pos,y:pos.y+13,type:'neighbor',id:data.id,label:data.name});
     }
   }

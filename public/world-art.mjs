@@ -411,6 +411,47 @@ export function person(c,x,y,direction,t,moving,style='player',action=''){
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
+function neighborHouse(c,a,t){
+  const {x,y,name='',tier=0}=a;
+  const width=51+tier*3,height=30+tier*2;
+  const walls=['#dfc68f','#e4c590','#e0bd83','#d7b276','#d9b67a'][tier];
+  const trim=['#f5e5bc','#f7e7bd','#f7e4b5','#f5dca6','#ffe8ae'][tier];
+  const roof=['#8b5d45','#805944','#6e5546','#536052','#485c53'][tier];
+  shade(c,x+2,y+2,width*.55,5+tier*.35);
+
+  // Each wealth tier adds a clearer silhouette and more crafted details.
+  box(c,walls,x-width*.42,y-height*.58,width*.84,height*.58,2);
+  if(tier>=2)box(c,trim,x-width*.44,y-height*.61,width*.88,3,1);
+  c.fillStyle=roof;c.beginPath();
+  c.moveTo(x-width*.52,y-height*.54);c.lineTo(x,y-height);c.lineTo(x+width*.52,y-height*.54);
+  c.lineTo(x+width*.43,y-height*.48);c.lineTo(x-width*.43,y-height*.48);c.closePath();c.fill();
+  line(c,trim,.65,[[x-width*.47,y-height*.53],[x,y-height*.94],[x+width*.47,y-height*.53]]);
+  box(c,'#755038',x-4,y-13,8,13,1);
+  box(c,tier>=3?'#a9d8d5':'#9bc3c1',x-width*.29,y-13,7,7,1);
+  box(c,tier>=3?'#a9d8d5':'#9bc3c1',x+width*.29-7,y-13,7,7,1);
+  line(c,trim,.65,[[x-width*.29+3.5,y-13],[x-width*.29+3.5,y-6]]);
+  line(c,trim,.65,[[x+width*.29-3.5,y-13],[x+width*.29-3.5,y-6]]);
+  if(tier>=1)box(c,'#695047',x-width*.31,y-height*.90,4,9,1);
+  if(tier>=2){
+    ellipse(c,'#cf9c54',x-width*.50,y-2,4,2.2);ellipse(c,'#70945e',x-width*.50,y-5,4,3);
+    ellipse(c,'#d3a057',x+width*.50,y-2,4,2.2);ellipse(c,'#6d925c',x+width*.50,y-5,4,3);
+  }
+  if(tier>=3){
+    box(c,'#eee1bd',x-width*.54,y-height*.44,3,height*.45,1);
+    box(c,'#eee1bd',x+width*.54-3,y-height*.44,3,height*.45,1);
+  }
+  if(tier>=4){
+    const glint=.35+Math.sin(t*2.1+x)*.12;
+    ellipse(c,`rgba(255,226,132,${glint})`,x,y-height*.82,3.3,3.3);
+    line(c,'#f0d184',1,[[x,y-height*.87],[x,y-height*.77]]);
+  }
+
+  const fullName=String(name),label=fullName.length>13?fullName.slice(0,12)+'…':fullName;
+  c.save();c.font='700 5.5px system-ui';c.textAlign='center';
+  const labelWidth=Math.min(width-4,c.measureText(label).width+8);
+  box(c,'#344c3be8',x-labelWidth*.5,y-height*.75,labelWidth,9,3);
+  c.fillStyle='#fff3d2';c.fillText(label,x,y-height*.75+6.3);c.restore();
+}
 export function actor(c,a,t,state){
   const {x,y,type,w,style}=a;
   if(type==='dock'){
@@ -471,6 +512,7 @@ export function actor(c,a,t,state){
     shade(c,x+5,y-1,spread*.57,6);
     return sprite(c,'tree',x,y,spread,tall,seed(y,x)>.5,Math.sin(t*1.5+y)*(state.weather.id==='wind'||state.weather.id==='storm'?.055:.022));
   }
+  if(type==='neighbor')return neighborHouse(c,a,t);
   if(type==='foundation'){
     shade(c,x,y+6,41,7);box(c,'#9a855a',x-38,y-12,76,24,4);box(c,'#c2a978',x-36,y-11,72,20,3);
     for(let i=0;i<4;i++)line(c,'#9c7957a5',.65,[[x-34,y-8+i*5],[x+33,y-8+i*5]]);
@@ -484,7 +526,7 @@ export function actor(c,a,t,state){
     for(let i=0;i<11;i++)ellipse(c,'#e6bc73',x-9+i*1.65,y-9+(i%2)*1.15,1,.8);
     return;
   }
-  const name=type==='neighbor'?'house':type;
+  const name=type;
   const spriteWidth=type==='house'?w*.96:type==='coop'?w*.78:type==='well'?w*1.05:w;
   const ratio=type==='well'?1.45:type==='house'||type==='neighbor'?1.02:type==='coop'?1.03:type==='barn'?.94:.84;
   shade(c,x+3,y,spriteWidth*.61,6);
@@ -506,16 +548,46 @@ export function gate(c,a,t){
 export function atmosphere(c,t,w,reduce,daylight=0){
   if(w==='rain'||w==='storm'){
     const storm=w==='storm';
-    box(c,storm?'#2e3c6451':'#486b8734',0,0,width,height,0);
-    for(let i=0;i<(storm?135:85);i++){
-      const x=(i*59+t*(storm?227:164))%500-10,y=(i*37+t*(145+i%4*22))%310-10;
-      line(c,i%2?'#deebe7a0':'#a5c8d288',i%3?.48:.75,[[x,y],[x-(storm?6:3),y+(storm?10:7)]]);
-    }
-    if(storm&&!reduce&&t%18.2<.15)box(c,'#deebff50',0,0,width,height,0);
-    for(let i=0;i<14;i++){
-      const life=reduce?.6:(t*1.9+i*.43)%1,x=(i*83+53)%width,y=(i*53+27)%height;
-      c.strokeStyle='rgba(211,238,224,'+(.52*(1-life))+')';c.lineWidth=.50;
-      c.beginPath();c.ellipse(x,y,1+life*6,.5+life*2,0,0,Math.PI*2);c.stroke();
+    const veil=c.createLinearGradient(0,0,0,height);
+    veil.addColorStop(0,storm?'#29365466':'#47698142');
+    veil.addColorStop(.62,storm?'#3446654d':'#53788a2d');
+    veil.addColorStop(1,storm?'#263b4b38':'#436b7130');
+    box(c,veil,0,0,width,height,0);
+
+    // Several rain planes keep the shower from looking like one flat moving grid.
+    const planes=storm
+      ? [[54,178,5.5,11,.34],[58,228,7.5,16,.52],[45,292,10,22,.72]]
+      : [[34,125,2.5,7,.25],[37,166,3.7,10,.42],[26,215,5.5,14,.62]];
+    const gust=reduce?0:Math.sin(t*.43)*1.4+Math.sin(t*.17+1.8)*.8;
+    c.save();c.lineCap='round';
+    planes.forEach(([count,speed,slant,length,alpha],layer)=>{
+      const travel=height+length+24;
+      for(let i=0;i<count;i++){
+        const phase=(i*83+layer*47)%travel;
+        const y=reduce?(phase%height):(phase+t*(speed+i%5*3))%travel-12;
+        const lane=(i*137+layer*61)% (width+70)-35;
+        const drift=reduce?0:t*(storm?34:20)+Math.sin(i*2.7+t*.55)*3;
+        const x=(lane+drift)%(width+70)-20;
+        const lean=slant+gust+(i%4-1.5)*.35;
+        c.strokeStyle=`rgba(${layer===2?'224,242,244':'183,215,224'},${alpha})`;
+        c.lineWidth=layer===2?.82:.42+layer*.12;
+        c.beginPath();c.moveTo(x,y);c.lineTo(x-lean,y+length+(i%3));c.stroke();
+      }
+    });
+    c.restore();
+
+    if(!reduce){
+      const flashPhase=t%18.2;
+      if(storm&&flashPhase<.30){
+        const flash=Math.sin(flashPhase/.30*Math.PI);
+        box(c,`rgba(222,235,255,${flash*.24})`,0,0,width,height,0);
+      }
+      for(let i=0;i<(storm?19:13);i++){
+        const life=(t*(storm?2.2:1.65)+i*.571)%1;
+        const x=(i*97+31)%width,y=height*.39+(i*47%Math.round(height*.58));
+        c.strokeStyle=`rgba(211,238,232,${.46*(1-life)})`;c.lineWidth=.46;
+        c.beginPath();c.ellipse(x,y,1.2+life*5.5,.45+life*1.65,0,0,Math.PI*2);c.stroke();
+      }
     }
   } else if(w==='fog'){
     box(c,'#d5e4c435',0,0,width,height,0);
