@@ -34,6 +34,7 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const row=db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code);
   const state=JSON.parse(row.state);
   state.farms[a.state.me.id].plots[0].at=unixNow()-600;
+  state.farms[a.state.me.id].plots[0].wetUntil=unixNow()+60;
   state.created-=600;
   state.farms[a.state.me.id].inventory.carrot=4;
   db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(state),a.code);
@@ -49,6 +50,9 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.deepEqual(transactions.map(x=>x.status).sort(),[200,400]);
   assert.equal((await api('state',null,a)).state.me.coins,121);
   assert.equal((await api('state',null,a)).state.listings.length,0);
+  assert.equal((await send(a,'aquaStock',{index:0,item:'tilapia',qty:1})).status,200);
+  const mixed=await send(a,'aquaStock',{index:0,item:'prawn',qty:1});
+  assert.deepEqual(mixed.state.me.pondBatches[0].map(batch=>batch.kind),['tilapia','prawn']);
   const pose={x:140,y:180,facing:'right',walking:true};
   const enter=(p,area,host)=>api('scene',{area,host,pose},p);
   assert.equal((await enter(a,'lake')).players.length,0);

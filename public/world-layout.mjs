@@ -1,17 +1,16 @@
-import {fenceAt,getLand,homesteadSize,landTypes,lotCount,plotOffset,pondOffset} from './land.mjs';
-import {fishing} from './aqua.mjs';
+import {fenceAt,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPond,plotOffset,pondOffset} from './land.mjs';
+import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 
 export const size = { width: 480, height: 288 };
 const wide={width:720,height:432};
 
-export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,w:148,h:81});
+export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,...lotSize});
 const baseGarden=(rows)=>[{x:146,y:43,w:59,h:43*(rows-1)+36},{x:249,y:43,w:108,h:43*(rows-1)+36}];
 const basePen={x:82,y:106,w:258,h:95};
-const basePonds=[{x:547,y:125,w:145,h:133,shape:'rect'},{x:548,y:286,w:128,h:50,shape:'rect'}];
 const docks = {
-  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi cá',side:'right'}, {x:583,y:350,type:'pond',index:1,label:'Ao nuôi tôm',side:'up'}],
-  visit:[{x:530,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ao cá',side:'right'}],
+  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'right'}, {x:583,y:350,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'up'}],
+  visit:[{x:530,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
   lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };
 const rect = (x, y, w, h) => ({ x, y, w, h });
@@ -21,7 +20,7 @@ export const maps = {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[236,221], bounds:homesteadSize,
     paths:[[[0,234],[72,236],[123,219],[182,226],[234,224],[237,155],[229,96],[235,51],[234,0]],[[234,224],[313,230],[367,210],[428,218],[476,232],[530,224],[521,289],[528,358],[530,405],[582,407],[589,382],[583,350]],[[234,224],[236,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[89,188],[79,153],[82,121],[98,116],[houseDoor.x,110],[houseDoor.x,houseDoor.y]],[[389,212],[389,128]],[[236,286],[229,333],[234,409],[234,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
     trees:[[30,33],[47,75],[14,135],[15,181],[412,46],[448,89],[465,29],[39,271],[91,268],[416,271],[472,265],[487,70],[540,61],[658,49],[702,116],[709,251],[701,375],[655,406],[505,377],[389,351],[295,400],[156,359],[80,388]],
-    water:[rect(21,92,43,106),rect(28,198,24,19),...basePonds],
+    water:[rect(21,92,43,106),rect(28,198,24,19),mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:397,y:146,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:91,y:184,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
     exits:[exit(234,13,'Đường sang chợ','market',[238,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(234,273,'Sang xóm bên','neighbors',[238,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
@@ -132,21 +131,21 @@ export function features(id, snapshot, neighbor, page=0) {
       ground.push({...garden,type:'garden-bed'});
       decor(-1,garden);
     }
-    decor(-2,basePonds[0]);decor(-3,basePonds[1]);
+    decor(-2,mainPond);
     const land=getLand(owner);
     for(let i=0;i<lotCount;i++){
       const lot=land[i], area=lotRect(i), x=area.x+area.w*.5, y=area.y+area.h+7;
       ground.push({...area,type:'lot',lot,index:i});
       if(id==='field')hotspots.push({x,y,type:'land',index:i,label:(lot?.kind&&lot.kind!=='empty'?landTypes[lot.kind].name:lot?'Đất trống':'Mua đất')+' · Ô '+(i+1)});
       if(lot?.fence)ground.push({...area,type:'fence',style:lot.fence});
-      if(lot?.kind==='fish'||lot?.kind==='shrimp'){
-        const section={x:area.x+9,y:area.y+8,w:area.w-18,h:area.h-24,shape:'rect'};
+      if(lot?.kind==='pond'){
+        const section={x:area.x+lotPondInset.x,y:area.y+lotPondInset.y,w:area.w-lotPondInset.w,h:area.h-lotPondInset.h,shape:'rect'};
         water.push(section);
-        const data=owner.ponds?.[pondOffset+i];
+        const batches=visiblePondBatches(owner,pondOffset+i);
         const dock={x,y:y-12,index:i+pondOffset,side:'up',label:landTypes[lot.kind].name+' · Ô '+(i+1)};
-        actors.push({...dock,type:'dock',data,upgraded:id==='lake'&&(snapshot.fishingLimit??fishing.limit)>fishing.limit});
+        actors.push({...dock,type:'dock',batches});
         if(id==='field')hotspots.push({...dock,type:'pond'});
-        else if(lot.kind==='fish')hotspots.push({...dock,type:'neighbor-fishing'});
+        else hotspots.push({...dock,type:'neighbor-fishing'});
       }
       if(lot?.kind==='coop'){
         actors.push({x:area.x+area.w*.5,y:area.y+37,type:'coop',w:51});
@@ -177,8 +176,8 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(well.x-11,well.y-7,22,8));
   }
   for(const dock of docks[id]??[]){
-    const batch=id==='field'?farm.ponds?.[dock.index]:id==='visit'?neighbor?.ponds?.[dock.index]:null;
-    actors.push({...dock,type:'dock',data:batch});
+    const batches=visiblePondBatches(owner,dock.index);
+    actors.push({...dock,type:'dock',batches,upgraded:id==='lake'&&(snapshot.fishingLimit??fishing.limit)>fishing.limit});
     hotspots.push(dock);
   }
   if(id==='field') actors.push({x:124,y:133,type:'wildlife',index:0,data:{kind:'chicken'}});

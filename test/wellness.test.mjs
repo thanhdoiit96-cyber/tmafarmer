@@ -50,7 +50,12 @@ test('older stock completes its old goal and new animals use separate growth and
   act(room,'feed',{index:0});
   assert.throws(()=>act(room,'collect',{index:0},5500),/chưa sẵn/);
   act(room,'collect',{index:0},animals.pig.grow+animals.pig.time+10);
-  assert.equal(farm.inventory.truffle,2);
+  assert.equal(farm.inventory.pork,4);
+  assert.equal(farm.pens.length,0);
+  const time=animals.pig.grow+animals.pig.time+11;
+  act(room,'animal',{item:'chicken'},time);
+  assert.throws(()=>act(room,'feed',{index:0,target:'0'},time),/không tồn tại/);
+  act(room,'feed',{index:0,target:String(farm.pens[0].id)},time);
 });
 
 test('task priorities and wealth use current status and system prices',()=>{

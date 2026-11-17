@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {farmTasks} from '../public/tasks.mjs';
-import { gameDay, slotLength, apply, newFarm, newRoom, projectAnimal, projectPlot, snapshot } from '../public/game.mjs';
+import { gameDay, slotLength, apply, cropYield, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot } from '../public/game.mjs';
 
 const start=10_000;
 function world() {
@@ -77,6 +77,7 @@ test('garden and barn theft keep reserves, share caps, reset daily, and respect 
   const r=world(), b=r.farms.b;
   b.inventory.carrot=5;
   action(r,'b','plant',{item:'wheat',index:0});
+  action(r,'b','water',{index:0});
   action(r,'a','steal',{target:'b',source:'garden',index:0},600);
   assert.throws(()=>action(r,'a','steal',{target:'b',source:'barn',item:'carrot'},601),/đã lấy/);
   action(r,'b','upgrade',{item:'fence'},601);
@@ -95,6 +96,48 @@ test('garden and barn theft keep reserves, share caps, reset daily, and respect 
   assert.equal(r.farms.e.inventory.corn,3);
   assert.throws(()=>action(r,'f','steal',{target:'e',source:'barn',item:'corn'},gameDay+5),/ít nhất 3/);
   assert.equal(snapshot(r,r.farms.a,start+gameDay+5).me.daily.taken,3);
+});
+
+test('dry soil slows growth in the same weather and pest damage reduces the actual harvest',()=>{
+  const r=world(), farm=r.farms.a;
+  const plot={kind:'corn',goal:1500,at:start,progress:0,pests:0,wetUntil:0,protectedUntil:0,picked:0};
+  const dry=projectPlot(r,plot,start+100);
+  const wet=projectPlot(r,{...plot,wetUntil:start+40},start+100);
+  assert.equal(dry.progress,65);
+  assert.ok(Math.abs(wet.progress-(40*1.38+60*.65))<1e-7);
+  for(const [index,pests,expected] of [[0,0,4],[1,22,3],[2,42,2],[3,79,1]]){
+    farm.plots[index]={...plot,pests,progress:1500};
+    const before=farm.inventory.corn??0;
+    assert.equal(cropYield(farm.plots[index]),expected);
+    action(r,'a','harvest',{index});
+    assert.equal(farm.inventory.corn-before,expected);
+  }
+  farm.plots[4]={...plot,pests:45};
+  action(r,'a','spray',{index:4});
+  assert.equal(farm.plots[4].pests,0);
+  assert.equal(cropYield(farm.plots[4]),2);
+});
+
+test('pork orders accept meat and the market locks truffle seed behind workshop and XP',()=>{
+  const r=world(), farm=r.farms.a;
+  farm.coins=500; farm.inventory.truffle=3;
+  const day=3;
+  const order=orderList(day).find(row=>row.items.some(item=>item.item==='pork'));
+  assert.ok(order);
+  assert.throws(()=>action(r,'a','order',{index:order.id},day*gameDay),/chưa có đủ hàng/);
+  farm.inventory.pork=4;
+  action(r,'a','order',{index:order.id},day*gameDay);
+  assert.equal(farm.inventory.pork,2);
+  assert.equal(farm.inventory.truffle,3);
+  assert.throws(()=>action(r,'a','buy',{item:'truffleSeed'}),/Xưởng máy cấp 3/);
+  farm.workshop=3;
+  assert.throws(()=>action(r,'a','buy',{item:'truffleSeed'}),/350 XP/);
+  farm.xp=350;
+  const coins=farm.coins;
+  action(r,'a','buy',{item:'truffleSeed'});
+  assert.equal(farm.coins,coins-180);
+  action(r,'a','plant',{item:'truffle',index:0});
+  assert.equal(farm.plots[0].kind,'truffle');
 });
 test('market escrow transfers goods and coins once',()=>{
   const r=world(), a=r.farms.a,b=r.farms.b;

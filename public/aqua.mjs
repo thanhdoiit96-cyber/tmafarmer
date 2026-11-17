@@ -4,10 +4,6 @@ export const aquatic = {
   carp:{name:'Cá chép', seed:'carpSeed', time:55*60, yield:4, food:2},
 };
 export const fishing = { wait:6, window:55, cooldown:45, limit:12 };
-export const pondKinds = [
-  {name:'Ao cá', species:['tilapia','carp']},
-  {name:'Ao tôm', species:['prawn']},
-];
 export const aquaGoods = {
   tilapiaSeed:{name:'Cá rô phi giống', icon:'🐟', buy:12},
   prawnSeed:{name:'Tôm càng giống', icon:'🦐', buy:22},
@@ -21,8 +17,7 @@ export const aquaGoods = {
 };
 
 export function projectPond(batch, now, eachWeather) {
-  if (!batch) return null;
-  const next={...batch};
+  const next={...batch,count:batch.count??1,picked:batch.picked??0};
   const def=aquatic[batch.kind];
   next.progress=Math.min(next.progress,def.time);
   eachWeather(batch.at,Math.min(now,batch.fedUntil),(weather,from,to)=>{
@@ -32,13 +27,23 @@ export function projectPond(batch, now, eachWeather) {
   return next;
 }
 
+export const pondReady=batch=>batch.progress>=aquatic[batch.kind].time;
+export const pondYield=batch=>aquatic[batch.kind].yield*(batch.count??1)-(batch.picked??0);
+export const pondFood=batch=>aquatic[batch.kind].food*(batch.count??1);
+export function visiblePondBatches(farm,index){
+  const batch=farm?.ponds?.[index];
+  return farm?.pondBatches?.[index]??(Array.isArray(batch)?batch:batch?[batch]:[]);
+}
+
 export function fishingState(farm, day, now) {
   const history=farm.fishing;
   const cast=history?.cast;
   return {
     used:history?.day===day?history.used:0,
     nextAt:history?.nextAt??0,
-    cast:cast&&now<=cast.expires?cast:null,
+    cast:cast&&now<=cast.expires
+      ?cast.source==='pond'&&cast.index===1?{...cast,index:0}:cast
+      :null,
   };
 }
 

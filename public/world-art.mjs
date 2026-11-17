@@ -732,10 +732,13 @@ export function actor(c,a,t,state){
     c.rotate(angle);
     sprite(c,'pier',0,6,a.upgraded?26:18,a.upgraded?38:29);
     c.restore();
-    if(a.data){
+    if(a.batches.length){
       const ax=a.side==='right'?x+23:a.side==='left'?x-23:x+12,ay=a.side==='up'?y-25:y-7;
       c.save();c.globalAlpha=.68;
-      sprite(c,a.data.kind,ax+Math.sin(t*1.4)*5,ay+Math.cos(t)*2,14,9,false,Math.sin(t)*.16);
+      a.batches.forEach(({kind},i)=>{
+        const phase=t+i*2;
+        sprite(c,kind,ax+i*7+Math.sin(phase*1.4)*4,ay-i*8+Math.cos(phase)*2,14,9,false,Math.sin(phase)*.16);
+      });
       c.restore();
     }
     return;

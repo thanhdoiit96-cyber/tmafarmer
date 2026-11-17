@@ -37,13 +37,14 @@ test('additional gardens, ponds and livestock work with existing game actions',(
   act(room,'a','decorate',2,'wood');
   assert.throws(()=>act(room,'a','buildLand',0,'fish'),/đất trống/);
   act(room,'a','plant',12,'wheat');
+  act(room,'a','water',12,'');
   act(room,'a','harvest',12,'',500);
   assert.equal(a.inventory.wheat,3);
   act(room,'a','aquaStock',3,'tilapia',500);
   act(room,'a','aquaFeed',3,'',500);
   const elapsed=500+aquatic.tilapia.time+1;
   const guest=snapshot(room,room.farms.b,now+elapsed);
-  assert.equal(guest.neighbors[0].ponds[3].available,true);
+  assert.equal(guest.neighbors[0].pondBatches[3][0].available,true);
   apply(room,'b',{action:'cast',index:3,source:'pond',target:'a'},now+elapsed);
   act(room,'b','reel',undefined,'',elapsed+fishing.wait);
   act(room,'a','aquaHarvest',3,'',elapsed+fishing.wait);

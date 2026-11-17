@@ -10,15 +10,15 @@ Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vư�
 
 ## Lịch và thủy sản
 
-- Một ngày game kéo dài 8 giờ thực. Thời tiết thay đổi mỗi 2 giờ gồm nắng nhẹ, mưa rào, nhiều mây, nắng nóng, gió mạnh, sương và dông. Dữ liệu làng cũ ghi nhận thời điểm chuyển lịch khi vào lại. Ao cá và ao tôm có sẵn con giống và thức ăn khởi đầu.
+- Một ngày game kéo dài 8 giờ thực. Thời tiết thay đổi mỗi 2 giờ gồm nắng nhẹ, mưa rào, nhiều mây, nắng nóng, gió mạnh, sương và dông. Dữ liệu làng cũ ghi nhận thời điểm chuyển lịch khi vào lại. Vườn có sẵn cá giống, tôm giống và thức ăn khởi đầu.
 - Vườn nhà và vườn hàng xóm có kích thước 820 × 640 đơn vị, hồ làng có kích thước 720 × 432 đơn vị, với camera theo nhân vật và bản đồ nhỏ. Dùng nút khu vực để đi nhanh tới hồ làng hoặc men theo lối ra phía đông nam vườn nhà.
-- Chọn Ao nuôi hoặc đến cầu gỗ cạnh ao. Cá rô phi, tôm càng và cá chép cần lần lượt 20, 35 và 55 phút tăng trưởng cơ sở khi có thức ăn. Thời tiết làm thay đổi tốc độ lớn.
+- Chọn Ao nuôi hoặc đến cầu gỗ cạnh ao. Cá và tôm ở chung ao, với sức chứa 6 con ở ao chính và 2 con ở ao xây thêm. Cá rô phi, tôm càng và cá chép cần lần lượt 20, 35 và 55 phút tăng trưởng cơ sở khi có thức ăn. Thời tiết làm thay đổi tốc độ lớn.
 - Hồ làng miễn phí 12 lượt thành công/ngày. Thả câu và chờ 6 giây trước khi kéo cần, sau đó nghỉ 45 giây. Tỷ lệ cá chép vàng là 2% lúc sương, 4% lúc mưa rào và 3% trong các thời tiết còn lại có thể thả câu.
 - Câu ở ao hàng xóm chỉ lấy được 1 cá trưởng thành nếu chủ ao còn tối thiểu 3 con trước khi câu. Lượt câu dùng chung giới hạn lấy đồ từ ruộng và kho. Cổng đóng bảo vệ 30 phút.
 
 ## Đất và chơi cùng khu vực
 
-- Mỗi người có 2 ô đất trống cùng kích thước và các công trình cơ bản như nhau. Trong tab **Đất**, mua thêm tối đa 6 ô, chọn xây vườn có 3 luống, ao cá, ao tôm hoặc chuồng tối đa 2 con. Giá ô mua đầu tiên là 65 xu. Có thể chọn công trình từ bản đồ hoặc dùng **Tới ô**.
+- Mỗi người có 2 ô đất trống cùng kích thước và các công trình cơ bản như nhau. Trong tab **Đất**, mua thêm tối đa 6 ô, chọn xây vườn có 3 luống, ao nuôi hoặc chuồng tối đa 2 con. Giá ô mua đầu tiên là 65 xu. Có thể chọn công trình từ bản đồ hoặc dùng **Tới ô**.
 - Hàng rào có kiểu gỗ mật ong, gỗ trắng và tre xanh. Trang trí từng công trình từ tab **Đất** hoặc mở **Hàng rào công trình chính** trong **Xây dựng**. Hàng rào trang trí khác với nâng cấp an ninh.
 - Trong làng online, chợ, hồ và đường làng là khu chung. Ở vườn nhà, chủ và khách cùng xem một bố cục. Vị trí cập nhật khoảng 1,2 giây, trình duyệt nội suy giữa các cập nhật. Nút **Chat** nằm dưới bản đồ, chỉ hiện khi đã vào làng. Phòng chat theo khu vực, cùng người chơi trong làng.
 - Khi nâng cấp một bản tự triển khai, chạy lệnh migration D1 trước khi cập nhật Worker. Migration mới thêm bảng vị trí và chat, giữ dữ liệu farm hiện có.
