@@ -2,7 +2,8 @@ import {features, maps, plotPosition, route, size, walkable} from './world-layou
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {taskStyles} from './tasks.mjs';
-import {actor, artReady, atmosphere, drawTask, gate, grass, landscapeEntity, landscapeLife, person, pixelActor, pixelPerson, water} from './world-art.mjs';
+import {facingFromDelta, playerSpeed} from './world-motion.mjs';
+import {actor, artReady, atmosphere, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, pixelActor, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -35,9 +36,8 @@ export function createWorld(root, onInteract) {
   let pixelPreview=localStorage.getItem('mua-vui-pixel-preview')!=='false';
 
   function syncPixelToggle(){
-    const available=sceneId==='field';
-    const pixel=available&&pixelPreview;
-    pixelToggle.hidden=!available;
+    const pixel=Boolean(sceneId)&&pixelPreview;
+    pixelToggle.hidden=!sceneId;
     pixelToggle.textContent='Pixel: '+(pixelPreview?'Bật':'Tắt');
     pixelToggle.setAttribute('aria-pressed',String(pixelPreview));
     root.dataset.pixel=String(pixel);
@@ -73,11 +73,11 @@ export function createWorld(root, onInteract) {
     }
     mini.fillStyle='#fff5c5';mini.beginPath();mini.arc(x*sx,y*sy,2.1,0,2*Math.PI);mini.fill();
   }
-  let x=236,y=221,facing='down',walking=false,waypoints=[],pending,onArrival,active,previousTime=0,poseUntil=0,pose='',effects=[];
+  let x=236,y=221,facing='down',walking=false,walkDistance=0,waypoints=[],pending,onArrival,active,previousTime=0,poseStarted=0,pose='',effects=[];
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
-    x=px;y=py;facing=dir;stop();poseUntil=0;effects=[];
+    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
   function stop() {waypoints=[];pending=null;onArrival=null;walking=false;}
@@ -150,14 +150,18 @@ export function createWorld(root, onInteract) {
   function move(dx,dy,dt) {
     const len=Math.hypot(dx,dy);
     if(len<.001)return;
-    const dist=Math.min(len,96*dt), mx=dx/len*dist,my=dy/len*dist;
-    if(Math.abs(dx)>Math.abs(dy)) facing=dx<0?'left':'right';
-    else if(dy) facing=dy<0?'up':'down';
+    const dist=Math.min(len,playerSpeed*dt), mx=dx/len*dist,my=dy/len*dist;
     const px=x,py=y;
     if(walkable(scene,x+mx,y)) x+=mx;
     if(walkable(scene,x,y+my)) y+=my;
-    walking=Math.hypot(x-px,y-py)>.01;
-    if(walking)canvas.dataset.position=Math.round(x)+','+Math.round(y);
+    const traveled=Math.hypot(x-px,y-py);
+    walking=traveled>.001;
+    if(walking){
+      walkDistance+=traveled;
+      facing=facingFromDelta(x-px,y-py);
+      pose='';
+      canvas.dataset.position=Math.round(x)+','+Math.round(y);
+    }
   }
   function particle(input) {
     const palette=effectStyle[input.action];
@@ -170,12 +174,11 @@ export function createWorld(root, onInteract) {
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
     pose=input.action;
-    poseUntil=performance.now()+680;
+    poseStarted=performance.now();
     if((input.action==='cast'||input.action==='reel')&&target&&distance(target,x,y)<64){
       facing=target.side;
     } else if(target&&distance(target,x,y)<64) {
-      const dx=target.x-x,dy=target.y-y;
-      facing=Math.abs(dx)>Math.abs(dy)?dx<0?'left':'right':dy<0?'up':'down';
+      facing=facingFromDelta(target.x-x,target.y-y);
     }
     effects.push({x:spot.x,y:spot.y,time:performance.now(),palette});
   }
@@ -200,32 +203,34 @@ export function createWorld(root, onInteract) {
         const [dx,dy]=[...keys].reduce(([a,b],key)=>[a+deltas[key][0],b+deltas[key][1]],[0,0]);
         move(dx*100,dy*100,dt);
       } else if(waypoints.length) {
-        const [px,py]=waypoints[0];
-        if(Math.hypot(px-x,py-y)<1.1) {
+        while(waypoints.length&&Math.hypot(waypoints[0][0]-x,waypoints[0][1]-y)<1.1){
           waypoints.shift();
-          if(!waypoints.length&&pending){
-            const next=pending, callback=onArrival;
-            stop();
-            if(distance(next,x,y)<range){
-              if(callback)callback();
-              else use(next);
-            }
-          }
-        } else {
+        }
+        if(waypoints.length){
+          const [px,py]=waypoints[0];
           move(px-x,py-y,dt);
-          if(!walking)stop();
+          if(!walking&&dt>0)stop();
+        } else if(pending){
+          const next=pending, callback=onArrival;
+          stop();
+          if(distance(next,x,y)<range){
+            if(callback)callback();
+            else use(next);
+          }
         }
       }
     }
+    if(!walking)walkDistance=0;
     refreshHint();
     const t=now/1000, ambient=reduce.matches?0:t;
     shiftCamera();
-    const pixel=sceneId==='field'&&pixelPreview;
+    const pixel=pixelPreview;
     const scale=pixelViewport.width/size.width;
     const cameraX=pixel?Math.round(camera.x*scale)/scale:camera.x;
     const cameraY=pixel?Math.round(camera.y*scale)/scale:camera.y;
     context.drawImage(terrain,cameraX*resolution,cameraY*resolution,size.width*resolution,size.height*resolution,0,0,size.width,size.height);
     context.save();context.translate(-cameraX,-cameraY);
+    if(pixel)context.imageSmoothingEnabled=false;
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
     const highlight=active?.type==='plot'?active:null;
@@ -247,8 +252,22 @@ export function createWorld(root, onInteract) {
       context.fillRect(highlight.x-25,highlight.drawY-15,50,29);
     }
     for(const peer of peers.values()){
-      const blend=reduce.matches?1:Math.min(1,dt*8);
-      peer.x+=(peer.goalX-peer.x)*blend;peer.y+=(peer.goalY-peer.y)*blend;
+      const dx=peer.goalX-peer.x,dy=peer.goalY-peer.y;
+      const remaining=Math.hypot(dx,dy);
+      peer.walking=!reduce.matches&&remaining>.55&&dt>0;
+      if(peer.walking){
+        const traveled=Math.min(remaining,dt*playerSpeed);
+        const blend=traveled/remaining;
+        peer.x+=dx*blend;peer.y+=dy*blend;
+        peer.walkDistance+=traveled;
+        peer.facing=facingFromDelta(dx,dy);
+      }else{
+        if(reduce.matches||remaining<=.55){
+          peer.x=peer.goalX;peer.y=peer.goalY;
+        }
+        peer.walkDistance=0;
+        peer.facing=peer.goalFacing;
+      }
     }
     const sprites=[...scene.actors,...scenery,...peers.values(),{type:'player',x,y}].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
@@ -263,18 +282,20 @@ export function createWorld(root, onInteract) {
     for(const a of sprites) {
       if(a.x<camera.x-75||a.y<camera.y-28||a.x>camera.x+size.width+75||a.y>camera.y+size.height+95)continue;
       if(a.type==='player'){
-        const action=now<poseUntil?pose:fishingHere&&!walking?'cast':'';
-        if(pixel)pixelPerson(context,x,y,facing,reduce.matches?0:t,walking,action);
-        else person(context,x,y,facing,reduce.matches?0:t,walking,undefined,action);
+        const elapsed=(now-poseStarted)/1000;
+        let action='';
+        if(!walking)action=elapsed<.75&&pose ? pose : fishingHere ? 'cast' : '';
+        drawPerson(context,x,y,facing,ambient,{pixel,walking,walkDistance:reduce.matches?0:walkDistance,action,elapsed:reduce.matches?0:elapsed});
       }
       else if(a.type==='peer'){
-        person(context,a.x,a.y,a.facing,ambient,a.walking,'trader');
+        drawPerson(context,a.x,a.y,a.facing,ambient,{pixel,walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
         context.font='500 6px sans-serif';context.textAlign='center';
         const name=a.name.slice(0,24), width=context.measureText(name).width+7;
-        context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,a.y-38,width,9,2);context.fill();
-        context.fillStyle='#fff3d3';context.fillText(name,a.x,a.y-31.6);
+        const labelY=a.y-(pixel?52:38);
+        context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,labelY,width,9,2);context.fill();
+        context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
-      else if(!(pixel&&pixelActor(context,a,ambient,snapshot))) actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
+      else if(!(pixel&&pixelActor(context,a,ambient,snapshot))) actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot,pixel);
     }
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');
@@ -346,7 +367,8 @@ export function createWorld(root, onInteract) {
     const next=new Map();
     for(const player of players){
       const previous=peers.get(player.player);
-      next.set(player.player,{type:'peer',name:player.name,x:previous?.x??player.x,y:previous?.y??player.y,goalX:player.x,goalY:player.y,facing:player.facing,walking:!!player.walking});
+      next.set(player.player,{type:'peer',name:player.name,x:previous?.x??player.x,y:previous?.y??player.y,goalX:player.x,goalY:player.y,
+        facing:previous?.facing??player.facing,goalFacing:player.facing,walkDistance:previous?.walkDistance??0});
     }
     peers=next;
   }

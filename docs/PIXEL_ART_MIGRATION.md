@@ -36,6 +36,13 @@ Trạng thái:
 - [x] Thêm skill `.agents/skills/game-pixel-art/SKILL.md` để các asset sau giữ cùng art direction và chuẩn atlas.
 - [x] Chuẩn hóa trực tiếp từ hình gốc V2 thành `characters-v2-hd.png` và `vertical-slice-v2-hd.png`. Tái tạo bằng `python3 scripts/normalize-pixel-hd.py` với Pillow.
 - [x] Thay bước thu nhỏ bản đồ cuối mỗi frame bằng Canvas `640 × 384`. Nút Pixel dùng cùng lựa chọn đã lưu trước đây.
+- [x] Dùng cùng renderer và atlas nhân vật ở Vườn nhà, Nhà vườn, Chuồng, Chợ, Hàng xóm, Hồ làng, vườn ghé thăm và Xưởng máy. Nhà hàng xóm dùng chung sprite với nhà vườn, có chi tiết riêng theo cấp.
+
+## Nhịp di chuyển và hướng sprite
+
+- Sáu khung đi của người chơi dùng quãng đường đã đi. Một chu kỳ mất khoảng một giây ở tốc độ chuẩn. Người chơi và người cùng khu dùng chung nhịp.
+- Gà bước, dừng và mổ theo trạng thái. Các khung đứng/đi trong atlas quay trái, khung mổ quay phải. Hướng gốc khai báo riêng cho từng trạng thái; chân bám mốc đất của nhóm khung.
+- Vật nuôi dùng các nhịp đi và nghỉ ngắn theo từng con. Bò, lợn và các vật nuôi dùng atlas cũ luân phiên nhấc chân khi đi và cúi khi ăn. Thao tác cuốc chạy từ khung đầu, các công cụ tưới, thu hoạch và câu cá vẽ theo hành động.
 
 ## Đánh giá concept v1
 
@@ -94,4 +101,4 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 1. Chuyển terrain Vườn nhà sang tileset theo mật độ 2×.
 2. Chuyển mưa, sương và ánh sáng sang hiệu ứng pixel.
 3. Bổ sung animation công việc riêng cho tưới, cuốc, gieo và thu hoạch.
-4. Đánh giá vertical slice trước khi chuyển Chợ, Chuồng, Hàng xóm, Hồ và Xưởng máy.
+4. Chuyển dần phông nền và đạo cụ đặc thù từng cảnh sang atlas pixel riêng.

@@ -4,6 +4,7 @@ import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {animalMotion,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -340,7 +341,7 @@ export function landscapeLife(c,id,t){
     line(c,dragon?'#34524f':'#5e4b34',.50,[[px,py-1.3],[px+.35,py+(dragon?2.2:1.0)]]);
   }
 }
-function plot(c,a,t,state){
+function plot(c,a,t,state,paintCrops=true){
   const {x,y,data,index,visit}=a;
   const wet=data&&!visit&&(data.wetUntil>state.now||state.weather.wet);
   const compact=!data&&a.compactAt<=state.now;
@@ -366,7 +367,7 @@ function plot(c,a,t,state){
   }
   for(let i=0;i<30;i++)ellipse(c,i%2?'#6d513854':'#eed09855',x-18+seed(i,index)*36,y-10+seed(i+91,index)*17,.26+seed(i,76)*.44,.28);
   if(!data)return;
-  for(let i=0;i<8;i++){
+  for(let i=0;paintCrops&&i<8;i++){
     const px=x-16+(i%4)*10+(seed(i,index)-.5)*1.4,py=y-3+Math.floor(i/4)*8;
     const sway=Math.sin(t*3+i+y)*.7, grow=3+Math.min(fraction,1)*7+seed(i,16);
     ellipse(c,'#604a2f66',px,py+.45,2.8,.75);
@@ -404,44 +405,55 @@ function plot(c,a,t,state){
     line(c,'#ffe4a4',.65,[[px,py-2],[px,py+2]]);
   }
 }
-function critter(c,a,t){
-  const {data,index}=a;
+function animalScale(data){
+  return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
+}
+function critter(c,a,t,pixel){
+  if(!dim(atlas))return;
+  const {data,index=0}=a;
   const visual={duck:'chicken',goat:'cow',sheep:'cow'}[data.kind]??data.kind;
-  const large=!['chicken','duck'].includes(data.kind),range=large?11:15;
-  const cycle=(t+index*2.73)%12,smooth=value=>value*value*(3-2*value);
-  let offset,facing,walking;
-  if(cycle<5){offset=-range+range*2*smooth(cycle/5);facing=1;walking=1;}
-  else if(cycle<8){offset=range;facing=1;walking=0;}
-  else if(cycle<11){offset=range-range*2*smooth((cycle-8)/3);facing=-1;walking=1;}
-  else {offset=-range;facing=-1;walking=0;}
-  const peck=!large&&!walking?Math.max(0,Math.sin((cycle%3)*Math.PI*2))*3.2:0;
-  const graze=large&&!walking?Math.max(0,Math.sin((cycle%3)*Math.PI))*.10:0;
-  const gait=Math.abs(Math.sin(t*(large?8.5:13)+index))*1.45*walking;
-  const waddle=data.kind==='duck'&&walking?Math.sin(t*12+index)*.10:0;
-  const breathe=1+Math.sin(t*2.1+index)*.018;
-  const x=a.x+offset,y=a.y+Math.sin(t*.7+index)*1.3;
-  shade(c,x,y,large?13:8,walking?3.2:3.8);
-  const size=(data.age===undefined||data.age>=growthGoal(data))?1:.72+.28*data.age/growthGoal(data);
-  if(large&&Math.sin(t*3.7+index)>0.82){
-    const tailSide=facing<0?1:-1;
-    line(c,'#68543f',.8,[[x+tailSide*10,y-12],[x+tailSide*14,y-15-Math.sin(t*12)*2]]);
-  }
+  const large=visual!=='chicken';
+  const motion=animalMotion(t,index,large?11:15,large?'graze':'peck');
+  const walking=motion.state==='walk';
+  const phase=motion.distance/(large?9:7.5)*Math.PI*2;
+  const step=Math.sin(phase);
+  const foraging=motion.state==='graze'||motion.state==='peck';
+  const bend=foraging ? .5-.5*Math.cos(motion.elapsed*(large?4.7:9.3)) : 0;
+  const size=animalScale(data),w=(large?29:14)*size,h=(visual==='cow'?22:visual==='pig'?19:16)*size;
+  const x=pixel?snapPixel(a.x+motion.offset):a.x+motion.offset,y=pixel?snapPixel(a.y):a.y;
+  const [sx,sy,sw,sh]=frames[visual];
+  const cut=Math.round(sh*(large?.72:.79)), body=h*cut/sh;
+  const half=Math.floor(sw/2), split=w*half/sw;
+  const bob=Math.abs(step)*(large?.48:.7)*size;
+  shade(c,x,y,(large?13:8)*size,walking?3.2:3.8);
   c.save();
   if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
   if(data.kind==='goat')c.filter='grayscale(.42) sepia(.22) brightness(1.12)';
   if(data.kind==='sheep')c.filter='grayscale(.78) brightness(1.38)';
-  sprite(c,visual,x,y-gait+peck*.35,(large?29:14)*size*breathe,(visual==='cow'?22:visual==='pig'?19:16)*size/breathe,facing<0,waddle+(walking?Math.sin(t*9+index)*.035:graze));
-  c.restore();
-  if(!walking&&cycle>6.4&&cycle<6.8){
-    const mark=data.kind==='pig'?'♪':large?'·':'˙';
-    c.fillStyle='#f7e9b9b8';c.font='700 6px system-ui';c.textAlign='center';c.fillText(mark,x+6,y-22-peck);
+  c.translate(x,y);
+  if(spriteFlip(motion.facing,1))c.scale(-1,1);
+  if(walking){
+    // Keep one leg group on the ground while the other group lifts and swings.
+    const backLift=Math.max(0,step)*1.3*size,frontLift=Math.max(0,-step)*1.3*size;
+    const swing=step*1.4*size;
+    c.drawImage(atlas,sx,sy+cut,half,sh-cut,-w/2+swing,-h+body-bob,split,h-body+bob-backLift);
+    c.drawImage(atlas,sx+half,sy+cut,sw-half,sh-cut,-w/2+split-swing,-h+body-bob,w-split,h-body+bob-frontLift);
+    c.drawImage(atlas,sx,sy,sw,cut,-w/2,-h-bob,w,body+.2);
+  } else if(bend){
+    c.drawImage(atlas,sx,sy+cut,sw,sh-cut,-w/2,-h+body,w,h-body);
+    c.translate(0,-h+body);
+    c.rotate(bend*(large?.12:.29));
+    c.drawImage(atlas,sx,sy,sw,cut,-w/2,-body,w,body+.4);
+  } else {
+    c.drawImage(atlas,sx,sy,sw,sh,-w/2,-h,w,h);
   }
+  c.restore();
 }
-export function person(c,x,y,direction,t,moving,style='player',action=''){
+function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   const profile=direction==='left'||direction==='right';
   const kind=direction==='up'?'back':profile?'profile':'front';
   const scale=style==='player'?1:.83,h=31*scale,w=(profile?11:14)*scale;
-  const phase=t*13.5,stride=moving?Math.sin(phase):0;
+  const phase=walkDistance/playerStride*Math.PI*2,stride=moving?Math.sin(phase):0;
   const idle= moving?0:Math.sin(t*2.15)*.32;
   const bob=moving?(1-Math.cos(phase*2))*.72:idle;
   const lean=moving?(profile?stride*.022:Math.sin(phase)*.012):Math.sin(t*.85)*.006;
@@ -454,7 +466,7 @@ export function person(c,x,y,direction,t,moving,style='player',action=''){
     const cut=Math.ceil(sh*.75),top=h*.75;
     c.save();c.translate(x,y-bob);if(direction==='left')c.scale(-1,1);
     if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
-    if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
+    if(style!=='player'&&style!=='vendor')c.filter='hue-rotate(26deg) saturate(.82)';
     c.save();c.translate(0,-h+top);c.rotate(lean);c.drawImage(atlas,sx,sy,sw,cut,-w/2,-top,w,top+.16);c.restore();
     const half=Math.floor(sw/2),right=sw-half;
     const swing=profile?stride*1.8:stride*.58, lift=Math.max(0,stride)*1.15,otherLift=Math.max(0,-stride)*1.15;
@@ -462,6 +474,8 @@ export function person(c,x,y,direction,t,moving,style='player',action=''){
     c.drawImage(atlas,sx+half,sy+cut,right,sh-cut,-swing,-h+top-stride*.55-otherLift,w/2,h-top+otherLift);
     c.restore();
   }
+}
+function personTool(c,x,y,direction,t,action){
   if(action==='cast'||action==='reel'){
     const sign=direction==='left'?-1:1;
     line(c,'#ddbd83',1,[[x+sign*2,y-11],[x+sign*11,y-21],[x+sign*17,y-24]]);
@@ -476,66 +490,72 @@ export function person(c,x,y,direction,t,moving,style='player',action=''){
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
-export function pixelPerson(c,x,y,direction,t,moving,action=''){
-  if(!dim(pixelCharacters))return person(c,x,y,direction,t,moving,'player',action);
-  const working=!!action&&!['cast'].includes(action),state=working?'work':moving?'walk':'idle';
-  const animation=pixelCharacter.states[state],frame=animation.first+Math.floor(t*animation.fps)%animation.frames;
-  const row=pixelCharacter.directions[direction]??0,sx=frame*pixelCharacter.cellWidth,sy=row*pixelCharacter.cellHeight;
-  const px=snapPixel(x),py=snapPixel(y);
-  shade(c,px,py,10.5,moving?3.2:3.8);
-  c.save();c.imageSmoothingEnabled=false;
-  c.drawImage(pixelCharacters,sx,sy,pixelCharacter.cellWidth,pixelCharacter.cellHeight,px-18,py-48,36,48);
-  c.restore();
-  if(action==='cast'||action==='reel'){
-    const sign=direction==='left'?-1:1;
-    line(c,'#ddbd83',1,[[px+sign*2,py-11],[px+sign*11,py-21],[px+sign*17,py-24]]);
-    line(c,'#e9dfbf99',.45,[[px+sign*17,py-24],[px+sign*19,py-10]]);
+export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
+  if(!pixel||!dim(pixelCharacters)){
+    legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
+    personTool(c,x,y,direction,elapsed,action);
+    return;
   }
+  const work=action==='till';
+  const anim=pixelCharacter.states[work?'work':walking?'walk':'idle'];
+  const time=work?elapsed:t;
+  const step=walking?walkFrame(walkDistance,stride,anim.frames):Math.floor(time*anim.fps);
+  const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
+  const row=pixelCharacter.directions[direction]??0,sx=frame*pixelCharacter.cellWidth,sy=row*pixelCharacter.cellHeight;
+  const px=snapPixel(x),py=snapPixel(y),standing=style==='player'||style==='peer';
+  const scale=standing?1:.875;
+  shade(c,px,py,10.5*scale,walking?3.2:3.8);
+  c.save();c.imageSmoothingEnabled=false;
+  if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
+  if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
+  const unit=pixelStep*scale;
+  c.drawImage(pixelCharacters,sx,sy,pixelCharacter.cellWidth,pixelCharacter.cellHeight,snapPixel(px-24*unit),snapPixel(py-59*unit),36*scale,48*scale);
+  c.restore();
+  if(!work)personTool(c,px,py,elapsed,action);
+}
+function pixelHouse(c,x,y,w){
+  const frame=pixelSlice.house,scale=w/frame.w;
+  c.drawImage(pixelObjects,frame.x,frame.y,frame.w,frame.h,snapPixel(x-w/2),snapPixel(y-frame.h*scale),w,frame.h*scale);
 }
 export function pixelActor(c,a,t,state){
   if(!dim(pixelObjects))return false;
   const px=snapPixel(a.x),py=snapPixel(a.y);
   if(a.type==='house'){
-    const frame=pixelSlice.house;
     shade(c,px+3,py,36,6);
-    c.save();c.imageSmoothingEnabled=false;
-    c.drawImage(pixelObjects,frame.x,frame.y,frame.w,frame.h,px-72,py-120,144,120);
+    c.save();
+    if(a.style==='visit')c.filter='hue-rotate(12deg) saturate(.9)';
+    pixelHouse(c,px,py,144);
     c.restore();
     return true;
   }
   const crop=pixelSlice.crops[a.data?.kind];
   if(a.type==='plot'&&crop){
-    plot(c,{...a,data:null},t,state);
-    const fraction=Math.min(1,a.data.progress/cropGoal(a.data));
+    plot(c,a,t,state,false);
+    const fraction=a.visit?(a.data.ripe?1:.5):Math.min(1,a.data.progress/cropGoal(a.data));
     const stage=Math.min(pixelSlice.crops.stages-1,Math.floor(fraction*pixelSlice.crops.stages));
     const cell=pixelSlice.crops.cell;
-    c.save();c.imageSmoothingEnabled=false;
     c.drawImage(pixelObjects,crop.x+stage*cell,crop.y,cell,cell,px-18,py-27,36,36);
-    c.restore();
     return true;
   }
   if((a.type==='animal'||a.type==='wildlife')&&a.data?.kind==='chicken'){
-    const info=pixelSlice.chicken,cycle=(t+(a.index??0)*2.73)%12;
-    let offset,stateName='idle',facing=1;
-    if(cycle<5){offset=-15+cycle*6;stateName='walk';}
-    else if(cycle<8)offset=15;
-    else if(cycle<11){offset=15-(cycle-8)*10;stateName='walk';facing=-1;}
-    else {offset=-15;stateName='peck';facing=-1;}
-    if(stateName==='idle'&&cycle>6.4)stateName='peck';
-    const animation=info.states[stateName];
-    const frame=animation.first+Math.floor(t*animation.fps)%animation.frames;
+    const info=pixelSlice.chicken,motion=animalMotion(t,a.index??0,15,'peck');
+    const animation=info.states[motion.state],walking=motion.state==='walk';
+    const step=walking?walkFrame(motion.distance,info.stride,animation.frames):Math.floor(motion.elapsed*animation.fps)%animation.frames;
+    const frame=animation.first+step;
     const sx=info.x+(frame%info.columns)*info.cell,sy=info.y+Math.floor(frame/info.columns)*info.cell;
-    const chickenX=snapPixel(a.x+offset);
-    shade(c,chickenX,py,8,stateName==='walk'?3.2:3.8);
-    c.save();c.imageSmoothingEnabled=false;
-    c.translate(chickenX,0);c.scale(facing,1);
-    c.drawImage(pixelObjects,sx,sy,info.cell,info.cell,-18,py-36,36,36);
+    const chickenX=snapPixel(a.x+motion.offset), unit=pixelStep*animalScale(a.data);
+    const width=Math.round(info.cell*unit/pixelStep)*pixelStep;
+    shade(c,chickenX,py,8,walking?3.2:3.8);
+    c.save();
+    c.translate(chickenX,0);
+    if(spriteFlip(motion.facing,animation.sourceFacing))c.scale(-1,1);
+    c.drawImage(pixelObjects,sx,sy,info.cell,info.cell,-width/2,snapPixel(py-animation.feet*unit),width,width);
     c.restore();
     return true;
   }
   return false;
 }
-function neighborHouse(c,a,t){
+function neighborHouse(c,a,t,pixel){
   const {x,y,name='',tier=0,selected=false}=a;
   const width=52+tier*3.2,height=width*1.02;
   shade(c,x+3,y,width*.58,5.5+tier*.35);
@@ -547,7 +567,8 @@ function neighborHouse(c,a,t){
   }
   c.save();
   c.filter=['saturate(.86) brightness(.96)','sepia(.08) saturate(.94)','saturate(1.02) brightness(1.02)','hue-rotate(8deg) saturate(.92) brightness(1.04)','hue-rotate(13deg) saturate(1.02) brightness(1.07)'][tier];
-  sprite(c,'house',x,y,width,height);
+  if(pixel&&dim(pixelObjects))pixelHouse(c,x,y,snapPixel(width));
+  else sprite(c,'house',x,y,width,height);
   c.restore();
 
   if(tier>=1){
@@ -581,7 +602,7 @@ function neighborHouse(c,a,t){
     c.strokeStyle='#e9cf8c';c.lineWidth=.65;c.beginPath();c.roundRect(x-labelWidth*.5,labelY,labelWidth,11,4);c.stroke();c.restore();
   }
 }
-export function actor(c,a,t,state){
+export function actor(c,a,t,state,pixel){
   const {x,y,type,w,style}=a;
   if(type==='dock'){
     const angle=a.side==='left'?-Math.PI/2:a.side==='right'?Math.PI/2:0;
@@ -602,8 +623,7 @@ export function actor(c,a,t,state){
     shade(c,x-10,y+3,7,2);
     sprite(c,'basket',x-13,y+1,10,9);
     sprite(c,'basket',x+12,y+3,9,8,true);
-    const turn=Math.sin(t*.9);
-    return person(c,x+turn*3,y,turn<0?'left':'right',t,t>0&&Math.abs(turn)<.45,'trader');
+    return drawTownsperson(c,x,y,t,'trader',pixel);
   }
   if(type==='order-board'){
     const width=a.upgraded?30:24;
@@ -643,17 +663,14 @@ export function actor(c,a,t,state){
     return;
   }
   if(type==='plot')return plot(c,a,t,state);
-  if(type==='animal'||type==='wildlife')return critter(c,a,t);
-  if(type==='npc'){
-    const phase=t*.65+(style==='vendor'?0:2.1);
-    return person(c,x+Math.sin(phase)*6,y,Math.cos(phase)<0?'left':'right',t,t>0&&Math.abs(Math.cos(phase))>.30,style);
-  }
+  if(type==='animal'||type==='wildlife')return critter(c,a,t,pixel);
+  if(type==='npc')return drawTownsperson(c,x,y,t,style,pixel);
   if(type==='tree'){
     const spread=27+seed(x,y)*12, tall=spread*.98;
     shade(c,x+5,y-1,spread*.57,6);
     return sprite(c,'tree',x,y,spread,tall,seed(y,x)>.5,Math.sin(t*1.5+y)*(state.weather.id==='wind'||state.weather.id==='storm'?.055:.022));
   }
-  if(type==='neighbor')return neighborHouse(c,a,t);
+  if(type==='neighbor')return neighborHouse(c,a,t,pixel);
   if(type==='foundation'){
     shade(c,x,y+6,41,7);box(c,'#9a855a',x-38,y-12,76,24,4);box(c,'#c2a978',x-36,y-11,72,20,3);
     for(let i=0;i<4;i++)line(c,'#9c7957a5',.65,[[x-34,y-8+i*5],[x+33,y-8+i*5]]);
@@ -675,6 +692,12 @@ export function actor(c,a,t,state){
     c.save();c.filter=style==='red'?'hue-rotate(-40deg) saturate(.88)':style==='gold'?'sepia(.42) saturate(1.2)':'hue-rotate(18deg) saturate(.85)';
     sprite(c,name,x,y,spriteWidth,spriteWidth*ratio);c.restore();
   } else sprite(c,name,x,y,spriteWidth,spriteWidth*ratio);
+}
+function drawTownsperson(c,x,y,t,style,pixel){
+  const motion=animalMotion(t,style==='vendor'?0:1,5);
+  drawPerson(c,x+motion.offset,y,motion.facing===1?'right':'left',t,{
+    pixel,style,walking:motion.state==='walk',walkDistance:motion.distance,stride:10,
+  });
 }
 export function gate(c,a,t){
   const {x,y,side}=a;
