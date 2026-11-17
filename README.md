@@ -20,8 +20,8 @@ Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vư�
 
 - Mỗi người có 2 ô đất trống cùng kích thước và các công trình cơ bản như nhau. Trong tab **Đất**, mua thêm tối đa 6 ô, chọn xây vườn có 3 luống, ao nuôi hoặc chuồng tối đa 2 con. Giá ô mua đầu tiên là 65 xu. Có thể chọn công trình từ bản đồ hoặc dùng **Tới ô**.
 - Hàng rào có kiểu gỗ mật ong, gỗ trắng và tre xanh. Trang trí từng công trình từ tab **Đất** hoặc mở **Hàng rào công trình chính** trong **Xây dựng**. Hàng rào trang trí khác với nâng cấp an ninh.
-- Trong làng online, chợ, hồ và đường làng là khu chung. Ở vườn nhà, chủ và khách cùng xem một bố cục. Vị trí cập nhật khoảng 1,2 giây, trình duyệt nội suy giữa các cập nhật. Nút **Chat** nằm dưới bản đồ, chỉ hiện khi đã vào làng. Phòng chat theo khu vực, cùng người chơi trong làng.
-- Khi nâng cấp một bản tự triển khai, chạy lệnh migration D1 trước khi cập nhật Worker. Migration mới thêm bảng vị trí và chat, giữ dữ liệu farm hiện có.
+- Trong làng online, chợ, hồ và đường làng là khu chung. Ở vườn nhà, chủ và khách cùng xem một bố cục. Vị trí cập nhật khoảng 1,2 giây, trình duyệt nội suy giữa các cập nhật. Nút **Chat** nằm dưới bản đồ, chỉ hiện khi đã vào làng. Tin nhắn nổi trên đầu nhân vật 5 giây và chỉ hiện cho người ở gần trong cùng khu vực. Tin nhắn mới chỉ giữ trong RAM.
+- Nút **Nhân vật** cho phép đổi Nam hoặc Nữ. Lựa chọn được lưu theo vườn và các người chơi khác sẽ thấy mẫu mới.
 
 ## Nhịp chăm sóc, sức khỏe và tài sản
 
@@ -71,6 +71,8 @@ Chạy lệnh tạo D1 một lần. Nếu đã có D1 từ lần deploy trước
 npm.cmd run d1:migrate
 npm.cmd run deploy:worker
 ```
+
+Với bản đã triển khai, binding `CHAT` và migration Durable Object trong `wrangler.toml` được cài khi deploy Worker. Chức năng mới không cần migration D1.
 
 Ghi lại URL Worker mà Wrangler trả về, ví dụ `https://vuon-mua-vui.ten-ban.workers.dev`. Mở URL Worker với đuôi `/api/health` để kiểm tra phản hồi `{"ok":true}`. Tiếp theo, sửa `destination` trong `vercel.json` thành URL Worker thực, giữ đuôi `/api/:path*`.
 

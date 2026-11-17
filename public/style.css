@@ -15,6 +15,8 @@ button svg,.world-stat svg,.map-help svg{display:block;width:19px;height:19px;fi
 .mark{display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:#dfe9d3;color:var(--green)}
 .mark svg{width:23px;height:23px}
 .top-end{display:flex;align-items:center;gap:8px}
+.avatar-menu{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid #c9d8bb;border-radius:9px;background:#edf0de;color:#31503a;font-size:11px;font-weight:800;white-space:nowrap}
+.avatar-menu svg{width:14px;height:14px}
 .world-stat,.room,.help{border:1px solid var(--stroke);border-radius:9px;display:inline-flex;justify-content:center;align-items:center;gap:6px;padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap;background:#fffdf6;color:var(--deep)}
 .world-stat svg,.room svg,.help svg{width:16px;height:16px}
 .wallet{background:#f8eed3;color:#765226;border-color:#ebdbb2}
@@ -121,6 +123,14 @@ dialog p,dialog li{font-size:13px;color:var(--muted);line-height:1.55}
 dialog p{margin:9px 0}
 dialog label{display:grid;gap:5px;font-size:12px;font-weight:700;margin:10px 0}
 dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px;padding:10px;background:#fffcf1;font-size:14px}
+.avatar-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;border:0;margin:12px 0;padding:0}
+.avatar-options legend{color:#31503a;font-size:12px;font-weight:800;margin-bottom:6px}
+.avatar-options label{position:relative;place-items:center;margin:0;padding:4px 7px 6px;border:1px solid #d8d6bc;border-radius:9px;background:#f5efdf;color:#375742;cursor:pointer}
+.avatar-options label:has(:checked){background:#e6eedb;border-color:#709668}
+.avatar-options label:has(:focus-visible){outline:2px solid #31503a;outline-offset:2px}
+.avatar-options input{position:absolute;opacity:0;width:1px;height:1px;padding:0}
+.avatar-portrait{display:block;width:48px;height:64px;image-rendering:pixelated;background:url('/pixel/characters-v2-hd.png') no-repeat}
+.avatar-portrait[data-avatar="male"]{background-image:url('/pixel/farmer-male-poses.png')}
 #toast{position:fixed;bottom:18px;right:18px;z-index:10;max-width:min(90vw,420px);padding:10px 13px;border-radius:8px;background:#285640;color:white;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}
 #toast.show{opacity:1}
 #toast.error{background:#8b412f}
@@ -227,6 +237,7 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .journal-status{font-size:10px;font-weight:700;white-space:nowrap}
 .journal-reward small{color:#726446;font-weight:700}
 @media(max-width:370px){#nav{display:grid;grid-template-columns:repeat(3,1fr)}}
+@media(max-width:390px){.avatar-menu{padding:6px}.avatar-menu svg{display:none}.top-end{gap:4px}}
 
 .village-ladder{display:flex;flex-wrap:wrap;gap:5px;list-style:none;margin:8px 0 13px;padding:0}
 .village-ladder li{padding:4px 7px;border:1px solid #e8e0cb;border-radius:12px;color:#665d49;font-size:10px;font-weight:700}

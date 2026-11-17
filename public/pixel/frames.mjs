@@ -8,6 +8,11 @@ export const pixelCharacter={
     work:{first:10,frames:6,fps:8},
   },
 };
+export const maleCharacter={
+  poses:'/pixel/farmer-male-poses.png',
+  walk:'/pixel/farmer-male-walk.png',
+  workFrames:[1,2,2,3,3,1],
+};
 export const pixelSlice={
   source:'/pixel/vertical-slice-v2-hd.png',house:{x:0,y:0,w:192,h:160},
   crops:{

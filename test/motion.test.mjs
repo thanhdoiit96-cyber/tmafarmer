@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
+import {maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
 import {actionPoseSeconds,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
 import {features,walkable} from '../public/world-layout.mjs';
 import {newFarm,newRoom,snapshot} from '../public/game.mjs';
@@ -37,6 +37,17 @@ test('the farmer walk atlas has a full sized sprite for every frame and directio
   assert.equal(png.toString('ascii',12,16),'IHDR');
   assert.equal(png.readUInt32BE(16),cellWidth*states.walk.frames);
   assert.equal(png.readUInt32BE(20),cellHeight*Object.keys(directions).length);
+});
+
+test('the male avatar atlases align with the walk and tool frames',()=>{
+  const {cellWidth,cellHeight,directions,states}=pixelCharacter;
+  for(const source of [maleCharacter.poses,maleCharacter.walk]){
+    const png=readFileSync(new URL('../public'+source,import.meta.url));
+    assert.equal(png.readUInt32BE(16),cellWidth*4);
+    assert.equal(png.readUInt32BE(20),cellHeight*Object.keys(directions).length);
+  }
+  assert.equal(maleCharacter.workFrames.length,states.work.frames);
+  assert.ok(maleCharacter.workFrames.every(frame=>frame>=1&&frame<=3));
 });
 
 test('animals pause inside their pen and honor reduced motion',()=>{

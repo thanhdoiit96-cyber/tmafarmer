@@ -1,10 +1,11 @@
 import {features, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
+import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -37,7 +38,7 @@ export function createWorld(root, onInteract) {
   const hint=root.querySelector('[data-world-hint]');
   const radar=root.querySelector('[data-radar]'), mini=radar.getContext('2d');
   let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, activePage, marks=[];
-  let observedAt=performance.now(), terrainKey='', peers=new Map(), scenery=[];
+  let observedAt=performance.now(), terrainKey='', peers=new Map(), speech=new Map(), scenery=[];
   let pointer=null, routeMarker=null;
 
   function paintTerrain(){
@@ -95,6 +96,7 @@ export function createWorld(root, onInteract) {
       setPosition(arrival??maps[id].spawn);
       shiftCamera();
       peers.clear();
+      speech.clear();
       terrainKey='';
     }
     if(activePage!==page)stop();
@@ -297,7 +299,8 @@ export function createWorld(root, onInteract) {
         peer.facing=peer.goalFacing;
       }
     }
-    const sprites=[...scene.actors,...scenery,...peers.values(),{type:'player',x,y}].sort((a,b)=>a.y-b.y);
+    const player={type:'player',player:snapshot.me.id,avatar:snapshot.me.avatar,x,y};
+    const sprites=[...scene.actors,...scenery,...peers.values(),player].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
@@ -310,12 +313,12 @@ export function createWorld(root, onInteract) {
         const action=!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
         const fishing=!walking&&dock&&distance(dock,x,y)<range&&(action==='cast'||action==='reel'||fishingHere);
         const poseTime=reduce.matches?(actionPoseSeconds[action]??0)*.55:elapsed;
-        drawPerson(context,x,y,fishing?dock.side:facing,ambient,{walking:walking&&!reduce.matches,walkDistance,action,elapsed:poseTime});
+        drawPerson(context,x,y,fishing?dock.side:facing,ambient,{avatar:a.avatar,walking:walking&&!reduce.matches,walkDistance,action,elapsed:poseTime});
         if(fishing)drawFishing(context,x,y,dock,{action:action==='cast'||action==='reel'?action:'hold',
           elapsed:poseTime,ambient,bite:!!cast&&cast.ready<=gameNow,caught:caughtFish,reduced:reduce.matches});
       }
       else if(a.type==='peer'){
-        drawPerson(context,a.x,a.y,a.facing,ambient,{walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
+        drawPerson(context,a.x,a.y,a.facing,ambient,{avatar:a.avatar,walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
         context.font='500 6px sans-serif';context.textAlign='center';
         const name=a.name.slice(0,24), width=context.measureText(name).width+7;
         const labelY=a.y-52;
@@ -352,6 +355,16 @@ export function createWorld(root, onInteract) {
     drawEffects(now);
     context.restore();
     if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
+    if(speech.size){
+      context.save();context.translate(-cameraX,-cameraY);
+      for(const person of [...peers.values(),player]){
+        const bubble=speech.get(person.player);
+        if(!bubble||bubble.deadline<=now||distance(person,x,y)>speechRange)continue;
+        if(person.x<cameraX||person.x>cameraX+size.width||person.y<cameraY||person.y>cameraY+size.height)continue;
+        drawSpeech(context,bubble,person.x,person.y-(person.type==='peer'?56:49),cameraX,cameraY);
+      }
+      context.restore();
+    }
     drawRadar();
     requestAnimationFrame(frame);
   }
@@ -401,11 +414,17 @@ export function createWorld(root, onInteract) {
     const next=new Map();
     for(const player of players){
       const previous=peers.get(player.player);
-      next.set(player.player,{type:'peer',name:player.name,x:previous?.x??player.x,y:previous?.y??player.y,goalX:player.x,goalY:player.y,
+      next.set(player.player,{type:'peer',player:player.player,avatar:player.avatar,name:player.name,x:previous?.x??player.x,y:previous?.y??player.y,goalX:player.x,goalY:player.y,
         facing:previous?.facing??player.facing,goalFacing:player.facing,walkDistance:previous?.walkDistance??0});
     }
     peers=next;
   }
+  function setSpeech(messages){
+    speech=new Map(messages.map(message=>{
+      const previous=speech.get(message.player);
+      return [message.player,{...message,layout:previous?.key===message.key?previous.layout:undefined}];
+    }));
+  }
   const position=()=>({x:Math.round(x),y:Math.round(y),facing,walking});
-  return {sync,particle,approach,position,setPeers};
+  return {sync,particle,approach,position,setPeers,setSpeech};
 }

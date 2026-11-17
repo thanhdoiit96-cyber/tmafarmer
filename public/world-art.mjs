@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -18,6 +18,8 @@ const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homeArt=load('/nha-vuon.webp');
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
+const malePoses=load(maleCharacter.poses);
+const maleWalk=load(maleCharacter.walk);
 const pixelObjects=load(pixelSlice.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
@@ -67,6 +69,42 @@ function shade(c,x,y,w=8,h=3) {
   const rad=c.createRadialGradient(0,0,w*.12,0,0,w);
   rad.addColorStop(0,'#332e2055');rad.addColorStop(1,'#332e2000');
   ellipse(c,rad,0,0,w,w);c.restore();
+}
+function speechLayout(c,text){
+  const max=112, lines=[];
+  let line='';
+  for(const word of text.trim().split(/\s+/u)){
+    const next=line?line+' '+word:word;
+    if(c.measureText(next).width<=max){line=next;continue;}
+    if(line)lines.push(line);
+    line='';
+    for(const char of word){
+      if(c.measureText(line+char).width>max){lines.push(line);line='';}
+      line+=char;
+    }
+  }
+  if(line)lines.push(line);
+  if(lines.length>3){
+    const last=Array.from(lines[2]);
+    while(c.measureText(last.join('')+'…').width>max)last.pop();
+    lines.splice(2,lines.length-2,last.join('')+'…');
+  }
+  return {lines,width:Math.max(29,Math.ceil(Math.max(...lines.map(value=>c.measureText(value).width)))+12)};
+}
+export function drawSpeech(c,bubble,x,y,left,top){
+  c.font='700 8px system-ui';
+  c.textAlign='left';c.textBaseline='top';
+  bubble.layout??=speechLayout(c,bubble.text);
+  const {lines,width}=bubble.layout, height=lines.length*10+9;
+  const px=snapPixel(Math.min(left+size.width-width-4,Math.max(left+4,x-width/2)));
+  const py=snapPixel(Math.max(top+4,y-height-5));
+  const tail=Math.max(px+7,Math.min(px+width-7,x));
+  c.fillStyle='#fff5da';c.strokeStyle='#426349';c.lineWidth=1;
+  c.beginPath();c.roundRect(px,py,width,height,5);c.fill();c.stroke();
+  c.beginPath();c.moveTo(tail-3,py+height-.5);c.lineTo(tail,py+height+4);c.lineTo(tail+3,py+height-.5);
+  c.fill();c.stroke();
+  c.fillStyle='#263c2d';
+  lines.forEach((line,index)=>c.fillText(line,px+6,py+4+index*10));
 }
 function sprite(c,name,x,y,w,h,flip=false,angle=0){
   if(!dim(atlas))return;
@@ -636,18 +674,22 @@ export function drawFishing(c,x,y,dock,{action,elapsed,ambient,bite,caught,reduc
     line(c,'#d1edd4',1.4,[[px+2,py-3],[px+5,py-5],[px+5,py-1],[px+2,py-3]]);
   }
 }
-export function drawPerson(c,x,y,direction,t,{walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
+export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
   if(!dim(pixelCharacters)){
     legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
     personTool(c,x,y,direction,elapsed,action);
     return;
   }
   const work=action==='till';
-  const moving=walking&&!work&&dim(farmerWalk);
+  const male=avatar==='male'&&dim(malePoses);
+  const walkAtlas=male?maleWalk:farmerWalk;
+  const moving=walking&&!work&&dim(walkAtlas);
   const {cellWidth,cellHeight,directions,states}=pixelCharacter;
   const anim=states[work?'work':moving?'walk':'idle'];
   const step=moving?walkFrame(walkDistance,stride,anim.frames):Math.floor((work?elapsed:t)*anim.fps);
-  const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
+  const sequence=work?Math.min(anim.frames-1,step):step%anim.frames;
+  const frame=male?(moving?sequence:work?maleCharacter.workFrames[sequence]:0):anim.first+sequence;
+  const atlas=moving?walkAtlas:male?malePoses:pixelCharacters;
   const row=directions[direction]??0;
   const px=snapPixel(x),py=snapPixel(y);
   const standing=style==='player'||style==='peer';
@@ -662,7 +704,7 @@ export function drawPerson(c,x,y,direction,t,{walking=false,walkDistance=0,style
     const lean=Math.sin(Math.min(1,elapsed/actionPoseSeconds.plant)*Math.PI)*.075;
     c.translate(px,py);c.rotate(direction==='left'?-lean:lean);c.translate(-px,-py);
   }
-  c.drawImage(moving?farmerWalk:pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
+  c.drawImage(atlas,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
     snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
   c.restore();
   if(!work)personTool(c,px,py,direction,elapsed,action);

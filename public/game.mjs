@@ -15,6 +15,10 @@ const oldSlot = 180;
 const shieldDuration = 30 * 60;
 export const dryGrowthFactor=.65;
 export const supplyLimit=100;
+export const avatars={female:'Nữ',male:'Nam'};
+export const avatarOf=value=>Object.hasOwn(avatars,value)?value:'female';
+export const speechRange=110;
+export const speechLifetime=5000;
 export const soilIdleTime = gameDay;
 const postRainTime = 20 * 60;
 export const weather = [
@@ -166,9 +170,9 @@ function setSoilTime(farm,index,time){
 export const capacity = (farm) => [30,55,90][farm.barn-1];
 export const stock = (farm) => Object.keys(goods).filter(key=>goods[key].sell).reduce((sum,key)=>sum+(farm.inventory[key]||0),0);
 export const has = (obj, key) => Object.hasOwn(obj, key);
-export function newFarm(id, name, time) {
+export function newFarm(id, name, time, avatar) {
   return {
-    id, name, soilSince:time, coins:100, xp:0, field:1, barn:1, coop:0, fence:0, bag:1, workshop:0, shieldUntil:0,
+    id, name, avatar:avatarOf(avatar), soilSince:time, coins:100, xp:0, field:1, barn:1, coop:0, fence:0, bag:1, workshop:0, shieldUntil:0,
     inventory:{wheatSeed:5,carrotSeed:2,cornSeed:1,fertilizer:2,spray:1,feed:3,tilapiaSeed:1,prawnSeed:1,aquaFeed:3},
     plots:Array.from({length:6},()=>null), extraPlots:{}, pens:[], ponds:{0:[]}, land:getLand({}), decor:{}, daily:{day:-1,taken:0,lost:0,targets:[]},
     log:[{time, message:'Vườn mới đã sẵn sàng để gieo hạt.'}], recent:[],
@@ -374,7 +378,7 @@ export function snapshot(room, farm, time) {
   const dayEnds=plan.anchor+(day-plan.base+1)*plan.dayLength;
   const plots=cropIndexes(farm);
   const pondBatches=pondsAt(room,farm,time);
-  const me={...farm,wellness:wellnessAt(farm,time),plots:farm.plots.map(p=>projectPlot(room,p,time)),pens:farm.pens.map((p,i)=>({...projectedPen(room,farm,p,time),id:penId(p,i)})),
+  const me={...farm,avatar:avatarOf(farm.avatar),wellness:wellnessAt(farm,time),plots:farm.plots.map(p=>projectPlot(room,p,time)),pens:farm.pens.map((p,i)=>({...projectedPen(room,farm,p,time),id:penId(p,i)})),
     land:getLand(farm), plotIndexes:plots, pondIndexes:pondIndexes(farm),
     soilCompactsAt:Object.fromEntries(plots.filter(i=>!plotAt(farm,i)).map(i=>[i,compactAt(room,farm,i,time)])),
     extraPlots:Object.fromEntries(plots.filter(i=>i>=12).map(i=>[i,projectPlot(room,plotAt(farm,i),time)])),
@@ -419,7 +423,13 @@ export function snapshot(room, farm, time) {
     })};
 }
 export function apply(room,id,input,now,catchRoll=0.5,location){
-  const farm=room.farms[id], health=wellnessAt(farm,now);
+  const farm=room.farms[id];
+  if(input.action==='avatar'){
+    check(has(avatars,input.item),'Nhân vật không hợp lệ.');
+    farm.avatar=input.item;
+    return 'Đã chọn nhân vật '+avatars[input.item].toLowerCase()+'.';
+  }
+  const health=wellnessAt(farm,now);
   if(input.action==='consume'){
     const reason=mealRequirement(farm,input.item,health,now);
     check(!reason,reason);

@@ -4,6 +4,7 @@ import { resolve, extname, sep } from 'node:path';
 import { Readable } from 'node:stream';
 import { DatabaseSync } from 'node:sqlite';
 import worker from '../server/worker.mjs';
+import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
 const root=resolve('public');
 mkdirSync('.local',{recursive:true});
@@ -20,6 +21,7 @@ const DB={
   },
 };
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml'};
+const CHAT=localSpeechNamespace();
 const server=createServer(async(incoming,outgoing)=>{
   try {
     const url=new URL(incoming.url,'http://localhost');
@@ -29,7 +31,7 @@ const server=createServer(async(incoming,outgoing)=>{
         options.body=Readable.toWeb(incoming);
         options.duplex='half';
       }
-      const response=await worker.fetch(new Request(url,options),{DB});
+      const response=await worker.fetch(new Request(url,options),{DB,CHAT});
       outgoing.writeHead(response.status,Object.fromEntries(response.headers));
       if(response.body) Readable.fromWeb(response.body).pipe(outgoing);
       else outgoing.end();

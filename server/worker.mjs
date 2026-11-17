@@ -1,5 +1,5 @@
 import {social} from './social.mjs';
-import {advanceVillage, apply, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar} from './engine.mjs';
+import {advanceVillage, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -166,12 +166,14 @@ async function join(db,request) {
   const code=typeof data.code==='string'?data.code.trim().toUpperCase():'';
   if(name.length<2||name.length>24) return reply({error:'Tên vườn cần từ 2 đến 24 ký tự.'},400);
   if(code&&!codePattern.test(code)) return reply({error:'Mã gồm 8 ký tự từ A–F hoặc 0–9.'},400);
+  const avatar=data.avatar;
+  if(avatar!==undefined&&(typeof avatar!=='string'||!has(avatars,avatar)))return reply({error:'Nhân vật không hợp lệ.'},400);
   const token=random(32), id=await authId(token);
   for(let round=0;round<8;round++) {
     const time=unixNow();
     if(!code) {
       const state=newRoom(time), newCode=random(4).toUpperCase();
-      state.farms[id]=newFarm(id,name,time);
+      state.farms[id]=newFarm(id,name,time,avatar);
       const result=await db.prepare('INSERT OR IGNORE INTO farm_rooms(code,state) VALUES (?,?)').bind(newCode,JSON.stringify(state)).run();
       if(result.meta.changes===1) return reply({token,code:newCode,state:snapshot(state,state.farms[id],time)},201);
       continue;
@@ -183,7 +185,7 @@ async function join(db,request) {
     upgradeCalendar(state,time);
     startVillageSecurity(state,dayAt(state,time));
     startSoilClock(state,time);
-    state.farms[id]=newFarm(id,name,time);
+    state.farms[id]=newFarm(id,name,time,avatar);
     const result=await save(db,code,row.revision,state);
     if(result.meta.changes===1) return reply({token,code,state:snapshot(state,state.farms[id],time)},201);
   }
@@ -220,7 +222,7 @@ export default {
         if(!row)return reply({error:'Làng này không còn tồn tại.'},404);
         const {farms}=JSON.parse(row.state);
         if(!has(farms,id))return reply({error:'Phiên chơi không còn hiệu lực.'},401);
-        const result=await social(db,code,farms,id,socialAction,input,unixNow());
+        const result=await social(db,env.CHAT,code,farms,id,socialAction,input,Date.now());
         return reply(result,result.status??200);
       }
       if(input&&(!/^[a-f\d-]{36}$/.test(input.requestId)||typeof input.action!=='string'||

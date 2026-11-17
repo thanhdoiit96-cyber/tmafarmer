@@ -5,6 +5,7 @@ import {DatabaseSync} from 'node:sqlite';
 import worker from '../server/worker.mjs';
 import {homeBed} from '../public/home-rules.mjs';
 import {orderList,unixNow} from '../public/game.mjs';
+import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
 test('two guest sessions share durable D1-style state with atomic sales, presence and area chat',async()=>{
   const db=new DatabaseSync(':memory:');
@@ -13,18 +14,21 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
     const query=db.prepare(sql);
     return {bind(...params){return {first:async()=>query.get(...params),all:async()=>({results:query.all(...params)}),run:async()=>({meta:query.run(...params)})};}};
   }};
+  const CHAT=localSpeechNamespace();
   const api=async(path,data,session)=>{
     const headers=session?{authorization:'Bearer '+session.token,'x-room-code':session.code}:{};
     const response=await worker.fetch(new Request('https://farm.example/api/'+path,{
       method:data?'POST':'GET',headers,body:data?JSON.stringify(data):undefined,
-    }),{DB});
+    }),{DB,CHAT});
     return {status:response.status,...await response.json()};
   };
   const a=await api('join',{name:'Vườn Sen'});
-  const b=await api('join',{name:'Vườn Bắp',code:a.code});
+  const b=await api('join',{name:'Vườn Bắp',code:a.code,avatar:'male'});
   const c=await api('join',{name:'Vườn Lúa',code:a.code});
   assert.equal(a.status,201);
   assert.equal(b.status,201);
+  assert.equal(b.state.me.avatar,'male');
+  assert.equal((await api('join',{name:'Vườn thử',code:a.code,avatar:'other'})).status,400);
   assert.equal((await api('state',null,a)).state.neighbors.length,2);
   assert.equal((await api('state',null,{...a,token:'0'.repeat(64)})).status,401);
   const requestId=crypto.randomUUID();
@@ -60,6 +64,10 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const onLake=await enter(b,'lake');
   assert.deepEqual(onLake.players.map(p=>p.name),['Vườn Sen']);
   assert.equal(onLake.players[0].walking,1);
+  assert.equal((await enter(a,'lake')).players[0].avatar,'male');
+  assert.equal((await send(b,'avatar',{item:'female'})).state.me.avatar,'female');
+  assert.equal((await send(b,'avatar',{item:'other'})).status,400);
+  assert.equal((await enter(a,'lake')).players[0].avatar,'female');
   assert.equal((await enter(c,'market')).players.length,0);
   assert.equal((await api('chat',{area:'lake',text:'Chào hồ',nonce:crypto.randomUUID()},c)).status,409);
   const message={area:'lake',text:'  Chào  hồ làng! ',nonce:crypto.randomUUID()};
@@ -67,6 +75,12 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.ok(greetings.every(r=>r.status===200));
   const lakeChat=await enter(a,'lake');
   assert.deepEqual(lakeChat.messages.map(m=>m.text),['Chào hồ làng!']);
+  assert.equal(lakeChat.messages[0].expires-lakeChat.messages[0].sent,5000);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM farm_chat').get().count,0);
+  const distant=await api('scene',{area:'lake',pose:{...pose,x:430}},c);
+  assert.equal(distant.players.length,2);
+  assert.equal(distant.messages.length,0);
+  assert.equal((await enter(c,'lake')).messages[0].text,'Chào hồ làng!');
   assert.equal((await enter(c,'market')).messages.length,0);
   assert.equal((await enter(a,'field')).players.length,0);
   const guest=await enter(c,'visit',a.state.me.id);

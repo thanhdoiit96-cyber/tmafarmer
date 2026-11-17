@@ -7,7 +7,7 @@ import {aquatic,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mj
 import {createSceneChat} from './scene-chat.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, animalRequirement, animals, apply, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, growthGoal, mealCooldown, mealRequirement, productGoal, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow} from './game.mjs';
+import {advanceVillage, animalRequirement, animals, apply, avatarOf, avatars, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, growthGoal, mealCooldown, mealRequirement, productGoal, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -46,7 +46,7 @@ const supplyGroups={
 };
 let supplyGroup='all';
 const world=createWorld($('#world'),interactWithWorld);
-const sceneChat=createSceneChat({api,world,showToast,context:()=>state&&{session,area:tab==='neighbors'&&neighborId?'visit':tab==='workshop'?'field':tab,host:neighborId}});
+const sceneChat=createSceneChat({api,world,showToast,context:()=>state&&{session,player:state.me.id,area:tab==='neighbors'&&neighborId?'visit':tab,host:neighborId}});
 let tasks=[];
 const cropAt=(farm,index)=>index<plotOffset?farm.plots[index]:farm.extraPlots[index];
 const lotLabel=lot=>lot?.kind==='empty'?'Đất trống':landTypes[lot?.kind]?.name??'Chưa mua';
@@ -753,6 +753,15 @@ function modal(title,html) {
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
   if(!dialog.open) dialog.showModal();
 }
+function avatarOptions(current){
+  return '<fieldset class="avatar-options"><legend>Nhân vật</legend>'+Object.entries(avatars).map(([key,label])=>
+    '<label><input type="radio" name="avatar" value="'+key+'"'+(avatarOf(current)===key?' checked':'')+'><span class="avatar-portrait" data-avatar="'+key+'" aria-hidden="true"></span><strong>'+label+'</strong></label>').join('')+'</fieldset>';
+}
+function showAvatar(){
+  if(!state)return;
+  modal('Chọn nhân vật','<form data-form="avatar">'+avatarOptions(state.me.avatar)+
+    '<button class="btn primary">Lưu nhân vật</button></form><p id="dialog-error" role="status"></p>');
+}
 function showAccountModal(mode='login') {
   const room= session?.code || inviteCode || '';
   const formMode=mode==='register'?'register':'login';
@@ -772,7 +781,7 @@ function showRoom() {
   }
   const previous=store.read(previousKey);
   const rejoin=previous&&!inviteCode?'<div class="actions">'+btn('Tiếp tục làng '+previous.code,'data-resume','gold')+'</div>':'';
-  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p><div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+btn('Chơi nhanh','data-close','subtle')+'</div><form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label><button class="btn primary">Bắt đầu chơi online</button></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
+  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p><div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+'</div><form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label>'+avatarOptions(state?.me.avatar)+'<div class="actions"><button class="btn primary">Bắt đầu chơi online</button>'+btn('Chơi nhanh','data-quick-avatar','subtle')+'</div></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
 }
 function showShop(key,sell) {
   const farm=state.me, info=goods[key], price=sell?info.sell:info.buy;
@@ -932,6 +941,11 @@ document.addEventListener('click',async e=>{
   else if('villageFund' in d) showVillageFund();
   else if('weather' in d) showWeather();
   else if('room' in d) showRoom();
+  else if('avatarMenu' in d) showAvatar();
+  else if('quickAvatar' in d){
+    const avatar=el.form.elements.avatar.value;
+    if(avatar===state.me.avatar||await perform({action:'avatar',item:avatar}))dialog.close();
+  }
   else if('account' in d) showAccountModal('login');
   else if('accountMode' in d) showAccountModal(d.accountMode==='register'?'register':'login');
   else if('accountLogout' in d) {
@@ -1081,6 +1095,8 @@ dialog.addEventListener('submit',async e=>{
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;
     } finally { busy=false; }
+  } else if(mode==='avatar'){
+    if(await perform({action:'avatar',item:values.avatar}))dialog.close();
   } else {
     const success=await perform({action:mode,item:values.item??form.dataset.item,...(mode==='villageFund'?{amount:Number(values.amount)}:{qty:Number(values.qty)}),...(mode==='list'?{price:Number(values.price)}:{}),...(mode==='aquaStock'?{index:Number(form.dataset.pond)}:{})});
     if(success) dialog.close();
