@@ -257,6 +257,13 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 
 .market-search{display:grid;gap:5px;margin:7px 0 10px;color:#435b44;font-size:11px;font-weight:800}
 .market-search input{width:100%;min-height:37px;padding:7px 9px;border:1px solid #d5d3b8;border-radius:8px;background:#fffdf5;color:#2a4534;font-size:13px}
+.market-filters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.market-supply-group+.market-supply-group{margin-top:11px}
+.market-supply-group h4{margin:0;padding:6px 8px;border-radius:6px;background:#e8eedb;color:#31503a;font-size:11px}
+.buy-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.buy-steps .btn{min-height:38px;font-size:13px}
+dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px 0;padding:8px 10px;border-radius:8px;background:#edf0de;color:#2c5139}
+.buy-total output{font-weight:800;font-variant-numeric:tabular-nums}
 .market-sale{display:grid;justify-content:stretch;gap:4px}
 .market-sale .actions{margin:2px 0 0}
 .market-sale .actions .btn{min-height:34px}

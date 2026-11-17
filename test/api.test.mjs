@@ -114,6 +114,20 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.ok(receipts.every(r=>r.status===200&&r.state.me.inventory.wheat===0));
   assert.equal(receipts[0].state.village.income,onSale.village.income+162);
   assert.equal(receipts[0].state.me.coins,receipts[1].state.me.coins);
+  const bulk=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  Object.assign(bulk.farms[a.state.me.id],{coins:1000});
+  bulk.farms[a.state.me.id].inventory.aquaFeed=68;
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(bulk),a.code);
+  const purchase={action:'buy',item:'aquaFeed',qty:30,requestId:crypto.randomUUID()};
+  const buys=await Promise.all([api('action',purchase,a),api('action',purchase,a)]);
+  assert.ok(buys.every(r=>r.status===200&&r.state.me.inventory.aquaFeed===98&&r.state.me.coins===850));
+  const over=await send(a,'buy',{item:'aquaFeed',qty:3});
+  assert.equal(over.status,400);
+  assert.match(over.error,/100 món/);
+  const tooExpensive=await send(a,'buy',{item:'carpSeed',qty:40});
+  assert.equal(tooExpensive.status,400);
+  assert.match(tooExpensive.error,/đủ xu/);
+  assert.equal((await api('state',null,a)).state.me.coins,850);
   db.close();
 });
 

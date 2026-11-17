@@ -196,5 +196,6 @@ test('selling all values the whole current stack and leaves other inventory alon
   farm.inventory.wheat=27;
   action(r,'a','sell',{item:'wheat',qty:24});
   assert.equal(farm.inventory.wheat,3);
-  assert.throws(()=>action(r,'a','buy',{item:'wheatSeed',qty:24}),/Số lượng/);
+  assert.throws(()=>action(r,'a','list',{item:'wheat',price:6,qty:24}),/Số lượng/);
+  assert.throws(()=>action(r,'a','buy',{item:'wheatSeed',qty:101}),/Số lượng/);
 });

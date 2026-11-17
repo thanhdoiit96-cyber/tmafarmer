@@ -14,6 +14,7 @@ const oldDay = 12 * 60;
 const oldSlot = 180;
 const shieldDuration = 30 * 60;
 export const dryGrowthFactor=.65;
+export const supplyLimit=100;
 export const soilIdleTime = gameDay;
 const postRainTime = 20 * 60;
 export const weather = [
@@ -436,7 +437,8 @@ function applyAction(room,id,input,now,catchRoll){
   const farm=room.farms[id];
   const {action,item,index,target,source}=input;
   const qty=input.qty??1;
-  check(Number.isSafeInteger(qty)&&qty>=1&&(action==='sell'||qty<=20),'Số lượng không hợp lệ.');
+  const quantityLimit=action==='sell'?Infinity:action==='buy'?supplyLimit:20;
+  check(Number.isSafeInteger(qty)&&qty>=1&&qty<=quantityLimit,'Số lượng không hợp lệ.');
   if(action==='villageFund'){
     const result=contributeVillage(room,farm,item,input.amount);
     check(!result.error,result.error);
@@ -579,10 +581,10 @@ function applyAction(room,id,input,now,catchRoll){
     check(has(goods,item)&&goods[item].buy,'Vật phẩm không có ở cửa hàng.');
     const crop=Object.keys(crops).find(key=>crops[key].seed===item);
     if(crop)check(!cropRequirement(farm,crop),cropRequirement(farm,crop));
-    check(own(farm,item)+qty<=100,'Túi vật tư chỉ chứa 100 món mỗi loại.');
+    check(own(farm,item)+qty<=supplyLimit,'Túi vật tư chỉ chứa '+supplyLimit+' món mỗi loại.');
     spend(farm,goods[item].buy*qty);
     add(farm,item,qty);
-    return 'Đã mua '+goods[item].name.toLowerCase()+'.';
+    return 'Đã mua '+qty+' '+goods[item].name.toLowerCase()+'.';
   }
   if(action==='sell') {
     check(has(goods,item)&&goods[item].sell,'Mặt hàng không bán được.');
