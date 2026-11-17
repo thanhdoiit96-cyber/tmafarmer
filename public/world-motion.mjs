@@ -1,5 +1,11 @@
 export const playerSpeed=76;
 export const playerStride=64;
+export const actionPoseSeconds={till:.85,plant:.85,cast:.55,reel:.72};
+
+export function fishingBobber(dock){
+  const dx=dock.side==='left'?-36:dock.side==='right'?36:19;
+  return {x:dock.x+dx,y:dock.y-(dock.side==='up'?42:0)};
+}
 
 export function walkFrame(distance,stride,frames){
   return Math.floor((distance%stride)/stride*frames);

@@ -94,6 +94,9 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 
 `world.mjs` giữ camera và gameplay. Renderer đọc atlas/metadata và vẽ trực tiếp vào Canvas Pixel; các sprite cũ còn được dùng cho đạo cụ, vật nuôi và dự phòng khi tải asset.
 
+- Cuốc đất dùng lại sáu khung hình công việc có sẵn. Gieo hạt dùng túi hạt và các hạt rơi xuống luống; câu cá vẽ cần, dây, phao và gợn nước theo từng trạng thái thả, chờ, kéo. Các hiệu ứng dùng lại Canvas Pixel và có trạng thái tĩnh khi bật giảm chuyển động.
+- Vật nuôi có tỷ lệ theo từng loài và độ trưởng thành trên bản đồ chuồng chính, ô đất mở rộng và vườn ghé thăm.
+
 ## Tiêu chí nghiệm thu vertical slice
 
 - Nhân vật, nhà, cây và gà đọc rõ ở kích thước mobile nhỏ nhất.
@@ -107,5 +110,5 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 
 1. Chuyển terrain Vườn nhà sang tileset theo mật độ 2×.
 2. Chuyển mưa, sương và ánh sáng sang hiệu ứng pixel.
-3. Bổ sung animation công việc riêng cho tưới, cuốc, gieo và thu hoạch.
+3. Bổ sung sprite chuyển động riêng cho tưới và thu hoạch.
 4. Chuyển dần phông nền và đạo cụ đặc thù từng cảnh sang atlas pixel riêng.

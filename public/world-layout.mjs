@@ -34,7 +34,7 @@ export const maps = {
   workshop:{
     name:'Xưởng máy',subtitle:'KHU CHẾ TẠO',spawn:[238,244],water:[],trees:[],objects:[],
     blocks:[rect(0,0,480,62),rect(0,62,25,226),rect(455,62,25,226),rect(45,75,108,50),rect(327,75,108,50),rect(56,159,88,43),rect(336,159,88,43)],
-    hotspots:[{x:238,y:107,type:'craft-bench',label:'Bàn chế tạo · Sắp ra mắt'}],
+    hotspots:[{x:238,y:107,type:'craft-bench',label:'Bàn chế biến'}],
     exits:[exit(238,274,'Ra vườn','field',[476,168],'down')],
   },
   coop: {

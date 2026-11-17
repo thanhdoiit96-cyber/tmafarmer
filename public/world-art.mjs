@@ -5,7 +5,7 @@ import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
-import {animalMotion,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
+import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -539,6 +539,7 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
+const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[30,25],sheep:[33,24]};
 function critter(c,a,t){
   if(!dim(atlas))return;
   const {data,index=0}=a;
@@ -550,13 +551,14 @@ function critter(c,a,t){
   const step=Math.sin(phase);
   const foraging=motion.state==='graze'||motion.state==='peck';
   const bend=foraging ? .5-.5*Math.cos(motion.elapsed*(large?4.7:9.3)) : 0;
-  const size=animalScale(data),w=(large?29:14)*size,h=(visual==='cow'?22:visual==='pig'?19:16)*size;
+  const size=animalScale(data),[width,height]=animalSizes[data.kind];
+  const w=width*size,h=height*size;
   const x=snapPixel(a.x+motion.offset),y=snapPixel(a.y);
   const [sx,sy,sw,sh]=frames[visual];
   const cut=Math.round(sh*(large?.72:.79)), body=h*cut/sh;
   const half=Math.floor(sw/2), split=w*half/sw;
   const bob=Math.abs(step)*(large?.48:.7)*size;
-  shade(c,x,y,(large?13:8)*size,walking?3.2:3.8);
+  shade(c,x,y,w*.48,walking?3.2:3.8);
   c.save();
   if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
   if(data.kind==='goat')c.filter='grayscale(.42) sepia(.22) brightness(1.12)';
@@ -593,11 +595,11 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   c.restore();
 }
 function personTool(c,x,y,direction,t,action){
-  if(action==='cast'||action==='reel'){
-    const sign=direction==='left'?-1:1;
-    line(c,'#ddbd83',1,[[x+sign*2,y-11],[x+sign*11,y-21],[x+sign*17,y-24]]);
-    line(c,'#e9dfbf99',.45,[[x+sign*17,y-24],[x+sign*19,y-10]]);
-    ellipse(c,'#f4a66d',x+sign*19,y-10,1.6,1.5);
+  if(action==='plant'){
+    const px=x+(direction==='left'?-7:7),py=y-13+Math.sin(t/actionPoseSeconds.plant*Math.PI)*3;
+    box(c,'#745138',px-3,py-2,6,6,1);
+    box(c,'#d9b07a',px-2,py-1,4,4,1);
+    line(c,'#f5dfa5',.8,[[px-2,py],[px+2,py]]);
   } else if(action==='water'){
     const px=x+(direction==='left'?-8:8),py=y-11+Math.sin(t*12);
     box(c,'#bed9d0',px-2,py,5,4,1);line(c,'#9dc8c6',.85,[[px+2,py+1],[px+5,py-.8],[px+6,py-.1]]);
@@ -606,6 +608,33 @@ function personTool(c,x,y,direction,t,action){
     line(c,'#8d6540',1.4,[[toolX-4*side,toolY-7],[toolX+3*side,toolY+1]]);
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
+}
+export function drawFishing(c,x,y,dock,{action,elapsed,ambient,bite,caught,reduced}){
+  const phase=action==='hold'?1:Math.min(1,elapsed/actionPoseSeconds[action]);
+  const reach=action==='cast'?.25+.75*phase:action==='reel'?1-.72*phase:1;
+  const dir=dock.side==='left'?-1:1;
+  const lift=action==='cast'?-Math.sin(phase*Math.PI)*12:action==='reel'?-Math.sin(phase*Math.PI*.8)*15:0;
+  const hand=[x+dir*8,y-15], tip=[x+dir*(dock.side==='up'?17:20),y-27+lift];
+  const origin=fishingBobber(dock);
+  const bob=action==='hold'&&!reduced?(bite?Math.abs(Math.sin(ambient*7))*2.5:Math.sin(ambient*3)) : 0;
+  const px=snapPixel(tip[0]+(origin.x-tip[0])*reach);
+  const py=snapPixel(tip[1]+(origin.y-tip[1])*reach+bob-
+    (action==='cast'?Math.sin(phase*Math.PI)*10:action==='reel'?Math.sin(phase*Math.PI)*12:0));
+  line(c,'#573e29',2.4,[hand,tip]);
+  line(c,'#e8bb77',1.1,[hand,tip]);
+  line(c,'#f7e7bc',.75,[tip,[snapPixel((tip[0]+px)/2),snapPixel((tip[1]+py)/2+2)],[px,py]]);
+  c.fillStyle='#663f2f';c.fillRect(px-2,py-1.5,4,3.75);
+  c.fillStyle='#ff8d60';c.fillRect(px-1.5,py-1.5,3,2.25);
+  c.fillStyle='#fff1c7';c.fillRect(px-.75,py-2.25,1.5,1.5);
+  if(action==='hold'||action==='cast'&&phase>.72||action==='reel'&&phase<.47){
+    const ripple=reduced?5:action==='hold'?4+(ambient*10)%5:5+phase*5;
+    c.strokeStyle=bite?'#fff0b5':'#bce6dd';c.lineWidth=.75;
+    c.beginPath();c.ellipse(origin.x,origin.y+1,ripple,ripple*.36,0,0,Math.PI*2);c.stroke();
+  }
+  if(action==='reel'&&caught&&phase>.15&&phase<.92){
+    line(c,'#9bdfd2',2.3,[[px-3,py-3],[px+2,py-3]]);
+    line(c,'#d1edd4',1.4,[[px+2,py-3],[px+5,py-5],[px+5,py-1],[px+2,py-3]]);
+  }
 }
 export function drawPerson(c,x,y,direction,t,{walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
   if(!dim(pixelCharacters)){
@@ -629,10 +658,14 @@ export function drawPerson(c,x,y,direction,t,{walking=false,walkDistance=0,style
   if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
   const unit=pixelStep*scale;
   const left=px-cellWidth/2*unit,top=py-59*unit;
+  if(action==='plant'){
+    const lean=Math.sin(Math.min(1,elapsed/actionPoseSeconds.plant)*Math.PI)*.075;
+    c.translate(px,py);c.rotate(direction==='left'?-lean:lean);c.translate(-px,-py);
+  }
   c.drawImage(moving?farmerWalk:pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
     snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
   c.restore();
-  if(!work)personTool(c,px,py,elapsed,action);
+  if(!work)personTool(c,px,py,direction,elapsed,action);
 }
 function pixelHouse(c,x,y,w,h=w*pixelSlice.house.h/pixelSlice.house.w){
   const frame=pixelSlice.house;
@@ -663,9 +696,9 @@ function drawAtlasActor(c,a,t,state){
     const step=walking?walkFrame(motion.distance,info.stride,animation.frames):Math.floor(motion.elapsed*animation.fps)%animation.frames;
     const frame=animation.first+step;
     const sx=info.x+(frame%info.columns)*info.cell,sy=info.y+Math.floor(frame/info.columns)*info.cell;
-    const chickenX=snapPixel(a.x+motion.offset), unit=pixelStep*animalScale(a.data);
+    const chickenX=snapPixel(a.x+motion.offset), unit=pixelStep*.65*animalScale(a.data);
     const width=Math.round(info.cell*unit/pixelStep)*pixelStep;
-    shade(c,chickenX,py,8,walking?3.2:3.8);
+    shade(c,chickenX,py,width*.23,walking?2.3:2.9);
     c.save();
     c.translate(chickenX,0);
     if(spriteFlip(motion.facing,animation.sourceFacing))c.scale(-1,1);

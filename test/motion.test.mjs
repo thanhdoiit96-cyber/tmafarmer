@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
-import {animalMotion,facingFromDelta,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
+import {actionPoseSeconds,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
+import {features,walkable} from '../public/world-layout.mjs';
+import {newFarm,newRoom,snapshot} from '../public/game.mjs';
 
 test('the farmer steps through four walk poses per distance cycle and loops at the end',()=>{
   const {frames}=pixelCharacter.states.walk;
@@ -44,5 +46,24 @@ test('animals pause inside their pen and honor reduced motion',()=>{
     const motion=at(time);
     assert.ok(Math.abs(motion.offset)<=11);
     if(motion.state==='graze')assert.equal(at(time+.01).offset,motion.offset);
+  }
+});
+
+test('the whole hoe sequence can play and fishing lines end in the connected water',()=>{
+  assert.ok(actionPoseSeconds.till>=pixelCharacter.states.work.frames/pixelCharacter.states.work.fps);
+  const room=newRoom(0);
+  room.farms.a=newFarm('a','Vườn nhà',0);
+  room.farms.b=newFarm('b','Hàng xóm',0);
+  room.farms.b.land[0]={kind:'pond'};
+  const data=snapshot(room,room.farms.a,0);
+  for(const area of ['lake','visit']){
+    const scene=features(area,data,data.neighbors[0]);
+    const docks=scene.hotspots.filter(point=>point.type.endsWith('fishing'));
+    assert.equal(docks.length,2);
+    for(const dock of docks){
+      const bobber=fishingBobber(dock);
+      assert.equal(walkable({...scene,blocks:[]},bobber.x,bobber.y),false);
+      assert.equal(walkable({...scene,blocks:[],water:[]},bobber.x,bobber.y),true);
+    }
   }
 });

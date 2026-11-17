@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {animals,apply,cropGoal,dayReward,gameDay,growthGoal,newFarm,newRoom,productGoal,snapshot} from '../public/game.mjs';
+import {animals,apply,cropGoal,dayReward,gameDay,growthGoal,mealCooldown,newFarm,newRoom,productGoal,snapshot,stock} from '../public/game.mjs';
 import {homeBed} from '../public/home-rules.mjs';
 import {features,maps,route,walkable} from '../public/world-layout.mjs';
 import {farmTasks} from '../public/tasks.mjs';
@@ -34,6 +34,33 @@ test('new work spends energy once, rejected actions preserve it, and rest blocks
   act(room,'water',{index:0},30);
   assert.ok(farm.wellness.stamina<48);
   assert.throws(()=>act(room,'drink',{},31),/vừa hồi phục/);
+});
+
+test('workshop recipes consume produce once and meals recover stats under a shared cooldown',()=>{
+  const room=world(), farm=room.farms.a;
+  Object.assign(farm.inventory,{wheat:2,carrot:2,milk:1});
+  assert.throws(()=>act(room,'craft',{item:'bread'}),/cấp 1/);
+  farm.workshop=1;
+  assert.throws(()=>act(room,'craft',{item:'warmMilk'}),/cấp 2/);
+  assert.throws(()=>act(room,'craft',{item:'bread',qty:2}),/một phần/);
+  act(room,'craft',{item:'bread'});
+  act(room,'craft',{item:'carrotJuice'});
+  assert.equal(stock(farm),1);
+  assert.equal(farm.inventory.bread,1);
+  assert.throws(()=>act(room,'craft',{item:'bread'}),/nguyên liệu/);
+  assert.throws(()=>act(room,'consume',{item:'bread'}),/đã đầy/);
+  farm.wellness={water:30,food:85,stamina:60,at:start,until:{},restUntil:0};
+  act(room,'consume',{item:'bread'});
+  assert.deepEqual([farm.wellness.water,farm.wellness.food,farm.wellness.stamina],[30,100,82]);
+  assert.equal(farm.inventory.bread,0);
+  assert.throws(()=>act(room,'consume',{item:'carrotJuice'},mealCooldown-1),/tiếp theo/);
+  assert.equal(farm.inventory.carrotJuice,1);
+  act(room,'consume',{item:'carrotJuice'},mealCooldown);
+  assert.equal(snapshot(room,farm,start+mealCooldown).me.wellness.stamina,100);
+  assert.equal(farm.wellness.water,62);
+  farm.workshop=2;
+  act(room,'craft',{item:'warmMilk'},mealCooldown);
+  assert.equal(farm.inventory.warmMilk,1);
 });
 
 test('older stock completes its old goal and new animals use separate growth and production clocks',()=>{

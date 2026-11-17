@@ -3,8 +3,8 @@ import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
-import {facingFromDelta, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actionPoseSeconds, facingFromDelta, fishingBobber, playerSpeed} from './world-motion.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -17,7 +17,7 @@ const effectStyle={
   aquaStock:['#81b792','#bce6c2'],aquaFeed:['#c49054','#ead38d'],aquaHarvest:['#79c5cb','#d0f1dd'],
   cast:['#87d1d7','#b9f0dd'],reel:['#84ced2','#e2f4c2'],
   animal:['#e0b982','#f5dbaa'],deal:['#dcaf57','#f7e797'],sell:['#dcaf57','#f7e797'],rest:['#e9c77d','#fff0b5'],
-  buy:['#dcaf57','#f7e797'],list:['#dcaf57','#f7e797'],order:['#dcaf57','#f7e797'],
+  buy:['#dcaf57','#f7e797'],list:['#dcaf57','#f7e797'],order:['#dcaf57','#f7e797'],craft:['#c69357','#f9dea2'],
 };
 
 export function createWorld(root, onInteract) {
@@ -65,10 +65,11 @@ export function createWorld(root, onInteract) {
     mini.fillStyle='#fff5c5';mini.beginPath();mini.arc(x*sx,y*sy,2.1,0,2*Math.PI);mini.fill();
   }
   let x=236,y=221,facing='down',walking=false,walkDistance=0,waypoints=[],pending,onArrival,active,previousTime=0,poseStarted=0,pose='',effects=[];
+  let fishingDock=null,caughtFish=false,posePlot;
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
-    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;
+    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;fishingDock=null;
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
   function stop() {waypoints=[];pending=null;onArrival=null;walking=false;}
@@ -147,7 +148,7 @@ export function createWorld(root, onInteract) {
     const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index))??[];
     const dock=points.sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
     if(!dock)return false;
-    if(distance(dock,x,y)<16){callback?.();return true;}
+    if(distance(dock,x,y)<16){stop();callback?.();return true;}
     return walkTo(dock.x,dock.y,dock,callback);
   }
   function move(dx,dy,dt) {
@@ -166,35 +167,62 @@ export function createWorld(root, onInteract) {
       canvas.dataset.position=Math.round(x)+','+Math.round(y);
     }
   }
-  function particle(input) {
+  function nearestFishingDock(index){
+    const type=sceneId==='visit'?'neighbor-fishing':'public-fishing';
+    return scene.hotspots.filter(a=>a.type===type&&(index===undefined||a.index===index))
+      .sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
+  }
+  function particle(input,{cast,caught}={}) {
     const palette=effectStyle[input.action];
     if(!palette||!scene)return;
     let target=null;
     if(['till','water','plant','fertilize','spray','harvest'].includes(input.action)&&sceneId==='field') target=plotPosition(input.index);
     if(['feed','collect'].includes(input.action)&&sceneId==='coop') target=scene.hotspots.find(a=>a.type==='animal'&&a.index===input.index);
     if(input.action.startsWith('aqua')&&sceneId==='field') target=scene.hotspots.find(a=>a.type==='pond'&&a.index===input.index);
-    if(input.action==='cast'||input.action==='reel') target=scene.hotspots.filter(a=>a.type.endsWith('fishing')).sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
+    if(input.action==='cast'||input.action==='reel'){
+      const dock=nearestFishingDock(cast?.index);
+      if(!dock||distance(dock,x,y)>=range)return;
+      fishingDock=dock;
+      caughtFish=!!caught;
+      facing=dock.side;
+      target=fishingBobber(dock);
+    }
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
     pose=input.action;
+    posePlot=input.index;
     poseStarted=performance.now();
-    if((input.action==='cast'||input.action==='reel')&&target&&distance(target,x,y)<64){
-      facing=target.side;
-    } else if(target&&distance(target,x,y)<64) {
+    if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {
       facing=facingFromDelta(target.x-x,target.y-y);
     }
-    effects.push({x:spot.x,y:spot.y,time:performance.now(),palette});
+    const delay={till:350,plant:320,cast:420}[input.action]??0;
+    effects.push({x:spot.x,y:spot.y,time:poseStarted+delay,palette});
+    if(input.action==='plant'&&target&&!reduce.matches){
+      effects.push({x:spot.x,y:spot.y,fromX:x,fromY:y-14,time:poseStarted+90,palette,seeds:true});
+    }
   }
   function drawEffects(now) {
     effects=effects.filter(e=>now-e.time<780);
-    for(const e of effects)for(let n=0;n<(reduce.matches?4:12);n++) {
-      const life=reduce.matches?.27:(now-e.time)/780, angle=n*2.399;
-      context.globalAlpha=Math.max(0,1-life);
-      context.fillStyle=e.palette[n%2];
-      const px=e.x+Math.cos(angle)*life*(10+n*2), py=e.y-4+Math.sin(angle)*life*(10+n)-life*22;
-      context.fillRect(Math.round(px),Math.round(py),n%3===0?4:2,n%3===0?3:2);
+    for(const e of effects){
+      if(now<e.time)continue;
+      if(e.seeds){
+        for(let i=0;i<5;i++){
+          const travel=(now-e.time-i*26)/260;
+          if(travel<0||travel>1)continue;
+          context.fillStyle=i%2?'#e1bd79':'#c3914c';
+          context.fillRect(Math.round(e.fromX+(e.x-e.fromX+i*2-4)*travel),Math.round(e.fromY+(e.y-e.fromY)*travel-13*Math.sin(Math.PI*travel)),2,2);
+        }
+        continue;
+      }
+      for(let n=0;n<(reduce.matches?4:12);n++) {
+        const life=reduce.matches?.27:(now-e.time)/780, angle=n*2.399;
+        context.globalAlpha=Math.max(0,1-life);
+        context.fillStyle=e.palette[n%2];
+        const px=e.x+Math.cos(angle)*life*(10+n*2), py=e.y-4+Math.sin(angle)*life*(10+n)-life*22;
+        context.fillRect(Math.round(px),Math.round(py),n%3===0?4:2,n%3===0?3:2);
+      }
+      context.globalAlpha=1;
     }
-    context.globalAlpha=1;
   }
   function frame(now){
     const dt=Math.min(Math.max(0,(now-previousTime)/1000),.035);
@@ -274,18 +302,17 @@ export function createWorld(root, onInteract) {
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
     const fishingHere=cast&&cast.expires>=gameNow&&(sceneId==='lake'&&cast.source==='public'||sceneId==='visit'&&cast.source==='pond'&&cast.target===currentVisit);
-    if(fishingHere&&active?.type.endsWith('fishing')&&cast.ready<=gameNow){
-      const bob=Math.sin(ambient*9)*1.7;
-      const shift={left:[-13,0],right:[13,0],up:[0,-18]}[active.side];
-      context.fillStyle='#fff0b5';context.beginPath();context.arc(active.x+shift[0],active.y+shift[1]+bob,2.1,0,Math.PI*2);context.fill();
-    }
+    const dock=fishingDock??(fishingHere&&nearestFishingDock(cast.index));
     for(const a of sprites) {
       if(a.x<camera.x-75||a.y<camera.y-28||a.x>camera.x+size.width+75||a.y>camera.y+size.height+95)continue;
       if(a.type==='player'){
         const elapsed=(now-poseStarted)/1000;
-        let action='';
-        if(!walking)action=elapsed<.75&&pose ? pose : fishingHere ? 'cast' : '';
-        drawPerson(context,x,y,facing,ambient,{walking:walking&&!reduce.matches,walkDistance,action,elapsed:reduce.matches?0:elapsed});
+        const action=!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
+        const fishing=!walking&&dock&&distance(dock,x,y)<range&&(action==='cast'||action==='reel'||fishingHere);
+        const poseTime=reduce.matches?(actionPoseSeconds[action]??0)*.55:elapsed;
+        drawPerson(context,x,y,fishing?dock.side:facing,ambient,{walking:walking&&!reduce.matches,walkDistance,action,elapsed:poseTime});
+        if(fishing)drawFishing(context,x,y,dock,{action:action==='cast'||action==='reel'?action:'hold',
+          elapsed:poseTime,ambient,bite:!!cast&&cast.ready<=gameNow,caught:caughtFish,reduced:reduce.matches});
       }
       else if(a.type==='peer'){
         drawPerson(context,a.x,a.y,a.facing,ambient,{walking:a.walking,walkDistance:a.walkDistance,style:'peer'});
@@ -295,6 +322,8 @@ export function createWorld(root, onInteract) {
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,labelY,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
+      else if(a.type==='plot'&&a.index===posePlot&&pose==='plant'&&!reduce.matches&&now-poseStarted<380)
+        actor(context,{...a,data:null},ambient,snapshot);
       else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
     if(sceneId==='home'){
