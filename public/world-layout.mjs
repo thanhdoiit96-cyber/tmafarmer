@@ -125,7 +125,10 @@ export function features(id, snapshot, neighbor, page=0) {
       hotspots.push({...pos,y:pos.y+8,drawY:pos.y,type:'plot',index:i,data,label:'Ô đất '+(i+1)});
     }
     const decor=(index,rect)=>{const style=fenceAt(owner,index);if(style)ground.push({...rect,type:'fence',style});};
-    for(const garden of baseGarden(Math.ceil(owner.plots.length/3)))decor(-1,garden);
+    for(const garden of baseGarden(Math.ceil(owner.plots.length/3))){
+      ground.push({...garden,type:'garden-bed'});
+      decor(-1,garden);
+    }
     decor(-2,basePonds[0]);decor(-3,basePonds[1]);
     const land=getLand(owner);
     for(let i=0;i<lotCount;i++){

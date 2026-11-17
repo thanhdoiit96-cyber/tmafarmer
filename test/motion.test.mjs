@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
-import {animalMotion,facingFromDelta,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
+import {animalMotion,facingFromDelta,playerSpeed,playerStride,spriteFlip,walkFrame,walkPose} from '../public/world-motion.mjs';
 
 test('the farmer holds each walk frame for one sixth of the traveled stride',()=>{
   const {frames}=pixelCharacter.states.walk;
@@ -27,6 +27,21 @@ test('the chicken faces its direction of travel in both walking legs and while p
     assert.equal(peck.offset,animalMotion(pause+.1,0,15,'peck').offset);
     assert.equal(spriteFlip(peck.facing,states.peck.sourceFacing),walk.facing===-1);
   }
+});
+
+test('the farmer keeps one grounded foot while the other swings',()=>{
+  for(let i=0;i<100;i++){
+    const phase=i/100;
+    const pose=walkPose(phase*playerStride,playerStride);
+    assert.ok(pose.left.lift===0||pose.right.lift===0);
+    for(const foot of [pose.left,pose.right]){
+      assert.ok(Math.abs(foot.reach)<=1&&foot.lift>=0&&foot.lift<=1);
+    }
+  }
+  const first=walkPose(playerStride*.33,playerStride);
+  const second=walkPose(playerStride*.83,playerStride);
+  assert.ok(first.right.lift>.9&&second.left.lift>.9);
+  assert.deepEqual(walkPose(playerStride,playerStride),walkPose(0,playerStride));
 });
 
 test('animals pause inside their pen and honor reduced motion',()=>{

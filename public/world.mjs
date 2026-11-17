@@ -1,9 +1,10 @@
 import {features, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
+import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {facingFromDelta, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, pixelActor, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawMapPointer, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, pixelActor, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -21,6 +22,7 @@ const effectStyle={
 
 export function createWorld(root, onInteract) {
   const canvas=root.querySelector('canvas'), context=canvas.getContext('2d');
+  canvas.style.cursor=createMapCursor();
   const terrain=document.createElement('canvas');
   const resolution=2;
   const ctx=terrain.getContext('2d');
@@ -34,6 +36,7 @@ export function createWorld(root, onInteract) {
   let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, activePage, marks=[];
   let observedAt=performance.now(), terrainKey='', peers=new Map(), scenery=[];
   let pixelPreview=localStorage.getItem('mua-vui-pixel-preview')!=='false';
+  let terrainScale=resolution, pointer=null, routeMarker=null;
 
   function syncPixelToggle(){
     const pixel=Boolean(sceneId)&&pixelPreview;
@@ -52,9 +55,11 @@ export function createWorld(root, onInteract) {
   }
 
   function paintTerrain(){
-    terrain.width=bounds.width*resolution;
-    terrain.height=bounds.height*resolution;
-    ctx.scale(resolution,resolution);
+    terrainScale=pixelPreview?pixelViewport.width/size.width:resolution;
+    terrain.width=Math.ceil(bounds.width*terrainScale);
+    terrain.height=Math.ceil(bounds.height*terrainScale);
+    ctx.scale(terrainScale,terrainScale);
+    ctx.imageSmoothingEnabled=!pixelPreview;
     grass(ctx,maps[sceneId],sceneId,scene);
   }
   function shiftCamera(){
@@ -77,7 +82,7 @@ export function createWorld(root, onInteract) {
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
-    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];
+    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
   function stop() {waypoints=[];pending=null;onArrival=null;walking=false;}
@@ -113,7 +118,7 @@ export function createWorld(root, onInteract) {
     marks=id==='field'||id==='coop'?tasks.flatMap(task=>{
       const point=positionByTask.get(task.kind+':'+task.index);
       if(!point)return [];
-      return [{x:point.x,y:(point.drawY??point.y)-(task.kind==='plot'?19:task.kind==='animal'?32:22),style:taskStyles[task.type]}];
+      return [{point,style:taskStyles[task.type]}];
     }):[];
     const visual=JSON.stringify(scene.ground);
     if(terrainKey!==visual){
@@ -139,6 +144,17 @@ export function createWorld(root, onInteract) {
     pending=target??null;
     onArrival=callback;
     return true;
+  }
+  function pointerLocation(event){
+    const bounds=canvas.getBoundingClientRect();
+    return {x:(event.clientX-bounds.left)*size.width/bounds.width,y:(event.clientY-bounds.top)*size.height/bounds.height};
+  }
+  function targetAt(px,py){
+    return scene.hotspots.reduce((best,p)=>{
+      const distance=Math.hypot(px-p.x,py-(p.drawY??(p.type==='exit'?p.y:p.y-10)));
+      const radius=p.type==='plot'?23:p.type==='exit'?16:p.w?Math.min(p.w*.5,32):20;
+      return distance<=radius&&(!best||distance<best.distance)?{p,distance}:best;
+    },null)?.p;
   }
   function approach(type,index,callback){
     const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index))??[];
@@ -228,28 +244,29 @@ export function createWorld(root, onInteract) {
     const scale=pixelViewport.width/size.width;
     const cameraX=pixel?Math.round(camera.x*scale)/scale:camera.x;
     const cameraY=pixel?Math.round(camera.y*scale)/scale:camera.y;
-    context.drawImage(terrain,cameraX*resolution,cameraY*resolution,size.width*resolution,size.height*resolution,0,0,size.width,size.height);
+    context.imageSmoothingEnabled=!pixel;
+    context.drawImage(terrain,cameraX*terrainScale,cameraY*terrainScale,size.width*terrainScale,size.height*terrainScale,0,0,size.width,size.height);
     context.save();context.translate(-cameraX,-cameraY);
     if(pixel)context.imageSmoothingEnabled=false;
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
-    const highlight=active?.type==='plot'?active:null;
-    if(active&&active.type!=='plot'&&active.type!=='exit'){
-      context.strokeStyle='#fff0b5';
-      context.lineWidth=1.4;
-      context.beginPath();
-      context.ellipse(active.x,active.y-3,7,3.5,0,0,Math.PI*2);
-      context.stroke();
+    const hovered=pointer?targetAt(cameraX+pointer.x,cameraY+pointer.y):null;
+    const highlight=hovered??active;
+    if(highlight&&highlight.type!=='plot'&&highlight.type!=='exit'){
+      drawMapPointer(context,highlight.x,highlight.y-2,ambient,{opacity:hovered?1:.68});
     }
-    if(sceneId==='field'&&Number.isInteger(selectedPlot)){
-      const {x:px,y:py}=plotPosition(selectedPlot);
-      context.strokeStyle='#f7e4a3';
-      context.lineWidth=1.2;
-      context.beginPath();context.roundRect(px-24,py-14,48,27,4);context.stroke();
+    if(routeMarker){
+      if(!waypoints.length&&routeMarker.until===Infinity)routeMarker.until=now+500;
+      if(now>=routeMarker.until)routeMarker=null;
+      else drawMapPointer(context,routeMarker.x,routeMarker.y,ambient,{blocked:routeMarker.blocked,opacity:Math.min(1,(routeMarker.until-now)/280)});
     }
-    if(highlight&&sceneId==='visit'){
-      context.fillStyle='#efe1a49c';
-      context.fillRect(highlight.x-25,highlight.drawY-15,50,29);
+    const highlightedPlot=highlight?.type==='plot'?highlight.index:null;
+    for(const index of new Set([sceneId==='field'?selectedPlot:null,highlightedPlot])){
+      if(!Number.isInteger(index))continue;
+      const {x:px,y:py}=plotPosition(index);
+      context.strokeStyle=index===highlightedPlot?'#fff1bd':'#dfb873';
+      context.lineWidth=1.6;
+      context.beginPath();context.roundRect(px-24.5,py-14.5,49,28,4);context.stroke();
     }
     for(const peer of peers.values()){
       const dx=peer.goalX-peer.x,dy=peer.goalY-peer.y;
@@ -314,7 +331,12 @@ export function createWorld(root, onInteract) {
       context.restore();
     } else if(!reduce.matches)landscapeLife(context,sceneId,ambient);
     for(const item of scene.hotspots)if(item.type==='exit')gate(context,item,ambient);
-    for(const mark of marks)if(mark.x>=camera.x&&mark.x<=camera.x+size.width&&mark.y>=camera.y&&mark.y<=camera.y+size.height)drawTask(context,mark.x,mark.y+Math.sin(ambient*2+mark.x)*.65,mark.style);
+    for(const {point,style} of marks){
+      const pos=point.type==='plot'?cropTaskPosition({...point,y:point.drawY},pixel):{x:point.x,y:point.y-(point.type==='animal'?32:22)};
+      if(pos.x>=camera.x&&pos.x<=camera.x+size.width&&pos.y>=camera.y&&pos.y<=camera.y+size.height){
+        drawTask(context,pos.x,pos.y+(point.type==='plot'?0:Math.sin(ambient*2+pos.x)*.65),style);
+      }
+    }
     drawEffects(now);
     context.restore();
     if(sceneId!=='home'&&sceneId!=='workshop')atmosphere(context,ambient,snapshot.weather.id,reduce.matches,daylight);
@@ -331,37 +353,43 @@ export function createWorld(root, onInteract) {
     }
     const direction=directions[letter];
     if(!direction)return;
-    event.preventDefault(); stop(); keys.add(direction);
+    event.preventDefault(); stop(); routeMarker=null; keys.add(direction);
   };
   window.addEventListener('keydown',down);
   window.addEventListener('keyup',e=>keys.delete(directions[e.key.length===1?e.key.toLowerCase():e.key]));
   window.addEventListener('blur',()=>keys.clear());
   document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
+  canvas.addEventListener('pointermove',event=>{
+    if(event.pointerType!=='touch')pointer=pointerLocation(event);
+  });
+  canvas.addEventListener('pointerleave',()=>{pointer=null;});
   canvas.addEventListener('pointerup',event=>{
     if(!scene||event.button!==0) return;
-    const bound=canvas.getBoundingClientRect();
-    const px=camera.x+(event.clientX-bound.left)*size.width/bound.width, py=camera.y+(event.clientY-bound.top)*size.height/bound.height;
-    const target=scene.hotspots.reduce((best,p)=>{
-      const distance=Math.hypot(px-p.x,py-(p.drawY??(p.type==='exit'?p.y:p.y-10)));
-      const radius=p.type==='plot'?23:p.type==='exit'?16:p.w?Math.min(p.w*.5,32):20;
-      return distance<=radius&&(!best||distance<best.distance)?{p,distance}:best;
-    },null)?.p;
-    if(target&&distance(target,x,y)<range)use(target);
-    else walkTo(target?.x??px,target?.y??py,target);
+    const point=pointerLocation(event);
+    const px=camera.x+point.x,py=camera.y+point.y,target=targetAt(px,py);
+    if(target&&distance(target,x,y)<range){routeMarker=null;use(target);}
+    else if(walkTo(target?.x??px,target?.y??py,target)){
+      const [x,y]=waypoints.at(-1);
+      routeMarker={x,y,until:Infinity};
+    }else routeMarker={x:px,y:py,blocked:true,until:performance.now()+600};
   });
   root.querySelectorAll('[data-direction]').forEach(button=>{
     const direction=button.dataset.direction;
     button.addEventListener('pointerdown',event=>{
       if(event.button!==0)return;
-      button.setPointerCapture(event.pointerId);stop();keys.add(direction);
+      button.setPointerCapture(event.pointerId);button.dataset.held='true';stop();routeMarker=null;keys.add(direction);
     });
-    for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>keys.delete(direction));
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>{
+      delete button.dataset.held;
+      keys.delete(direction);
+    });
   });
   interacted.addEventListener('click',()=>use());
   pixelToggle.addEventListener('click',()=>{
     pixelPreview=!pixelPreview;
     localStorage.setItem('mua-vui-pixel-preview',String(pixelPreview));
     syncPixelToggle();
+    if(sceneId)paintTerrain();
   });
   function setPeers(players){
     const next=new Map();

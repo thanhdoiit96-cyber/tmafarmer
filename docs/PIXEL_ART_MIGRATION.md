@@ -37,10 +37,14 @@ Trạng thái:
 - [x] Chuẩn hóa trực tiếp từ hình gốc V2 thành `characters-v2-hd.png` và `vertical-slice-v2-hd.png`. Tái tạo bằng `python3 scripts/normalize-pixel-hd.py` với Pillow.
 - [x] Thay bước thu nhỏ bản đồ cuối mỗi frame bằng Canvas `640 × 384`. Nút Pixel dùng cùng lựa chọn đã lưu trước đây.
 - [x] Dùng cùng renderer và atlas nhân vật ở Vườn nhà, Nhà vườn, Chuồng, Chợ, Hàng xóm, Hồ làng, vườn ghé thăm và Xưởng máy. Nhà hàng xóm dùng chung sprite với nhà vườn, có chi tiết riêng theo cấp.
+- [x] Thay nền ở cả tám cảnh bằng bộ vật liệu V3. Tách màu Vườn nhà và vườn ghé thăm, lát quảng trường chợ, thêm thảm sân rơm ở chuồng, đường ven hồ, ván và chiếu trong nhà, sàn đá trong xưởng. Mặt bằng chơi và điểm tương tác vẫn lấy từ dữ liệu bản đồ.
+- [x] Căn lúa, cà rốt và bắp theo phần hình nhìn thấy, đặt biểu tượng công việc trên tán cây. Thêm con trỏ và vòng đánh dấu đích tự tìm đường.
+
+Ảnh vật liệu gốc ở `docs/assets/terrain-materials-v3-source.png`. Tấm chất liệu tạo từ concept Vườn Mùa Vui theo lưới 4 × 2, nhìn thẳng từ trên xuống, gồm cỏ vườn, cỏ rợp, đá lát, bờ hồ, ván gỗ, đá phiến, sân rơm và sỏi đường. Atlas chạy game là `public/pixel/terrain-materials-v3.png` với tám ô 128 × 128. Renderer lật đối xứng từng ô khi lặp texture để liền mép.
 
 ## Nhịp di chuyển và hướng sprite
 
-- Sáu khung đi của người chơi dùng quãng đường đã đi. Một chu kỳ mất khoảng một giây ở tốc độ chuẩn. Người chơi và người cùng khu dùng chung nhịp.
+- Nhân vật giữ các khung thân trên gốc, vẽ chân theo ba động tác đặt gót, chuyển trụ và nhấc chân. Hai chân lệch nửa chu kỳ, đế giày bám mốc mặt đất khi chịu lực. Một chu kỳ mất khoảng một giây ở tốc độ chuẩn. Người chơi và người cùng khu dùng chung nhịp.
 - Gà bước, dừng và mổ theo trạng thái. Các khung đứng/đi trong atlas quay trái, khung mổ quay phải. Hướng gốc khai báo riêng cho từng trạng thái; chân bám mốc đất của nhóm khung.
 - Vật nuôi dùng các nhịp đi và nghỉ ngắn theo từng con. Bò, lợn và các vật nuôi dùng atlas cũ luân phiên nhấc chân khi đi và cúi khi ăn. Thao tác cuốc chạy từ khung đầu, các công cụ tưới, thu hoạch và câu cá vẽ theo hành động.
 

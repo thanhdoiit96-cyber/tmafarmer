@@ -9,14 +9,17 @@ const lotus=(x,y,w,flip)=>feature('lotus',x,y,w,w*.58,flip);
 
 const field={
   floor:'meadow', road:'earth',
-  tint:'#f8d48112',
+  tint:'#ffdb941b',
   terrain:[
     terrain('forest',[[0,0],[124,0],[88,91],[72,167],[57,223],[0,224]]),
     terrain('lakebank',[[510,64],[820,0],[820,376],[761,410],[620,382],[516,371],[494,276]]),
     terrain('forest',[[0,301],[91,314],[202,346],[210,392],[84,399],[0,470]]),
-    terrain('stone',[[84,28],[134,27],[150,52],[143,111],[93,117],[73,83]]),
+    terrain('gravel',[[60,23],[153,23],[166,76],[146,108],[121,115],[67,97]]),
     terrain('stone',[[346,106],[428,91],[455,134],[442,167],[370,179],[345,146]]),
     terrain('meadow',[[34,389],[797,390],[813,640],[18,640]]),
+  ],
+  pads:[
+    {floor:'stone',x:360,y:125,w:75,h:47},
   ],
   decor:[
     tree(18,54,63),tree(50,89,53,true),tree(26,237,65,true),tree(456,75,69),tree(90,350,83),tree(160,330,62,true),tree(416,380,56),
@@ -36,13 +39,28 @@ const field={
 const scenes={
   home:{decor:[],life:[]},
   workshop:{decor:[],life:[]},
-  field, visit:field,
+  field,
+  visit:{
+    ...field,road:'trail',tint:'#6fbbdc30',
+    decor:[...field.decor.filter(item=>!['bamboo','flowers'].includes(item.kind)),
+      bamboo(39,63,37,true),bamboo(446,85,35),bamboo(746,303,41),
+      bed(71,97,23),bed(134,207,20,true),bed(135,54,23),bed(371,61,25,true),
+      bed(419,207,36,true),bed(494,251,29),bed(717,263,38),bed(690,391,24),
+    ],
+    life:[{kind:'dragonfly',x:85,y:141},{kind:'butterfly',x:146,y:211},{kind:'butterfly',x:375,y:66},{kind:'dragonfly',x:600,y:283}],
+  },
   market:{
-    floor:'meadow',road:'stone',tint:'#e7b97718',
+    floor:'forest',road:'stone',tint:'#eac28524',
     terrain:[
       terrain('stone',[[58,47],[424,49],[412,133],[399,225],[322,251],[174,248],[56,223],[69,148]]),
       terrain('forest',[[0,0],[93,0],[68,70],[58,147],[0,175]]),
       terrain('lakebank',[[420,80],[480,61],[480,269],[416,244],[395,177]]),
+    ],
+    pads:[
+      {floor:'stone',x:61,y:100,w:333,h:139},
+      {floor:'gravel',x:78,y:58,w:58,h:62},
+      {floor:'gravel',x:196,y:55,w:81,h:57},
+      {floor:'gravel',x:351,y:61,w:58,h:59},
     ],
     decor:[
       tree(30,56,63),tree(449,66,68,true),tree(30,213,64,true),tree(452,273,65),
@@ -59,8 +77,9 @@ const scenes={
     terrain:[
       terrain('forest',[[0,0],[164,0],[144,62],[79,106],[54,174],[0,189]]),
       terrain('forest',[[343,0],[480,0],[480,108],[421,105],[374,75]]),
-      terrain('stone',[[84,102],[333,102],[349,160],[319,201],[100,207],[74,150]]),
+      terrain('gravel',[[169,44],[301,43],[321,97],[305,112],[168,108],[153,74]]),
     ],
+    pads:[{floor:'straw',x:77,y:103,w:262,h:100},{floor:'stone',x:353,y:132,w:54,h:49}],
     decor:[
       tree(32,62,66),bamboo(58,86,39,true),tree(103,63,59,true),bamboo(354,49,40),tree(405,63,72),tree(471,102,62,true),
       tree(432,260,64),rock(24,184,28),rock(415,158,20),rock(317,257,32,true),bed(68,265,29),bed(130,237,23,true),
@@ -69,11 +88,17 @@ const scenes={
     life:[{kind:'butterfly',x:78,y:207},{kind:'dragonfly',x:429,y:137}],
   },
   neighbors:{
-    floor:'forest',road:'trail',tint:'#41684f15',
+    floor:'forest',road:'trail',tint:'#78a08024',
     terrain:[
       terrain('meadow',[[59,28],[207,25],[260,57],[395,44],[421,152],[416,226],[313,240],[121,239],[55,202]]),
       terrain('lakebank',[[0,78],[70,75],[78,129],[21,177],[0,161]]),
       terrain('lakebank',[[410,53],[480,62],[480,177],[426,166]]),
+    ],
+    pads:[
+      {floor:'meadow',x:54,y:37,w:143,h:70},
+      {floor:'meadow',x:281,y:36,w:132,h:71},
+      {floor:'meadow',x:54,y:145,w:143,h:47},
+      {floor:'meadow',x:281,y:145,w:132,h:55},
     ],
     decor:[
       tree(45,52,73),tree(402,56,67,true),tree(44,225,77,true),tree(432,270,63),
@@ -84,11 +109,16 @@ const scenes={
     life:[{kind:'butterfly',x:116,y:144},{kind:'butterfly',x:309,y:198},{kind:'butterfly',x:386,y:224}],
   },
   lake:{
-    floor:'lakebank',road:'trail',tint:'#a7d4aa14',
+    floor:'lakebank',road:'trail',tint:'#a1d6bd22',
     terrain:[
       terrain('forest',[[0,0],[592,0],[562,56],[472,74],[327,55],[196,73],[158,142],[103,239],[41,270],[0,248]]),
       terrain('meadow',[[0,282],[109,251],[198,277],[333,298],[464,281],[592,307],[720,276],[720,432],[0,432]]),
       terrain('stone',[[65,82],[144,79],[163,117],[152,151],[100,164],[66,137]]),
+    ],
+    pads:[
+      {floor:'stone',x:66,y:100,w:75,h:55},
+      {floor:'gravel',x:262,y:239,w:54,h:32},
+      {floor:'stone',x:563,y:202,w:43,h:34},
     ],
     decor:[
       tree(54,93,90),tree(170,98,69,true),tree(304,59,69),tree(410,55,77,true),tree(523,58,77),

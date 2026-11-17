@@ -4,7 +4,8 @@ import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
-import {animalMotion,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
+import {cropPlacement} from './pixel/crop-layout.mjs';
+import {animalMotion,playerStride,spriteFlip,walkFrame,walkPose} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -13,30 +14,33 @@ const load = source => {
 };
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const landscapeArt=load('/canh-quan.webp');
-const surfaceArt=load('/dia-hinh.webp');
+const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homeArt=load('/nha-vuon.webp');
 const pixelCharacters=load(pixelCharacter.source);
 const pixelObjects=load(pixelSlice.source);
 const surfaces={};
-const floors=['meadow','forest','stone','lakebank'];
+const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
+const terrainColors={meadow:'#74954c',forest:'#3c633f',stone:'#bfa57e',lakebank:'#537a61',wood:'#9a643e',slate:'#677769',straw:'#b78c56',gravel:'#c7a574'};
 
-function mirrorTile(image,index){
-  const width=420,height=250;
+function mirrorTile(image,index,name){
+  const cell=128;
   const tile=document.createElement('canvas');
-  tile.width=width*2;tile.height=height*2;
+  tile.width=cell*2;tile.height=cell*2;
   const context=tile.getContext('2d');
-  const sx=(index%2)*image.naturalWidth/2,sy=Math.floor(index/2)*image.naturalHeight/2;
+  const sx=index%4*cell,sy=Math.floor(index/4)*cell;
   for(let row=0;row<2;row++)for(let col=0;col<2;col++){
     context.save();
-    context.translate(col?width*2:0,row?height*2:0);
+    context.translate(col?cell*2:0,row?cell*2:0);
     context.scale(col?-1:1,row?-1:1);
-    context.drawImage(image,sx,sy,image.naturalWidth/2,image.naturalHeight/2,0,0,width,height);
+    context.drawImage(image,sx,sy,cell,cell,0,0,cell,cell);
     context.restore();
   }
+  context.globalAlpha=['meadow','forest','lakebank'].includes(name)?.38:.22;
+  context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
 export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),pixelObjects.decode()]).then(()=>{
-  if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index));
+  if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
 const {width,height}=size;
@@ -71,16 +75,15 @@ function sprite(c,name,x,y,w,h,flip=false,angle=0){
   c.drawImage(atlas,sx,sy,sw,sh,-w/2,-h,w,h);
   c.restore();
 }
-const terrainColors={meadow:'#779453',forest:'#446b46',stone:'#bc9c73',lakebank:'#6a9570'};
 const roads={
-  earth:{width:21,colors:['#687649','#b49b66','#dcc49a','#ead3aa'],pebble:'#755e3b38'},
-  stone:{width:19,colors:['#8a7b61','#b5a18a','#d5bc96','#e4cca3'],pebble:'#8c734943'},
-  trail:{width:16,colors:['#506c44','#85905a','#beac79','#d2be8d'],pebble:'#69573d39'},
+  earth:{width:21,colors:['#527349','#ad9866','#d0af7c'],floor:'gravel'},
+  stone:{width:20,colors:['#7b6d58','#b29466','#e0c38c'],floor:'stone'},
+  trail:{width:16,colors:['#3f674e','#8e9060','#ceac77'],floor:'gravel'},
 };
 function texture(c,floor){
   if(!surfaces[floor])return terrainColors[floor];
   const pattern=c.createPattern(surfaces[floor],'repeat');
-  pattern.setTransform(new DOMMatrix().scale(floor==='stone'?.55:.78));
+  pattern.setTransform(new DOMMatrix().scale(['stone','gravel'].includes(floor)?.53:.75));
   return pattern;
 }
 function region(c,layer){
@@ -93,27 +96,28 @@ function region(c,layer){
     c.quadraticCurveTo(current[0],current[1],(current[0]+next[0])/2,(current[1]+next[1])/2);
   }
   c.closePath();
-  c.save();
-  c.filter='blur(3.5px)';
-  c.fillStyle=tissue;c.globalAlpha=.90;c.fill();
-  c.restore();
+  c.strokeStyle='#35523830';c.lineWidth=3;c.stroke();
+  c.fillStyle=tissue;c.fill();
   c.restore();
 }
 function pathSet(c,paths,style){
-  const {width,colors,pebble}=roads[style];
+  const {width,colors,floor}=roads[style];
   for(let i=0;i<colors.length;i++){
-    const offset=i===colors.length-1?-.65:0;
-    for(const path of paths)line(c,colors[i],width+9-i*6,path.map(([x,y])=>[x,y+offset]));
+    for(const path of paths)line(c,colors[i],width+8-i*4,path);
   }
+  c.save();c.globalAlpha=.64;
+  const fill=texture(c,floor);
+  for(const path of paths)line(c,fill,width-3,path);
+  c.restore();
   for(const path of paths)for(let i=1;i<path.length;i++){
     const [a,b]=[path[i-1],path[i]];
     const length=Math.hypot(b[0]-a[0],b[1]-a[1]);
-    for(let n=4;n<length;n+=3.4){
+    for(let n=7;n<length;n+=11){
       const t=n/length,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;
-      const d=(seed(Math.round(x),Math.round(y))-.5)*(width-1);
+      const s=seed(Math.round(x),Math.round(y)),d=(s>.5?1:-1)*(width*.48+s*3);
       const xx=x-(b[1]-a[1])/length*d,yy=y+(b[0]-a[0])/length*d;
-      ellipse(c,n%3<1?'#fff0c47e':pebble,xx,yy,.40+Math.abs(d)/13,.24+Math.abs(d)/27);
-      if(style==='stone'&&n%5<2)line(c,'#90775a36',.48,[[xx-2,yy+.4],[xx+.5,yy-1.1],[xx+2,yy-.8]]);
+      ellipse(c,'#57483470',xx,yy,1.5+s,.65+s*.3);
+      ellipse(c,'#ead6a9b5',xx-.3,yy-.6,1.15+s,.5);
     }
   }
 }
@@ -232,45 +236,105 @@ function flower(c,x,y,type){
   ellipse(c,type?'#edc67d':'#f1e0b3',x+1.65,y-4,1.25,.98);
   ellipse(c,'#d69250',x+1.7,y-4,.43,.38);
 }
+function pad(c,{floor,x,y,w,h}){
+  box(c,'#2f4b3770',x-2,y-1,w+4,h+5,6);
+  box(c,'#e8ce946f',x-1,y-1,w+2,h+2,5);
+  box(c,texture(c,floor),x,y,w,h,5);
+}
+function homeFloor(c){
+  if(dim(homeArt))c.drawImage(homeArt,0,0,width,height);
+  else {
+    box(c,'#98643f',0,0,width,height,0);
+    box(c,'#704b32',0,0,width,82,0);
+    box(c,'#caa877',335,76,111,78,4);
+    box(c,'#668760',338,101,105,49,3);
+  }
+  c.save();
+  // Retain the room's furniture and walls around the playable part of the floor.
+  c.beginPath();c.moveTo(25,144);c.lineTo(142,144);c.lineTo(152,105);c.lineTo(300,105);
+  c.lineTo(323,157);c.lineTo(447,158);c.lineTo(447,256);c.lineTo(265,266);c.lineTo(212,266);c.lineTo(25,256);c.closePath();c.clip();
+  c.globalAlpha=.76;box(c,texture(c,'wood'),0,102,width,166,0);c.globalAlpha=1;
+  const light=c.createLinearGradient(45,91,289,230);
+  light.addColorStop(0,'#ffe6a56b');light.addColorStop(1,'#ffe4a600');
+  for(let i=0;i<4;i++){
+    c.fillStyle=light;c.beginPath();c.moveTo(24+i*13,100);c.lineTo(37+i*13,100);
+    c.lineTo(214+i*11,217);c.lineTo(193+i*11,217);c.closePath();c.fill();
+  }
+  box(c,'#513d33a0',165,154,152,63,6);
+  box(c,'#d4ab73',166,151,148,62,5);
+  box(c,'#416753',171,156,138,52,3);
+  box(c,'#759474',177,160,126,44,2);
+  for(let x=184;x<=296;x+=14){
+    for(const y of [165,199])ellipse(c,'#dcd39f',x,y,2.5,1.3);
+  }
+  for(let x=179;x<310;x+=4){
+    c.fillStyle='#f5d89a';c.fillRect(x,149,1.5,3);c.fillRect(x,213,1.5,3);
+  }
+  for(const x of [219,240,261]){
+    line(c,'#e6ca89',1.2,[[x-4,182],[x,176],[x+4,182],[x,188],[x-4,182]]);
+  }
+  c.restore();
+}
+function workshopFloor(c){
+  box(c,'#383e36',0,0,width,height,0);
+  box(c,texture(c,'slate'),25,54,430,234,3);
+  box(c,'#394e426a',25,54,430,234,0);
+  box(c,'#36594d',0,0,width,61,0);
+  for(let x=0;x<width;x+=16)line(c,'#29483f',1,[[x,1],[x,60]]);
+  for(const x of [0,22,148,316,449,472]){
+    box(c,'#294439',x,0,6,63,1);
+    box(c,'#638270',x+1,0,1,59,0);
+  }
+  for(const x of [82,394]){
+    box(c,'#263f35',x-37,12,74,41,3);
+    box(c,'#c4d8a5',x-32,16,64,32,2);
+    box(c,texture(c,'forest'),x-30,18,60,28,1);
+    line(c,'#98744d',2,[[x,16],[x,48]]);
+    line(c,'#b8945d',2,[[x-32,33],[x+32,33]]);
+    box(c,'#af8852',x-39,47,78,5,1);
+  }
+  box(c,'#b2905f',25,58,430,5,0);
+  box(c,'#b2a27a',215,139,50,120,2);
+  box(c,'#52776a',219,143,42,117,1);
+  for(let y=149;y<=249;y+=8)line(c,'#adc0a0',.7,[[222,y],[258,y]]);
+  for(const x of [42,324]){
+    for(const y of [77,160]){
+      shade(c,x+52,y+43,62,7);
+      box(c,'#503c30',x,y,114,48,3);
+      box(c,texture(c,'wood'),x+3,y+3,108,36,2);
+      box(c,'#c4a16e',x+2,y+3,110,3,1);
+      box(c,'#7f674c',x+6,y+40,102,4,1);
+    }
+    for(const [dx,dy] of [[24,92],[51,98],[86,174]]){
+      ellipse(c,'#5d5242',x+dx,dy+1,9,7);
+      ellipse(c,'#d0a068',x+dx,dy,8,6);ellipse(c,'#65513b',x+dx,dy,2.3,1.9);
+      for(let i=0;i<8;i++){
+        const a=i*Math.PI/4;
+        box(c,'#caac77',x+dx+Math.cos(a)*8-1,dy+Math.sin(a)*6-1,2,2,0);
+      }
+    }
+    box(c,'#6e9488',x+11,169,52,22,2);
+    line(c,'#d2e3c2',1,[[x+15,185],[x+24,177],[x+40,177],[x+56,184]]);
+  }
+  shade(c,240,132,47,6);
+  box(c,'#304b40',195,77,90,57,4);
+  box(c,'#c6bb88',199,81,82,48,2);
+  box(c,'#567568',203,84,74,37,1);
+  line(c,'#d9d8b1',1.3,[[210,110],[225,95],[239,108],[258,90],[269,100]]);
+  for(const [x,y] of [[225,95],[239,108],[258,90]])ellipse(c,'#f1dba1',x,y,2,2);
+  box(c,'#825b3b',211,265,58,23,2);
+  box(c,'#bb9360',214,267,52,3,1);
+}
 export function grass(c,scene,kind,features){
   const {width,height}=scene.bounds??size;
-  if(kind==='home'){
-    if(dim(homeArt))c.drawImage(homeArt,0,0,width,height);
-    else {
-      box(c,'#b17843',0,0,width,height,0);
-      box(c,'#774630',0,0,width,82,0);
-      box(c,'#d6ae76',336,73,115,81,5);
-      box(c,'#6f8151',340,96,107,54,3);
-      box(c,'#80512c',40,84,88,50,3);
-    }
-    return;
-  }
-  if(kind==='workshop'){
-    box(c,'#6d4c37',0,0,width,height,0);
-    const wall=c.createLinearGradient(0,0,0,72);
-    wall.addColorStop(0,'#4d5f52');wall.addColorStop(1,'#73806a');box(c,wall,0,0,width,72,0);
-    for(let y=72;y<height;y+=18)for(let x=(y/18%2)*15-15;x<width;x+=30){
-      box(c,(x/30+y/18)%2?'#b99464':'#c8a575',x,y,30,18,0);
-      line(c,'#765c4345',.6,[[x,y],[x+30,y]]);
-    }
-    box(c,'#4d382b',35,64,128,65,5);box(c,'#d2ad70',42,70,114,9,2);
-    box(c,'#4d382b',317,64,128,65,5);box(c,'#d2ad70',324,70,114,9,2);
-    for(const [x,y] of [[71,92],[105,93],[351,92],[399,91]]){
-      ellipse(c,'#b89255',x,y,12,12);ellipse(c,'#6b5942',x,y,4,4);
-      for(let i=0;i<8;i++){const angle=i*Math.PI/4;box(c,'#c5a466',x+Math.cos(angle)*13-2,y+Math.sin(angle)*13-3,4,6,1);}
-    }
-    box(c,'#66513b',50,154,100,52,4);box(c,'#ddb871',56,159,88,8,2);
-    box(c,'#66513b',330,154,100,52,4);box(c,'#ddb871',336,159,88,8,2);
-    box(c,'#31483b',198,72,84,63,6);box(c,'#d5c18d',204,78,72,50,4);
-    c.fillStyle='#496250';c.font='700 8px system-ui';c.textAlign='center';c.fillText('BẢNG CÔNG THỨC',240,91);
-    c.fillStyle='#86775a';c.font='6px system-ui';c.fillText('Đang chờ cập nhật',240,108);
-    box(c,'#704b31',211,246,58,42,3);box(c,'#b98653',216,250,48,6,2);
-    return;
-  }
+  if(kind==='home')return homeFloor(c);
+  if(kind==='workshop')return workshopFloor(c);
   const landscape=landscapeFor(kind);
   box(c,texture(c,landscape.floor),0,0,width,height,0);
   for(const layer of landscape.terrain)region(c,layer);
   box(c,landscape.tint,0,0,width,height,0);
+  for(const item of landscape.pads??[])pad(c,item);
+  for(const area of features.ground)if(area.type==='garden-bed')pad(c,{...area,floor:'straw'});
   pathSet(c,scene.paths,landscape.road);
   for(const area of features.ground)if(area.type==='lot')drawLot(c,area);
   for(const point of features.water){
@@ -368,7 +432,7 @@ function plot(c,a,t,state,paintCrops=true){
   for(let i=0;i<30;i++)ellipse(c,i%2?'#6d513854':'#eed09855',x-18+seed(i,index)*36,y-10+seed(i+91,index)*17,.26+seed(i,76)*.44,.28);
   if(!data)return;
   for(let i=0;paintCrops&&i<8;i++){
-    const px=x-16+(i%4)*10+(seed(i,index)-.5)*1.4,py=y-3+Math.floor(i/4)*8;
+    const px=x-15+(i%4)*10,py=y-5+Math.floor(i/4)*9;
     const sway=Math.sin(t*3+i+y)*.7, grow=3+Math.min(fraction,1)*7+seed(i,16);
     ellipse(c,'#604a2f66',px,py+.45,2.8,.75);
     line(c,'#426139',.7,[[px,py],[px+sway*.45,py-grow*.52],[px+sway,py-grow]]);
@@ -453,10 +517,9 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   const profile=direction==='left'||direction==='right';
   const kind=direction==='up'?'back':profile?'profile':'front';
   const scale=style==='player'?1:.83,h=31*scale,w=(profile?11:14)*scale;
-  const phase=walkDistance/playerStride*Math.PI*2,stride=moving?Math.sin(phase):0;
-  const idle= moving?0:Math.sin(t*2.15)*.32;
-  const bob=moving?(1-Math.cos(phase*2))*.72:idle;
-  const lean=moving?(profile?stride*.022:Math.sin(phase)*.012):Math.sin(t*.85)*.006;
+  const pose=moving?walkPose(walkDistance,playerStride):null;
+  const bob=pose?pose.rise*.75:Math.sin(t*2.15)*.32;
+  const lean=pose?pose.left.reach*.017:Math.sin(t*.85)*.006;
   shade(c,x,y,11*scale*(moving ? .92 : 1),moving?3.35:4);
   if(style==='player') {
     c.strokeStyle='#f5df9dcc';c.lineWidth=.65;c.beginPath();c.ellipse(x,y-.1,7.5,2.5,0,0,Math.PI*2);c.stroke();
@@ -469,9 +532,9 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
     if(style!=='player'&&style!=='vendor')c.filter='hue-rotate(26deg) saturate(.82)';
     c.save();c.translate(0,-h+top);c.rotate(lean);c.drawImage(atlas,sx,sy,sw,cut,-w/2,-top,w,top+.16);c.restore();
     const half=Math.floor(sw/2),right=sw-half;
-    const swing=profile?stride*1.8:stride*.58, lift=Math.max(0,stride)*1.15,otherLift=Math.max(0,-stride)*1.15;
-    c.drawImage(atlas,sx,sy+cut,half,sh-cut,-w/2+swing,-h+top+stride*.55-lift,w/2,h-top+lift);
-    c.drawImage(atlas,sx+half,sy+cut,right,sh-cut,-swing,-h+top-stride*.55-otherLift,w/2,h-top+otherLift);
+    const reach=profile?2.1:.4, left=pose?.left,rightFoot=pose?.right;
+    c.drawImage(atlas,sx,sy+cut,half,sh-cut,-w/2+(left?.reach??0)*reach,-h+top,w/2,h-top+bob-(left?.lift??0)*2);
+    c.drawImage(atlas,sx+half,sy+cut,right,sh-cut,(rightFoot?.reach??0)*reach,-h+top,w/2,h-top+bob-(rightFoot?.lift??0)*2);
     c.restore();
   }
 }
@@ -490,6 +553,37 @@ function personTool(c,x,y,direction,t,action){
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
   } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
 }
+function pixelLeg(c,hipX,hipY,footX,footY,toe,far){
+  const trouser=far?'#433229':'#564031', light=far?'#654733':'#785737';
+  for(let y=hipY;y<footY-3;y++){
+    const progress=(y-hipY)/(footY-3-hipY);
+    const x=Math.round(hipX+(footX-hipX)*progress)-3;
+    c.fillStyle=trouser;c.fillRect(x,y,6,1);
+    c.fillStyle=light;c.fillRect(x+1,y,3,1);
+  }
+  c.fillStyle=trouser;c.fillRect(footX-3,footY-5,6,3);
+  c.fillStyle=far?'#80502e':'#a36436';
+  c.fillRect(footX-3,footY-4,6,3);
+  c.fillRect(footX-3+(toe<0?-2:0),footY-2,toe?8:6,2);
+  c.fillStyle='#492f25';c.fillRect(footX-3+(toe<0?-2:0),footY-1,toe?8:6,1);
+  c.fillStyle=far?'#a46c3c':'#dc9f59';c.fillRect(footX+(toe<0?-4:0),footY-3,3,1);
+}
+function pixelWalk(c,px,py,unit,row,direction,distance,stride){
+  const motion=walkPose(distance,stride),{cellWidth,cellHeight,states}=pixelCharacter;
+  const frame=states.walk.first+walkFrame(distance,stride,states.walk.frames);
+  const side=direction==='left'?-1:direction==='right'?1:0;
+  const depth=direction==='up'?-1:1;
+  const hipY=43-Math.round(motion.rise*1.8);
+  const parts=[motion.left,motion.right].map(({reach,lift},i)=>{
+    const hipX=side?23+i*2:20+i*8;
+    return {hipX,x:hipX+Math.round(side*reach*10),y:59+Math.round(side?i*2-1-lift*6:depth*reach*4-lift*6),far:i===0};
+  });
+  c.translate(snapPixel(px-24*unit),snapPixel(py-59*unit));c.scale(unit,unit);
+  parts.sort((a,b)=>a.y-b.y);
+  for(const {hipX,x,y,far} of parts)pixelLeg(c,hipX,hipY,x,y,side,far);
+  const rock=side?0:Math.round(motion.left.reach);
+  c.drawImage(pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,45,rock,hipY-43,cellWidth,45);
+}
 export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
   if(!pixel||!dim(pixelCharacters)){
     legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
@@ -497,11 +591,7 @@ export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDist
     return;
   }
   const work=action==='till';
-  const anim=pixelCharacter.states[work?'work':walking?'walk':'idle'];
-  const time=work?elapsed:t;
-  const step=walking?walkFrame(walkDistance,stride,anim.frames):Math.floor(time*anim.fps);
-  const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
-  const row=pixelCharacter.directions[direction]??0,sx=frame*pixelCharacter.cellWidth,sy=row*pixelCharacter.cellHeight;
+  const row=pixelCharacter.directions[direction]??0;
   const px=snapPixel(x),py=snapPixel(y),standing=style==='player'||style==='peer';
   const scale=standing?1:.875;
   shade(c,px,py,10.5*scale,walking?3.2:3.8);
@@ -509,7 +599,14 @@ export function drawPerson(c,x,y,direction,t,{pixel=false,walking=false,walkDist
   if(style==='vendor')c.filter='hue-rotate(-27deg) saturate(.86)';
   if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
   const unit=pixelStep*scale;
-  c.drawImage(pixelCharacters,sx,sy,pixelCharacter.cellWidth,pixelCharacter.cellHeight,snapPixel(px-24*unit),snapPixel(py-59*unit),36*scale,48*scale);
+  if(walking&&!work)pixelWalk(c,px,py,unit,row,direction,walkDistance,stride);
+  else{
+    const anim=pixelCharacter.states[work?'work':'idle'];
+    const step=Math.floor((work?elapsed:t)*anim.fps);
+    const frame=anim.first+(work?Math.min(anim.frames-1,step):step%anim.frames);
+    const {cellWidth,cellHeight}=pixelCharacter;
+    c.drawImage(pixelCharacters,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,snapPixel(px-24*unit),snapPixel(py-59*unit),cellWidth*unit,cellHeight*unit);
+  }
   c.restore();
   if(!work)personTool(c,px,py,elapsed,action);
 }
@@ -528,14 +625,13 @@ export function pixelActor(c,a,t,state){
     c.restore();
     return true;
   }
-  const crop=pixelSlice.crops[a.data?.kind];
-  if(a.type==='plot'&&crop){
-    plot(c,a,t,state,false);
-    const fraction=a.visit?(a.data.ripe?1:.5):Math.min(1,a.data.progress/cropGoal(a.data));
-    const stage=Math.min(pixelSlice.crops.stages-1,Math.floor(fraction*pixelSlice.crops.stages));
-    const cell=pixelSlice.crops.cell;
-    c.drawImage(pixelObjects,crop.x+stage*cell,crop.y,cell,cell,px-18,py-27,36,36);
-    return true;
+  if(a.type==='plot'){
+    const crop=cropPlacement(a);
+    if(crop){
+      plot(c,a,t,state,false);
+      c.drawImage(pixelObjects,crop.sx,crop.sy,crop.w,crop.h,crop.x,crop.y,crop.width,crop.height);
+      return true;
+    }
   }
   if((a.type==='animal'||a.type==='wildlife')&&a.data?.kind==='chicken'){
     const info=pixelSlice.chicken,motion=animalMotion(t,a.index??0,15,'peck');
@@ -809,4 +905,27 @@ export function drawTask(c,x,y,style){
   c.font='bold 6.5px system-ui';
   c.textAlign='center';
   c.fillText(style.mark,x,y+2.1);
+}
+
+export function createMapCursor(){
+  const image=document.createElement('canvas');
+  image.width=28;image.height=28;
+  const c=image.getContext('2d');
+  c.beginPath();c.moveTo(4,3);c.lineTo(5,21);c.lineTo(10,16);c.lineTo(14,23);
+  c.lineTo(17,21);c.lineTo(13,14);c.lineTo(20,13);c.closePath();
+  c.fillStyle='#fff0c2';c.fill();
+  c.strokeStyle='#294b38';c.lineWidth=2;c.lineJoin='round';c.stroke();
+  line(c,'#92ab70',1.5,[[7,7],[8,15]]);
+  box(c,'#c28740',19,4,3,3,1);box(c,'#efc472',23,8,2,2,1);
+  return `url(${image.toDataURL()}) 4 3, crosshair`;
+}
+export function drawMapPointer(c,x,y,t,{blocked=false,opacity=1}={}){
+  c.save();c.globalAlpha=opacity;
+  ellipse(c,'#2c433b62',x,y+1.4,9.5,4.7);
+  c.strokeStyle=blocked?'#f3a785':'#fff0bb';c.lineWidth=1.4;
+  c.beginPath();c.ellipse(x,y,8.1,3.7,0,0,Math.PI*2);c.stroke();
+  const lift=t?Math.sin(t*5)*1.2:0;
+  line(c,blocked?'#a84736':'#315843',3,[[x-3,y-7+lift],[x,y-4+lift],[x+3,y-7+lift]]);
+  line(c,blocked?'#ffd9bd':'#fff5d1',1.4,[[x-3,y-7+lift],[x,y-4+lift],[x+3,y-7+lift]]);
+  c.restore();
 }
