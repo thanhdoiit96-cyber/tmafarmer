@@ -35,7 +35,6 @@ let demo;
 let state, tab='field', selected=0, neighborId, busy=false, toastTimer, inviteCode='';
 let revision=-1, receivedAt=Date.now(), villagePage=0, stockPage=0, panel='area', marketPane='orders', pondTab=0, selectedLot=0, plotGroup=-1, visitPond=0, baseDecorOpen=false, showTomorrow=false;
 const areaIcons={field:'leaf',home:'home',workshop:'build',coop:'coop',market:'market',neighbors:'users',lake:'fish'};
-const shortAreaNames={field:'Vườn',home:'Nhà',workshop:'Xưởng',coop:'Chuồng',market:'Chợ',neighbors:'Xóm',lake:'Hồ'};
 const panels={area:['leaf','Khu vực'],land:['build','Đất'],ponds:['fish','Ao nuôi'],orders:['orders','Đơn hàng'],stock:['bag','Kho'],buildings:['build','Xây dựng'],log:['log','Nhật ký']};
 const tabGroups={main:['area','tasks','progress','rank'],farm:['land','ponds','stock'],village:['orders','villageLevel','buildings','log']};
 const extraPanels={tasks:['orders','Việc cần làm'],progress:['trophy','Tiến độ'],rank:['trophy','Tài sản'],villageLevel:['build','Cấp làng']};
@@ -43,6 +42,13 @@ const icon=name=>'<svg aria-hidden="true"><use href="#i-'+name+'"/></svg>';
 const dialog=$('#dialog');
 const landscape=matchMedia('(orientation: landscape) and (min-width: 500px) and (max-width: 1100px) and (max-height: 600px)');
 const layout=$('.layout'), farmPanel=$('#farm-panel'), panelBody=$('.panel-body'), panelToggle=$('[data-panel-toggle]');
+const worldHud=$('.world-hud'), statusHud=$('.status-hud'), statusSlot=$('#status-slot');
+function placeStatus(){
+  if(landscape.matches)worldHud.insertBefore(statusHud,$('#world-weather'));
+  else statusSlot.append(statusHud);
+}
+placeStatus();
+landscape.addEventListener('change',placeStatus);
 let lastPanelTime=0, composingMarketSearch=false;
 const marketQueries={supplies:'',sales:'',stall:''};
 const supplyGroups={
@@ -644,6 +650,10 @@ function focusKey(element) {
   return Object.entries(element.dataset).map(([key,value])=>key+'='+value).join('|')+
     ('itemInfo' in element.dataset?(element.getAttribute('aria-label')??''):'');
 }
+function areaButtons(farm) {
+  return Object.entries(tabs).filter(([key])=>key!=='workshop'||(farm.workshop??0)>0).map(([key,[,name]])=>
+    '<button type="button" data-tab="'+key+'" class="'+(tab===key?'active':'')+'"'+(tab===key?' aria-current="page"':'')+'>'+icon(areaIcons[key])+name+'</button>').join('');
+}
 function render(arrival) {
   if(!state||composingMarketSearch) return;
   const focused=document.activeElement;
@@ -663,7 +673,7 @@ function render(arrival) {
   const [,title,description]=tabs[tab];
   const selectedNeighbor=tab==='neighbors'?state.neighbors.find(n=>n.id===neighborId):undefined;
   if(!selectedNeighbor)neighborId=null;
-  $('#nav').innerHTML=Object.entries(tabs).filter(([key])=>key!=='workshop'||workshopUnlocked).map(([key,[,name]])=>'<button data-tab="'+key+'" aria-label="'+name+'" class="'+(tab===key?'active':'')+'"'+(tab===key?' aria-current="page"':'')+'>'+icon(areaIcons[key])+'<span class="nav-full">'+name+'</span><span class="nav-short">'+shortAreaNames[key]+'</span></button>').join('');
+  $('#nav').innerHTML=areaButtons(farm);
   $('#coin').textContent=formatCoins(farm.coins)+' xu';
   $('#room span').textContent=session?'Làng '+session.code:'Vào làng';
   $('#sub-title').textContent=session?farm.name+' · '+state.village.name:'Vườn chơi thử';
@@ -674,7 +684,7 @@ function render(arrival) {
   $('#date').textContent='Ngày '+(state.day+1);
   villagePage=Math.min(villagePage,Math.max(0,Math.ceil((state.neighbors.length+1)/6)-1));
   world.sync(selectedNeighbor?'visit':tab,state,{neighbor:selectedNeighbor,selection:selected,page:villagePage,arrival,tasks});
-  $('#world-weather').innerHTML=tab==='home'||tab==='workshop'?'':'<button class="world-weather" type="button" data-weather aria-label="Xem dự báo: '+state.weather.name+'">'+icon('weather')+state.weather.name+'</button>';
+  $('#world-weather').innerHTML=tab==='home'||tab==='workshop'?'':'<button class="world-weather" type="button" data-weather aria-label="Xem dự báo: '+state.weather.name+'">'+icon('weather')+'<span class="weather-name">'+state.weather.name+'</span><span class="landscape-only weather-symbol" aria-hidden="true">'+state.weather.icon+'</span></button>';
   $('#board').innerHTML={
     home:()=>renderHome(farm,now), workshop:()=>renderWorkshop(farm), field:()=>renderField(farm), lake:()=>renderLake(farm,now), coop:()=>renderCoop(farm,now), market:()=>renderMarket(farm), neighbors:()=>renderNeighbors(farm,now)
   }[tab]();
@@ -812,6 +822,15 @@ function modal(title,html) {
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
   if(!dialog.open) dialog.showModal();
 }
+function showMobileMenu(){
+  if(!state)return;
+  const roomLabel=$('#room span').textContent;
+  const fullscreen=document.fullscreenEnabled&&(document.fullscreenElement?document.exitFullscreen:document.documentElement.requestFullscreen);
+  modal('Khu vực','<nav class="mobile-area-list" aria-label="Di chuyển tới khu vực">'+areaButtons(state.me)+'</nav>'+
+    '<div class="mobile-options">'+btn(icon('users')+escape(roomLabel),'data-room')+btn(icon('users')+'Nhân vật','data-avatar-menu')+
+    btn(icon('music')+'Nhạc nền','data-music-menu')+btn(icon('help')+'Hướng dẫn','data-info')+
+    (fullscreen?btn(document.fullscreenElement?'Thoát toàn màn hình':'Toàn màn hình','data-fullscreen'): '')+'</div>');
+}
 function showMusic(){
   modal('Nhạc nền','<p>Vườn sớm</p><label class="music-volume">Âm lượng <output for="farm-volume">'+music.volume+'%</output>'+
     '<input id="farm-volume" type="range" min="0" max="100" step="1" value="'+music.volume+'" data-music-volume></label>'+
@@ -872,7 +891,7 @@ function listingDialog() {
     '</select></label><label>Số lượng<input type="number" name="qty" min="1" max="20" value="1" required></label><label>Giá mỗi món · xu<input type="number" name="price" min="1" value="'+goods[items[0]].sell+'" required></label><button class="btn primary">Đăng lên sạp</button></form><p id="dialog-error" role="status"></p>');
 }
 function help() {
-  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang điện thoại, bấm Công cụ để mở bảng quản lý.</li><li>Chạm thanh Thể lực và chọn Chỉ đường về nhà. Trong nhà, tới giường để nghỉ. Bạn cũng có thể mở Nhà vườn trên thanh điều hướng.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, mua gà rồi cho ăn. Vật nuôi lớn lên trước khi cho trứng hoặc sữa. Khi lợn đủ lớn, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
+  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm thanh Thể lực và chọn Chỉ đường về nhà. Trong nhà, tới giường để nghỉ. Bạn cũng có thể chọn Nhà vườn trong Khu vực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, mua gà rồi cho ăn. Vật nuôi lớn lên trước khi cho trứng hoặc sữa. Khi lợn đủ lớn, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
 }
 async function perform(input) {
   if(busy)return false;
@@ -970,8 +989,19 @@ document.addEventListener('click',async e=>{
   const d=el.dataset;
   if('tab' in d) {
     if(!state) return;
+    if(el.closest('.mobile-area-list'))dialog.close();
     if(d.tab==='home')guideHome();
     else {if(d.tab==='market'&&el.closest('.journal'))marketPane='sales';goTo(d.tab);}
+  } else if('mobileMenu' in d)showMobileMenu();
+  else if('fullscreen' in d){
+    try {
+      if(document.fullscreenElement)await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+      dialog.close();
+    } catch {
+      dialog.close();
+      showToast('Trình duyệt chưa thể chuyển chế độ toàn màn hình.',true);
+    }
   } else if('panelToggle' in d)setPanelOpen(!layout.hasAttribute('data-panel-open'));
   else if('panelClose' in d)setPanelOpen(false);
   else if('chatToggle' in d&&landscape.matches)setPanelOpen(false);
