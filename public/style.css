@@ -112,11 +112,28 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .upgrade-card p{margin-top:3px}
 .upgrade-card .btn{flex:none}
 .itemrow .btn{flex:none}
-.stock-pager{margin:12px 0 9px;color:var(--muted);font-size:10px}
-.stock-grid{margin-top:7px}
-.stock-card{display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:5px;min-height:50px;padding:6px;border:1px solid #e8ddc6;border-radius:10px;background:linear-gradient(145deg,#fffaf0,#f4ecd9)}
-.stock-card .stock-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#e5ecd8;font-size:16px}
-.stock-card div{display:grid;gap:2px;min-width:0}.stock-card small{color:#84775e;font-size:8px;text-transform:uppercase;letter-spacing:.05em}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.stock-card>b{color:#526347;font-size:11px}.stock-card .btn{grid-column:2/4;min-height:27px;padding:3px 6px;font-size:9px}
+.stock-heading{margin-bottom:7px}
+.stock-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.stock-tabs .btn{padding-inline:2px}
+.stock-grid{margin-top:7px;align-items:stretch}
+.stock-grid>p{grid-column:1/-1;padding:9px;background:#f5efdf;border-radius:8px}
+.stock-card{
+  display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:4px 5px;min-width:0;
+  min-height:54px;padding:6px;border:1px solid #e8ddc6;border-radius:9px;text-align:left;color:var(--deep);background:#fffaf0
+}
+.stock-card:hover,.stock-card:focus-visible{border-color:#91a77d;background:#f4f5e8}
+.stock-icon{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#e5ecd8;font-size:15px}
+.stock-name{grid-column:2/-1;font-size:11px;font-weight:800;overflow-wrap:anywhere}
+.stock-quantity{grid-column:1/3;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.stock-status{padding:2px 5px;border-radius:4px;background:#e6ecdc;color:#34563d;font-size:9px;font-weight:800;white-space:nowrap}
+.stock-status[data-locked="true"]{background:#f6ebd2;color:#774d25}
+.stock-tooltip{
+  position:fixed;z-index:9;width:min(250px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;
+  padding:10px;border:1px solid #cbd5b9;border-radius:10px;background:var(--paper);color:var(--deep);
+  box-shadow:0 6px 20px #243e2d35;font-size:12px
+}
+.stock-tooltip .item-description{margin:5px 0 0}
+.stock-tooltip-lock{margin:6px 0 0;color:#774d25;font-weight:800}
 .recipe-card .item-link{font-size:inherit}
 .workshop-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 0 9px}
 .workshop-tabs .btn{min-height:36px;padding-inline:3px}
@@ -128,7 +145,6 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .upgrade-materials li[data-ready="false"] strong{color:#805627}
 .item-link{border:0;background:transparent;padding:1px 0;color:#305b41;text-align:left;font-weight:800;font-size:11px;text-decoration:underline;text-underline-offset:2px}
 .item-link:hover{color:#6d491e}
-.stock-card .item-link{white-space:normal;overflow-wrap:anywhere}
 .item-description{display:grid;gap:4px;margin:12px 0;padding:9px 11px;border-radius:9px;background:#edf0de}
 .item-description dt{font-size:11px;font-weight:800;color:#31503a}
 .item-description dd{margin:0 0 4px;color:var(--muted);font-size:12px;line-height:1.5}
