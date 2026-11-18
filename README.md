@@ -94,7 +94,7 @@ npx wrangler secret put SUPER_ADMIN_ACCOUNT_ID
 
 Có thể đặt cùng biến này trong cấu hình của Worker trên Cloudflare. Để trống biến thì tính năng super admin tắt. Tài khoản cần có phiên đăng nhập hợp lệ và cả username lẫn ID phải khớp. [Lệnh D1](https://developers.cloudflare.com/d1/wrangler-commands/) · [Biến bí mật của Worker](https://developers.cloudflare.com/workers/configuration/secrets/)
 
-Trong game, vào làng bằng tài khoản `ntdoi`, mở **Hàng xóm** rồi bấm **Mời ra** và xác nhận. Nếu đang ở làng khác, chọn **Về vườn chơi thử**, mở **Vào làng** và nhập mã làng cần quản lý. Người tạo làng được bảo vệ khỏi thao tác mời ra.
+Trong game, vào làng bằng tài khoản `ntdoi`, mở bảng **Công cụ** nếu đang chơi trên điện thoại nằm ngang, rồi chọn **Làng → Thành viên → Mời ra** và xác nhận. Nếu đang ở làng khác, chọn **Về vườn chơi thử**, mở **Vào làng** và nhập mã làng cần quản lý. Người tạo làng được bảo vệ khỏi thao tác mời ra.
 
 ### Đưa giao diện lên Vercel
 

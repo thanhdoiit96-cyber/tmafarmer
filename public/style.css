@@ -97,6 +97,7 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .animal-card .animal-icon{float:left;margin:0 4px 1px 0}
 .animal-card .progress{clear:both}
 .neighbor-card .btn{margin-top:6px}
+.village-member-name{min-width:0;overflow-wrap:anywhere}
 .animal-icon{font-size:26px;display:inline-block}
 .pixel-animal{flex:none;width:42px;height:36px;background-repeat:no-repeat;background-size:84px 36px;image-rendering:pixelated}
 [data-action="animal"]{display:inline-flex;align-items:center;gap:4px;text-align:left}
@@ -283,9 +284,11 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .panel-shortcuts button{min-height:28px;font-size:11px;white-space:nowrap}
 .panel-subtabs{margin-top:2px;padding-top:2px;border-top:1px solid #e5dcc7}
 .panel-subtabs[data-count="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.panel-subtabs[data-count="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
 .panel-subtabs button{min-height:33px;flex-direction:row;font-size:10px}
 .panel-subtabs svg{width:14px;height:14px}
 .panel-subtabs[data-count="4"] button{gap:2px;white-space:normal;padding-inline:2px}
+.panel-subtabs[data-count="5"] button{flex-direction:column;gap:2px;white-space:normal;padding-inline:1px}
 .xp-summary .row{margin-top:8px;color:#31503a;font-size:11px}
 .xp-list{list-style:none;margin:2px 0;padding:0}
 .xp-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #e9dfca;color:#435b44;font-size:11px}

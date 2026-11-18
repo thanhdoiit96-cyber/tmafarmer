@@ -37,7 +37,7 @@ let revision=-1, receivedAt=Date.now(), villagePage=0, panel='area', marketPane=
 const areaIcons={field:'leaf',home:'home',workshop:'build',coop:'coop',market:'market',neighbors:'users',lake:'fish'};
 const panels={area:['leaf','Khu vực'],land:['build','Đất'],ponds:['fish','Ao nuôi'],orders:['orders','Đơn hàng'],stock:['bag','Kho'],buildings:['build','Xây dựng'],log:['log','Nhật ký']};
 const tabGroups={main:['area','tasks','progress','rank'],farm:['land','ponds','stock'],village:['orders','villageLevel','buildings','log']};
-const extraPanels={tasks:['orders','Việc cần làm'],progress:['trophy','Tiến độ'],rank:['trophy','Tài sản'],villageLevel:['build','Cấp làng']};
+const extraPanels={tasks:['orders','Việc cần làm'],progress:['trophy','Tiến độ'],rank:['trophy','Tài sản'],villageLevel:['build','Cấp làng'],members:['users','Thành viên']};
 const icon=name=>'<svg aria-hidden="true"><use href="#i-'+name+'"/></svg>';
 const dialog=$('#dialog');
 const landscape=matchMedia('(orientation: landscape) and (min-width: 500px) and (max-width: 1100px) and (max-height: 600px)');
@@ -435,12 +435,9 @@ function renderNeighbors(farm,now) {
   if(!current) {
     const count=Math.ceil(homes.length/6);
     const pages=count>1?'<div class="row map-pages">'+btn('‹ Trang trước','data-village-page="'+(villagePage-1)+'"','subtle',villagePage===0)+'<span>'+String(villagePage+1)+' / '+count+'</span>'+btn('Trang sau ›','data-village-page="'+(villagePage+1)+'"','subtle',villagePage+1>=count)+'</div>':'';
-    const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>{
-      const remove=state.canManageMembers&&!n.mine&&n.id!==state.villageOwnerId?
-        btn('Mời ra','data-remove-member="'+n.id+'" aria-label="Mời '+escape(n.name)+' ra khỏi làng"','subtle'):'';
-      return '<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
-        btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+' '+remove+'</article>';
-    }).join('');
+    const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>
+      '<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
+      btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+'</article>').join('');
     const waiting=state.neighbors.length?'':'<article class="wide-card"><h3>Làng đang chờ hàng xóm</h3><p>Chia sẻ mã làng để bạn bè vào trồng và trao đổi cùng bạn.</p><div class="actions">'+btn('Chia sẻ mã','data-room','primary')+'</div></article>';
     return html+pages+'<div class="farm-list card-grid">'+cards+waiting+'</div>';
   }
@@ -682,6 +679,18 @@ function renderOrders(farm,now){
     (showTomorrow?'<ul>'+forecasts+'</ul>':'')+'</div>';
 }
 const formatCoins=value=>value.toLocaleString('vi-VN');
+function renderVillageMembers(farm){
+  const members=[farm,...state.neighbors];
+  const rows=members.map(member=>{
+    const owner=member.id===state.villageOwnerId, mine=member.id===farm.id;
+    const role=owner?(mine?'Chủ làng · Bạn':'Chủ làng'):mine?'Bạn':'';
+    const remove=owner||mine?'':btn('Mời ra','data-remove-member="'+member.id+'" aria-label="Mời '+escape(member.name)+' ra khỏi làng"','subtle');
+    return '<article class="row"><div class="village-member-name"><h3>'+escape(member.name)+'</h3>'+
+      (role?'<p>'+role+'</p>':'')+'</div>'+remove+'</article>';
+  }).join('');
+  return '<div class="row board-bar"><h2>Thành viên</h2><span class="badge">'+members.length+' vườn</span></div>'+
+    '<div class="farm-list">'+rows+'</div>';
+}
 function renderVillage(farm){
   const {name,level,income,orders,theftsToday,theftCap,next,fund,built}=state.village;
   const ladder='<ol class="village-ladder" aria-label="Các cấp của làng">'+villageLevels.map((label,i)=>
@@ -746,6 +755,7 @@ function renderPanel(farm,now) {
   if(panel==='ponds')return renderPonds(farm,now);
   if(panel==='orders')return renderOrders(farm,now);
   if(panel==='villageLevel')return renderVillage(farm);
+  if(panel==='members')return renderVillageMembers(farm);
   if(panel==='stock')return renderStock(farm);
   if(panel==='buildings') return '<div class="row"><h2>Công trình</h2>'+btn(farm.xp+' XP','data-panel="progress" aria-label="Xem tiến độ XP"','subtle')+'</div>'+'<div class="upgrade-list card-grid">'+Object.keys(buildings).map(key=>upgrade(farm,key)).join('')+'</div>'+
     ((farm.workshop??0)>0?'<div class="actions">'+btn('Vào Xưởng máy','data-workshop-go','primary')+'</div>':'')+
@@ -780,6 +790,8 @@ function render(arrival) {
   const folded=new Map(Array.from(panelBody.querySelectorAll('details[data-panel-fold]'),el=>[el.dataset.panelFold,el.open]));
   const farm=state.me, now=currentTime();
   const workshopUnlocked=(farm.workshop??0)>0;
+  const canManage=!!session&&state.canManageMembers;
+  if(panel==='members'&&!canManage)panel='villageLevel';
   if(tab==='workshop'&&!workshopUnlocked){tab='field';panel='area';}
   if(!farm.plotIndexes.includes(selected)){selected=0;plotGroup=-1;}
   lastPanelTime=now;
@@ -805,10 +817,11 @@ function render(arrival) {
   $('#tools').innerHTML=tab==='field'?renderCropTools(farm,now):'';
   const panelNav=$('#panel-nav');
   panelNav.className='panel-tabs';
-  const group=Object.values(tabGroups).find(keys=>keys.includes(panel))??tabGroups.main;
-  panelNav.innerHTML='<div class="panel-shortcuts">'+Object.keys(tabGroups).map(key=>{
-    const active=tabGroups[key]===group;
-    return '<button data-group="'+key+'" data-panel="'+tabGroups[key][0]+'"'+(active?' class="active"':'')+'>'+({main:'Tổng quan',farm:'Nông trại',village:'Làng'})[key]+'</button>';
+  const groups=canManage?{...tabGroups,village:[...tabGroups.village,'members']}:tabGroups;
+  const group=Object.values(groups).find(keys=>keys.includes(panel))??groups.main;
+  panelNav.innerHTML='<div class="panel-shortcuts">'+Object.keys(groups).map(key=>{
+    const active=groups[key]===group;
+    return '<button data-group="'+key+'" data-panel="'+groups[key][0]+'"'+(active?' class="active"':'')+'>'+({main:'Tổng quan',farm:'Nông trại',village:'Làng'})[key]+'</button>';
   }).join('')+'</div><div class="panel-subtabs" data-count="'+group.length+'">'+group.map(key=>{
     const [glyph,label]={...panels,...extraPanels}[key];
     return '<button data-panel="'+key+'" class="'+(key===panel?'active':'')+'" aria-pressed="'+(key===panel)+'">'+icon(key==='area'?areaIcons[tab]:glyph)+label+'</button>';
@@ -1261,12 +1274,12 @@ document.addEventListener('click',async e=>{
   else if('visit' in d) visit(d.visit);
   else if('removeMember' in d){
     const neighbor=state.neighbors.find(entry=>entry.id===d.removeMember);
-    if(!session||!state.canManageMembers||!neighbor||neighbor.id===state.villageOwnerId)return;
+    if(panel!=='members'||!session||!state.canManageMembers||!neighbor||neighbor.id===state.villageOwnerId)return;
     modal('Mời thành viên ra khỏi làng','<p>Vườn, tài sản và các sạp của <strong>'+escape(neighbor.name)+'</strong> sẽ bị xóa khỏi làng sau khi xác nhận.</p>'+
       '<div class="actions">'+btn('Hủy','data-close','subtle')+
       btn('Mời ra','data-confirm-remove-member="'+neighbor.id+'"','danger')+'</div><p id="dialog-error" role="status"></p>');
   } else if('confirmRemoveMember' in d){
-    if(session&&state.canManageMembers&&await perform({action:'removeMember',target:d.confirmRemoveMember}))dialog.close();
+    if(panel==='members'&&session&&state.canManageMembers&&await perform({action:'removeMember',target:d.confirmRemoveMember}))dialog.close();
   }
   else if('return' in d) goTo('neighbors');
   else if('villagePage' in d) { villagePage=Number(d.villagePage); render(); }
