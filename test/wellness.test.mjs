@@ -13,6 +13,7 @@ const world=()=>{
   return room;
 };
 const act=(room,action,options={},offset=0,id='a')=>apply(room,id,{action,...options},start+offset);
+const restAtHome=(room,offset=0)=>apply(room,'a',{action:'rest'},start+offset,undefined,'home');
 test('new work spends energy once, rejected actions preserve it, and rest blocks work until complete',()=>{
   const room=world(), farm=room.farms.a;
   act(room,'plant',{item:'wheat',index:0});
@@ -26,7 +27,9 @@ test('new work spends energy once, rejected actions preserve it, and rest blocks
   assert.throws(()=>act(room,'water',{index:0}),/đói/);
   act(room,'eat');
   assert.throws(()=>act(room,'water',{index:0}),/mệt/);
-  act(room,'rest');
+  assert.throws(()=>act(room,'rest',{area:'home'}),/vào Nhà vườn/);
+  assert.throws(()=>apply(room,'a',{action:'rest'},start,undefined,'field'),/vào Nhà vườn/);
+  restAtHome(room);
   assert.throws(()=>act(room,'water',{index:0},59),/nghỉ xong/);
   assert.equal(snapshot(room,farm,start+60).me.wellness.stamina,76);
   act(room,'water',{index:0},60);
@@ -37,7 +40,7 @@ test('new work spends energy once, rejected actions preserve it, and rest blocks
 test('rest grants 75 points after a minute and can start again immediately',()=>{
   const room=world(), farm=room.farms.a;
   farm.wellness={water:50,food:50,stamina:0,at:start,until:{},restUntil:0};
-  const rest=offset=>act(room,'rest',{},offset);
+  const rest=offset=>restAtHome(room,offset);
   const stamina=offset=>snapshot(room,farm,start+offset).me.wellness.stamina;
   rest(0);
   assert.equal(restSeconds,60);
@@ -58,7 +61,7 @@ test('previously started rest keeps its reward but its old cooldown does not blo
   farm.wellness={water:50,food:50,stamina:25,at:start,until:{stamina:start+360},restUntil:start+30};
   assert.equal(snapshot(room,farm,start+29).me.wellness.stamina,25+29/60);
   assert.equal(snapshot(room,farm,start+30).me.wellness.stamina,71.5);
-  act(room,'rest',{},30);
+  restAtHome(room,30);
   assert.equal(farm.wellness.restUntil,start+90);
   assert.equal(farm.wellness.until.stamina,undefined);
   assert.equal(snapshot(room,farm,start+90).me.wellness.stamina,100);

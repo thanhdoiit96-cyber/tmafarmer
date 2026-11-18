@@ -366,8 +366,8 @@ export function createWorld(root, onInteract, landscape) {
       context.fillStyle='#41563a';context.beginPath();
       context.roundRect(bed.x-83,bed.y-25,66,13,6);context.fill();
       context.fillStyle='#fff5d5';
-      context.fillText(resting?'Đang nghỉ':'Giường nghỉ',bed.x-50,bed.y-16);
-      if(resting&&distance(bed,x,y)<32){
+      context.fillText('Giường nghỉ',bed.x-50,bed.y-16);
+      if(resting){
         const drift=reduce.matches?0:Math.sin(ambient*3)*1.8;
         context.fillText('Z',x+12,y-32+drift);
         context.fillText('z',x+19,y-39+drift);

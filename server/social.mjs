@@ -2,7 +2,7 @@ import {avatarOf,homesteadSize,speechRange} from './engine.mjs';
 const directions=['up','right','down','left'];
 const shared=['lake','market','neighbors'];
 const privateScenes=['field','coop','home','workshop'];
-const recentSeconds=9;
+export const recentSeconds=9;
 
 export function sceneKey(farms, player, area, host) {
   if(shared.includes(area))return area;

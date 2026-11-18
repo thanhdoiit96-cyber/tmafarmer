@@ -505,7 +505,7 @@ export function snapshot(room, farm, time) {
         available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
 }
-export function apply(room,id,input,now,catchRoll=0.5){
+export function apply(room,id,input,now,catchRoll=0.5,area){
   const farm=room.farms[id];
   if(input.action==='removeMember'){
     const {target}=input;
@@ -542,6 +542,7 @@ export function apply(room,id,input,now,catchRoll=0.5){
   if(recovery){
     const info=vitals[recovery];
     if(recovery==='stamina'){
+      check(area==='home','Hãy vào Nhà vườn để bắt đầu nghỉ.');
       check(!(health.restUntil>now),'Bạn đang nghỉ. Hãy chờ lượt này kết thúc.');
       check(health.stamina<100,'Thể lực đã đầy.');
       health.restUntil=now+restSeconds;

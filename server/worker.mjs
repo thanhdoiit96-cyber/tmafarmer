@@ -1,4 +1,4 @@
-import {social} from './social.mjs';
+import {recentSeconds,sceneKey,social} from './social.mjs';
 import {advanceVillage, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
@@ -263,7 +263,13 @@ export default {
         }
         const prior=farm.recent.find(r=>r.id===input.requestId);
         if(prior) return reply({state:view(),message:prior.message,revision:row.revision});
-        const message=apply(state,id,input,time,catchRoll);
+        let area;
+        if(input.action==='rest'){
+          const here=await db.prepare('SELECT scene FROM farm_presence WHERE room=? AND player=? AND seen>=?')
+            .bind(code,id,time-recentSeconds).first();
+          if(here?.scene===sceneKey(state.farms,id,'home'))area='home';
+        }
+        const message=apply(state,id,input,time,catchRoll,area);
         farm.recent.push({id:input.requestId,message});
         farm.recent=farm.recent.slice(-64);
         const result=await save(db,code,row.revision,state);

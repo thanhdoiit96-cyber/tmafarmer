@@ -240,6 +240,7 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .task-summary strong,.task-card strong{font-size:12px}
 .task-summary small,.task-card small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#665f50}
 .task-mark{display:grid;flex:none;place-items:center;width:29px;height:29px;border-radius:9px;background:#e2edd8;color:#2f6541;font-size:13px;font-weight:800}
+.task-summary .task-mark[data-pending="true"]{color:#fff;background:#b32d35}
 [data-tone="urgent"] .task-mark,.task-mark[data-tone="urgent"]{color:#9b4135;background:#fae4da}
 [data-tone="care"] .task-mark,.task-mark[data-tone="care"]{color:#39688b;background:#e0edf2}
 .task-arrow{font-size:18px;color:#647a57}
