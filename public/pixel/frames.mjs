@@ -32,9 +32,9 @@ export const pixelSlice={
     },
   },
 };
-export const cropStagesAtlas={source:'/pixel/crop-stages.png',cell:48,crops:moreCrops};
+export const cropStagesAtlas={source:'/pixel/crop-stages-v2.png',cell:48,crops:moreCrops};
 export const livestockAtlas={
-  source:'/pixel/livestock-v1.png',
-  frames:{goat:[0,0,56,48],sheep:[56,0,56,48]},
-  legStart:{goat:.73,sheep:.8},
+  source:'/pixel/livestock-v2.png',columns:4,
+  frames:{goat:[0,0,56,48],sheep:[56,0,56,48],goose:[112,0,56,48],rabbit:[168,0,56,48]},
+  legStart:{goat:.73,sheep:.8,goose:.88},
 };

@@ -1,5 +1,5 @@
 import {mainPlotSlot,plotAt,plotOffset,pondOffset} from './land.mjs';
-import {animals,cropGoal,productGoal} from './game.mjs';
+import {animals,cropGoal,goods,productGoal} from './game.mjs';
 import {aquatic,pondReady,visiblePondBatches} from './aqua.mjs';
 
 export const taskStyles={
@@ -18,10 +18,12 @@ export function farmTasks(snapshot,now=snapshot.now){
       plot.progress>=cropGoal(plot)?['ready','Thu hoạch']:
       plot.pests>=(highRisk?12:15)&&plot.protectedUntil<=now?['urgent','Trị sâu']:
       !weather.wet&&plot.wetUntil<=now?['care','Tưới nước']:null;
-    if(task)tasks.push({type:task[0],title:task[1],label,kind:'plot',index});
+    if(task)tasks.push({type:task[0],title:task[1],label:plot?label+' · '+goods[plot.kind].name:label,kind:'plot',index});
   }
   me.pens.forEach((pen,index)=>{
-    const task=pen.progress>=productGoal(pen)?['ready',animals[pen.kind].oneTime?'Xuất chuồng lợn':'Thu sản phẩm']:pen.fedUntil<=now?['urgent','Cho vật nuôi ăn']:null;
+    const animal=animals[pen.kind];
+    const task=pen.progress>=productGoal(pen)?['ready',animal.oneTime?'Xuất chuồng '+animal.name.toLowerCase():'Thu '+goods[animal.product].name.toLowerCase()]:
+      pen.fedUntil<=now?['urgent','Cho '+animal.name.toLowerCase()+' ăn']:null;
     if(task)tasks.push({type:task[0],title:task[1],label:pen.lot===undefined?'Chuồng chính':'Chuồng ô '+(pen.lot+1),kind:'animal',index,lot:pen.lot});
   });
   for(const index of me.pondIndexes){

@@ -9,7 +9,7 @@ import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, animalRequirement, animals, apply, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceVillage, animalRequirement, animals, apply, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -242,7 +242,7 @@ function describeItem(item){
   const animal=Object.values(animals).find(value=>value.product===item);
   const mentionRecipes=Object.keys(recipes).filter(key=>recipes[key].ingredients[item]);
   const uses=['Bán lấy xu'];
-  if(['wheat','carrot','corn','egg','milk','minnow','pork'].includes(item))uses.push('giao đơn làng');
+  if(['wheat','carrot','corn','egg','milk','minnow','pork'].includes(item)||varietyOrders.some(order=>order.items.some(entry=>entry.item===item)))uses.push('giao đơn làng');
   if(crops[item])uses.push('giữ làm giống');
   if(mentionRecipes.length)uses.push('chế biến '+mentionRecipes.map(key=>goods[key].name.toLowerCase()).join(', '));
   let source;
@@ -314,7 +314,7 @@ function showCropGrowth(index){
 function renderCropTools(farm,now) {
   const plot=plotAt(farm,selected);
   if(!plot&&farm.soilCompactsAt[selected]<=now)return '<h2>Đất đã chai</h2><p>Ô này bỏ trống ít nhất 8 giờ. Cuốc đất để làm tơi rồi gieo hạt.</p><div class="actions">'+act('Cuốc đất','till','',selected,'primary')+'</div>';
-  if(!plot) return '<h2>Gieo hạt</h2><p>Chọn giống cho ô '+plotNumber(selected)+'. Cây chất lượng cao cần Xưởng máy.</p><div class="actions crop-actions">'+Object.entries(crops).map(([key,crop])=>{
+  if(!plot) return '<h2>Gieo hạt</h2><p>Chọn giống cho ô '+plotNumber(selected)+'. Một số giống cần Xưởng máy.</p><div class="actions crop-actions">'+Object.entries(crops).map(([key,crop])=>{
     const locked=cropRequirement(farm,key);
     return act(nice(key)+(locked?' · 🔒 '+locked:' · '+(farm.inventory[crop.seed]||0)),'plant',key,selected,crop.quality?'gold':'',!!locked||!farm.inventory[crop.seed]);
   }).join('')+'</div>';
@@ -353,7 +353,8 @@ function animalIllustration(kind){
   const frame=livestockAtlas.frames[kind];
   if(!frame)return '<span class="animal-icon" aria-hidden="true">'+animals[kind].icon+'</span>';
   const [x]=frame;
-  return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+livestockAtlas.source+');background-position:-'+x*.75+'px 0"></span>';
+  return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+livestockAtlas.source+
+    ');background-size:'+livestockAtlas.columns*42+'px 36px;background-position:-'+x*.75+'px 0"></span>';
 }
 function renderCoop(farm,now,lot){
   const pens=farm.pens.map((pen,i)=>({pen,i})).filter(entry=>entry.pen.lot===lot);
@@ -369,7 +370,7 @@ function renderCoop(farm,now,lot){
       const info=animals[pen.kind];
       const targetAge=growthGoal(pen), targetProduct=productGoal(pen), grown=pen.age>=targetAge, ready=pen.progress>=targetProduct;
       const status=!grown?'Đang lớn':info.oneTime?(ready?'Sẵn sàng xuất chuồng':'Đang vỗ béo'):(ready?'Có ':'Đang tạo ')+goods[info.product].name.toLowerCase();
-      const label=info.oneTime?'Xuất chuồng · '+info.yield+' thịt lợn':'Thu sản phẩm';
+      const label=info.oneTime?'Xuất chuồng · '+info.yield+' '+goods[info.product].name.toLowerCase():'Thu sản phẩm';
       const ref=' data-target="'+(pen.id??i)+'" data-index="'+i+'"';
       const feed=btn('Cho ăn · '+info.food,'data-action="feed"'+ref,'',pen.fedUntil>now||farm.inventory.feed<info.food);
       const collect=btn(label,'data-action="collect"'+ref,'primary');
@@ -587,7 +588,7 @@ function renderProgress(farm){
   const {xp,rank,next}=farmProgress(farm);
   const earn={
     harvest:'Thu hoạch cây',collect:'Thu sản phẩm vật nuôi',aquaHarvest:'Thu cá hoặc tôm',
-    upgrade:'Xây hoặc nâng cấp công trình',order:'Giao đơn lẻ',basket:'Giao đơn giỏ',workshopOrder:'Giao đơn xưởng',journal:'Hoàn thành Sổ việc hôm nay',
+    upgrade:'Xây hoặc nâng cấp công trình',order:'Giao đơn lẻ',basket:'Giao đơn giỏ hoặc đơn mùa vụ',workshopOrder:'Giao đơn xưởng',journal:'Hoàn thành Sổ việc hôm nay',
   };
   return boardBar('Tiến độ',formatCoins(xp)+' XP')+'<div class="farm-list progress-panel">'+
     '<article class="xp-summary"><h3>'+rank.name+'</h3><p>XP tích lũy theo vườn để mở giống, vật nuôi và các cấp công trình. XP được giữ sau khi mở khóa. Xu và yêu cầu công trình được tính riêng.</p>'+
@@ -666,7 +667,7 @@ function renderOrders(farm,now){
     }).join('');
     const ready=order.items.every(({item,qty})=>(farm.inventory[item]??0)>=qty);
     return '<div class="order-ticket" data-category="'+(order.category??'regular')+'" data-ready="'+ready+'"><div class="row"><h3>'+
-      (order.title??goods[order.items[0].item].name)+'</h3><span class="badge">'+(ready?'Đủ hàng':order.category==='workshop'?'Đơn xưởng':order.title?'Đơn giỏ':'Thiếu hàng')+'</span></div>'+
+      (order.title??goods[order.items[0].item].name)+'</h3><span class="badge">'+(ready?'Đủ hàng':order.category==='workshop'?'Đơn xưởng':order.category==='variety'?'Đơn mùa vụ':order.title?'Đơn giỏ':'Thiếu hàng')+'</span></div>'+
       '<ul aria-label="Hàng cần giao">'+requirements+'</ul><div class="row order-footer"><small>'+order.reward+' xu · +'+order.xp+' XP</small>'+
       act('Giao hàng','order','',order.id,'primary',!ready)+'</div></div>';
   }).join('');
@@ -1050,7 +1051,7 @@ function listingDialog() {
     '</select></label><label>Số lượng<input type="number" name="qty" min="1" max="20" value="1" required></label><label>Giá mỗi món · xu<input type="number" name="price" min="1" value="'+goods[items[0]].sell+'" required></label><button class="btn primary">Đăng lên sạp</button></form><p id="dialog-error" role="status"></p>');
 }
 function help() {
-  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm Thể lực → Về Nhà vườn. Khi vào nhà, chọn Nghỉ ngay. Sau 60 giây, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, mua gà rồi cho ăn. Vật nuôi lớn lên trước khi cho trứng hoặc sữa. Khi lợn đủ lớn, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
+  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm Thể lực → Về Nhà vườn. Khi vào nhà, chọn Nghỉ ngay. Sau 60 giây, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, đón vật nuôi rồi cho ăn. Vật nuôi lớn lên trước khi cho sản phẩm. Khi lợn hoặc thỏ sẵn sàng, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
 }
 async function perform(input) {
   if(busy)return false;

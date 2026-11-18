@@ -21,14 +21,14 @@ test('crop stages share a centered footprint and keep their marker clear of the 
 });
 
 test('visitors see the actual growth stage and each new atlas row fits the 48 pixel cells',()=>{
-  for(const kind of ['tomato','sunflower','strawberry','grape','tea','truffle']){
+  for(const kind of ['tomato','sunflower','strawberry','grape','tea','truffle','sweetPotato','pumpkin','peanut']){
     for(let stage=0;stage<4;stage++){
       const cell=cropFrame(kind,stage);
       const art=cropPlacement({x:176,y:106,data:{kind,stage},visit:true});
-      assert.equal(cell.source,'/pixel/crop-stages.png');
+      assert.equal(cell.source,'/pixel/crop-stages-v2.png');
       assert.equal(art.sx,stage*48+cell.bounds[0]);
       assert.ok(cell.bounds.every(edge=>edge>=0&&edge<=48));
-      assert.ok(cell.y+cell.bounds[3]<=288);
+      assert.ok(cell.y+cell.bounds[3]<=432);
     }
   }
 });

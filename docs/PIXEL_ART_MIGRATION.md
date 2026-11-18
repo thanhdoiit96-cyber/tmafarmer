@@ -99,7 +99,9 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 - Dê sữa và cừu có minh họa riêng trong `public/pixel/livestock-v1.png`. Hai ô 56 × 48 dùng chung đường chân, mỗi loài có đường cắt chân riêng cho chuyển động trên bản đồ. Giao diện chuồng và mua vật nuôi dùng cùng atlas. Chạy `python3 scripts/normalize-livestock.py` để xuất lại từ ảnh nguồn trong `docs/assets/`.
 - Nhân vật nam mặc áo xanh, khăn vàng và nón lá. Hai atlas `public/pixel/farmer-male-walk.png` và `public/pixel/farmer-male-poses.png` dùng ô 48 × 64, bốn hướng và cùng điểm neo chân với nhân vật nữ. Atlas tư thế gồm đứng yên, chuẩn bị cuốc, nâng cuốc và bổ xuống. Chạy `python3 scripts/normalize-male-character.py` để xuất lại atlas từ ảnh nguồn trong `docs/assets/`.
 - Bong bóng chat dùng màu kem và xanh lá của giao diện, tự xuống dòng, đặt trên tên người chơi và chỉ xuất hiện khi ở gần nhân vật gửi.
-- Atlas `public/pixel/crop-stages.png` thêm bốn giai đoạn cho cà chua, hướng dương, dâu, nho, trà và nấm truffle. Hình ở luống và trong bảng giống dùng chung sprite 48 × 48. Chạy `python3 scripts/normalize-crop-stages.py` để xuất lại atlas và tọa độ từ hai ảnh nguồn trong `docs/assets/`.
+- Atlas `public/pixel/crop-stages.png` thêm bốn giai đoạn cho cà chua, hướng dương, dâu, nho, trà và nấm truffle. Hình ở luống và trong bảng giống dùng chung sprite 48 × 48. Hai ảnh nguồn ban đầu trong `docs/assets/` được dùng tiếp ở bản V2.
+- Bản mở rộng dùng `public/pixel/crop-stages-v2.png` với 4 cột và 9 hàng, thêm khoai lang, bí đỏ và đậu phộng. Cả 12 khung mới dùng ô 48 × 48 và cùng mốc chân với các giống cũ. Nguồn mới ở `docs/assets/crop-stages-seasonal-source.png`. Script chuẩn hóa xuất bản V2 từ ba ảnh nguồn.
+- Atlas `public/pixel/livestock-v2.png` thêm ngỗng và thỏ, mỗi loài một ô 56 × 48. Bản đồ dùng bước đi hiện có cho ngỗng và nhịp nhảy cả khung cho thỏ. Hình trong chuồng dùng chung atlas. Nguồn mới ở `docs/assets/livestock-goose-rabbit-source.png`. Chạy `python3 scripts/normalize-livestock.py` để xuất bản V2.
 
 ## Tiêu chí nghiệm thu vertical slice
 

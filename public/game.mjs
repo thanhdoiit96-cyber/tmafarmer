@@ -50,6 +50,9 @@ export const goods = {
   strawberrySeed:{name:'Giống dâu chất lượng cao',icon:'🍓',buy:38}, grapeSeed:{name:'Giống nho chất lượng cao',icon:'🍇',buy:55},
   teaSeed:{name:'Giống trà thượng hạng',icon:'🍵',buy:72},
   truffleSeed:{name:'Giống nấm truffle',icon:'🍄',buy:180},
+  sweetPotatoSeed:{name:'Giống khoai lang',icon:'🍠',buy:16},
+  pumpkinSeed:{name:'Giống bí đỏ',icon:'🎃',buy:27},
+  peanutSeed:{name:'Giống đậu phộng',icon:'🥜',buy:35},
   spray:{name:'Thuốc trừ sâu',icon:'🧴',buy:9}, feed:{name:'Thức ăn',icon:'🥣',buy:7},
   wheat:{name:'Lúa mì',icon:'🌾',sell:6}, carrot:{name:'Cà rốt',icon:'🥕',sell:10},
   corn:{name:'Bắp',icon:'🌽',sell:15}, tomato:{name:'Cà chua',icon:'🍅',sell:18}, sunflower:{name:'Hướng dương',icon:'🌻',sell:23},
@@ -58,6 +61,9 @@ export const goods = {
   milk:{name:'Sữa',icon:'🥛',sell:22},
   goatMilk:{name:'Sữa dê',icon:'🍼',sell:30}, wool:{name:'Len cừu',icon:'🧶',sell:42},
   pork:{name:'Thịt lợn',icon:'🍖',sell:32}, truffle:{name:'Nấm truffle',icon:'🍄',sell:95},
+  sweetPotato:{name:'Khoai lang',icon:'🍠',sell:12}, pumpkin:{name:'Bí đỏ',icon:'🎃',sell:21},
+  peanut:{name:'Đậu phộng',icon:'🥜',sell:29}, gooseEgg:{name:'Trứng ngỗng',icon:'🥚',sell:26},
+  rabbitMeat:{name:'Thịt thỏ',icon:'🍖',sell:38},
   bread:{name:'Bánh mì',icon:'🍞'}, carrotJuice:{name:'Nước ép cà rốt',icon:'🥤'}, warmMilk:{name:'Sữa ấm',icon:'🥛'},
   berrySmoothie:{name:'Sinh tố dâu',icon:'🍓'}, grapeJuice:{name:'Nước ép nho',icon:'🍇'}, milkTea:{name:'Trà sữa',icon:'🫖'},
   woolCloth:{name:'Vải len dệt',icon:'🧵',sell:92},
@@ -73,6 +79,9 @@ export const crops = {
   grape:{seed:'grapeSeed',time:60*60,yield:5,workshop:2,quality:true},
   tea:{seed:'teaSeed',time:75*60,yield:6,workshop:3,quality:true},
   truffle:{seed:'truffleSeed',time:120*60,yield:3,workshop:3,xp:350,quality:true},
+  sweetPotato:{seed:'sweetPotatoSeed',time:22*60,yield:4,xp:18},
+  pumpkin:{seed:'pumpkinSeed',time:40*60,yield:4,xp:60},
+  peanut:{seed:'peanutSeed',time:50*60,yield:5,workshop:1,xp:100},
 };
 export const animals = {
   chicken:{name:'Gà mái',icon:'🐔',cost:35, grow:20*60, time:15*60,legacy:70, product:'egg', yield:3, food:1, level:1},
@@ -81,6 +90,8 @@ export const animals = {
   pig:{name:'Lợn',icon:'🐖',cost:90, grow:60*60, time:40*60, product:'pork', yield:4, food:2, level:2, oneTime:true},
   goat:{name:'Dê sữa',icon:'🐐',cost:110,grow:55*60,time:35*60,product:'goatMilk',yield:3,food:2,level:2,xp:70},
   sheep:{name:'Cừu',icon:'🐑',cost:145,grow:70*60,time:50*60,product:'wool',yield:2,food:3,level:3,xp:130},
+  goose:{name:'Ngỗng',icon:'🪿',cost:105,grow:50*60,time:30*60,product:'gooseEgg',yield:3,food:2,level:3,xp:100},
+  rabbit:{name:'Thỏ',icon:'🐇',cost:110,grow:48*60,time:38*60,product:'rabbitMeat',yield:4,food:2,level:3,xp:160,oneTime:true},
 };
 export const recipes={
   bread:{level:1,ingredients:{wheat:2},gain:{stamina:22,food:28}},
@@ -314,6 +325,13 @@ const workshopOrders=[
   {title:'Keo cho thợ mộc',items:[{item:'starchGlue',qty:3},{item:'corn',qty:1}]},
   {title:'Tấm cách nhiệt cho kho làng',items:[{item:'insulationMat',qty:2},{item:'milk',qty:2}]},
 ];
+export const varietyOrders=[
+  {crop:'sweetPotato',title:'Khoai lang cho quán nướng',items:[{item:'sweetPotato',qty:4}]},
+  {crop:'pumpkin',title:'Bí đỏ cho bếp làng',items:[{item:'pumpkin',qty:3}]},
+  {crop:'peanut',title:'Đậu phộng cho sạp rang',items:[{item:'peanut',qty:4}]},
+  {animal:'goose',title:'Trứng ngỗng cho chợ sáng',items:[{item:'gooseEgg',qty:3}]},
+  {animal:'rabbit',title:'Thịt thỏ cho quán làng',items:[{item:'rabbitMeat',qty:3}]},
+];
 export function orderList(day,room) {
   const variants=[
     [['wheat',4,36],['carrot',3,45],['egg',2,34]],
@@ -341,6 +359,12 @@ export function orderList(day,room) {
     const id=-(day*3+1);
     const value=order.items.reduce((sum,{item,qty})=>sum+goods[item].sell*qty,0);
     daily.push({...order,category:'workshop',id,slot:id,reward:Math.ceil(value*1.25),xp:xpRewards.workshopOrder});
+  }
+  const {crop,animal,title,items}=varietyOrders[day%varietyOrders.length];
+  if(Object.values(room?.farms??{}).some(farm=>crop?!cropRequirement(farm,crop):!animalRequirement(farm,animal))){
+    const id=-(day*3+2);
+    const value=items.reduce((sum,{item,qty})=>sum+goods[item].sell*qty,0);
+    daily.push({title,items,category:'variety',id,slot:id,reward:Math.ceil(value*1.25),xp:xpRewards.basket});
   }
   return daily;
 }
@@ -838,7 +862,7 @@ function applyAction(room,id,input,now,catchRoll){
     check(Number.isInteger(slot)&&farm.pens[slot],'Vật nuôi không tồn tại.');
     const pen=projectedPen(room,farm,farm.pens[slot],now), info=animals[pen.kind];
     if(action==='feed') {
-      check(!info.oneTime||pen.progress<productGoal(pen),'Lợn đã sẵn sàng xuất chuồng.');
+      check(!info.oneTime||pen.progress<productGoal(pen),info.name+' đã sẵn sàng xuất chuồng.');
       check(pen.fedUntil<=now,'Vật nuôi vẫn còn thức ăn.');
       use(farm,'feed',info.food);
       pen.fedUntil=now+Math.ceil((growthGoal(pen)+productGoal(pen))*1.25);

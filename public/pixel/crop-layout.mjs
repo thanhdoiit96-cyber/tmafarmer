@@ -15,6 +15,9 @@ export const cropGrowthLabels={
   grape:['Mầm nho','Leo giàn','Chùm xanh','Chùm tím'],
   tea:['Mầm trà','Cây non','Bụi trà','Búp trà non'],
   truffle:['Nấm mới nhú','Nấm non','Cụm nấm lớn','Nấm già'],
+  sweetPotato:['Mầm non','Xòe lá','Dây ra hoa','Củ lớn'],
+  pumpkin:['Mầm non','Dây leo','Nở hoa','Bí chín'],
+  peanut:['Mầm non','Cây non','Ra hoa','Quả già'],
 };
 export function cropFrame(kind,stage){
   const original=Object.hasOwn(pixelSlice.crops,kind);

@@ -99,7 +99,7 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .neighbor-card .btn{margin-top:6px}
 .village-member-name{min-width:0;overflow-wrap:anywhere}
 .animal-icon{font-size:26px;display:inline-block}
-.pixel-animal{flex:none;width:42px;height:36px;background-repeat:no-repeat;background-size:84px 36px;image-rendering:pixelated}
+.pixel-animal{flex:none;width:42px;height:36px;background-repeat:no-repeat;image-rendering:pixelated}
 [data-action="animal"]{display:inline-flex;align-items:center;gap:4px;text-align:left}
 [data-action="animal"] .animal-icon:not(.pixel-animal){font-size:16px}
 .itemlist{display:grid;margin-top:5px}

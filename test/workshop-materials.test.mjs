@@ -54,8 +54,8 @@ test('a stable workshop order supplements the regular board, with a single share
   assert.equal(a.xp,30);
   assert.equal(a.inventory.woolCloth,2);
   const remaining=snapshot(room,b,start);
-  assert.equal(remaining.orders.length,3);
-  assert.equal(remaining.orderCount,4);
+  assert.deepEqual(remaining.orders.filter(order=>order.category!=='variety'),orderList(0));
+  assert.equal(remaining.orderCount,remaining.orders.length+1);
   assert.throws(()=>deliver('b'),/đã giao/);
   assert.throws(()=>deliver('b',start+2*gameDay),/hết hạn/);
   const ids=Array.from({length:30},(_,day)=>orderList(day,room)).flat().map(order=>order.id);

@@ -579,7 +579,7 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
-const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[36,31],sheep:[38,33]};
+const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
 function critter(c,a,t){
   const {data,index=0}=a;
   const visual=data.kind==='duck'?'chicken':data.kind;
@@ -587,7 +587,8 @@ function critter(c,a,t){
   const art=livestockFrame?livestockArt:atlas;
   if(!dim(art))return;
   const large=visual!=='chicken';
-  const motion=animalMotion(t,index,large?11:15,large?'graze':'peck');
+  const rabbit=visual==='rabbit';
+  const motion=animalMotion(t,index,large?11:15,rabbit?'idle':large?'graze':'peck');
   const walking=motion.state==='walk';
   const phase=motion.distance/(large?9:7.5)*Math.PI*2;
   const step=Math.sin(phase);
@@ -605,7 +606,10 @@ function critter(c,a,t){
   if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
   c.translate(x,y);
   if(spriteFlip(motion.facing,1))c.scale(-1,1);
-  if(walking){
+  if(rabbit&&walking){
+    const hop=Math.max(0,Math.sin(phase))*3.5*size;
+    c.drawImage(art,sx,sy,sw,sh,-w/2,snapPixel(-h-hop),w,h);
+  } else if(walking){
     // Keep one leg group on the ground while the other group lifts and swings.
     const backLift=Math.max(0,step)*1.3*size,frontLift=Math.max(0,-step)*1.3*size;
     const swing=step*1.4*size;
