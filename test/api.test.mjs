@@ -151,6 +151,34 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.match(tooExpensive.error,/đủ xu/);
   assert.equal((await api('state',null,a)).state.me.coins,850);
 
+  const contributionFixture=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  delete contributionFixture.villageDrive;
+  Object.assign(contributionFixture.farms[a.state.me.id].inventory,{wheat:16,carrot:12});
+  Object.assign(contributionFixture.farms[b.state.me.id].inventory,{corn:12,carrot:12});
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(contributionFixture),a.code);
+  const [boardA,boardB]=await Promise.all([api('state',null,a),api('state',null,b)]);
+  const index=boardA.state.villageDrive.id;
+  assert.equal(boardB.state.villageDrive.id,index);
+  assert.equal((await send(a,'villageGoods',{index,item:'wheat',qty:16})).status,200);
+  assert.equal((await send(b,'villageGoods',{index,item:'corn',qty:12})).status,200);
+  const makeDonation=()=>({requestId:crypto.randomUUID(),action:'villageGoods',index,item:'carrot',qty:12});
+  const requestsToFinish=[makeDonation(),makeDonation()];
+  const finalDonations=await Promise.all([a,b].map((player,i)=>api('action',requestsToFinish[i],player)));
+  assert.deepEqual(finalDonations.map(result=>result.status).sort(),[200,400]);
+  const winner=finalDonations.findIndex(result=>result.status===200);
+  const retryDonation=await api('action',requestsToFinish[winner],[a,b][winner]);
+  assert.equal(retryDonation.state.me.coins,finalDonations[winner].state.me.coins);
+  const paid=await Promise.all([a,b].map(player=>api('state',null,player)));
+  for(const [i,result] of paid.entries()){
+    assert.equal(result.state.villageDrive.completed,true);
+    assert.equal(result.state.villageDrive.mine.paid,true);
+    assert.equal(result.state.me.inventory.carrot,i===winner?0:12);
+    const before=contributionFixture.farms[[a,b][i].state.me.id];
+    const contributionValue=(i===0?16*6:12*15)+(i===winner?12*10:0);
+    assert.equal(result.state.me.coins,before.coins+Math.ceil(contributionValue*1.25));
+    assert.equal(result.state.me.xp,before.xp+12);
+  }
+
   const target=b.state.me.id;
   assert.equal((await send(c,'removeMember',{target})).status,403);
   assert.equal((await send(a,'removeMember',{target:a.state.me.id})).status,400);

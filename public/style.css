@@ -343,6 +343,17 @@ dialog .music-volume input{grid-column:1/-1;padding:0;accent-color:#376044}
 .village-project h3{margin:0;font-size:13px}
 .village-project .progress{margin-top:8px}
 .village-project .actions{margin-bottom:0}
+.village-drive{padding:9px;margin-bottom:8px;border:1px solid #cddbbd;border-radius:9px;background:#f5f7ea}
+.village-drive h2{margin:0}
+.village-drive h3{margin:5px 0;font-size:12px;color:var(--deep)}
+.village-drive-items{list-style:none;margin:0 0 7px;padding:0}
+.village-drive-items li{padding:5px 0;border-bottom:1px solid #dfe6ce;color:var(--deep);font-size:11px}
+.village-drive-items .progress{margin:4px 0}
+.village-drive-stock{min-height:24px;color:var(--muted)}
+.village-drive-stock .btn{min-height:32px}
+.village-drive details{margin-top:6px}
+.village-drive details ol{margin:4px 0 0;padding-left:20px;font-size:11px;overflow-wrap:anywhere}
+.village-drive-last{margin-top:6px;overflow-wrap:anywhere}
 .village-empty{padding:10px;background:#f2efe1;border-radius:8px}
 
 .market-banner{display:grid;gap:2px;margin:0 0 6px;padding:7px 9px;border-radius:9px;color:#fffae9;background:#324d3a linear-gradient(90deg,#222d21da,#2739238c 57%,#2a46291a);background-image:linear-gradient(90deg,#222d21da,#2739238c 57%,#2a46291a),url('/cho-hoang-hon.webp');background-size:cover;background-position:center 54%}

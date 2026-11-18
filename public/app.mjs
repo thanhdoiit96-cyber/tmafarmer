@@ -9,7 +9,7 @@ import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, animalRequirement, animals, apply, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceVillage, advanceVillageDrive, animalRequirement, animals, apply, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -136,7 +136,8 @@ function updateDemo() {
   const day=dayAt(demo,time);
   const started=startVillageSecurity(demo,day);
   const soilStarted=startSoilClock(demo,time);
-  if(advanceVillage(demo,day)||started||soilStarted)store.write(demoKey,demo);
+  const driveUpdated=advanceVillageDrive(demo,time);
+  if(advanceVillage(demo,day)||started||soilStarted||driveUpdated)store.write(demoKey,demo);
   setState(snapshot(demo,demo.farms.demo,time));
 }
 async function api(path, payload, credentials=session) {
@@ -680,6 +681,41 @@ function renderOrders(farm,now){
     (showTomorrow?'<ul>'+forecasts+'</ul>':'')+'</div>';
 }
 const formatCoins=value=>value.toLocaleString('vi-VN');
+function renderVillageDrive(farm,now){
+  const drive=state.villageDrive;
+  if(!drive)return '';
+  const {title,items,mine,minimum,rewardXp,completed,endsAt,contributors,previous}=drive;
+  const status=completed?'Đã hoàn thành':endsAt<=now?'Đã hết hạn':'Còn <span data-until="'+endsAt+'">'+duration(endsAt-now)+'</span>';
+  const rows=items.map(({item,required,delivered})=>{
+    const count=farm.inventory[item]??0;
+    const ready=delivered>=required;
+    return '<li><div class="row">'+itemLink(item)+'<strong>'+delivered+' / '+required+'</strong></div>'+
+      valueBar(delivered,required)+'<div class="row village-drive-stock"><small>Trong kho '+count+'</small>'+
+      (completed||ready?'':btn('Góp','data-village-goods="'+item+'" aria-label="Góp '+escape(goods[item].name)+'"','primary',!count||endsAt<=now))+'</div></li>';
+  }).join('');
+  const personal=mine.paid?'Đã nhận '+formatCoins(mine.coins)+' xu và '+rewardXp+' XP.':
+    completed?'Đợt này thưởng cho vườn góp từ '+minimum+' món.':
+    mine.quantity<minimum?'Góp từ '+minimum+' món để nhận thưởng khi làng hoàn thành.':
+    'Dự kiến nhận '+formatCoins(mine.coins)+' xu và '+rewardXp+' XP khi làng hoàn thành.';
+  const rank=contributors.length?'<details class="panel-fold" data-panel-fold="village-drive-rank"><summary>Bảng đóng góp</summary><ol>'+
+    contributors.map(({name,quantity})=>'<li>'+escape(name)+' · '+quantity+' món</li>').join('')+'</ol></details>':'';
+  const last=previous?'<p class="village-drive-last"><strong>Đợt trước · '+escape(previous.title)+'</strong> · '+(previous.completed?'Hoàn thành':'Hết hạn')+
+    (previous.top?' · Góp nhiều nhất: '+escape(previous.top.name)+' ('+previous.top.quantity+' món)':'')+'</p>':'';
+  return '<section class="village-drive" aria-label="Đơn góp hàng của làng"><div class="row"><h2>Đơn góp hàng</h2><span class="badge">'+status+'</span></div>'+
+    '<h3>'+escape(title)+'</h3><ul class="village-drive-items">'+rows+'</ul>'+
+    '<p><strong>Bạn đã góp '+mine.quantity+' món.</strong> '+personal+'</p>'+rank+last+'</section>';
+}
+function showVillageGoods(item){
+  const drive=state.villageDrive;
+  if(!drive||drive.completed||drive.endsAt<=currentTime())return;
+  const line=drive.items.find(entry=>entry.item===item);
+  if(!line)return;
+  const maximum=Math.min(line.required-line.delivered,state.me.inventory[item]??0);
+  if(maximum<1)return;
+  modal('Góp '+goods[item].name.toLowerCase(),'<p>Bạn có thể góp tối đa '+maximum+' món. Hàng đã góp sẽ được trừ khỏi kho và không hoàn lại khi hết hạn.</p>'+
+    '<form data-form="villageGoods" data-item="'+item+'" data-index="'+drive.id+'"><label>Số lượng góp<input name="qty" type="number" min="1" max="'+maximum+'" value="1" required></label>'+
+    '<button class="btn primary">Xác nhận góp</button></form><p id="dialog-error" role="status"></p>');
+}
 function renderVillageMembers(farm){
   const members=[farm,...state.neighbors];
   const rows=members.map(member=>{
@@ -754,7 +790,7 @@ function renderPanel(farm,now) {
   if(panel==='rank')return renderRank(farm);
   if(panel==='land')return renderLand(farm,now);
   if(panel==='ponds')return renderPonds(farm,now);
-  if(panel==='orders')return renderOrders(farm,now);
+  if(panel==='orders')return renderVillageDrive(farm,now)+renderOrders(farm,now);
   if(panel==='villageLevel')return renderVillage(farm);
   if(panel==='members')return renderVillageMembers(farm);
   if(panel==='stock')return renderStock(farm);
@@ -769,7 +805,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -1086,7 +1122,7 @@ async function perform(input) {
       updateDemo();
     }
     render();
-    if(input.action!=='removeMember'&&tab===actionTab&&neighborId===actionNeighbor){
+    if(!['removeMember','villageGoods'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
       const reel=input.action==='reel';
       const caught=reel&&['minnow','tilapia','carp','goldenCarp'].some(key=>(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
       world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
@@ -1094,7 +1130,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageFund','sell','till','plant','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1236,6 +1272,7 @@ document.addEventListener('click',async e=>{
   else if('supplyGroup' in d) { supplyGroup=d.supplyGroup; render(); }
   else if('seedCrop' in d) showSeedCrop(d.seedCrop);
   else if('villageFund' in d) showVillageFund();
+  else if('villageGoods' in d) showVillageGoods(d.villageGoods);
   else if('weather' in d) showWeather();
   else if('room' in d) showRoom();
   else if('avatarMenu' in d) showAvatar();
@@ -1426,6 +1463,8 @@ dialog.addEventListener('submit',async e=>{
     } finally { busy=false; }
   } else if(mode==='avatar'){
     if(await perform({action:'avatar',item:values.avatar}))dialog.close();
+  } else if(mode==='villageGoods'){
+    if(await perform({action:mode,item:form.dataset.item,index:Number(form.dataset.index),qty:Number(values.qty)}))dialog.close();
   } else {
     const success=await perform({action:mode,item:values.item??form.dataset.item,...(mode==='villageFund'?{amount:Number(values.amount)}:{qty:Number(values.qty)}),...(mode==='list'?{price:Number(values.price)}:{}),...(mode==='aquaStock'?{index:Number(form.dataset.pond)}:{})});
     if(success) dialog.close();

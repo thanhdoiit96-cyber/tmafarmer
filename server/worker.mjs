@@ -1,5 +1,5 @@
 import {recentSeconds,sceneKey,social} from './social.mjs';
-import {advanceVillage, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
+import {advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -213,12 +213,19 @@ async function join(db,request,superAdminAccountId) {
     if(!row) return reply({error:'Không tìm thấy mã làng.'},404);
     const state=JSON.parse(row.state);
     const id=linked&&has(state.farms,linked.farm_id)?linked.farm_id:await farmIdFor(code);
-    if(admin&&has(state.farms,id))return joined(state,code,id,time,200);
+    if(admin&&has(state.farms,id)){
+      if(advanceVillageDrive(state,time)){
+        const saved=await save(db,code,row.revision,state);
+        if(saved.meta.changes!==1)continue;
+      }
+      return joined(state,code,id,time,200);
+    }
     if(Object.keys(state.farms).length>=12) return reply({error:'Làng đã đủ 12 vườn.'},409);
     upgradeCalendar(state,time);
     startVillageSecurity(state,dayAt(state,time));
     startSoilClock(state,time);
     state.farms[id]=newFarm(id,name,time,avatar);
+    advanceVillageDrive(state,time);
     const result=await save(db,code,row.revision,state);
     if(result.meta.changes===1) return joined(state,code,id,time,201);
   }
@@ -278,9 +285,10 @@ export default {
         const calendarUpdated=upgradeCalendar(state,time);
         const securityStarted=startVillageSecurity(state,dayAt(state,time));
         const soilStarted=startSoilClock(state,time);
+        const driveUpdated=advanceVillageDrive(state,time);
         if(!input) {
           const promoted=advanceVillage(state,dayAt(state,time));
-          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted)return reply({state:view(),revision:row.revision});
+          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted&&!driveUpdated)return reply({state:view(),revision:row.revision});
           const migrated=await save(db,code,row.revision,state);
           if(migrated.meta.changes===1)return reply({state:view(),revision:row.revision+1});
           continue;
