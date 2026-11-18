@@ -94,6 +94,11 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .itemrow:last-child{border-bottom:0;padding-bottom:0}
 .itemrow>div:first-child{min-width:0;overflow-wrap:anywhere}
 .itemrow strong{font-size:11px}
+.upgrade-list{display:grid;gap:7px;margin-top:9px}
+.upgrade-card{padding:8px;border:1px solid #e7dec9;border-radius:9px;background:#f9f4e6}
+.upgrade-card h3{margin:0}
+.upgrade-card p{margin-top:3px}
+.upgrade-card .btn{flex:none}
 .itemrow .btn{flex:none}
 .stock-pager{margin:12px 0 9px;color:var(--muted);font-size:10px}
 .stock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}

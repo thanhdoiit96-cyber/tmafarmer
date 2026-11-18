@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {farmTasks} from '../public/tasks.mjs';
-import { gameDay, slotLength, apply, cropYield, farmProgress, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, xpUnlocks } from '../public/game.mjs';
+import { gameDay, slotLength, apply, capacity, cropYield, farmProgress, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, xpUnlocks } from '../public/game.mjs';
 
 const start=10_000;
 function world() {
@@ -77,14 +77,52 @@ test('farm progression shows real XP thresholds and upgrades never spend XP',()=
   const room=world(), farm=room.farms.a;
   assert.equal(farmProgress(farm).rank.name,'Tân nông');
   assert.equal(farmProgress(farm).next.xp,20);
-  assert.deepEqual(xpUnlocks.map(unlock=>unlock.xp),[20,25,40,50,70,100,130,180,350]);
+  assert.deepEqual(xpUnlocks.filter(unlock=>unlock.xp<=350).map(unlock=>unlock.xp),[20,25,40,50,70,100,130,180,350]);
   farm.coins=150;
   farm.xp=40;
   assert.match(action(room,'a','upgrade',{item:'workshop'}),/\+10 XP/);
   assert.equal(farm.xp,50);
   assert.equal(farm.coins,30);
   assert.equal(farmProgress(farm).next.xp,70);
-  assert.equal(farmProgress({xp:350}).next,null);
+  assert.equal(farmProgress({xp:350}).next.label,'Hàng rào cấp 2');
+  assert.equal(farmProgress({xp:2200}).next,null);
+});
+test('barn upgrades check the next XP threshold and admit more produce into storage',()=>{
+  const r=world(), a=r.farms.a;
+  Object.assign(a,{barn:3,xp:419,coins:5000});
+  a.inventory.wheat=90;
+  a.plots[0]={kind:'wheat',progress:480,goal:480,pests:0,at:start};
+  assert.throws(()=>action(r,'a','harvest',{index:0}),/Kho đầy/);
+  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/420 XP/);
+  assert.equal(a.coins,5000);
+  a.xp=420;
+  action(r,'a','upgrade',{item:'barn'});
+  assert.equal(a.xp,430);
+  assert.equal(capacity(a),145);
+  action(r,'a','harvest',{index:0});
+  assert.equal(a.inventory.wheat,93);
+  a.xp=1650;
+  action(r,'a','upgrade',{item:'barn'});
+  assert.equal(capacity(a),220);
+  action(r,'a','upgrade',{item:'barn'});
+  assert.equal(capacity(a),320);
+  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/tối đa/);
+});
+test('advanced workshops unlock recipes and advanced fences keep a daily theft limit',()=>{
+  const r=world(), a=r.farms.a;
+  Object.assign(a,{workshop:3,fence:1,xp:2200,coins:8000});
+  Object.assign(a.inventory,{strawberry:2,goatMilk:1,grape:2,carrot:6,tea:1,milk:1});
+  assert.throws(()=>action(r,'a','craft',{item:'berrySmoothie'}),/Xưởng máy cấp 4/);
+  for(const item of ['berrySmoothie','grapeJuice','milkTea']){
+    action(r,'a','upgrade',{item:'workshop'});
+    action(r,'a','craft',{item});
+    assert.equal(a.inventory[item],1);
+  }
+  for(let level=2;level<=4;level++)action(r,'a','upgrade',{item:'fence'});
+  action(r,'b','steal',{target:'a',source:'barn',item:'carrot'});
+  assert.throws(()=>action(r,'c','steal',{target:'a',source:'barn',item:'carrot'}),/đạt giới hạn/);
+  action(r,'a','shield');
+  assert.equal(a.shieldUntil,start+60*60);
 });
 test('garden and barn theft keep reserves, share caps, reset daily, and respect upgrades',()=>{
   const r=world(), b=r.farms.b;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/game.mjs';
-import {getLand,lotPrice} from '../public/land.mjs';
+import {getLand,lotPrice,mainPlotId} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 
 const now=1000;
@@ -78,4 +78,44 @@ test('owners and visitors use the same parcel geometry and rectangular ponds sta
     assert.ok(path,point.label);
     assert.ok(Math.hypot(path.at(-1)[0]-point.x,path.at(-1)[1]-point.y)<31,point.label);
   }
+});
+test('higher main field levels preserve garden plot IDs and add reachable beds for owners and visitors',()=>{
+  const room=setup(),a=room.farms.a,b=room.farms.b;
+  Object.assign(a,{coins:5000,xp:1850,field:3,plots:Array(12).fill(null)});
+  act(room,'a','buildLand',0,'garden');
+  act(room,'a','plant',12,'wheat');
+  for(let level=4;level<=6;level++)act(room,'a','upgrade',undefined,'field');
+  const upper=mainPlotId(12), last=mainPlotId(20);
+  act(room,'a','plant',upper,'carrot');
+  const own=snapshot(room,a,now), guest=snapshot(room,b,now);
+  const view=guest.neighbors[0];
+  assert.equal(own.me.plots.length,21);
+  assert.equal(new Set(own.me.plotIndexes).size,24);
+  assert.equal(own.me.extraPlots[12].kind,'wheat');
+  assert.equal(own.me.plots[12].kind,'carrot');
+  assert.equal(view.extraPlots[12].kind,'wheat');
+  assert.equal(view.plots[12].kind,'carrot');
+  assert.equal(own.me.soilCompactsAt[last],now+8*60*60);
+  for(const [id,state,neighbor] of [['field',own,undefined],['visit',guest,view]]){
+    const scene=features(id,state,neighbor);
+    for(const plot of scene.hotspots.filter(row=>row.type==='plot')){
+      const path=route(scene,maps[id].spawn,[plot.x,plot.y]);
+      assert.ok(path?.length,plot.label);
+      assert.ok(Math.hypot(path.at(-1)[0]-plot.x,path.at(-1)[1]-plot.y)<31,plot.label);
+    }
+  }
+});
+test('upgraded main coop seats twelve reachable animals without changing parcel capacity',()=>{
+  const room=setup(),a=room.farms.a;
+  Object.assign(a,{coins:9900,xp:1950,coop:3});
+  for(let level=4;level<=6;level++)act(room,'a','upgrade',undefined,'coop');
+  for(let i=0;i<12;i++)act(room,'a','animal',undefined,'chicken');
+  assert.throws(()=>act(room,'a','animal',undefined,'chicken'),/hết chỗ/);
+  const scene=features('coop',snapshot(room,a,now));
+  const seats=scene.hotspots.filter(spot=>spot.type==='animal');
+  assert.equal(new Set(seats.map(spot=>spot.x+','+spot.y)).size,12);
+  for(const spot of seats)assert.ok(route(scene,maps.coop.spawn,[spot.x,spot.y]));
+  act(room,'a','buildLand',0,'coop');
+  for(let i=0;i<2;i++)act(room,'a','animal',0,'chicken');
+  assert.throws(()=>act(room,'a','animal',0,'chicken'),/hết chỗ/);
 });

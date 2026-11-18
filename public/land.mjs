@@ -17,9 +17,16 @@ export function getLand(farm){
   return farm.land.map(lot=>lot&&lot.kind!==pondLotKind(lot.kind)?{...lot,kind:'pond'}:lot);
 }
 export const plotOffset=12;
+const upperFieldOffset=plotOffset+lotCount*3;
 export const pondOffset=2;
+export const mainPlotId=slot=>slot<plotOffset?slot:upperFieldOffset+slot-plotOffset;
+export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?index-upperFieldOffset+plotOffset:-1;
+export const plotAt=(farm,index)=>{
+  const slot=mainPlotSlot(index);
+  return slot<0?farm.extraPlots?.[index]:farm.plots[slot];
+};
 export function cropIndexes(farm){
-  const result=farm.plots.map((_,i)=>i);
+  const result=farm.plots.map((_,slot)=>mainPlotId(slot));
   getLand(farm).forEach((lot,i)=>{
     if(lot?.kind==='garden')for(let j=0;j<3;j++)result.push(plotOffset+i*3+j);
   });

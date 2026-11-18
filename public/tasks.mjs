@@ -1,4 +1,4 @@
-import {plotOffset,pondOffset} from './land.mjs';
+import {mainPlotSlot,plotAt,plotOffset,pondOffset} from './land.mjs';
 import {animals,cropGoal,productGoal} from './game.mjs';
 import {aquatic,pondReady,visiblePondBatches} from './aqua.mjs';
 
@@ -11,8 +11,9 @@ export function farmTasks(snapshot,now=snapshot.now){
   const {me,weather}=snapshot, tasks=[];
   const highRisk=weather.wet||snapshot.afterRainUntil>now;
   for(const index of me.plotIndexes){
-    const plot=index<plotOffset?me.plots[index]:me.extraPlots[index];
-    const label=index<plotOffset?'Ô '+(index+1):'Vườn ô '+(Math.floor((index-plotOffset)/3)+1)+' · luống '+((index-plotOffset)%3+1);
+    const plot=plotAt(me,index);
+    const slot=mainPlotSlot(index);
+    const label=slot>=0?'Ô '+(slot+1):'Vườn ô '+(Math.floor((index-plotOffset)/3)+1)+' · luống '+((index-plotOffset)%3+1);
     const task=!plot?(me.soilCompactsAt?.[index]<=now?['care','Cuốc đất']:null):
       plot.progress>=cropGoal(plot)?['ready','Thu hoạch']:
       plot.pests>=(highRisk?12:15)&&plot.protectedUntil<=now?['urgent','Trị sâu']:

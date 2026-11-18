@@ -1,4 +1,4 @@
-import {fenceAt,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPond,plotOffset,pondOffset} from './land.mjs';
+import {fenceAt,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 
@@ -6,7 +6,8 @@ export const size = { width: 480, height: 288 };
 const wide={width:720,height:432};
 
 export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,...lotSize});
-const baseGarden=(rows)=>[{x:146,y:43,w:59,h:43*(rows-1)+36},{x:249,y:43,w:108,h:43*(rows-1)+36}];
+const gardenBeds=(rows,y)=>[{x:146,y,w:59,h:43*(rows-1)+36},{x:249,y,w:108,h:43*(rows-1)+36}];
+const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),43),...(rows>4?gardenBeds(rows-4,270):[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
   field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'right'}, {x:583,y:350,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'up'}],
@@ -79,13 +80,15 @@ Object.assign(maps.visit,{
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
 export function plotPosition(index){
-  if(index<plotOffset)return {x:index%3===0?176:index%3===1?276:329,y:63+Math.floor(index/3)*43};
+  const slot=mainPlotSlot(index);
+  if(slot>=0)return {x:[176,276,329][slot%3],y:slot<plotOffset?63+Math.floor(slot/3)*43:290+Math.floor((slot-plotOffset)/3)*43};
   const lot=lotRect(Math.floor((index-plotOffset)/3));
   return {x:lot.x+25+(index%3)*49,y:lot.y+47};
 }
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
 export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
-const coopPosition = i => ({x:115+i%3*72,y:126+Math.floor(i/3)*48});
+const coopPosition=(i,level)=>level<4?{x:115+i%3*72,y:126+Math.floor(i/3)*48}:
+  {x:113+i%4*61,y:126+Math.floor(i/4)*36};
 const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
 export function features(id, snapshot, neighbor, page=0) {
   const map=maps[id];
@@ -120,11 +123,12 @@ export function features(id, snapshot, neighbor, page=0) {
       actors.push(workshop);blocks.push(rect(456,139,40,13));
       if(id==='field')hotspots.push({...workshop,y:workshop.y+12});
     }
-    for(const i of owner.plotIndexes??owner.plots.map((_,index)=>index)) {
-      const data=i<plotOffset?owner.plots[i]:owner.extraPlots?.[i];
+    for(const i of owner.plotIndexes??owner.plots.map((_,slot)=>mainPlotId(slot))) {
+      const data=plotAt(owner,i);
       const pos=plotPosition(i);
       actors.push({...pos,type:'plot',index:i,data,compactAt:id==='field'?owner.soilCompactsAt?.[i]:undefined,visit:id==='visit'});
-      hotspots.push({...pos,y:pos.y+8,drawY:pos.y,type:'plot',index:i,data,label:'Ô đất '+(i+1)});
+      const slot=mainPlotSlot(i);
+      hotspots.push({...pos,y:pos.y+8,drawY:pos.y,type:'plot',index:i,data,label:slot>=0?'Ô đất '+(slot+1):'Vườn ô '+(Math.floor((i-plotOffset)/3)+1)+' · luống '+((i-plotOffset)%3+1)});
     }
     const decor=(index,rect)=>{const style=fenceAt(owner,index);if(style)ground.push({...rect,type:'fence',style});};
     for(const garden of baseGarden(Math.ceil(owner.plots.length/3))){
@@ -163,7 +167,7 @@ export function features(id, snapshot, neighbor, page=0) {
     let seat=0;
     for(const [i,data] of farm.pens.entries()) {
       if(data.lot!==undefined)continue;
-      const pos=coopPosition(seat++);
+      const pos=coopPosition(seat++,farm.coop);
       actors.push({...pos,type:'animal',index:i,data});
       hotspots.push({...pos,type:'animal',index:i,data,label:'Chăm vật nuôi'});
     }
