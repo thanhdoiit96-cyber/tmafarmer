@@ -84,6 +84,7 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .btn.primary{border-color:#254f36;background:#30573e;color:#fff9e9}
 .btn.gold{background:#f5e9cb;border-color:#e7d7b0;color:#725422}
 .btn.subtle{background:#f9f4e6;border-color:#e9dfca;color:#655746}
+.btn.danger{background:#8e4232;border-color:#8e4232;color:#fff9ed}
 .farm-list{display:grid;gap:6px}
 .farm-list article{min-width:0;border:1px solid #eee5d0;background:#f9f4e6;border-radius:9px;padding:8px}
 .farm-list .row,.upgrade-card .row,.order-ticket .row{flex-wrap:wrap}

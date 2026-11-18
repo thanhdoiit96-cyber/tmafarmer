@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../server/worker.mjs';
 import {homeBed} from '../public/home-rules.mjs';
-import {orderList,unixNow} from '../public/game.mjs';
+import {dayAt,orderList,unixNow} from '../public/game.mjs';
 import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
 test('two guest sessions share durable D1-style state with atomic sales, presence and area chat',async()=>{
@@ -27,6 +27,8 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const c=await api('join',{name:'Vườn Lúa',code:a.code});
   assert.equal(a.status,201);
   assert.equal(b.status,201);
+  assert.equal(a.state.canManageMembers,true);
+  assert.equal((await api('state',null,b)).state.canManageMembers,false);
   assert.equal(b.state.me.avatar,'male');
   assert.equal((await api('join',{name:'Vườn thử',code:a.code,avatar:'other'})).status,400);
   assert.equal((await api('state',null,a)).state.neighbors.length,2);
@@ -91,15 +93,12 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   db.prepare('UPDATE farm_presence SET seen=? WHERE player=?').run(unixNow()-10,c.state.me.id);
   assert.equal((await enter(a,'field')).players.length,0);
   assert.equal((await enter(b,'field')).players.length,0);
-  assert.equal((await send(a,'rest')).status,400);
-  assert.equal((await enter(a,'home')).status,200);
-  assert.equal((await send(a,'rest')).status,400);
-  assert.equal((await api('scene',{area:'home',pose:{...pose,...homeBed}},a)).status,200);
-  assert.equal((await enter(c,'home',a.state.me.id)).players.length,0);
   const rest={action:'rest',requestId:crypto.randomUUID()};
   const resting=await api('action',rest,a);
   assert.equal(resting.status,200);
   assert.equal(resting.state.me.wellness.restUntil-resting.state.now,60);
+  assert.equal((await api('scene',{area:'home',pose:{...pose,...homeBed}},a)).status,200);
+  assert.equal((await enter(c,'home',a.state.me.id)).players.length,0);
   assert.equal((await send(a,'rest')).status,400);
   const retry=await api('action',rest,a);
   assert.equal(retry.state.me.wellness.restUntil,resting.state.me.wellness.restUntil);
@@ -143,6 +142,28 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal(tooExpensive.status,400);
   assert.match(tooExpensive.error,/đủ xu/);
   assert.equal((await api('state',null,a)).state.me.coins,850);
+
+  const target=b.state.me.id;
+  assert.equal((await send(c,'removeMember',{target})).status,403);
+  assert.equal((await send(a,'removeMember',{target:a.state.me.id})).status,400);
+  const pending=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  delete pending.ownerId; // Older room data infers the owner from the first farm.
+  const listing={id:pending.nextListing++,seller:target,item:'wheat',qty:2,price:7};
+  pending.listings[listing.id]=listing;
+  pending.farms[a.state.me.id].fishing={day:dayAt(pending,unixNow()),cast:{source:'pond',target,index:0,expires:unixNow()+60}};
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(pending),a.code);
+  const removal={action:'removeMember',target,requestId:crypto.randomUUID()};
+  const results=await Promise.all([api('action',removal,a),api('action',removal,a)]);
+  assert.ok(results.every(result=>result.status===200&&result.state.neighbors.length===1));
+  assert.ok(results.every(result=>result.state.wealth.every(entry=>entry.id!==target)&&result.state.listings.length===0));
+  assert.equal(results[0].state.me.fishing.cast,null);
+  assert.equal((await api('state',null,b)).status,401);
+  assert.equal((await enter(b,'lake')).status,401);
+  assert.equal((await send(b,'sell',{item:'wheat'})).status,401);
+  assert.equal((await send(a,'removeMember',{target})).status,400);
+  const joinedAgain=await api('join',{name:'Vườn Bắp',code:a.code});
+  assert.equal(joinedAgain.status,201);
+  assert.notEqual(joinedAgain.state.me.id,target);
   db.close();
 });
 
@@ -162,7 +183,10 @@ test('registered account can attach to a room and persist its session', async()=
   };
   const guest=await api('join',{name:'Tài khoản test'});
   assert.equal(guest.status,201);
-  const registered=await api('account/register',{username:'demo-user',password:'secret123',roomCode:guest.code,farmId:guest.state.me.id});
+  const friend=await api('join',{name:'Hàng xóm test',code:guest.code});
+  const register=(username,village)=>({username,password:'secret123',roomCode:village.code,farmId:village.state.me.id});
+  assert.equal((await api('account/register',register('false-owner',guest))).status,403);
+  const registered=await api('account/register',register('demo-user',guest),guest);
   assert.equal(registered.status,200);
   assert.equal(registered.account.username,'demo-user');
   const login=await api('account/login',{username:'demo-user',password:'secret123'});
@@ -170,5 +194,24 @@ test('registered account can attach to a room and persist its session', async()=
   const me=await api('account/me',null,{token:login.token});
   assert.equal(me.status,200);
   assert.ok(me.rooms.some(room=>room.roomCode===guest.code));
+  const registeredFriend=await api('account/register',register('friend-user',guest),friend);
+  assert.equal(registeredFriend.rooms[0].farmId,friend.state.me.id);
+  const ownerSession={token:login.token,code:guest.code};
+  const friendSession={token:registeredFriend.token,code:guest.code};
+  const remove={action:'removeMember',target:friend.state.me.id,requestId:crypto.randomUUID()};
+  const writeRoom=db.prepare('UPDATE farm_rooms SET state=? WHERE code=?');
+  const saved=db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(guest.code).state;
+  const legacy=JSON.parse(saved);
+  delete legacy.ownerAccountId;
+  writeRoom.run(JSON.stringify(legacy),guest.code);
+  assert.equal((await api('state',null,guest)).state.canManageMembers,true);
+  assert.equal((await api('state',null,ownerSession)).state.canManageMembers,false);
+  assert.equal((await api('action',remove,ownerSession)).status,403);
+  writeRoom.run(saved,guest.code);
+  assert.equal((await api('state',null,ownerSession)).state.canManageMembers,true);
+  assert.equal((await api('action',remove,friendSession)).status,403);
+  assert.equal((await api('action',remove,ownerSession)).status,200);
+  assert.equal((await api('state',null,friendSession)).status,401);
+  assert.equal((await api('account/me',null,friendSession)).rooms.length,0);
   db.close();
 });

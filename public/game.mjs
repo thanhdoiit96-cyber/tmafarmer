@@ -1,5 +1,4 @@
 import {addVillageIncome,advanceVillage,contributeVillage,hasVillageProject,recordVillageTheft,startVillageSecurity,villageLevels,villageSnapshot,villageTheftsLeft} from './village.mjs';
-import {atHomeBed} from './home-rules.mjs';
 import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {coopCapacity,cropIndexes,fenceAt,fences,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
@@ -246,6 +245,7 @@ export function newFarm(id, name, time, avatar) {
 export function newRoom(time) {
   return { created:time, soilSince:time, securityStartDay:0, longDays:true, weatherOffset:0, farms:{}, listings:{}, nextListing:1 };
 }
+export const villageOwner=room=>room.ownerId??Object.keys(room.farms)[0];
 function eachWeather(room, from, to, visit) {
   for (let t=Math.max(from, to-4*gameDay);t<to;) {
     const next=Math.min(to,nextSlot(room,t));
@@ -505,8 +505,24 @@ export function snapshot(room, farm, time) {
         available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
 }
-export function apply(room,id,input,now,catchRoll=0.5,location){
+export function apply(room,id,input,now,catchRoll=0.5){
   const farm=room.farms[id];
+  if(input.action==='removeMember'){
+    const {target}=input;
+    check(id===villageOwner(room),'Chỉ chủ làng mới có thể mời thành viên ra.');
+    check(target!==id&&has(room.farms,target),'Thành viên này không còn trong làng hoặc là chủ làng.');
+    const name=room.farms[target].name;
+    delete room.farms[target];
+    for(const [key,listing] of Object.entries(room.listings)){
+      if(listing.seller===target)delete room.listings[key];
+    }
+    for(const member of Object.values(room.farms)){
+      if(member.fishing?.cast?.target===target)member.fishing.cast=null;
+    }
+    const message='Đã mời '+name+' ra khỏi làng.';
+    record(farm,now,message);
+    return message;
+  }
   if(input.action==='avatar'){
     check(has(avatars,input.item),'Nhân vật không hợp lệ.');
     farm.avatar=input.item;
@@ -526,7 +542,6 @@ export function apply(room,id,input,now,catchRoll=0.5,location){
   if(recovery){
     const info=vitals[recovery];
     if(recovery==='stamina'){
-      check(atHomeBed(location),'Hãy về nhà vườn và tới gần giường để nghỉ.');
       check(!(health.restUntil>now),'Bạn đang nghỉ. Hãy chờ lượt này kết thúc.');
       check(health.stamina<100,'Thể lực đã đầy.');
       health.restUntil=now+restSeconds;

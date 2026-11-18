@@ -1,5 +1,4 @@
 import {villageLevels} from './village.mjs';
-import {atHomeBed} from './home-rules.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
 import {coopCapacity,fenceAt,fences,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
@@ -151,9 +150,9 @@ async function api(path, payload, credentials=session) {
   }
   return result;
 }
-async function apiAccount(path,payload) {
+async function apiAccount(path,payload,credentials) {
   const headers={};
-  if(accountSession?.token) headers.authorization='Bearer '+accountSession.token;
+  if(credentials?.token) headers.authorization='Bearer '+credentials.token;
   let response;
   try {
     if(payload) headers['content-type']='application/json';
@@ -391,7 +390,11 @@ function renderNeighbors(farm,now) {
   if(!current) {
     const count=Math.ceil(homes.length/6);
     const pages=count>1?'<div class="row map-pages">'+btn('‹ Trang trước','data-village-page="'+(villagePage-1)+'"','subtle',villagePage===0)+'<span>'+String(villagePage+1)+' / '+count+'</span>'+btn('Trang sau ›','data-village-page="'+(villagePage+1)+'"','subtle',villagePage+1>=count)+'</div>':'';
-    const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>'<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+'</article>').join('');
+    const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>{
+      const remove=state.canManageMembers&&!n.mine?btn('Mời ra','data-remove-member="'+n.id+'" aria-label="Mời '+escape(n.name)+' ra khỏi làng"','subtle'):'';
+      return '<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
+        btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+' '+remove+'</article>';
+    }).join('');
     const waiting=state.neighbors.length?'':'<article class="wide-card"><h3>Làng đang chờ hàng xóm</h3><p>Chia sẻ mã làng để bạn bè vào trồng và trao đổi cùng bạn.</p><div class="actions">'+btn('Chia sẻ mã','data-room','primary')+'</div></article>';
     return html+pages+'<div class="farm-list card-grid">'+cards+waiting+'</div>';
   }
@@ -495,10 +498,11 @@ function renderJournal(farm){
 }
 function renderHome(farm,now){
   const health=wellnessAt(farm,now);
-  const status=health.restUntil>now?'Đang nghỉ · <span data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</span>':
+  const resting=health.restUntil>now;
+  const status=resting?'Đang nghỉ · <span data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</span>':
     'Thể lực '+Math.floor(health.stamina)+'/100';
   return '<section class="home-guide"><div><h2>Chỗ nghỉ</h2><p>'+status+'</p></div>'+
-    '<div class="actions">'+btn('Đến giường','data-bed-go','primary')+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
+    '<div class="actions">'+btn('Nghỉ ngay','data-recover="rest"','primary',resting||health.stamina>=100)+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
 }
 function renderTasks(farm){
   const journal=renderJournal(farm);
@@ -556,8 +560,9 @@ function renderHud(farm,now){
   $('#vital-hud').innerHTML=Object.entries(vitals).map(([key,info])=>{
     const points=Math.floor(health[key]), seconds=key==='stamina'?0:Math.max(0,(health.until[key]??0)-now);
     const resting=key==='stamina'&&health.restUntil>now;
-    const hint=resting?'Đang nghỉ · '+duration(health.restUntil-now):seconds?'Dùng lại sau '+duration(seconds):{water:'Uống nước',food:'Ăn cơm nắm',stamina:'Về nhà nghỉ sức'}[key];
-    return '<button type="button" class="vital" data-vital="'+key+'" data-low="'+(points<25)+'" aria-label="'+info.label+' '+points+'/100. '+hint+'" title="'+hint+'"><span class="vital-icon">'+icon(info.icon)+'</span><span class="vital-text"><span>'+info.label+'</span><strong>'+points+'</strong><i><em style="width:'+Math.max(0,points)+'%"></em></i></span></button>';
+    const hint=resting?'Đang nghỉ · '+duration(health.restUntil-now):seconds?'Dùng lại sau '+duration(seconds):{water:'Uống nước',food:'Ăn cơm nắm',stamina:'Nghỉ lấy sức'}[key];
+    const value=resting?'<strong data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</strong>':'<strong>'+points+'</strong>';
+    return '<button type="button" class="vital" data-vital="'+key+'" data-low="'+(points<25&&!resting)+'" aria-label="'+info.label+' '+points+'/100. '+hint+'" title="'+hint+'"><span class="vital-icon">'+icon(info.icon)+'</span><span class="vital-text"><span>'+info.label+'</span>'+value+'<i><em style="width:'+Math.max(0,points)+'%"></em></i></span></button>';
   }).join('');
   const priority=tasks[0];
   $('#task-hud').innerHTML='<button type="button" class="task-summary" data-panel="tasks" aria-label="Việc cần làm · '+(priority?tasks.length+' việc':'Mọi việc đang ổn')+'" aria-pressed="'+(panel==='tasks')+'"><span class="task-mark" data-tone="'+(priority?.type??'ready')+'">'+(priority?tasks.length:'✓')+'</span><span><strong>Việc cần làm</strong><small>'+(priority?priority.title+' · '+priority.label:'Mọi việc đang ổn')+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>';
@@ -575,12 +580,8 @@ function showRecovery(key){
       modal('Đang nghỉ','<p>Hồi thể lực sau <strong data-rest-countdown data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</strong>.</p>');
       return;
     }
-    const inHome=tab==='home', atBed=atHomeBed({area:tab,...world.position()});
-    const instruction=atBed?'Bạn đã đến giường.':inHome?'Đến giường ở bên phải hoặc bấm vào giường trên bản đồ.':
-      'Về vườn và vào nhà mái ngói ở góc trên bên trái. Trong nhà, đến gần giường và chọn Nghỉ lấy sức.';
-    const action=atBed?btn('Nghỉ lấy sức','data-recover="rest"','primary',health.stamina>=100):
-      btn(inHome?'Đến giường':'Chỉ đường về nhà',inHome?'data-bed-go':'data-home-go','primary');
-    modal('Thể lực','<p>'+instruction+'</p><p>Nghỉ '+restSeconds+' giây để hồi tối đa '+info.gain+' điểm thể lực.</p>'+
+    const action=btn('Nghỉ ngay','data-recover="rest"','primary',health.stamina>=100);
+    modal('Thể lực','<p>Nghỉ tại chỗ '+restSeconds+' giây để hồi tối đa '+info.gain+' điểm thể lực.</p>'+
       (health.stamina>=100?'<p>Thể lực đang đầy.</p>':'')+'<div class="actions">'+action+'</div>'+options+'<p id="dialog-error" role="status"></p>');
     return;
   }
@@ -705,7 +706,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-home-go],[data-bed-go],[data-home-exit],[data-village-fund],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -787,19 +788,12 @@ function goTo(area,arrival) {
 }
 function guideHome(){
   if(dialog.open)dialog.close();
-  if(tab==='home'){guideBed();return;}
+  if(tab==='home'){showRecovery('stamina');return;}
   const from={coop:[433,198],market:[234,34],lake:[679,402],neighbors:[234,251]}[tab];
   if(tab!=='field')goTo('field',from);
   const started=world.approach('house',undefined,()=>goTo('home'));
   if(started)reveal('#world');
   else showToast('Hãy đi theo lối về phía ngôi nhà ở góc trên bên trái.',true);
-}
-function guideBed(){
-  if(dialog.open)dialog.close();
-  if(tab!=='home')return;
-  const started=world.approach('bed',undefined,()=>showRecovery('stamina'));
-  if(started)reveal('#world');
-  else showToast('Hãy đến gần chiếc giường bên phải.',true);
 }
 function visit(id) {
   if(landscape.matches)setPanelOpen(false);
@@ -919,11 +913,14 @@ function showAvatar(){
   modal('Chọn nhân vật','<form data-form="avatar">'+avatarOptions(state.me.avatar)+
     '<button class="btn primary">Lưu nhân vật</button></form><p id="dialog-error" role="status"></p>');
 }
+function guestSession(){
+  return session&&!session.account&&session.token!==accountSession?.token?session:null;
+}
 function showAccountModal(mode='login') {
-  const room= session?.code || inviteCode || '';
+  const room=mode==='register'?guestSession()?.code:null;
   const formMode=mode==='register'?'register':'login';
   const title=formMode==='register'?'Tạo tài khoản':'Đăng nhập';
-  modal(title,'<div class="actions">'+btn('Đăng nhập','data-account-mode="login"',''+(formMode==='login'?'primary':'subtle'))+btn('Tạo tài khoản','data-account-mode="register"',''+(formMode==='register'?'primary':'subtle'))+'</div><form data-form="account" data-account-mode="'+formMode+'"><label>Tên tài khoản<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" placeholder="Ví dụ: demo_user"></label><label>Mật khẩu<input type="password" name="password" required minlength="6" maxlength="128" placeholder="Ít nhất 6 ký tự"></label>'+(room?'<p class="small">Room hiện tại sẽ được gắn vào tài khoản: '+room+'</p>':'')+'<button class="btn primary">'+(formMode==='register'?'Tạo tài khoản':'Đăng nhập')+'</button></form><p id="dialog-error" role="status"></p>');
+  modal(title,'<div class="actions">'+btn('Đăng nhập','data-account-mode="login"',''+(formMode==='login'?'primary':'subtle'))+btn('Tạo tài khoản','data-account-mode="register"',''+(formMode==='register'?'primary':'subtle'))+'</div><form data-form="account" data-account-mode="'+formMode+'"><label>Tên tài khoản<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" placeholder="Ví dụ: demo_user"></label><label>Mật khẩu<input type="password" name="password" required minlength="6" maxlength="128" placeholder="Ít nhất 6 ký tự"></label>'+(room?'<p class="small">Làng hiện tại sẽ được gắn vào tài khoản '+room+'</p>':'')+'<button class="btn primary">'+(formMode==='register'?'Tạo tài khoản':'Đăng nhập')+'</button></form><p id="dialog-error" role="status"></p>');
 }
 function showRoom() {
   if(session) {
@@ -965,7 +962,7 @@ function listingDialog() {
     '</select></label><label>Số lượng<input type="number" name="qty" min="1" max="20" value="1" required></label><label>Giá mỗi món · xu<input type="number" name="price" min="1" value="'+goods[items[0]].sell+'" required></label><button class="btn primary">Đăng lên sạp</button></form><p id="dialog-error" role="status"></p>');
 }
 function help() {
-  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm thanh Thể lực và chọn Chỉ đường về nhà. Trong nhà, tới giường để nghỉ. Bạn cũng có thể chọn Nhà vườn trong Khu vực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, mua gà rồi cho ăn. Vật nuôi lớn lên trước khi cho trứng hoặc sữa. Khi lợn đủ lớn, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
+  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm Thể lực rồi chọn Nghỉ ngay. Sau 60 giây tại chỗ, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, mua gà rồi cho ăn. Vật nuôi lớn lên trước khi cho trứng hoặc sữa. Khi lợn đủ lớn, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá và tôm chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
 }
 async function perform(input) {
   if(busy)return false;
@@ -974,13 +971,10 @@ async function perform(input) {
   busy=true;
   const credentials=session;
   const previousFarm=state.me, actionTab=tab, actionNeighbor=neighborId;
-  const location={area:tab,...world.position()};
   let updateAfter=false;
   try {
     let message;
-    if(input.action==='rest'&&!atHomeBed(location))throw new GameError('Hãy về nhà vườn và tới gần giường để nghỉ.');
     if(credentials) {
-      if(input.action==='rest')await api('scene',{area:'home',pose:location},credentials);
       input.requestId=crypto.randomUUID();
       let result;
       try {
@@ -995,13 +989,13 @@ async function perform(input) {
       message=result.message;
     } else {
       const updated=structuredClone(demo);
-      message=apply(updated,'demo',input,unixNow(),Math.random(),location);
+      message=apply(updated,'demo',input,unixNow(),Math.random());
       demo=updated;
       store.write(demoKey,demo);
       updateDemo();
     }
     render();
-    if(tab===actionTab&&neighborId===actionNeighbor){
+    if(input.action!=='removeMember'&&tab===actionTab&&neighborId===actionNeighbor){
       const reel=input.action==='reel';
       const caught=reel&&['minnow','tilapia','carp','goldenCarp'].some(key=>(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
       world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
@@ -1009,7 +1003,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=['order','villageFund','sell','till','plant'].includes(input.action);
+    updateAfter=error.status===401||['order','villageFund','sell','till','plant','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1040,8 +1034,13 @@ async function refresh(initial=false) {
       if(store.read(previousKey)?.token===credentials.token) store.write(previousKey,null);
       session=null;
       store.write(sessionKey,null);
+      selected=0; plotGroup=-1; pondTab=0; selectedLot=0;
+      tab='field'; neighborId=null; villagePage=0; panel='area';
+      setPanelOpen(false);
+      if(dialog.open)dialog.close();
       updateDemo();
       render();
+      if(!initial)showToast(error.message,true);
     }
     if(initial) {
       if(!state) {
@@ -1079,10 +1078,8 @@ document.addEventListener('click',async e=>{
   } else if('panelToggle' in d)setPanelOpen(!layout.hasAttribute('data-panel-open'));
   else if('panelClose' in d)setPanelOpen(false);
   else if('chatToggle' in d&&landscape.matches)setPanelOpen(false);
-  else if('homeGo' in d)guideHome();
   else if('workshopTab' in d&&Object.hasOwn(workshopTabs,d.workshopTab)){workshopTab=d.workshopTab;render();}
   else if('workshopGo' in d){goTo('workshop');reveal('#world');}
-  else if('bedGo' in d)guideBed();
   else if('homeExit' in d){
     world.approach('exit',undefined,()=>interactWithWorld({type:'exit',...maps.home.exits[0]}));
     reveal('#world');
@@ -1149,6 +1146,15 @@ document.addEventListener('click',async e=>{
     reveal('#tools');
   } else if('close' in d) dialog.close();
   else if('visit' in d) visit(d.visit);
+  else if('removeMember' in d){
+    const neighbor=state.neighbors.find(entry=>entry.id===d.removeMember);
+    if(!session||!state.canManageMembers||!neighbor)return;
+    modal('Mời thành viên ra khỏi làng','<p>Vườn, tài sản và các sạp của <strong>'+escape(neighbor.name)+'</strong> sẽ bị xóa khỏi làng sau khi xác nhận.</p>'+
+      '<div class="actions">'+btn('Hủy','data-close','subtle')+
+      btn('Mời ra','data-confirm-remove-member="'+neighbor.id+'"','danger')+'</div><p id="dialog-error" role="status"></p>');
+  } else if('confirmRemoveMember' in d){
+    if(session&&state.canManageMembers&&await perform({action:'removeMember',target:d.confirmRemoveMember}))dialog.close();
+  }
   else if('return' in d) goTo('neighbors');
   else if('villagePage' in d) { villagePage=Number(d.villagePage); render(); }
   else if('stockPage' in d) { stockPage=Number(d.stockPage); render(); }
@@ -1275,20 +1281,21 @@ dialog.addEventListener('submit',async e=>{
     busy=true;
     try {
       const method=form.dataset.accountMode==='register'?'register':'login';
-      const result=await apiAccount(method,{username:values.username,password:values.password,roomCode:session?.code||inviteCode||'',farmId:state?.me?.id||''});
+      const guest=method==='register'?guestSession():null;
+      const result=await apiAccount(method,{username:values.username,password:values.password,roomCode:guest?.code??''},guest);
       accountSession={token:result.token,username:result.account.username,accountId:result.account.id};
       store.write(accountKey,accountSession);
-      const resumeRoom=(result.rooms&&result.rooms.length?result.rooms[0].roomCode:session?.code||inviteCode||'');
+      const resumeRoom=result.rooms[0]?.roomCode;
       if(resumeRoom) {
-        session={code:resumeRoom,token:result.token};
+        session={code:resumeRoom,token:result.token,account:true};
         store.write(sessionKey,session);
         revision=-1;
-        if(state) setState(state);
       }
       dialog.close();
       render();
       showToast(method==='register'?'Đã tạo tài khoản thành công.':'Đăng nhập tài khoản thành công.');
-      if(resumeRoom) await refresh(true);
+      busy=false;
+      if(resumeRoom)await refresh(true);
     } catch(error) {
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;

@@ -1,5 +1,5 @@
 import {social} from './social.mjs';
-import {advanceVillage, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar} from './engine.mjs';
+import {advanceVillage, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -78,8 +78,11 @@ const ensurePrimaryRoom=async(db,accountId,roomCode,farmId)=>{
     VALUES (?,?,?,?,1,?)`).bind(linkId,accountId,roomCode,farmId,now).run();
   await db.prepare(`UPDATE farm_account_links SET is_primary = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE account_id = ?`).bind(linkId,accountId).run();
 };
-const accountRooms=async(db,accountId)=>db.prepare(`SELECT room_code, farm_id, is_primary, last_used_at
-  FROM farm_account_links WHERE account_id = ? ORDER BY last_used_at DESC, is_primary DESC`).bind(accountId).all();
+const accountRooms=async(db,accountId)=>db.prepare(`SELECT l.room_code, l.farm_id, l.is_primary, l.last_used_at
+  FROM farm_account_links l JOIN farm_rooms r ON r.code = l.room_code
+  WHERE l.account_id = ? AND EXISTS (
+    SELECT 1 FROM json_each(r.state, '$.farms') f WHERE f.key = l.farm_id
+  ) ORDER BY last_used_at DESC, is_primary DESC`).bind(accountId).all();
 const serializeAccountRooms=rows=>{
   const list=Array.isArray(rows)?rows:(rows?.results ?? []);
   return list.map(room=>({roomCode:room.room_code ?? room.roomCode, farmId:room.farm_id ?? room.farmId, isPrimary:Boolean(room.is_primary ?? room.isPrimary), lastUsedAt:room.last_used_at ?? room.lastUsedAt}));
@@ -113,9 +116,17 @@ async function registerAccount(db,request) {
   const username=typeof data.username==='string'?data.username.trim():'';
   const password=typeof data.password==='string'?data.password:'';
   const roomCode=typeof data.roomCode==='string'?data.roomCode.trim().toUpperCase():'';
-  const farmId=typeof data.farmId==='string'&&data.farmId?data.farmId:'';
   if(username.length<3||username.length>20||!/^[A-Za-z0-9_-]+$/.test(username)) return reply({error:'Tên tài khoản từ 3 đến 20 ký tự, chỉ chữ, số, gạch dưới hoặc gạch ngang.'},400);
   if(password.length<6||password.length>128) return reply({error:'Mật khẩu phải từ 6 đến 128 ký tự.'},400);
+  let farmId, isOwner=false;
+  if(roomCode){
+    const proof=authToken(request);
+    const row=proof&&codePattern.test(roomCode)?await readRoom(db,roomCode):null;
+    const room=row&&JSON.parse(row.state);
+    farmId=proof&&await authId(proof);
+    if(!room||!farmId||!has(room.farms,farmId)) return reply({error:'Hãy dùng phiên chơi gốc của vườn để gắn vào tài khoản.'},403);
+    isOwner=villageOwner(room)===farmId;
+  }
   const existing=await db.prepare('SELECT id FROM farm_accounts WHERE username = ?').bind(username).first();
   if(existing) return reply({error:'Tên tài khoản đã tồn tại.'},409);
   const accountId=random(16), now=unixNow();
@@ -125,13 +136,12 @@ async function registerAccount(db,request) {
   const sessionId=random(16);
   await db.prepare('INSERT INTO farm_account_sessions(id,account_id,token,device_id,created_at,expires_at) VALUES (?,?,?,?,?,?)')
     .bind(sessionId,accountId,token,null,now,now+accountSessionLifetime).run();
-  if(roomCode) {
-    const row=await readRoom(db,roomCode);
-    if(row) {
-      const roomState=JSON.parse(row.state);
-      const resolvedFarmId=farmId||Object.keys(roomState.farms)[0]||'';
-      if(resolvedFarmId && roomState.farms[resolvedFarmId]) await ensurePrimaryRoom(db,accountId,roomCode,resolvedFarmId);
-    }
+  if(farmId) {
+    await ensurePrimaryRoom(db,accountId,roomCode,farmId);
+    if(isOwner)await db.prepare(`UPDATE farm_rooms
+      SET state = json_set(state, '$.ownerAccountId', ?), revision = revision + 1
+      WHERE code = ? AND json_extract(state, '$.ownerAccountId') IS NULL`)
+      .bind(accountId,roomCode).run();
   }
   const rooms=await accountRooms(db,accountId);
   return reply({account:{id:accountId,username},token,rooms:serializeAccountRooms(rooms)},200);
@@ -173,9 +183,10 @@ async function join(db,request) {
     const time=unixNow();
     if(!code) {
       const state=newRoom(time), newCode=random(4).toUpperCase();
+      state.ownerId=id;
       state.farms[id]=newFarm(id,name,time,avatar);
       const result=await db.prepare('INSERT OR IGNORE INTO farm_rooms(code,state) VALUES (?,?)').bind(newCode,JSON.stringify(state)).run();
-      if(result.meta.changes===1) return reply({token,code:newCode,state:snapshot(state,state.farms[id],time)},201);
+      if(result.meta.changes===1) return reply({token,code:newCode,state:{...snapshot(state,state.farms[id],time),canManageMembers:true}},201);
       continue;
     }
     const row=await readRoom(db,code);
@@ -187,7 +198,7 @@ async function join(db,request) {
     startSoilClock(state,time);
     state.farms[id]=newFarm(id,name,time,avatar);
     const result=await save(db,code,row.revision,state);
-    if(result.meta.changes===1) return reply({token,code,state:snapshot(state,state.farms[id],time)},201);
+    if(result.meta.changes===1) return reply({token,code,state:{...snapshot(state,state.farms[id],time),canManageMembers:false}},201);
   }
   return reply({error:'Làng đang bận. Thử lại sau vài giây.'},409);
 }
@@ -221,7 +232,7 @@ export default {
         const row=await readRoom(db,code);
         if(!row)return reply({error:'Làng này không còn tồn tại.'},404);
         const {farms}=JSON.parse(row.state);
-        if(!has(farms,id))return reply({error:'Phiên chơi không còn hiệu lực.'},401);
+        if(!has(farms,id))return reply({error:'Bạn không còn là thành viên của làng này.'},401);
         const result=await social(db,env.CHAT,code,farms,id,socialAction,input,Date.now());
         return reply(result,result.status??200);
       }
@@ -234,31 +245,29 @@ export default {
         const row=await readRoom(db,code);
         if(!row) return reply({error:'Làng này không còn tồn tại.'},404);
         const state=JSON.parse(row.state), time=unixNow();
-        if(!has(state.farms,id)) return reply({error:'Phiên chơi không còn hiệu lực.'},401);
+        if(!has(state.farms,id)) return reply({error:'Bạn không còn là thành viên của làng này.'},401);
         const farm=state.farms[id];
+        // Old account links did not require proof of control over the guest farm.
+        const canManageMembers=id===villageOwner(state)&&(!accountSession||state.ownerAccountId===accountSession.account_id);
+        const view=()=>({...snapshot(state,farm,time),canManageMembers});
+        if(input?.action==='removeMember'&&!canManageMembers) return reply({error:'Cần phiên chơi gốc của chủ làng hoặc tài khoản chủ làng đã xác minh.'},403);
         const calendarUpdated=upgradeCalendar(state,time);
         const securityStarted=startVillageSecurity(state,dayAt(state,time));
         const soilStarted=startSoilClock(state,time);
         if(!input) {
           const promoted=advanceVillage(state,dayAt(state,time));
-          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted)return reply({state:snapshot(state,farm,time),revision:row.revision});
+          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted)return reply({state:view(),revision:row.revision});
           const migrated=await save(db,code,row.revision,state);
-          if(migrated.meta.changes===1)return reply({state:snapshot(state,farm,time),revision:row.revision+1});
+          if(migrated.meta.changes===1)return reply({state:view(),revision:row.revision+1});
           continue;
         }
         const prior=farm.recent.find(r=>r.id===input.requestId);
-        if(prior) return reply({state:snapshot(state,farm,time),message:prior.message,revision:row.revision});
-        let position;
-        if(input.action==='rest'){
-          const here=await db.prepare('SELECT scene,x,y,seen FROM farm_presence WHERE room=? AND player=?')
-            .bind(code,id).first();
-          if(here?.scene==='home:'+id&&here.seen>=time-9)position={area:'home',x:here.x,y:here.y};
-        }
-        const message=apply(state,id,input,time,catchRoll,position);
+        if(prior) return reply({state:view(),message:prior.message,revision:row.revision});
+        const message=apply(state,id,input,time,catchRoll);
         farm.recent.push({id:input.requestId,message});
         farm.recent=farm.recent.slice(-64);
         const result=await save(db,code,row.revision,state);
-        if(result.meta.changes===1) return reply({state:snapshot(state,farm,time),message,revision:row.revision+1});
+        if(result.meta.changes===1) return reply({state:view(),message,revision:row.revision+1});
       }
       return reply({error:'Làng đang bận. Thử thao tác lại sau vài giây.'},409);
     } catch(error) {
