@@ -38,3 +38,7 @@ export const livestockAtlas={
   frames:{goat:[0,0,56,48],sheep:[56,0,56,48],goose:[112,0,56,48],rabbit:[168,0,56,48]},
   legStart:{goat:.73,sheep:.8,goose:.88},
 };
+export const aquaticAtlas={
+  source:'/pixel/aquatic-v1.png',
+  frames:{snakehead:[0,0,56,40],catfish:[56,0,56,40],fieldCrab:[112,0,56,40]},
+};

@@ -118,3 +118,7 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 2. Chuyển mưa, sương và ánh sáng sang hiệu ứng pixel.
 3. Bổ sung sprite chuyển động riêng cho tưới và thu hoạch.
 4. Chuyển dần phông nền và đạo cụ đặc thù từng cảnh sang atlas pixel riêng.
+
+## Thủy sản năm 2026
+
+Ảnh gốc [aquatic-v1-source.png](assets/aquatic-v1-source.png) dùng cùng bảng màu ấm với vật nuôi của Vườn Mùa Vui. Atlas dùng trong game có kích thước 168 × 40 px và ba ô 56 × 40 px theo thứ tự cá lóc, cá trê, cua đồng. Mỗi ô được thu nhỏ riêng và áp ngưỡng alpha để giữ viền pixel rõ. Tọa độ khung nằm trong `public/pixel/frames.mjs`. Chợ, Ao nuôi, Kho và đơn thủy sản dùng ảnh của cùng loài. Canvas vẽ các lứa đã thả cạnh cầu gỗ.

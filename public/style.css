@@ -145,6 +145,10 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .upgrade-materials li+li{margin-top:3px}
 .upgrade-materials li[data-ready="false"] strong{color:#805627}
 .item-link{border:0;background:transparent;padding:1px 0;color:#305b41;text-align:left;font-weight:800;font-size:11px;text-decoration:underline;text-underline-offset:2px}
+.aqua-icon{display:inline-block;flex:none;width:28px;height:20px;vertical-align:middle;background:url('/pixel/aquatic-v1.png') no-repeat;background-size:84px 20px;image-rendering:pixelated}
+.item-link .aqua-icon{margin-right:3px}
+.aqua-stock{display:flex;align-items:center;gap:3px;text-align:left}
+.aqua-stock small{display:block;font-size:10px;line-height:1.25}
 .item-link:hover{color:#6d491e}
 .item-description{display:grid;gap:4px;margin:12px 0;padding:9px 11px;border-radius:9px;background:#edf0de}
 .item-description dt{font-size:11px;font-weight:800;color:#31503a}
@@ -365,6 +369,7 @@ dialog .music-volume input{grid-column:1/-1;padding:0;accent-color:#376044}
 .order-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr));align-items:start}
 .order-ticket{min-width:0;padding:7px;border:1px solid #e3d8bc;border-radius:9px;background:#fffaf0}
 .order-ticket[data-ready=true]{background:#f5f7ea;border-color:#cddbbd}
+.order-ticket[data-category="aquatic"]{box-shadow:inset 3px 0 #4b8d87}
 .order-ticket[data-category="workshop"]{box-shadow:inset 3px 0 #c68a4b}
 .order-ticket h3{margin:0;font-size:13px}
 .order-ticket ul,.order-preview ul{margin:6px 0;padding:0;list-style:none}

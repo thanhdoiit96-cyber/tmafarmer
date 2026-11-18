@@ -77,7 +77,7 @@ test('farm progression shows real XP thresholds and upgrades never spend XP',()=
   const room=world(), farm=room.farms.a;
   assert.equal(farmProgress(farm).rank.name,'Tân nông');
   assert.equal(farmProgress(farm).next.xp,18);
-  assert.deepEqual(xpUnlocks.filter(unlock=>unlock.xp<=350).map(unlock=>unlock.xp),[18,20,25,40,50,60,70,100,100,100,130,160,180,350]);
+  assert.deepEqual(xpUnlocks.filter(unlock=>unlock.xp<=350).map(unlock=>unlock.xp),[18,20,25,40,50,60,70,90,100,100,100,130,160,170,180,260,350]);
   farm.coins=150;
   farm.xp=40;
   assert.match(action(room,'a','upgrade',{item:'workshop'}),/\+10 XP/);

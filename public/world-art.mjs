@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {cropStagesAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -23,6 +23,7 @@ const maleWalk=load(maleCharacter.walk);
 const pixelObjects=load(pixelSlice.source);
 const moreCropArt=load(cropStagesAtlas.source);
 const livestockArt=load(livestockAtlas.source);
+const aquaticArt=load(aquaticAtlas.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -109,11 +110,13 @@ export function drawSpeech(c,bubble,x,y,left,top,viewWidth=size.width){
   lines.forEach((line,index)=>c.fillText(line,px+6,py+4+index*10));
 }
 function sprite(c,name,x,y,w,h,flip=false,angle=0){
-  if(!dim(atlas))return;
-  const [sx,sy,sw,sh]=frames[name];
+  const aquaticFrame=aquaticAtlas.frames[name];
+  const frame=aquaticFrame??frames[name],art=aquaticFrame?aquaticArt:atlas;
+  if(!frame||!dim(art))return;
+  const [sx,sy,sw,sh]=frame;
   c.save();c.translate(x,y);c.rotate(angle);
   if(flip)c.scale(-1,1);
-  c.drawImage(atlas,sx,sy,sw,sh,-w/2,-h,w,h);
+  c.drawImage(art,sx,sy,sw,sh,-w/2,-h,w,h);
   c.restore();
 }
 const roads={

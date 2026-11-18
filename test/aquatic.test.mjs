@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {apply, aquatic, dayAt, fishing, gameDay, newFarm, newRoom, slotLength, snapshot, upgradeCalendar, weatherAt} from '../public/game.mjs';
+import {apply, aquatic, dayAt, fishing, gameDay, goods, newFarm, newRoom, orderList, slotLength, snapshot, upgradeCalendar, weatherAt} from '../public/game.mjs';
 import {publicCatch} from '../public/aqua.mjs';
 import {pondCapacity} from '../public/land.mjs';
 
@@ -102,4 +102,50 @@ test('neighbor fishing shares theft caps, preserves the batch and rechecks the g
   assert.equal(owner.ponds[0][1].picked,1);
   send(room,'b','aquaHarvest',fishing.wait*2,{index:0,item:'carp'});
   assert.equal(owner.inventory.carp,3);
+});
+
+test('new species require progress to buy or stock and use the same pond and orders',()=>{
+  const room=setup(),farm=room.farms.a;
+  farm.coins=500;
+  farm.inventory.snakeheadSeed=1;
+  assert.throws(()=>send(room,'a','buy',0,{item:'snakeheadSeed'}),/90 XP/);
+  assert.throws(()=>send(room,'a','aquaStock',0,{item:'snakehead',index:0}),/90 XP/);
+  assert.equal(orderList(0,room).some(order=>order.category==='aquatic'),false);
+  farm.xp=260;
+  assert.throws(()=>send(room,'a','buy',0,{item:'fieldCrabSeed'}),/Kho cấp 2/);
+  assert.equal(orderList(2,room).some(order=>order.category==='aquatic'),false);
+  farm.barn=2;
+  farm.inventory.aquaFeed=8;
+  for(const [kind,def] of Object.entries(aquatic).filter(([,def])=>def.xp)){
+    send(room,'a','buy',0,{item:def.seed});
+    send(room,'a','aquaStock',0,{item:kind,index:0});
+    send(room,'a','aquaFeed',0,{item:kind,index:0});
+  }
+  assert.equal(farm.inventory.aquaFeed,0);
+  for(const kind of ['snakehead','catfish','fieldCrab']){
+    send(room,'a','aquaHarvest',7200,{item:kind,index:0});
+    assert.equal(farm.inventory[kind],aquatic[kind].yield);
+  }
+  ['snakehead','catfish','fieldCrab'].forEach((kind,day)=>{
+    const order=orderList(day,room).find(entry=>entry.category==='aquatic');
+    assert.equal(order.items[0].item,kind);
+    assert.ok(order.reward>goods[kind].sell*3);
+    const balance=farm.coins;
+    send(room,'a','order',day*gameDay+7200,{index:order.id});
+    assert.equal(farm.inventory[kind],aquatic[kind].yield-3);
+    assert.equal(farm.coins,balance+order.reward);
+  });
+});
+
+test('neighbor ponds can be fished for the new fish, while crab batches stay in the pond',()=>{
+  const room=setup(),owner=room.farms.b;
+  owner.ponds[0]=['fieldCrab','snakehead','catfish'].map(kind=>({
+    kind,count:1,progress:aquatic[kind].time,at:start,fedUntil:0,picked:0,
+  }));
+  const pond=snapshot(room,room.farms.a,start).neighbors.find(farm=>farm.id==='b').pondBatches[0];
+  assert.deepEqual(pond.map(batch=>batch.available),[false,true,true]);
+  send(room,'a','cast',0,{source:'pond',target:'b',index:0});
+  send(room,'a','reel',fishing.wait);
+  assert.equal(room.farms.a.inventory.snakehead,1);
+  assert.equal(owner.ponds[0][0].picked,0);
 });

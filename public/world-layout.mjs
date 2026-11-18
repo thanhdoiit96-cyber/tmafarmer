@@ -10,7 +10,7 @@ const gardenBeds=(rows,y)=>[{x:146,y,w:59,h:43*(rows-1)+36},{x:249,y,w:108,h:43*
 const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),43),...(rows>4?gardenBeds(rows-4,270):[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
-  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'right'}, {x:583,y:350,type:'pond',index:0,label:'Ao nuôi cá và tôm',side:'up'}],
+  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:583,y:350,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
   visit:[{x:530,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
   lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };

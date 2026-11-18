@@ -1,5 +1,5 @@
 import {recentSeconds,sceneKey,social} from './social.mjs';
-import {advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
+import {advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -224,6 +224,7 @@ async function join(db,request,superAdminAccountId) {
     upgradeCalendar(state,time);
     startVillageSecurity(state,dayAt(state,time));
     startSoilClock(state,time);
+    startLivestockClock(state,time);
     state.farms[id]=newFarm(id,name,time,avatar);
     advanceVillageDrive(state,time);
     const result=await save(db,code,row.revision,state);
@@ -285,10 +286,11 @@ export default {
         const calendarUpdated=upgradeCalendar(state,time);
         const securityStarted=startVillageSecurity(state,dayAt(state,time));
         const soilStarted=startSoilClock(state,time);
+        const livestockStarted=startLivestockClock(state,time);
         const driveUpdated=advanceVillageDrive(state,time);
         if(!input) {
           const promoted=advanceVillage(state,dayAt(state,time));
-          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted&&!driveUpdated)return reply({state:view(),revision:row.revision});
+          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted&&!livestockStarted&&!driveUpdated)return reply({state:view(),revision:row.revision});
           const migrated=await save(db,code,row.revision,state);
           if(migrated.meta.changes===1)return reply({state:view(),revision:row.revision+1});
           continue;
