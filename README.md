@@ -83,6 +83,19 @@ Với bản đã triển khai, binding `CHAT` và migration Durable Object trong
 
 Ghi lại URL Worker mà Wrangler trả về, ví dụ `https://vuon-mua-vui.ten-ban.workers.dev`. Mở URL Worker với đuôi `/api/health` để kiểm tra phản hồi `{"ok":true}`. Tiếp theo, sửa `destination` trong `vercel.json` thành URL Worker thực, giữ đuôi `/api/:path*`.
 
+#### Cấp quyền super admin cho tài khoản ntdoi
+
+Đăng nhập bằng tài khoản `ntdoi` do bạn quản lý. Chạy truy vấn bên dưới để lấy ID của tài khoản trên D1 đã triển khai, rồi nhập giá trị `id` khi Wrangler hỏi giá trị của `SUPER_ADMIN_ACCOUNT_ID`.
+
+```bash
+npx wrangler d1 execute DB --remote --command "SELECT id FROM farm_accounts WHERE username = 'ntdoi'"
+npx wrangler secret put SUPER_ADMIN_ACCOUNT_ID
+```
+
+Có thể đặt cùng biến này trong cấu hình của Worker trên Cloudflare. Để trống biến thì tính năng super admin tắt. Tài khoản cần có phiên đăng nhập hợp lệ và cả username lẫn ID phải khớp. [Lệnh D1](https://developers.cloudflare.com/d1/wrangler-commands/) · [Biến bí mật của Worker](https://developers.cloudflare.com/workers/configuration/secrets/)
+
+Trong game, vào làng bằng tài khoản `ntdoi`, mở **Hàng xóm** rồi bấm **Mời ra** và xác nhận. Nếu đang ở làng khác, chọn **Về vườn chơi thử**, mở **Vào làng** và nhập mã làng cần quản lý. Người tạo làng được bảo vệ khỏi thao tác mời ra.
+
 ### Đưa giao diện lên Vercel
 
 1. **Chơi thử:** Xóa trường `rewrites` và dấu phẩy cuối sau `"buildCommand": null` trong `vercel.json`. **Chơi online:** Giữ rewrite đã chỉnh ở bước Cloudflare.

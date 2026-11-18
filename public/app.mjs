@@ -143,7 +143,7 @@ async function api(path, payload, credentials=session) {
   const headers={};
   if(credentials) {
     headers.authorization='Bearer '+credentials.token;
-    headers['x-room-code']=credentials.code;
+    if(credentials.code)headers['x-room-code']=credentials.code;
   }
   let response;
   try {
@@ -436,7 +436,8 @@ function renderNeighbors(farm,now) {
     const count=Math.ceil(homes.length/6);
     const pages=count>1?'<div class="row map-pages">'+btn('‹ Trang trước','data-village-page="'+(villagePage-1)+'"','subtle',villagePage===0)+'<span>'+String(villagePage+1)+' / '+count+'</span>'+btn('Trang sau ›','data-village-page="'+(villagePage+1)+'"','subtle',villagePage+1>=count)+'</div>':'';
     const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>{
-      const remove=state.canManageMembers&&!n.mine?btn('Mời ra','data-remove-member="'+n.id+'" aria-label="Mời '+escape(n.name)+' ra khỏi làng"','subtle'):'';
+      const remove=state.canManageMembers&&!n.mine&&n.id!==state.villageOwnerId?
+        btn('Mời ra','data-remove-member="'+n.id+'" aria-label="Mời '+escape(n.name)+' ra khỏi làng"','subtle'):'';
       return '<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
         btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+' '+remove+'</article>';
     }).join('');
@@ -996,7 +997,20 @@ function showRoom() {
   }
   const previous=store.read(previousKey);
   const rejoin=previous&&!inviteCode?'<div class="actions">'+btn('Tiếp tục làng '+previous.code,'data-resume','gold')+'</div>':'';
-  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p><div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+'</div><form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label>'+avatarOptions(state?.me.avatar)+'<div class="actions"><button class="btn primary">Bắt đầu chơi online</button>'+btn('Chơi nhanh','data-quick-avatar','subtle')+'</div></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
+  const accountControls=accountSession?'<p>Tài khoản: <strong>'+escape(accountSession.username)+'</strong></p><div class="actions">'+
+    btn('Đăng nhập khác','data-account','primary')+btn('Đăng xuất','data-account-logout','subtle')+'</div>':
+    '<div class="actions">'+btn('Đăng nhập tài khoản','data-account','primary')+'</div>';
+  modal('Vào làng','<p>Nhập tên vườn và mã của bạn bè. Nếu để trống mã, bạn sẽ tạo làng mới.</p>'+accountControls+'<form data-form="join"><label>Tên vườn<input name="name" required minlength="2" maxlength="24" placeholder="Ví dụ: Vườn của Đổi"></label><label>Mã làng<input name="code" value="'+inviteCode+'" maxlength="8" placeholder="Để trống nếu tạo làng"></label>'+avatarOptions(state?.me.avatar)+'<div class="actions"><button class="btn primary">Bắt đầu chơi online</button>'+btn('Chơi nhanh','data-quick-avatar','subtle')+'</div></form>'+rejoin+'<p id="dialog-error" role="status"></p>');
+}
+function backToDemo(){
+  session=null;
+  revision=-1;
+  selected=0;plotGroup=-1;pondTab=0;selectedLot=0;
+  tab='field';neighborId=null;villagePage=0;panel='area';
+  store.write(sessionKey,null);
+  setPanelOpen(false);
+  updateDemo();
+  render();
 }
 function showShop(key,sell) {
   const farm=state.me, info=goods[key], price=sell?info.sell:info.buy;
@@ -1052,7 +1066,7 @@ async function perform(input) {
       message=result.message;
     } else {
       const updated=structuredClone(demo);
-      message=apply(updated,'demo',input,unixNow(),Math.random(),actionTab);
+      message=apply(updated,'demo',input,unixNow(),Math.random(),{area:actionTab});
       demo=updated;
       store.write(demoKey,demo);
       updateDemo();
@@ -1225,8 +1239,19 @@ document.addEventListener('click',async e=>{
   else if('account' in d) showAccountModal('login');
   else if('accountMode' in d) showAccountModal(d.accountMode==='register'?'register':'login');
   else if('accountLogout' in d) {
-    accountSession=null; store.write(accountKey,null); showToast('Đã đăng xuất tài khoản.');
+    const credentials=accountSession;
+    accountSession=null;
+    store.write(accountKey,null);
+    const previous=store.read(previousKey);
+    if(previous&&(previous.account||previous.token===credentials?.token))store.write(previousKey,null);
     dialog.close();
+    if(session&&(session.account||session.token===credentials?.token))backToDemo();
+    try {
+      if(credentials)await apiAccount('logout',{},credentials);
+      showToast('Đã đăng xuất tài khoản.');
+    } catch {
+      showToast('Đã thoát trên thiết bị này. Chưa thể kết thúc phiên trên máy chủ.',true);
+    }
   }
   else if('info' in d) help();
   else if('plot' in d) {
@@ -1236,7 +1261,7 @@ document.addEventListener('click',async e=>{
   else if('visit' in d) visit(d.visit);
   else if('removeMember' in d){
     const neighbor=state.neighbors.find(entry=>entry.id===d.removeMember);
-    if(!session||!state.canManageMembers||!neighbor)return;
+    if(!session||!state.canManageMembers||!neighbor||neighbor.id===state.villageOwnerId)return;
     modal('Mời thành viên ra khỏi làng','<p>Vườn, tài sản và các sạp của <strong>'+escape(neighbor.name)+'</strong> sẽ bị xóa khỏi làng sau khi xác nhận.</p>'+
       '<div class="actions">'+btn('Hủy','data-close','subtle')+
       btn('Mời ra','data-confirm-remove-member="'+neighbor.id+'"','danger')+'</div><p id="dialog-error" role="status"></p>');
@@ -1283,13 +1308,7 @@ document.addEventListener('click',async e=>{
   } else if('backDemo' in d) {
     dialog.close();
     store.write(previousKey,session);
-    session=null;
-    revision=-1;
-    selected=0;plotGroup=-1;pondTab=0;selectedLot=0;
-    tab='field'; neighborId=null; villagePage=0; panel='area';
-    store.write(sessionKey,null);
-    updateDemo();
-    render();
+    backToDemo();
   } else if('action' in d) {
     const input={action:d.action,item:d.item||''};
     if(d.index) input.index=Number(d.index);
@@ -1351,8 +1370,8 @@ dialog.addEventListener('submit',async e=>{
   if(mode==='join') {
     busy=true;
     try {
-      const result=await api('join',values,null);
-      session={code:result.code,token:result.token};
+      const result=await api('join',values,accountSession);
+      session={code:result.code,token:result.token,account:!!result.account};
       store.write(sessionKey,session);
       revision=-1;
       selected=0;plotGroup=-1;pondTab=0;selectedLot=0;
@@ -1371,6 +1390,9 @@ dialog.addEventListener('submit',async e=>{
       const method=form.dataset.accountMode==='register'?'register':'login';
       const guest=method==='register'?guestSession():null;
       const result=await apiAccount(method,{username:values.username,password:values.password,roomCode:guest?.code??''},guest);
+      const previous=store.read(previousKey);
+      if(previous&&(previous.account||previous.token===accountSession?.token))store.write(previousKey,null);
+      const switchingAccount=session&&(session.account||session.token===accountSession?.token);
       accountSession={token:result.token,username:result.account.username,accountId:result.account.id};
       store.write(accountKey,accountSession);
       const resumeRoom=result.rooms[0]?.roomCode;
@@ -1378,7 +1400,7 @@ dialog.addEventListener('submit',async e=>{
         session={code:resumeRoom,token:result.token,account:true};
         store.write(sessionKey,session);
         revision=-1;
-      }
+      } else if(switchingAccount)backToDemo();
       dialog.close();
       render();
       showToast(method==='register'?'Đã tạo tài khoản thành công.':'Đăng nhập tài khoản thành công.');

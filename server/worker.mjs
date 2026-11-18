@@ -14,6 +14,7 @@ const save=(db,code,revision,state)=>db.prepare('UPDATE farm_rooms SET state = ?
   .bind(JSON.stringify(state),code,revision).run();
 const codePattern=/^[A-F0-9]{8}$/;
 const accountSessionLifetime=30*24*60*60;
+const isSuperAdmin=(session,accountId)=>Boolean(accountId&&session?.username==='ntdoi'&&session.account_id===accountId);
 const runSql=async(db,statement,params=[] )=>{
   const prepared=db.prepare(statement);
   if(typeof prepared.run==='function') return await prepared.run(...params);
@@ -170,7 +171,13 @@ async function accountProfile(db,request) {
   const rooms=await accountRooms(db,session.account_id);
   return reply({account:{id:session.account_id,username:session.username},rooms:serializeAccountRooms(rooms)},200);
 }
-async function join(db,request) {
+async function logoutAccount(db,request) {
+  const token=authToken(request);
+  if(!token)return reply({error:'Phiên đăng nhập tài khoản không hợp lệ.'},401);
+  await db.prepare('DELETE FROM farm_account_sessions WHERE token = ?').bind(token).run();
+  return reply({ok:true});
+}
+async function join(db,request,superAdminAccountId) {
   const data=await body(request);
   const name=typeof data.name==='string'?data.name.trim().replace(/\s+/g,' '):'';
   const code=typeof data.code==='string'?data.code.trim().toUpperCase():'';
@@ -178,27 +185,42 @@ async function join(db,request) {
   if(code&&!codePattern.test(code)) return reply({error:'Mã gồm 8 ký tự từ A–F hoặc 0–9.'},400);
   const avatar=data.avatar;
   if(avatar!==undefined&&(typeof avatar!=='string'||!has(avatars,avatar)))return reply({error:'Nhân vật không hợp lệ.'},400);
-  const token=random(32), id=await authId(token);
+  const account=await lookupAccountSession(db,authToken(request));
+  const admin=isSuperAdmin(account,superAdminAccountId)?account:null;
+  const token=admin?.token??random(32);
+  const guestId=admin?null:await authId(token);
+  const farmIdFor=roomCode=>admin?authId('admin-farm:'+admin.account_id+':'+roomCode):guestId;
+  const linked=admin&&code?await lookupOwnedRoom(db,admin.account_id,code):null;
+  const joined=async(state,roomCode,id,time,status)=>{
+    if(admin)await ensurePrimaryRoom(db,admin.account_id,roomCode,id);
+    return reply({token,code:roomCode,account:Boolean(admin),state:{
+      ...snapshot(state,state.farms[id],time),canManageMembers:!!admin||id===villageOwner(state)
+    }},status);
+  };
   for(let round=0;round<8;round++) {
     const time=unixNow();
     if(!code) {
       const state=newRoom(time), newCode=random(4).toUpperCase();
+      const id=await farmIdFor(newCode);
       state.ownerId=id;
+      if(admin)state.ownerAccountId=admin.account_id;
       state.farms[id]=newFarm(id,name,time,avatar);
       const result=await db.prepare('INSERT OR IGNORE INTO farm_rooms(code,state) VALUES (?,?)').bind(newCode,JSON.stringify(state)).run();
-      if(result.meta.changes===1) return reply({token,code:newCode,state:{...snapshot(state,state.farms[id],time),canManageMembers:true}},201);
+      if(result.meta.changes===1) return joined(state,newCode,id,time,201);
       continue;
     }
     const row=await readRoom(db,code);
     if(!row) return reply({error:'Không tìm thấy mã làng.'},404);
     const state=JSON.parse(row.state);
+    const id=linked&&has(state.farms,linked.farm_id)?linked.farm_id:await farmIdFor(code);
+    if(admin&&has(state.farms,id))return joined(state,code,id,time,200);
     if(Object.keys(state.farms).length>=12) return reply({error:'Làng đã đủ 12 vườn.'},409);
     upgradeCalendar(state,time);
     startVillageSecurity(state,dayAt(state,time));
     startSoilClock(state,time);
     state.farms[id]=newFarm(id,name,time,avatar);
     const result=await save(db,code,row.revision,state);
-    if(result.meta.changes===1) return reply({token,code,state:{...snapshot(state,state.farms[id],time),canManageMembers:false}},201);
+    if(result.meta.changes===1) return joined(state,code,id,time,201);
   }
   return reply({error:'Làng đang bận. Thử lại sau vài giây.'},409);
 }
@@ -214,14 +236,16 @@ export default {
     try {
       if(pathname==='/api/account/register'&&method==='POST') return await registerAccount(db,request);
       if(pathname==='/api/account/login'&&method==='POST') return await loginAccount(db,request);
+      if(pathname==='/api/account/logout'&&method==='POST') return await logoutAccount(db,request);
       if(pathname==='/api/account/me'&&method==='GET') return await accountProfile(db,request);
-      if(pathname==='/api/join'&&method==='POST') return await join(db,request);
+      if(pathname==='/api/join'&&method==='POST') return await join(db,request,env.SUPER_ADMIN_ACCOUNT_ID);
       const socialAction=pathname==='/api/scene'?'scene':pathname==='/api/chat'?'chat':null;
       if(!socialAction&&!['/api/state','/api/action'].includes(pathname)) return reply({error:'Đường dẫn không tồn tại.'},404);
       if(pathname==='/api/state'&&method!=='GET'||(socialAction||pathname==='/api/action')&&method!=='POST') return reply({error:'Phương thức không hợp lệ.'},405);
       const token=authToken(request), code=request.headers.get('x-room-code');
       if(!token||!codePattern.test(code)) return reply({error:'Phiên chơi không hợp lệ.'},401);
       const accountSession=token?await lookupAccountSession(db,token):null;
+      const superAdmin=isSuperAdmin(accountSession,env.SUPER_ADMIN_ACCOUNT_ID);
       let id=await authId(token);
       if(accountSession) {
         const room=await lookupOwnedRoom(db,accountSession.account_id,code.toUpperCase());
@@ -248,9 +272,9 @@ export default {
         if(!has(state.farms,id)) return reply({error:'Bạn không còn là thành viên của làng này.'},401);
         const farm=state.farms[id];
         // Old account links did not require proof of control over the guest farm.
-        const canManageMembers=id===villageOwner(state)&&(!accountSession||state.ownerAccountId===accountSession.account_id);
+        const canManageMembers=superAdmin||(id===villageOwner(state)&&(!accountSession||state.ownerAccountId===accountSession.account_id));
         const view=()=>({...snapshot(state,farm,time),canManageMembers});
-        if(input?.action==='removeMember'&&!canManageMembers) return reply({error:'Cần phiên chơi gốc của chủ làng hoặc tài khoản chủ làng đã xác minh.'},403);
+        if(input?.action==='removeMember'&&!canManageMembers) return reply({error:'Chỉ chủ làng hoặc super admin mới có thể mời thành viên ra.'},403);
         const calendarUpdated=upgradeCalendar(state,time);
         const securityStarted=startVillageSecurity(state,dayAt(state,time));
         const soilStarted=startSoilClock(state,time);
@@ -269,7 +293,7 @@ export default {
             .bind(code,id,time-recentSeconds).first();
           if(here?.scene===sceneKey(state.farms,id,'home'))area='home';
         }
-        const message=apply(state,id,input,time,catchRoll,area);
+        const message=apply(state,id,input,time,catchRoll,{area,superAdmin});
         farm.recent.push({id:input.requestId,message});
         farm.recent=farm.recent.slice(-64);
         const result=await save(db,code,row.revision,state);

@@ -475,7 +475,7 @@ export function snapshot(room, farm, time) {
   const wealth=wealthRanking(room);
   const wealthByFarm=new Map(wealth.map(entry=>[entry.id,entry.total]));
   return {me,day,now:time,weather:weatherAt(room,time),forecast:weatherAt(room,next),next,afterRainUntil:afterRainUntil(room,time),
-    dayEnds, dayLength:plan.dayLength, wealth,
+    dayEnds, dayLength:plan.dayLength, wealth, villageOwnerId:villageOwner(room),
     orders:orders.filter(order=>!fulfilled.done.includes(order.slot)), nextOrders:orderList(day+1,room), orderCount:orders.length,
     village:{...villageSnapshot(room,day),theftsLeft:villageTheftsLeft(room,day)},
     fishingLimit:publicFishingLimit(room),
@@ -505,12 +505,14 @@ export function snapshot(room, farm, time) {
         available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
 }
-export function apply(room,id,input,now,catchRoll=0.5,area){
+export function apply(room,id,input,now,catchRoll=0.5,{area,superAdmin=false}={}){
   const farm=room.farms[id];
   if(input.action==='removeMember'){
     const {target}=input;
-    check(id===villageOwner(room),'Chỉ chủ làng mới có thể mời thành viên ra.');
-    check(target!==id&&has(room.farms,target),'Thành viên này không còn trong làng hoặc là chủ làng.');
+    const owner=villageOwner(room);
+    check(id===owner||superAdmin,'Chỉ chủ làng hoặc super admin mới có thể mời thành viên ra.');
+    check(target!==owner,'Chủ làng không thể bị mời ra.');
+    check(target!==id&&has(room.farms,target),'Thành viên này không còn trong làng hoặc là vườn của bạn.');
     const name=room.farms[target].name;
     delete room.farms[target];
     for(const [key,listing] of Object.entries(room.listings)){

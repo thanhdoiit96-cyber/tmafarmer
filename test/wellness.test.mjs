@@ -13,7 +13,7 @@ const world=()=>{
   return room;
 };
 const act=(room,action,options={},offset=0,id='a')=>apply(room,id,{action,...options},start+offset);
-const restAtHome=(room,offset=0)=>apply(room,'a',{action:'rest'},start+offset,undefined,'home');
+const restAtHome=(room,offset=0)=>apply(room,'a',{action:'rest'},start+offset,undefined,{area:'home'});
 test('new work spends energy once, rejected actions preserve it, and rest blocks work until complete',()=>{
   const room=world(), farm=room.farms.a;
   act(room,'plant',{item:'wheat',index:0});
@@ -28,7 +28,7 @@ test('new work spends energy once, rejected actions preserve it, and rest blocks
   act(room,'eat');
   assert.throws(()=>act(room,'water',{index:0}),/mệt/);
   assert.throws(()=>act(room,'rest',{area:'home'}),/vào Nhà vườn/);
-  assert.throws(()=>apply(room,'a',{action:'rest'},start,undefined,'field'),/vào Nhà vườn/);
+  assert.throws(()=>apply(room,'a',{action:'rest'},start,undefined,{area:'field'}),/vào Nhà vườn/);
   restAtHome(room);
   assert.throws(()=>act(room,'water',{index:0},59),/nghỉ xong/);
   assert.equal(snapshot(room,farm,start+60).me.wellness.stamina,76);

@@ -22,6 +22,7 @@ const DB={
 };
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.mp3':'audio/mpeg'};
 const CHAT=localSpeechNamespace();
+const {SUPER_ADMIN_ACCOUNT_ID}=process.env;
 const server=createServer(async(incoming,outgoing)=>{
   try {
     const url=new URL(incoming.url,'http://localhost');
@@ -31,7 +32,7 @@ const server=createServer(async(incoming,outgoing)=>{
         options.body=Readable.toWeb(incoming);
         options.duplex='half';
       }
-      const response=await worker.fetch(new Request(url,options),{DB,CHAT});
+      const response=await worker.fetch(new Request(url,options),{DB,CHAT,SUPER_ADMIN_ACCOUNT_ID});
       outgoing.writeHead(response.status,Object.fromEntries(response.headers));
       if(response.body) Readable.fromWeb(response.body).pipe(outgoing);
       else outgoing.end();
