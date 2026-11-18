@@ -92,12 +92,11 @@
         </section>
       </section>
       <aside class="control-panel" id="farm-panel" aria-label="Quản lý nông trại">
-        <div class="panel-mobile-header landscape-only">
-          <strong data-panel-title>Vườn nhà</strong>
-          <button class="btn subtle" type="button" data-panel-close aria-label="Đóng công cụ">×</button>
+        <div class="panel-navigation">
+          <nav id="panel-nav" aria-label="Công cụ nông trại"></nav>
+          <button class="btn subtle panel-close landscape-only" type="button" data-panel-close aria-label="Đóng công cụ">×</button>
         </div>
-        <nav id="panel-nav" aria-label="Công cụ nông trại"></nav>
-        <div class="panel-body">
+        <div class="panel-body" tabindex="0" role="region" aria-label="Nội dung công cụ nông trại">
           <section id="board" aria-label="Tác vụ trong khu vực"><p>Đang chuẩn bị vườn…</p></section>
           <section id="tools"></section>
           <section id="side" aria-label="Thông tin vườn" hidden></section>
