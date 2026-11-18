@@ -85,7 +85,8 @@ test('farm progression shows real XP thresholds and upgrades never spend XP',()=
   assert.equal(farm.coins,30);
   assert.equal(farmProgress(farm).next.xp,70);
   assert.equal(farmProgress({xp:350}).next.label,'Hàng rào cấp 2');
-  assert.equal(farmProgress({xp:2200}).next,null);
+  assert.equal(farmProgress({xp:2200}).next.label,'Kho cấp 7');
+  assert.equal(farmProgress({xp:2800}).next,null);
 });
 test('barn upgrades check the next XP threshold and admit more produce into storage',()=>{
   const r=world(), a=r.farms.a;
@@ -102,10 +103,24 @@ test('barn upgrades check the next XP threshold and admit more produce into stor
   action(r,'a','harvest',{index:0});
   assert.equal(a.inventory.wheat,93);
   a.xp=1650;
+  const coins=a.coins;
+  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/Thiếu 2 vải len dệt/);
+  assert.equal(a.coins,coins);
+  a.inventory.woolCloth=2;
   action(r,'a','upgrade',{item:'barn'});
   assert.equal(capacity(a),220);
+  assert.equal(a.inventory.woolCloth,0);
+  a.inventory.insulationMat=6;
   action(r,'a','upgrade',{item:'barn'});
   assert.equal(capacity(a),320);
+  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/2800 XP/);
+  a.xp=2800;
+  a.coins+=4000;
+  a.inventory.starchGlue=3;
+  action(r,'a','upgrade',{item:'barn'});
+  assert.equal(capacity(a),460);
+  assert.equal(a.inventory.insulationMat,0);
+  assert.equal(a.inventory.starchGlue,0);
   assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/tối đa/);
 });
 test('advanced workshops unlock recipes and advanced fences keep a daily theft limit',()=>{

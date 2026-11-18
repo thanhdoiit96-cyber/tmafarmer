@@ -106,8 +106,13 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .stock-card .stock-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#e5ecd8;font-size:20px}
 .stock-card div{display:grid;gap:2px;min-width:0}.stock-card small{color:#84775e;font-size:8px;text-transform:uppercase;letter-spacing:.05em}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.stock-card>b{color:#526347;font-size:11px}.stock-card .btn{grid-column:2/4;min-height:27px;padding:3px 6px;font-size:9px}
 .recipe-card .item-link{font-size:inherit}
+.workshop-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 0 9px}
+.workshop-tabs .btn{min-height:40px;padding-inline:3px}
+.workshop-empty{padding:10px;background:#f4efdf;border-radius:8px}
 .recipe-ingredients{margin:8px 0;padding:0;list-style:none}
 .recipe-ingredients li{display:flex;justify-content:space-between;align-items:center;gap:7px;padding:4px 7px;border-radius:6px;background:#eeead8;color:#48614b;font-size:11px}
+.upgrade-materials li+li{margin-top:3px}
+.upgrade-materials li[data-ready="false"] strong{color:#805627}
 .item-link{border:0;background:transparent;padding:1px 0;color:#305b41;text-align:left;font-weight:800;font-size:11px;text-decoration:underline;text-underline-offset:2px}
 .item-link:hover{color:#6d491e}
 .stock-card .item-link{white-space:normal;overflow-wrap:anywhere}
@@ -317,6 +322,7 @@ dialog .music-volume input{grid-column:1/-1;padding:0;accent-color:#376044}
 .order-list{display:grid;gap:8px}
 .order-ticket{padding:10px;border:1px solid #e3d8bc;border-radius:10px;background:#fffaf0}
 .order-ticket[data-ready=true]{background:#f5f7ea;border-color:#cddbbd}
+.order-ticket[data-category="workshop"]{box-shadow:inset 3px 0 #c68a4b}
 .order-ticket h3{margin:0;font-size:13px}
 .order-ticket ul,.order-preview ul{margin:6px 0;padding:0;list-style:none}
 .order-ticket li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:12px}

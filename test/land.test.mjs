@@ -82,6 +82,7 @@ test('owners and visitors use the same parcel geometry and rectangular ponds sta
 test('higher main field levels preserve garden plot IDs and add reachable beds for owners and visitors',()=>{
   const room=setup(),a=room.farms.a,b=room.farms.b;
   Object.assign(a,{coins:5000,xp:1850,field:3,plots:Array(12).fill(null)});
+  Object.assign(a.inventory,{starchGlue:2,insulationMat:2});
   act(room,'a','buildLand',0,'garden');
   act(room,'a','plant',12,'wheat');
   for(let level=4;level<=6;level++)act(room,'a','upgrade',undefined,'field');
@@ -108,6 +109,7 @@ test('higher main field levels preserve garden plot IDs and add reachable beds f
 test('upgraded main coop seats twelve reachable animals without changing parcel capacity',()=>{
   const room=setup(),a=room.farms.a;
   Object.assign(a,{coins:9900,xp:1950,coop:3});
+  Object.assign(a.inventory,{woolCloth:2,insulationMat:2});
   for(let level=4;level<=6;level++)act(room,'a','upgrade',undefined,'coop');
   for(let i=0;i<12;i++)act(room,'a','animal',undefined,'chicken');
   assert.throws(()=>act(room,'a','animal',undefined,'chicken'),/hết chỗ/);
