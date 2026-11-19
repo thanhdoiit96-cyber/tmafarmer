@@ -6,7 +6,10 @@
   "engines": { "node": ">=22.13" },
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "node scripts/build.mjs",
+    "build": "npm run progression:docs && node scripts/build.mjs",
+    "check:progression": "node scripts/progression.mjs",
+    "progression:docs": "node scripts/progression.mjs --write-docs",
+    "pixel:progression-art": "py scripts/generate-progression-art.py",
     "test": "node --test",
     "d1:create": "npx wrangler d1 create vuon-mua-vui",
     "d1:migrate": "npx wrangler d1 migrations apply DB --remote",

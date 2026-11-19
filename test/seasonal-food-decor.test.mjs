@@ -26,7 +26,7 @@ test('seasonal recipes use local produce, restore stated stats, and share the me
   craft('roastedPeanuts');
   assert.equal(stock(farm),0);
   for(const item of ['sweetPotato','pumpkin','milk','peanut'])assert.equal(farm.inventory[item],0);
-  for(const [i,{item}] of workshopFoodOrders.entries()){
+  for(const [i,{item}] of workshopFoodOrders.slice(0,3).entries()){
     const time=start+i*mealCooldown;
     farm.wellness={water:20,food:20,stamina:20,at:time,until:{},restUntil:0};
     send(room,'a',{action:'consume',item},time);
@@ -44,7 +44,7 @@ test('food orders keep a stable rotation with one shared fulfillment each',()=>{
   assert.ok(lookup(0,'roastedSweetPotato'));
   assert.equal(lookup(1,'pumpkinSoup'),undefined);
   assert.equal(lookup(2,'roastedPeanuts'),undefined);
-  a.workshop=2;
+  Object.assign(a,{workshop:9,coop:8,xp:16000});
   for(const [day,{item}] of workshopFoodOrders.entries()){
     const order=lookup(day,item), time=start+day*gameDay;
     const cost=Object.entries(recipes[item].ingredients).reduce((sum,[key,count])=>sum+goods[key].sell*count,0);

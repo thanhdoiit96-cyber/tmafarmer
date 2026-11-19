@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {farmTasks} from '../public/tasks.mjs';
-import { gameDay, slotLength, animals, apply, capacity, crops, cropYield, farmProgress, goods, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, varietyOrders, xpUnlocks } from '../public/game.mjs';
+import { gameDay, slotLength, animals, animalRequirement, apply, buildingUpgrade, capacity, cropRequirement, crops, cropYield, farmProgress, goods, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, varietyOrders, xpUnlocks } from '../public/game.mjs';
 
 const start=10_000;
 function world() {
@@ -86,7 +86,27 @@ test('farm progression shows real XP thresholds and upgrades never spend XP',()=
   assert.equal(farmProgress(farm).next.xp,60);
   assert.equal(farmProgress({xp:350}).next.label,'Hàng rào cấp 2');
   assert.equal(farmProgress({xp:2200}).next.label,'Kho cấp 7');
-  assert.equal(farmProgress({xp:2800}).next,null);
+  assert.equal(farmProgress({xp:2800}).next.xp,3000);
+});
+test('late-game ranks, crops, livestock and production buildings have staggered unlock gates',()=>{
+  const farm=newFarm('a','a',start);
+  assert.equal(farmProgress({xp:16000}).rank.level,13);
+  assert.equal(farmProgress({xp:16000}).rank.name,'Nông gia di sản');
+  assert.equal(farmProgress({xp:16000}).nextRank,null);
+  assert.equal(farmProgress({xp:2200}).nextRank.level,9);
+  for(const [kind,xp,workshop] of [['coffee',3200,7],['lotus',5600,8],['dragonfruit',9600,9],['blackRice',16000,9]]){
+    assert.match(cropRequirement({...farm,xp,workshop:workshop-1},kind),/Xưởng máy/);
+    assert.equal(cropRequirement({...farm,xp,workshop},kind),'');
+  }
+  assert.match(animalRequirement({...farm,xp:3600,coop:6},'quail'),/chuồng cấp 7/);
+  assert.equal(animalRequirement({...farm,xp:3600,coop:7},'quail'),'');
+  assert.match(animalRequirement({...farm,xp:7200,coop:7},'buffalo'),/chuồng cấp 8/);
+  assert.equal(animalRequirement({...farm,xp:7200,coop:8},'buffalo'),'');
+  assert.equal(buildingUpgrade({barn:9},'barn').max,10);
+  assert.equal(buildingUpgrade({field:8},'field').max,9);
+  assert.equal(buildingUpgrade({coop:7},'coop').max,8);
+  assert.equal(buildingUpgrade({workshop:8},'workshop').max,9);
+  assert.equal(capacity({barn:10}),1080);
 });
 test('new crops can be bought, grown, harvested and saved as seed at their milestones',()=>{
   for(const kind of ['sweetPotato','pumpkin','peanut']){
@@ -141,7 +161,7 @@ test('goose eggs and rabbit meat use the shared animal tasks and seasonal orders
   assert.equal(farm.pens[0].progress,0);
 
   farm.workshop=1;
-  const newOrders=varietyOrders.map((_,day)=>{
+  const newOrders=varietyOrders.slice(0,5).map((_,day)=>{
     assert.equal(orderList(day,world()).some(order=>order.category==='variety'),false);
     return orderList(day,room).find(order=>order.category==='variety');
   });
@@ -191,7 +211,13 @@ test('barn upgrades check the next XP threshold and admit more produce into stor
   assert.equal(capacity(a),460);
   assert.equal(a.inventory.insulationMat,0);
   assert.equal(a.inventory.starchGlue,0);
-  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/tối đa/);
+  assert.throws(()=>action(r,'a','upgrade',{item:'barn'}),/3600 XP/);
+  a.xp=3600;
+  a.coins+=5000;
+  a.inventory.insulationMat=5;
+  a.inventory.roastedCoffee=2;
+  action(r,'a','upgrade',{item:'barn'});
+  assert.equal(capacity(a),620);
 });
 test('advanced workshops unlock recipes and advanced fences keep a daily theft limit',()=>{
   const r=world(), a=r.farms.a;

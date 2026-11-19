@@ -3,6 +3,7 @@ import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './well
 import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
+import {farmRanks} from './progression-levels.mjs';
 export {homesteadSize} from './land.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
 
@@ -13,7 +14,7 @@ export const gameDay = 8 * 60 * 60;
 export const slotLength = 2 * 60 * 60;
 const oldDay = 12 * 60;
 const oldSlot = 180;
-const barnCapacity=[30,55,90,145,220,320,460];
+const barnCapacity=[30,55,90,145,220,320,460,620,820,1080];
 export const visitLimit=farm=>(farm.bag??1)*2;
 export const theftLossLimit=farm=>Math.max(1,3-(farm.fence??0));
 export const gateMinutes=farm=>[30,30,30,45,60][Math.min(farm.fence??0,4)];
@@ -24,16 +25,7 @@ export const avatarOf=value=>Object.hasOwn(avatars,value)?value:'female';
 export const speechRange=110;
 export const speechLifetime=5000;
 export const xpRewards={harvest:4,collect:5,aquaHarvest:6,upgrade:10,order:15,basket:24,workshopOrder:30,journal:8};
-export const farmRanks=[
-  {xp:0,name:'Tân nông'},
-  {xp:25,name:'Người vun trồng'},
-  {xp:70,name:'Nhà nông'},
-  {xp:130,name:'Chủ trang trại'},
-  {xp:350,name:'Bậc thầy canh tác'},
-  {xp:560,name:'Chủ nông trại lớn'},
-  {xp:1250,name:'Nông gia lão luyện'},
-  {xp:2200,name:'Nông gia xuất sắc'},
-];
+export {farmRanks};
 export const soilIdleTime = gameDay;
 const postRainTime = 20 * 60;
 export const weather = [
@@ -52,6 +44,10 @@ export const goods = {
   strawberrySeed:{name:'Giống dâu chất lượng cao',icon:'🍓',buy:38}, grapeSeed:{name:'Giống nho chất lượng cao',icon:'🍇',buy:55},
   teaSeed:{name:'Giống trà thượng hạng',icon:'🍵',buy:72},
   truffleSeed:{name:'Giống nấm truffle',icon:'🍄',buy:180},
+  coffeeSeed:{name:'Giống cà phê',icon:'☕',buy:95},
+  lotusSeed:{name:'Giống sen',icon:'🪷',buy:125},
+  dragonfruitSeed:{name:'Giống thanh long',icon:'🐉',buy:160},
+  blackRiceSeed:{name:'Giống nếp cẩm',icon:'🌾',buy:210},
   sweetPotatoSeed:{name:'Giống khoai lang',icon:'🍠',buy:16},
   pumpkinSeed:{name:'Giống bí đỏ',icon:'🎃',buy:27},
   peanutSeed:{name:'Giống đậu phộng',icon:'🥜',buy:35},
@@ -66,11 +62,17 @@ export const goods = {
   sweetPotato:{name:'Khoai lang',icon:'🍠',sell:12}, pumpkin:{name:'Bí đỏ',icon:'🎃',sell:21},
   peanut:{name:'Đậu phộng',icon:'🥜',sell:29}, gooseEgg:{name:'Trứng ngỗng',icon:'🥚',sell:26},
   rabbitMeat:{name:'Thịt thỏ',icon:'🍖',sell:38},
+  coffee:{name:'Quả cà phê',icon:'🫘',sell:72}, lotus:{name:'Gương sen',icon:'🪷',sell:90}, dragonfruit:{name:'Thanh long',icon:'🐉',sell:125},
+  blackRice:{name:'Nếp cẩm',icon:'🍚',sell:165},
+  quailEgg:{name:'Trứng cút',icon:'🥚',sell:32}, buffaloMilk:{name:'Sữa trâu',icon:'🥛',sell:78},
   bread:{name:'Bánh mì',icon:'🍞'}, carrotJuice:{name:'Nước ép cà rốt',icon:'🥤'}, warmMilk:{name:'Sữa ấm',icon:'🥛'},
   berrySmoothie:{name:'Sinh tố dâu',icon:'🍓'}, grapeJuice:{name:'Nước ép nho',icon:'🍇'}, milkTea:{name:'Trà sữa',icon:'🫖'},
   roastedSweetPotato:{name:'Khoai lang nướng',icon:'🍠'},
   pumpkinSoup:{name:'Súp bí đỏ',icon:'🥣'},
   roastedPeanuts:{name:'Đậu phộng rang',icon:'🥜'},
+  roastedCoffee:{name:'Cà phê rang',icon:'☕',sell:168}, lotusTea:{name:'Trà sen',icon:'🫖',sell:205}, dragonSmoothie:{name:'Sinh tố thanh long',icon:'🥤',sell:245},
+  quailTart:{name:'Bánh trứng cút',icon:'🥧',sell:118}, buffaloCheese:{name:'Phô mai sữa trâu',icon:'🧀',sell:190},
+  blackRicePudding:{name:'Chè nếp cẩm',icon:'🍨',sell:285},
   woolCloth:{name:'Vải len dệt',icon:'🧵',sell:92},
   starchGlue:{name:'Keo tinh bột',icon:'🫙',sell:64},
   insulationMat:{name:'Tấm cách nhiệt',icon:'🧶',sell:245},
@@ -87,6 +89,10 @@ export const crops = {
   sweetPotato:{seed:'sweetPotatoSeed',time:22*60,yield:4,xp:18},
   pumpkin:{seed:'pumpkinSeed',time:40*60,yield:4,xp:60},
   peanut:{seed:'peanutSeed',time:50*60,yield:5,workshop:1,xp:100},
+  coffee:{seed:'coffeeSeed',time:95*60,yield:5,workshop:7,xp:3200,quality:true},
+  lotus:{seed:'lotusSeed',time:115*60,yield:5,workshop:8,xp:5600,quality:true},
+  dragonfruit:{seed:'dragonfruitSeed',time:145*60,yield:6,workshop:9,xp:9600,quality:true},
+  blackRice:{seed:'blackRiceSeed',time:175*60,yield:6,workshop:9,xp:16000,quality:true},
 };
 export const animals = {
   chicken:{name:'Gà mái',icon:'🐔',cost:35, grow:20*60, time:15*60,legacy:70, product:'egg', yield:3, food:1, level:1},
@@ -97,6 +103,8 @@ export const animals = {
   sheep:{name:'Cừu',icon:'🐑',cost:145,grow:70*60,time:50*60,product:'wool',yield:2,food:3,level:3,xp:130},
   goose:{name:'Ngỗng',icon:'🪿',cost:105,grow:50*60,time:30*60,product:'gooseEgg',yield:3,food:2,level:3,xp:100},
   rabbit:{name:'Thỏ',icon:'🐇',cost:110,grow:48*60,time:38*60,product:'rabbitMeat',yield:4,food:2,level:3,xp:160,oneTime:true},
+  quail:{name:'Chim cút',icon:'🐦',cost:320,grow:70*60,time:48*60,product:'quailEgg',yield:4,food:3,level:7,xp:3600},
+  buffalo:{name:'Trâu nước',icon:'🐃',cost:620,grow:105*60,time:68*60,product:'buffaloMilk',yield:3,food:5,level:8,xp:7200},
 };
 const livestockDay=24*60*60;
 const livestockAges=[
@@ -121,6 +129,12 @@ export const recipes={
   berrySmoothie:{level:4,ingredients:{strawberry:2,goatMilk:1},gain:{stamina:40,food:32,water:18}},
   grapeJuice:{level:5,ingredients:{grape:2,carrot:1},gain:{stamina:45,water:55}},
   milkTea:{level:6,ingredients:{tea:1,milk:1},gain:{stamina:55,water:40,food:28}},
+  roastedCoffee:{level:7,ingredients:{coffee:2},gain:{stamina:58,food:18}},
+  quailTart:{level:7,ingredients:{quailEgg:2,wheat:1},gain:{stamina:35,food:58}},
+  lotusTea:{level:8,ingredients:{lotus:2,tea:1},gain:{stamina:52,water:62}},
+  buffaloCheese:{level:8,ingredients:{buffaloMilk:2},gain:{stamina:48,food:62}},
+  dragonSmoothie:{level:9,ingredients:{dragonfruit:2,buffaloMilk:1},gain:{stamina:62,water:48,food:32}},
+  blackRicePudding:{level:9,ingredients:{blackRice:2,buffaloMilk:1},gain:{stamina:58,food:72}},
   woolCloth:{category:'materials',level:3,ingredients:{wool:2}},
   starchGlue:{category:'materials',level:4,ingredients:{corn:3,wheat:2}},
   insulationMat:{category:'materials',level:5,ingredients:{woolCloth:1,starchGlue:1,tea:1}},
@@ -148,21 +162,22 @@ export function mealRequirement(farm,item,health,now){
   return '';
 }
 export const buildings = {
-  barn:{name:'Kho',icon:'📦',costs:[50,110,320,850,1850,3250],xp:[0,0,420,900,1650,2800],
-    materials:{5:{woolCloth:2},6:{insulationMat:2},7:{insulationMat:4,starchGlue:3}},
+  barn:{name:'Kho',icon:'📦',costs:[50,110,320,850,1850,3250,5200,8600,13800],xp:[0,0,420,900,1650,2800,3600,6800,11200],
+    materials:{5:{woolCloth:2},6:{insulationMat:2},7:{insulationMat:4,starchGlue:3},8:{insulationMat:5,roastedCoffee:2},9:{buffaloCheese:2,lotusTea:2}},
     notes:barnCapacity.map(count=>count+' nông sản')},
-  field:{name:'Ruộng',icon:'🌱',costs:[50,105,380,950,2100],xp:[0,0,470,1000,1850],
-    materials:{5:{starchGlue:2},6:{insulationMat:2}},
-    notes:[6,9,12,15,18,21].map(count=>count+' luống chính')},
-  coop:{name:'Chuồng',icon:'🏡',base:0,costs:[45,80,145,450,1100,2400],xp:[0,0,0,500,1080,1950],
-    materials:{5:{woolCloth:2},6:{insulationMat:2}},
-    notes:['Chưa xây','Tối đa 2 con','Tối đa 4 con · mở bò và lợn · che nắng','Tối đa 6 con','Tối đa 8 con','Tối đa 10 con','Tối đa 12 con']},
+  field:{name:'Ruộng',icon:'🌱',costs:[50,105,380,950,2100,4200,7600,12500],xp:[0,0,470,1000,1850,3200,7000,11200],
+    materials:{5:{starchGlue:2},6:{insulationMat:2},7:{insulationMat:3,roastedCoffee:1},8:{buffaloCheese:2,dragonSmoothie:1}},
+    notes:[6,9,12,15,18,21,24,27,30].map(count=>count+' luống chính')},
+  coop:{name:'Chuồng',icon:'🏡',base:0,costs:[45,80,145,450,1100,2400,4500,7800],xp:[0,0,0,500,1080,1950,3600,7200],
+    materials:{5:{woolCloth:2},6:{insulationMat:2},7:{insulationMat:3,woolCloth:2},8:{insulationMat:5,starchGlue:4}},
+    notes:['Chưa xây','Tối đa 2 con','Tối đa 4 con · mở bò và lợn · che nắng','Tối đa 6 con','Tối đa 8 con','Tối đa 10 con','Tối đa 12 con','Tối đa 14 con · mở chim cút','Tối đa 16 con · mở trâu nước']},
   fence:{name:'Hàng rào',icon:'🪵',base:0,costs:[40,160,450,1000],xp:[0,360,820,1520],
     notes:[0,1,2,3,4].map(fence=>'Mất tối đa '+theftLossLimit({fence})+' món/ngày · đóng cổng '+gateMinutes({fence})+' phút')},
   bag:{name:'Túi ghé vườn',icon:'🎒',costs:[55,110,290,680],xp:[0,0,440,950],
     notes:[1,2,3,4,5].map(bag=>visitLimit({bag})+' lượt/ngày, trong giới hạn của làng')},
-  workshop:{name:'Xưởng máy',icon:'⚙️',base:0,costs:[120,260,520,600,1350,2800],xp:[40,100,180,560,1220,2200],
-    notes:['Chưa xây','Dâu, bánh mì, nước ép cà rốt và khoai lang nướng','Nho, sữa ấm, súp bí đỏ và đậu phộng rang','Trà thượng hạng · truffle cần 350 XP','Sinh tố dâu','Nước ép nho','Trà sữa']},
+  workshop:{name:'Xưởng máy',icon:'⚙️',base:0,costs:[120,260,520,600,1350,2800,4600,7400,11600],xp:[40,100,180,560,1220,2200,3000,5600,9600],
+    materials:{7:{starchGlue:2,woolCloth:1},8:{insulationMat:2,coffee:2},9:{lotus:2,buffaloMilk:1}},
+    notes:['Chưa xây','Dâu, bánh mì, nước ép cà rốt và khoai lang nướng','Nho, sữa ấm, súp bí đỏ và đậu phộng rang','Trà thượng hạng · truffle cần 2.200 XP','Sinh tố dâu','Nước ép nho','Trà sữa','Cà phê rang và bánh trứng cút','Trà sen và phô mai sữa trâu','Sinh tố thanh long']},
 };
 export function buildingUpgrade(farm,key){
   const definition=buildings[key], base=definition.base??1;
@@ -190,7 +205,7 @@ export const xpUnlocks=[
 export function farmProgress(farm){
   const xp=farm.xp??0;
   const rank=farmRanks.findLast(entry=>entry.xp<=xp)??farmRanks[0];
-  return {xp,rank,next:xpUnlocks.find(entry=>entry.xp>xp)??null};
+  return {xp,rank,nextRank:farmRanks.find(entry=>entry.xp>xp)??null,next:xpUnlocks.find(entry=>entry.xp>xp)??null};
 }
 export function cropRequirement(farm,key){
   const crop=crops[key];
@@ -360,6 +375,12 @@ export const workshopFoodOrders=[
   {item:'roastedSweetPotato',title:'Khoai nướng cho gánh chợ'},
   {item:'pumpkinSoup',title:'Súp bí đỏ cho bếp làng'},
   {item:'roastedPeanuts',title:'Đậu phộng rang cho quán trà'},
+  {item:'roastedCoffee',title:'Cà phê rang cho quán sớm'},
+  {item:'quailTart',title:'Bánh trứng cút cho phiên chợ'},
+  {item:'lotusTea',title:'Trà sen cho nhà khách'},
+  {item:'buffaloCheese',title:'Phô mai sữa trâu cho bếp làng'},
+  {item:'dragonSmoothie',title:'Sinh tố thanh long cho hội mùa'},
+  {item:'blackRicePudding',title:'Chè nếp cẩm cho lễ hội làng'},
 ];
 export const varietyOrders=[
   {crop:'sweetPotato',title:'Khoai lang cho quán nướng',items:[{item:'sweetPotato',qty:4}]},
@@ -367,6 +388,12 @@ export const varietyOrders=[
   {crop:'peanut',title:'Đậu phộng cho sạp rang',items:[{item:'peanut',qty:4}]},
   {animal:'goose',title:'Trứng ngỗng cho chợ sáng',items:[{item:'gooseEgg',qty:3}]},
   {animal:'rabbit',title:'Thịt thỏ cho quán làng',items:[{item:'rabbitMeat',qty:3}]},
+  {crop:'coffee',title:'Quả cà phê cho lò rang',items:[{item:'coffee',qty:4}]},
+  {animal:'quail',title:'Trứng cút cho quán bánh',items:[{item:'quailEgg',qty:4}]},
+  {crop:'lotus',title:'Gương sen cho nhà trà',items:[{item:'lotus',qty:4}]},
+  {animal:'buffalo',title:'Sữa trâu cho lò phô mai',items:[{item:'buffaloMilk',qty:3}]},
+  {crop:'dragonfruit',title:'Thanh long cho hội mùa',items:[{item:'dragonfruit',qty:4}]},
+  {crop:'blackRice',title:'Nếp cẩm cho lễ hội mùa',items:[{item:'blackRice',qty:4}]},
 ];
 export const aquaOrders=[
   {title:'Cá lóc cho quán nướng',items:[{item:'snakehead',qty:3}]},
@@ -405,7 +432,11 @@ export function orderList(day,room) {
   const food=workshopFoodOrders[day%workshopFoodOrders.length];
   const recipe=recipes[food.item];
   const ingredients=Object.entries(recipe.ingredients);
-  if(farms.some(farm=>(farm.workshop??0)>=recipe.level&&ingredients.every(([key])=>!has(crops,key)||!cropRequirement(farm,key)))){
+  if(farms.some(farm=>(farm.workshop??0)>=recipe.level&&ingredients.every(([key])=>{
+    const crop=Object.hasOwn(crops,key)&&key;
+    const animal=Object.entries(animals).find(([,info])=>info.product===key)?.[0];
+    return crop?!cropRequirement(farm,crop):animal?!animalRequirement(farm,animal):true;
+  }))){
     const id=2_000_000_000+day, qty=2;
     const value=ingredients.reduce((sum,[key,count])=>sum+goods[key].sell*count,0);
     daily.push({title:food.title,items:[{item:food.item,qty}],category:'workshop',id,slot:id,reward:Math.ceil(value*qty*1.25),xp:xpRewards.basket});

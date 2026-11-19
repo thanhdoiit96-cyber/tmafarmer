@@ -11,7 +11,9 @@ Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vư�
 ## Tiến độ và âm thanh
 
 - XP tích lũy theo vườn. Thu hoạch, thu sản phẩm vật nuôi, giao đơn, xây công trình và hoàn thành Sổ việc hôm nay đều có thưởng XP. Tab **Tổng quan → Tiến độ** hiển thị danh hiệu, cách kiếm XP và các mốc.
-- Các mốc XP dùng để mở điều kiện mua hoặc gieo giống, đón vật nuôi và xây Xưởng máy. Xưởng máy cấp 1, 2 và 3 cần lần lượt 40, 100 và 180 XP. Nấm truffle cần Xưởng máy cấp 3 và 350 XP. XP được giữ khi mở khóa.
+- Cấp nông trại kéo dài từ cấp 1 đến cấp 13, đạt mốc cuối ở 16.000 XP. XP mở khóa giống, vật nuôi, sức chứa và công thức; xu, cấp công trình và vật liệu vẫn là các điều kiện riêng, không thể lên cấp chỉ bằng tích XP.
+- Giai đoạn chuyên canh mở cà phê ở 3.200 XP, chim cút ở 3.600 XP, sen ở 5.600 XP và trâu nước ở 7.200 XP; thanh long và sinh tố cao cấp mở từ 9.600 XP, nếp cẩm mở ở 16.000 XP. Mốc giống cũ được giữ nguyên để không khóa lại vật phẩm người chơi đã mở.
+- Xem [lộ trình cấp độ và nội dung nông trại](docs/GAME_PROGRESSION.md) để biết các mốc, trần công trình và nguyên tắc cân bằng.
 - Nút **Nhạc nền** cho phép chỉnh âm lượng và tắt tiếng. Bản nhạc Vườn sớm lặp khoảng 53 giây, được xuất từ `scripts/compose-vuon-som.py` với NumPy và FFmpeg.
 - Chọn **4 giai đoạn** trên luống hoặc mở chi tiết giống trong chợ để xem hình từng giai đoạn. Cây có thể thu hoạch khi tiến độ đạt 100%.
 
@@ -32,7 +34,7 @@ Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vư�
 
 ## Nhịp chăm sóc, sức khỏe và tài sản
 
-- Vụ mới có thời gian cơ sở 8 phút (lúa mì), 15 phút (cà rốt), 25 phút (bắp). Gà lớn sau 20 phút có thức ăn và cần thêm 15 phút mỗi kỳ trứng, bò 45 phút và 30 phút mỗi kỳ sữa, lợn 60 phút và 40 phút mỗi kỳ tìm nấm truffle. Chuồng chính cấp 2 mở bò và lợn. Thời tiết và chăm sóc tác động vào tốc độ. Vụ đã gieo giữ mốc cũ, vật nuôi đang nuôi hoàn thành kỳ hiện tại rồi chuyển sang thời gian mới.
+- Vụ mới có thời gian cơ sở 8 phút (lúa mì), 15 phút (cà rốt), 25 phút (bắp). Gà lớn sau 20 phút có thức ăn và cần thêm 15 phút mỗi kỳ trứng, bò 45 phút và 30 phút mỗi kỳ sữa, lợn 60 phút và 40 phút mỗi kỳ tìm nấm truffle. Chuồng cấp 7 mở chim cút, cấp 8 mở trâu nước; kho tối đa cấp 10, ruộng cấp 9, chuồng cấp 8 và xưởng máy cấp 9. Thời tiết và chăm sóc tác động vào tốc độ. Vụ đã gieo giữ mốc cũ, vật nuôi đang nuôi hoàn thành kỳ hiện tại rồi chuyển sang thời gian mới.
 - Ô đất trống trong 8 giờ thực sẽ chai và cần **Cuốc đất** trước khi gieo. Ô mới mở và ô vừa thu hoạch có 8 giờ để gieo ngay. Bản đồ vẽ vết nứt trên đất chai, bảng Việc cần làm chỉ đến ô đó. Làng cũ bắt đầu tính thời gian đất trống từ lần đầu mở bản cập nhật.
 - Trong mưa và 20 phút sau mưa, nguy cơ sâu tăng nhanh. Bảng Việc cần làm nhắc trị sâu sớm hơn trong thời gian này. Thuốc còn hiệu lực vẫn ngăn sâu tích lũy.
 - **Chợ làng → Vật tư / Bán nhanh / Sạp làng** đều có tìm theo tên, hỗ trợ gõ tiếng Việt có dấu hoặc không dấu. Ở **Bán nhanh**, chọn **Bán hết** để bán toàn bộ hàng hiện có của riêng mặt hàng đã chọn.

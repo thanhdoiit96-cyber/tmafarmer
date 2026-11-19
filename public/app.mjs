@@ -281,7 +281,8 @@ function itemDescription(item){
 function cropGrowthStrip(kind,currentStage){
   return '<ol class="crop-growth-strip" aria-label="Bốn giai đoạn phát triển">'+cropGrowthLabels[kind].map((label,stage)=>{
     const snap=cropFrame(kind,stage);
-    return '<li'+(stage===currentStage?' aria-current="step"':'')+'><span class="crop-growth-sprite" style="background-image:url('+snap.source+');background-position:'+(-snap.x)+'px '+(-snap.y)+'px" aria-hidden="true"></span><strong>'+label+'</strong></li>';
+    const sprite=snap&&!snap.procedural?'<span class="crop-growth-sprite" style="background-image:url('+snap.source+');background-position:'+(-snap.x)+'px '+(-snap.y)+'px" aria-hidden="true"></span>':'<span class="crop-growth-fallback" aria-hidden="true">'+goods[kind].icon+'</span>';
+    return '<li'+(stage===currentStage?' aria-current="step"':'')+'>'+sprite+'<strong>'+label+'</strong></li>';
   }).join('')+'</ol><p>Thu hoạch khi tiến độ đạt 100%.</p>';
 }
 function stockLock(farm,item){
@@ -766,15 +767,17 @@ function renderRank(me){
     '<ol class="wealth-list">'+rows+'</ol><p class="wealth-rules">Nếu bằng tổng tài sản, vườn có nhiều tiền mặt hơn xếp trước.</p></section>';
 }
 function renderProgress(farm){
-  const {xp,rank,next}=farmProgress(farm);
+  const {xp,rank,nextRank,next}=farmProgress(farm);
   const earn={
     harvest:'Thu hoạch cây',collect:'Thu sản phẩm vật nuôi',aquaHarvest:'Thu hoạch thủy sản',
     upgrade:'Xây hoặc nâng cấp công trình',order:'Giao đơn lẻ',basket:'Giao đơn giỏ hoặc đơn mùa vụ',workshopOrder:'Giao đơn xưởng',journal:'Hoàn thành Sổ việc hôm nay',
   };
   return boardBar('Tiến độ',formatCoins(xp)+' XP')+'<div class="farm-list progress-panel">'+
-    '<article class="xp-summary"><h3>'+rank.name+'</h3><p>XP tích lũy theo vườn để mở giống, vật nuôi và các cấp công trình. XP được giữ sau khi mở khóa. Xu và yêu cầu công trình được tính riêng.</p>'+
-    (next?'<div class="row"><strong>Mốc tiếp theo</strong><span>'+next.xp+' XP</span></div><p>'+escape(next.label)+' · Còn '+formatCoins(next.xp-xp)+' XP</p>'+valueBar(xp,next.xp):
-      '<p><strong>Đã đạt mọi mốc XP.</strong></p>')+'</article>'+
+    '<article class="xp-summary"><h3>Cấp '+rank.level+' · '+rank.name+'</h3><p>XP tích lũy theo vườn để mở giống, vật nuôi và các cấp công trình. XP được giữ sau khi mở khóa. Xu và yêu cầu công trình được tính riêng.</p>'+
+    (nextRank?'<div class="row"><strong>Cấp tiếp theo</strong><span>Cấp '+nextRank.level+' · '+nextRank.xp+' XP</span></div><p>'+escape(nextRank.name)+' · Còn '+formatCoins(nextRank.xp-xp)+' XP</p>'+valueBar(xp,nextRank.xp):
+      '<p><strong>Đã đạt cấp cao nhất.</strong></p>')+
+    (next?'<div class="row"><strong>Mở khóa tiếp theo</strong><span>'+next.xp+' XP</span></div><p>'+escape(next.label)+' · Còn '+formatCoins(next.xp-xp)+' XP</p>'+valueBar(xp,next.xp):
+      '<p><strong>Đã đạt mọi mốc mở khóa.</strong></p>')+'</article>'+
     '<details class="panel-fold" data-panel-fold="xp-milestones"><summary>Mốc mở khóa</summary><ul class="xp-list">'+xpUnlocks.map(entry=>
       '<li><div><strong>'+escape(entry.label)+'</strong>'+(entry.requires?'<small>'+escape(entry.requires)+'</small>':'')+
       (entry.reward?'<small>'+escape(entry.reward)+'</small>':'')+'</div><span data-ready="'+(xp>=entry.xp)+'">'+entry.xp+' XP'+(xp>=entry.xp?' ✓':'')+'</span></li>').join('')+'</ul></details>'+

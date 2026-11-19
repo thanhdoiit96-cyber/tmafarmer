@@ -1,5 +1,5 @@
 import {cropStage} from '../game.mjs';
-import {cropStagesAtlas,pixelSlice,pixelViewport} from './frames.mjs';
+import {cropStagesAtlas,pixelSlice,pixelViewport,progressionCropAtlas} from './frames.mjs';
 import {size} from '../world-layout.mjs';
 
 const unit=size.width/pixelViewport.width;
@@ -18,22 +18,31 @@ export const cropGrowthLabels={
   sweetPotato:['Mầm non','Xòe lá','Dây ra hoa','Củ lớn'],
   pumpkin:['Mầm non','Dây leo','Nở hoa','Bí chín'],
   peanut:['Mầm non','Cây non','Ra hoa','Quả già'],
+  coffee:['Mầm cà phê','Lá non','Ra quả xanh','Quả chín'],
+  lotus:['Mầm sen','Lá nổi','Nụ sen','Gương sen'],
+  dragonfruit:['Mầm thanh long','Thân leo','Nụ hoa','Quả chín'],
+  blackRice:['Mầm nếp cẩm','Lá non','Trổ bông tím','Bông chín'],
 };
 export function cropFrame(kind,stage){
   const original=Object.hasOwn(pixelSlice.crops,kind);
-  const source=original?pixelSlice.source:cropStagesAtlas.source;
-  const {cell,crops}=original?pixelSlice:cropStagesAtlas;
-  if(!Object.hasOwn(crops,kind))return null;
+  const progression=Object.hasOwn(progressionCropAtlas.crops,kind);
+  const atlas=original?pixelSlice:progression?progressionCropAtlas:cropStagesAtlas;
+  const source=atlas.source;
+  const {cell,crops}=atlas;
+  if(!Object.hasOwn(crops,kind))return cropGrowthLabels[kind]?{
+    procedural:true,source:'',x:0,y:0,bounds:[[16,26,32,40],[12,19,36,40],[8,11,40,40],[4,5,44,40]][stage],
+  }:null;
   const crop=crops[kind];
-  return {source,x:(original?crops.x:0)+stage*(cell??crops.cell),y:crop.y,bounds:crop.bounds[stage]};
+  return {source,x:(original?crops.x:0)+stage*(cell??crops.cell),y:original?crop.y:progression?crop.row*cell:crop.y,bounds:crop.bounds[stage]};
 }
 export function cropPlacement({x,y,data,visit}){
   if(!data||!Object.hasOwn(cropGrowthLabels,data.kind))return null;
   const stage=visit?(data.stage??(data.ripe?3:2)):cropStage(data);
   const frame=cropFrame(data.kind,stage);
+  if(!frame)return null;
   const [left,top,right,bottom]=frame.bounds;
   const w=right-left,h=bottom-top;
-  return {source:frame.source,sx:frame.x+left,sy:frame.y+top,w,h,
+  return {source:frame.source,procedural:frame.procedural,sx:frame.x+left,sy:frame.y+top,w,h,
     x:snap(x-w*unit/2),y:snap(y+6-h*unit),width:w*unit,height:h*unit};
 }
 

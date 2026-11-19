@@ -133,3 +133,10 @@ Bản mở rộng dùng nguồn [garden-decor-expansion-source.png](assets/garde
 ## Cô Lan
 
 Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) được xuất thành atlas 192 × 256 px, gồm 16 ô 48 × 64. Mỗi hướng có một dáng đứng, hai dáng sải chân và một dáng cúi làm việc. Chân các khung căn ở hàng 60. Bình tưới, giỏ thu hoạch và hạt hiệu ứng được vẽ riêng trên Canvas theo từng công việc.
+
+## Progression art atlas 2026
+
+- Added authored four-stage RGBA sprites for coffee, lotus, dragon fruit and black rice to `public/pixel/progression-crops-v1.png` (192 x 192, 48-pixel cells), with 4x nearest-neighbor source at `docs/assets/progression-crops-v1-source.png`.
+- Added distinct quail and water buffalo sprites to `public/pixel/progression-livestock-v1.png` (112 x 48, 56 x 48 cells), with 4x source at `docs/assets/progression-livestock-v1-source.png`.
+- Atlas frame metadata and per-stage bounds live in `public/pixel/frames.mjs`; runtime selects these frames instead of procedural crop art or recolored chicken/cow sprites.
+- Regenerate both atlases with `npm run pixel:progression-art`; the progression checker verifies PNG dimensions, RGBA alpha, frame coverage, unlock data, and upgrade table consistency.

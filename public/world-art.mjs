@@ -4,7 +4,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -24,6 +24,8 @@ const maleWalk=load(maleCharacter.walk);
 const pixelObjects=load(pixelSlice.source);
 const moreCropArt=load(cropStagesAtlas.source);
 const livestockArt=load(livestockAtlas.source);
+const progressionLivestockArt=load(progressionLivestockAtlas.source);
+const progressionCropArt=load(progressionCropAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
 const gardenHelperArt=load(gardenHelperAtlas.source);
@@ -598,7 +600,7 @@ function plot(c,a,t,state,paintCrops=true){
   const {x,y,data,index,visit}=a;
   const wet=data&&!visit&&(data.wetUntil>state.now||state.weather.wet);
   const compact=!data&&a.compactAt<=state.now;
-  const fraction=visit?(data?.ripe?1:.50):data?data.progress/cropGoal(data):0;
+  const fraction=visit?(data?.stage??(data?.ripe?3:2))/3:data?data.progress/cropGoal(data):0;
   const ripe=fraction>=1;
   shade(c,x,y+9,27,5);
   box(c,wet?'#674730':'#775433',x-23,y-13,46,25,4);
@@ -647,6 +649,18 @@ function plot(c,a,t,state,paintCrops=true){
         ellipse(c,'#d85355',px+sway-1,py-grow*.48,1.5,2);ellipse(c,'#ee7770',px+sway+1.5,py-grow*.62,1.4,1.8);
       } else if(data.kind==='grape'){
         for(let n=0;n<5;n++)ellipse(c,n%2?'#79548d':'#9670a5',px+sway+(n%2)*1.5,py-grow*.72+n*.75,1.25,1.25);
+      } else if(data.kind==='coffee'){
+        ellipse(c,fraction>.86?'#c54d3e':'#6d9b55',px+sway-1.3,py-grow*.55,1.35,1.7);
+        ellipse(c,fraction>.86?'#e8754e':'#8bb868',px+sway+1.1,py-grow*.67,1.2,1.6);
+      } else if(data.kind==='lotus'){
+        ellipse(c,'#7f9f57',px+sway,py-grow*.58,3.1,1.1,-.15);
+        if(fraction>.86){ellipse(c,'#e79a9d',px+sway,py-grow,2.1,1.7);ellipse(c,'#ffe0bd',px+sway,py-grow,1,1.2);}
+      } else if(data.kind==='dragonfruit'){
+        ellipse(c,'#537e4e',px+sway,py-grow*.64,2.7,1.1,-.1);
+        if(fraction>.86){ellipse(c,'#d84f72',px+sway,py-grow*.85,1.8,2.1);line(c,'#8eaa61',.65,[[px+sway-1.1,py-grow*1.02],[px+sway-1.8,py-grow*1.28],[px+sway-.5,py-grow*1.14]]);}
+      } else if(data.kind==='blackRice'){
+        ellipse(c,'#675079',px+sway,py-grow,1.35,3.1,sway*.5);
+        ellipse(c,'#b38bb2',px+sway-.5,py-grow-.65,.72,2.2,sway*.5);
       } else {
         ellipse(c,'#66834e',px+sway,py-grow*.65,3.2,1.3,.2);ellipse(c,'#91a766',px+sway,py-grow*.82,2.7,1.1,-.2);
       }
@@ -661,14 +675,15 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
-const animalSizes={chicken:[16,15],duck:[21,17],pig:[35,24],cow:[42,29],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
+const animalSizes={chicken:[16,15],duck:[21,17],quail:[18,16],pig:[35,24],cow:[42,29],buffalo:[47,33],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
 function critter(c,a,t){
   const {data,index=0}=a;
-  const visual=data.kind==='duck'?'chicken':data.kind;
-  const livestockFrame=livestockAtlas.frames[visual];
-  const art=livestockFrame?livestockArt:atlas;
+  const visual={duck:'chicken'}[data.kind]??data.kind;
+  const progressionFrame=progressionLivestockAtlas.frames[visual];
+  const livestockFrame=progressionFrame??livestockAtlas.frames[visual];
+  const art=progressionFrame?progressionLivestockArt:livestockFrame?livestockArt:atlas;
   if(!dim(art))return;
-  const large=visual!=='chicken';
+  const large=!['chicken','duck','quail'].includes(visual);
   const rabbit=visual==='rabbit';
   const motion=animalMotion(t,index,large?11:15,rabbit?'idle':large?'graze':'peck');
   const walking=motion.state==='walk';
@@ -814,8 +829,8 @@ function drawAtlasActor(c,a,t,state){
   }
   if(a.type==='plot'){
     const crop=cropPlacement(a);
-    const source=crop?.source===cropStagesAtlas.source?moreCropArt:pixelObjects;
-    if(crop&&dim(source)){
+    const source=crop?.source===progressionCropAtlas.source?progressionCropArt:crop?.source===cropStagesAtlas.source?moreCropArt:pixelObjects;
+    if(crop&&!crop.procedural&&dim(source)){
       plot(c,a,t,state,false);
       c.drawImage(source,crop.sx,crop.sy,crop.w,crop.h,crop.x,crop.y,crop.width,crop.height);
       return true;

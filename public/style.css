@@ -342,6 +342,7 @@ dialog .music-volume input{grid-column:1/-1;padding:0;accent-color:#376044}
 .crop-growth-strip li[aria-current]{background:#e6eed8;border-color:#79a269}
 .crop-growth-strip strong{font-size:10px}
 .crop-growth-sprite{display:block;width:48px;height:48px;margin:2px 0 4px;background-repeat:no-repeat;image-rendering:pixelated}
+.crop-growth-fallback{display:grid;place-items:center;width:48px;height:48px;margin:2px 0 4px;font-size:25px}
 @media(max-width:470px){.music-menu span{display:none}.music-menu svg{display:block}}
 @media(max-width:760px){.status-hud{grid-template-columns:1fr;gap:7px}.task-summary{min-height:43px}.status-hud{margin-bottom:9px}}
 @media(max-width:470px){.vital{gap:4px;padding:5px;min-height:43px}.vital-icon{width:23px;height:26px}.vital-icon svg{width:15px;height:15px}.vital-text{font-size:9px}.vital-text strong{font-size:10px}.status-hud{margin-top:-2px}}
