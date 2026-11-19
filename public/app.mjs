@@ -648,14 +648,15 @@ function gardenHelperStatus(farm,now){
   if(job){
     const completed=job.processed-job.skipped;
     const work=job.action==='water'?'tưới cây':'thu hoạch';
-    return '<div class="helper-status" data-helper-active><strong>'+gardenHelperName+' đang '+work+'</strong>'+
+    return '<div class="helper-status" data-helper-active><strong>'+gardenHelperName+' đang '+work+(job.keepSeeds?' · Giữ giống':'')+'</strong>'+
       '<p>Đã làm '+completed+'/'+job.steps.length+' ô'+(job.skipped?' · Bỏ qua '+job.skipped:'')+
       ' · Còn <span data-until="'+job.endsAt+'">'+duration(job.endsAt-now)+'</span></p></div>';
   }
   if(!report)return '';
   const work=report.action==='water'?'tưới':'thu hoạch';
   return '<div class="helper-status" data-helper-report><p>'+gardenHelperName+' đã '+work+' '+report.completed+'/'+report.total+' ô'+
-    (report.produce?' · '+report.produce+' nông sản':'')+(report.refund?' · Hoàn '+report.refund+' xu':'')+'</p></div>';
+    (report.produce?' · '+report.produce+' nông sản':'')+(report.seeds?' · Giữ '+report.seeds+' giống':'')+
+    (report.refund?' · Hoàn '+report.refund+' xu':'')+'</p></div>';
 }
 function renderTasks(farm,now){
   const shortcuts=Object.entries(gardenHelperActions).map(([action,{label,fee}])=>{
@@ -678,18 +679,23 @@ function showQuickGarden(action){
     const name=lot<0?'Ô '+number:'Vườn ô '+(lot+1)+' · Luống '+number;
     return '<label class="quick-plot"><input type="checkbox" value="'+index+'" data-garden-plot="'+kind+'"><span><strong>'+name+'</strong><small>'+escape(nice(kind))+'</small></span><span data-garden-yield></span></label>';
   }).join('');
+  const harvestOptions=action==='harvest'?'<fieldset class="quick-harvest-options"><legend>Cách thu hoạch</legend>'+
+    '<label><input type="radio" name="source" value="all" data-harvest-mode checked>Thu hết</label>'+
+    '<label><input type="radio" name="source" value="seed" data-harvest-mode>Giữ lại 1 giống/ô</label></fieldset>':'';
   modal(gardenHelperActions[action].label,'<form class="quick-garden-form" data-form="hireGardenHelper" data-operation="'+action+'">'+
-    '<div class="row"><strong>Chọn ô trong vườn</strong>'+btn('Chọn hết','data-quick-all','subtle')+'</div>'+
+    harvestOptions+'<div class="row"><strong>Chọn ô trong vườn</strong>'+btn('Chọn hết','data-quick-all','subtle')+'</div>'+
     '<div class="quick-garden-plots" role="group" aria-label="Các ô có thể chọn">'+rows+'</div>'+
     '<dl class="quick-garden-estimate" aria-live="polite" aria-atomic="true">'+
       '<div><dt>Số ô</dt><dd data-quick-count></dd></div><div><dt>Phí thuê</dt><dd data-quick-cost></dd></div>'+
-      '<div><dt>Thời gian</dt><dd data-quick-duration></dd></div><div><dt>Kho cần / trống</dt><dd data-quick-space></dd></div></dl>'+
+      '<div><dt>Thời gian</dt><dd data-quick-duration></dd></div>'+
+      '<div><dt>Kho cần / trống</dt><dd data-quick-space></dd><small data-quick-seeds></small></div></dl>'+
     '<p data-quick-warning role="status" hidden></p><p id="dialog-error" role="status"></p>'+
     '<button type="submit" class="btn primary" disabled>Xác nhận thuê '+gardenHelperName+'</button></form>');
   updateQuickGarden(dialog.querySelector('.quick-garden-form'));
 }
 function updateQuickGarden(form){
   const {me:farm,weather}=state, action=form.dataset.operation, now=currentTime();
+  const keepSeeds=form.elements.source?.value==='seed';
   const available=new Map(gardenHelperTargets(farm,action,weather,now).map(target=>[target.index,target]));
   const selected=[];
   let stale=false, validCount=0, selectedCount=0;
@@ -704,12 +710,15 @@ function updateQuickGarden(form){
     input.disabled=!valid&&!input.checked;
     const row=input.closest('label');
     row.toggleAttribute('data-unavailable',!valid);
-    row.querySelector('[data-garden-yield]').textContent=!valid?'Đã thay đổi':action==='harvest'?target.space+' món':'';
+    const reserve=valid&&keepSeeds&&target.space>0?1:0;
+    row.querySelector('[data-garden-yield]').textContent=!valid?'Đã thay đổi':action==='harvest'?
+      (target.space-reserve)+' món'+(reserve?' + 1 giống':''):'';
   }
-  const estimate=gardenHelperPreview(farm,action,selected);
-  const {cost,space,free,blocked}=estimate;
+  const estimate=gardenHelperPreview(farm,action,selected,keepSeeds);
+  const {cost,space,seeds,free,blocked}=estimate;
   const warning=stale?'Có ô đã thay đổi. Bỏ chọn ô đó để tiếp tục.':blocked;
-  const estimates={count:selectedCount,cost:stale?'—':cost+' xu',duration:stale?'—':duration(estimate.duration),space:stale?'—':space+' / '+free};
+  const estimates={count:selectedCount,cost:stale?'—':cost+' xu',duration:stale?'—':duration(estimate.duration),
+    space:stale?'—':space+' / '+free,seeds:keepSeeds&&!stale?'Giữ '+seeds+' giống':''};
   for(const [key,value] of Object.entries(estimates)){
     const output=form.querySelector('[data-quick-'+key+']');
     if(output.textContent!==String(value))output.textContent=value;
@@ -1599,7 +1608,7 @@ dialog.addEventListener('input',event=>{
   if(event.target.id==='buy-quantity')updateBuyTotal(event.target);
 });
 dialog.addEventListener('change',event=>{
-  if(!event.target.matches('[data-garden-plot]'))return;
+  if(!event.target.matches('[data-garden-plot],[data-harvest-mode]'))return;
   const form=event.target.form;
   form.querySelector('#dialog-error').textContent='';
   updateQuickGarden(form);
@@ -1666,7 +1675,9 @@ dialog.addEventListener('submit',async e=>{
     if(!ready)return;
     button.disabled=true;
     const operation=form.dataset.operation;
-    const worked=await perform({action:'hireGardenHelper',item:operation,plots,expectedSpace:space});
+    const request={action:'hireGardenHelper',item:operation,plots,expectedSpace:space};
+    if(operation==='harvest')request.source=values.source;
+    const worked=await perform(request);
     if(worked&&form.isConnected){
       dialog.close();
       const trigger=panelBody.querySelector('[data-quick-garden="'+operation+'"]:enabled')??$('#task-hud button');

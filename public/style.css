@@ -262,6 +262,12 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .helper-status{padding:6px 8px;margin:5px 0;background:#efe5f0;border:1px solid #e0ccde;border-radius:8px;color:#533950;font-size:11px}
 .helper-status p{margin:1px 0 0}
 .quick-garden-form{margin-top:9px}
+.quick-harvest-options{display:grid;grid-template-columns:1fr 1fr;gap:5px;border:0;margin:0 0 6px;padding:0;min-width:0}
+.quick-harvest-options legend{font-size:11px;font-weight:700;color:#30533b;margin-bottom:3px;padding:0}
+.quick-garden-form .quick-harvest-options label{display:flex;align-items:center;gap:6px;min-height:34px;margin:0;padding:4px 7px;border:1px solid #ded5bd;border-radius:8px;background:#fffcf2;cursor:pointer}
+.quick-harvest-options label:has(input:checked){border-color:#78916b;background:#eef2e3}
+.quick-harvest-options input{width:16px;height:16px;padding:0;margin:0;flex:none;accent-color:#315b43}
+.quick-garden-estimate [data-quick-seeds]{display:block;font-size:10px;font-weight:700}
 .quick-garden-form>.row{gap:6px}
 .quick-garden-form>.row>.btn{min-height:34px}
 .quick-garden-plots{display:grid;gap:4px;max-height:min(36dvh,18rem);margin:6px 0;overflow:auto;overscroll-behavior:contain}

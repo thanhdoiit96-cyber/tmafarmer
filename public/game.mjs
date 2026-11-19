@@ -549,33 +549,48 @@ export function gardenHelperTargets(farm,action,weather,time){
   });
 }
 
-export function gardenHelperPreview(farm,action,targets){
+export function gardenHelperPreview(farm,action,targets,keepSeeds=false){
   const count=targets.length;
   const cost=count*gardenHelperActions[action].fee;
-  const space=targets.reduce((total,target)=>total+target.space,0);
+  const seedNeeds=new Map();
+  let seeds=0, space=0;
+  for(const target of targets){
+    const reserve=keepSeeds&&action==='harvest'&&target.space>0?1:0;
+    space+=target.space-reserve;
+    if(reserve){
+      const seed=crops[target.kind].seed;
+      seedNeeds.set(seed,(seedNeeds.get(seed)??0)+1);
+      seeds++;
+    }
+  }
+  const fullSeed=[...seedNeeds].find(([seed,amount])=>own(farm,seed)+amount>supplyLimit)?.[0];
   const free=Math.max(0,capacity(farm)-stock(farm));
   const blocked=farm.gardenHelperJob?gardenHelperName+' đang làm một lượt khác.':
     count>gardenHelperLimit?'Chọn tối đa '+gardenHelperLimit+' ô mỗi lượt.':
     cost>farm.coins?'Bạn chưa đủ xu thuê người.':
+    keepSeeds&&action==='harvest'&&seeds<count?'Có ô không còn nông sản để giữ giống.':
+    fullSeed?'Túi không đủ chỗ cho '+goods[fullSeed].name.toLowerCase()+'. Hãy chọn ít ô hơn hoặc Thu hết.':
     space>free?'Kho thiếu '+(space-free)+' chỗ. Hãy giảm số ô hoặc dọn kho.':'';
   const {endsAt:duration}=gardenHelperSchedule(action,targets.map(target=>target.index),0);
-  return {cost,space,free,duration,blocked};
+  return {cost,space,seeds,free,duration,blocked};
 }
 
 function hireGardenHelper(room,farm,input,time){
   check(!farm.gardenHelperJob,gardenHelperName+' đang làm một lượt khác.');
-  const {item:action,plots:indexes}=input;
+  const {item:action,plots:indexes,source}=input;
   check(has(gardenHelperActions,action)&&Array.isArray(indexes)&&indexes.length>0&&indexes.length<=gardenHelperLimit,
     'Hãy chọn từ 1 đến '+gardenHelperLimit+' ô và công việc cần làm.');
+  check(source===undefined||action==='harvest'&&(source==='seed'||source==='all'),'Cách thu hoạch không hợp lệ.');
+  const keepSeeds=source==='seed';
   const valid=new Set(cropIndexes(farm)), weather=weatherAt(room,time);
   check(new Set(indexes).size===indexes.length&&indexes.every(index=>valid.has(index)),
     'Danh sách có ô trùng hoặc không thuộc vườn của bạn.');
   const targets=indexes.map(index=>{
     const raw=plotAt(farm,index), plot=projectPlot(room,raw,time);
     check(!plotWorkBlock(action,plot,weather,time),'Có ô đã thay đổi hoặc không còn phù hợp. Hãy kiểm tra lại lựa chọn.');
-    return {index,raw,space:action==='harvest'?harvestAmount(plot):0};
+    return {index,raw,kind:plot.kind,space:action==='harvest'?harvestAmount(plot):0};
   });
-  const preview=gardenHelperPreview(farm,action,targets);
+  const preview=gardenHelperPreview(farm,action,targets,keepSeeds);
   check(input.expectedSpace===preview.space,'Sản lượng đã thay đổi. Hãy xem lại số chỗ kho cần dùng.');
   check(!preview.blocked,preview.blocked);
   spend(farm,preview.cost);
@@ -585,7 +600,7 @@ function hireGardenHelper(room,farm,input,time){
     plot.plantedAt??=plot.at;
     return {...step,kind:plot.kind,plantedAt:plot.plantedAt};
   });
-  farm.gardenHelperJob={...schedule,action,steps,processed:0,skipped:0,produce:0,refund:0};
+  farm.gardenHelperJob={...schedule,action,keepSeeds,steps,processed:0,skipped:0,produce:0,seeds:0,refund:0};
   delete farm.gardenHelperReport;
   return 'Đã thuê '+gardenHelperName+' làm '+steps.length+' ô · '+preview.cost+' xu.';
 }
@@ -608,13 +623,16 @@ export function advanceGardenHelpers(room,time){
     const job=farm.gardenHelperJob;
     if(!job)continue;
     const {action,steps}=job;
+    const reserve=action==='harvest'&&job.keepSeeds?1:0;
     while(steps[job.processed]?.doneAt<=time){
       const {index,kind,plantedAt,doneAt}=steps[job.processed++];
       changed=true;
       const raw=plotAt(farm,index);
       const plot=raw?.kind===kind&&raw.plantedAt===plantedAt?projectPlot(room,raw,doneAt):null;
-      const space=plot&&action==='harvest'?harvestAmount(plot):0;
-      if(plotWorkBlock(action,plot,weatherAt(room,doneAt),doneAt)||space>0&&stock(farm)+space>capacity(farm)){
+      const amount=plot&&action==='harvest'?harvestAmount(plot):0;
+      const space=amount-reserve;
+      const noSeedSpace=plot&&reserve&&(amount<1||own(farm,crops[plot.kind].seed)>=supplyLimit);
+      if(plotWorkBlock(action,plot,weatherAt(room,doneAt),doneAt)||noSeedSpace||space>0&&stock(farm)+space>capacity(farm)){
         const refund=gardenHelperActions[action].fee;
         job.skipped++;
         job.refund+=refund;
@@ -623,17 +641,18 @@ export function advanceGardenHelpers(room,time){
       }
       if(action==='water')waterPlot(farm,index,plot,doneAt);
       else{
-        harvestPlot(farm,index,plot,doneAt,space);
+        harvestPlot(farm,index,plot,doneAt,amount,reserve);
         job.produce+=space;
+        job.seeds=(job.seeds??0)+reserve;
       }
       markDayGoal(farm,action,dayAt(room,doneAt));
     }
     if(job.processed!==steps.length)continue;
-    const {skipped,produce,refund,endsAt}=job;
+    const {skipped,produce,seeds=0,refund,endsAt}=job;
     const completed=steps.length-skipped;
-    farm.gardenHelperReport={action,completed,total:steps.length,skipped,produce,refund};
+    farm.gardenHelperReport={action,completed,total:steps.length,skipped,produce,seeds,refund};
     record(farm,endsAt,gardenHelperName+' đã '+(action==='water'?'tưới':'thu hoạch')+' '+completed+'/'+steps.length+' ô'+
-      (produce?' · '+produce+' nông sản':'')+(refund?' · hoàn '+refund+' xu':'')+'.');
+      (produce?' · '+produce+' nông sản':'')+(seeds?' · giữ '+seeds+' giống':'')+(refund?' · hoàn '+refund+' xu':'')+'.');
     delete farm.gardenHelperJob;
   }
   return changed;
