@@ -73,7 +73,7 @@ export function createWorld(root, onInteract, landscape) {
   function shiftCamera(immediate=false){
     const anchor=(sceneId==='field'||sceneId==='visit') ? .87 : .71;
     const horizontalInset=view.width*.22;
-    const upperInset=view.height*(anchor-.12),lowerInset=view.height*(anchor+.12);
+    const upperInset=view.height*(anchor-.12),lowerInset=view.height*Math.min(anchor+.12,.83);
     let left=camera.x,top=camera.y;
     if(immediate) {
       left=x-view.width*.5;

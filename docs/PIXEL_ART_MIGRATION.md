@@ -47,7 +47,7 @@ Trạng thái:
 ## Nhịp di chuyển và hướng sprite
 
 - Nhân vật có bốn khung toàn thân cho mỗi hướng đi, gồm hai tư thế chạm gót và hai tư thế chuyển chân. Canvas vẽ nguyên khung với cùng kích thước ô và mốc chân; nhịp đi tính theo quãng đường. Người chơi, người cùng khu và NPC dùng cùng bộ bước.
-- Camera dùng vùng an toàn ở giữa khung hình và chỉ cuộn khi nhân vật ra khỏi vùng này. Cảnh mới và đổi kích thước khung hình căn ngay lập tức; vị trí camera tiếp tục được snap theo lưới raster để tránh rung/mờ pixel.
+- Camera dùng vùng an toàn ở giữa khung hình và chỉ cuộn khi nhân vật ra khỏi vùng này; ngưỡng đi xuống được chặn ở 83% chiều cao để camera theo kịp trước khi nhân vật sát mép dưới. Cảnh mới và đổi kích thước khung hình căn ngay lập tức; vị trí camera tiếp tục được snap theo lưới raster để tránh rung/mờ pixel.
 - Mẫu bước đi theo thiết kế nón lá, khăn xanh và áo nâu ở `docs/assets/farmer-walk-v4-source.png`. Lệnh `python3 scripts/normalize-pixel-hd.py` xuất atlas `public/pixel/farmer-walk-v4.png` theo bốn hướng, dùng chung tỷ lệ và mốc chân (ô `48 × 64`).
 - Gà bước, dừng và mổ theo trạng thái. Các khung đứng/đi trong atlas quay trái, khung mổ quay phải. Hướng gốc khai báo riêng cho từng trạng thái; chân bám mốc đất của nhóm khung.
 - Vật nuôi dùng các nhịp đi và nghỉ ngắn theo từng con. Bò, lợn và các vật nuôi dùng atlas cũ luân phiên nhấc chân khi đi và cúi khi ăn. Thao tác cuốc chạy từ khung đầu, các công cụ tưới, thu hoạch và câu cá vẽ theo hành động.
