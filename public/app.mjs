@@ -1589,17 +1589,25 @@ document.addEventListener('click',async e=>{
     backToDemo();
   } else if('action' in d) {
     const input={action:d.action,item:d.item||''};
-    if(d.index) input.index=Number(d.index);
+    if(d.index!==undefined) input.index=Number(d.index);
     if(d.qty) input.qty=Number(d.qty);
     if(d.target)input.target=d.target;
     if(d.source)input.source=d.source;
     const fishing=input.action==='cast'||input.action==='reel';
-    if(fishing||plotWorkActions.has(input.action)){
+    const livestock=input.action==='feed'||input.action==='collect';
+    const aquaculture=input.action==='aquaFeed'||input.action==='aquaHarvest';
+    if(fishing||plotWorkActions.has(input.action)||livestock||aquaculture){
       if(busy)return;
       const cast=state.me.fishing.cast;
-      const type=fishing?((input.source??cast?.source)==='public'?'public-fishing':'neighbor-fishing'):'plot';
+      const type=fishing
+        ?((input.source??cast?.source)==='public'?'public-fishing':'neighbor-fishing')
+        :livestock?'animal':aquaculture?'pond':'plot';
       const started=world.approach(type,input.index??(fishing?cast?.index:undefined),()=>{void perform(input);});
-      if(!started)showToast(fishing?'Hãy đến cầu câu để dùng cần.':'Chưa tìm được đường tới ô đất.',true);
+      if(!started)showToast(
+        fishing?'Hãy đến cầu câu để dùng cần.':
+        livestock?'Chưa tìm được đường tới chuồng hoặc vật nuôi.':
+        aquaculture?'Chưa tìm được đường tới ao nuôi.':
+        'Chưa tìm được đường tới ô đất.',true);
       else if(landscape.matches||matchMedia('(max-width: 860px)').matches)reveal('#world');
       return;
     }
