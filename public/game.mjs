@@ -1,6 +1,6 @@
 import {addVillageIncome,advanceVillage,contributeVillage,hasVillageProject,recordVillageTheft,startVillageSecurity,villageLevels,villageSnapshot,villageTheftsLeft} from './village.mjs';
 import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
-import {coopCapacity,cropIndexes,fenceAt,fences,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
+import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 export {homesteadSize} from './land.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
@@ -66,6 +66,9 @@ export const goods = {
   rabbitMeat:{name:'Thịt thỏ',icon:'🍖',sell:38},
   bread:{name:'Bánh mì',icon:'🍞'}, carrotJuice:{name:'Nước ép cà rốt',icon:'🥤'}, warmMilk:{name:'Sữa ấm',icon:'🥛'},
   berrySmoothie:{name:'Sinh tố dâu',icon:'🍓'}, grapeJuice:{name:'Nước ép nho',icon:'🍇'}, milkTea:{name:'Trà sữa',icon:'🫖'},
+  roastedSweetPotato:{name:'Khoai lang nướng',icon:'🍠'},
+  pumpkinSoup:{name:'Súp bí đỏ',icon:'🥣'},
+  roastedPeanuts:{name:'Đậu phộng rang',icon:'🥜'},
   woolCloth:{name:'Vải len dệt',icon:'🧵',sell:92},
   starchGlue:{name:'Keo tinh bột',icon:'🫙',sell:64},
   insulationMat:{name:'Tấm cách nhiệt',icon:'🧶',sell:245},
@@ -109,7 +112,10 @@ export function animalCondition(pen,now){
 export const recipes={
   bread:{level:1,ingredients:{wheat:2},gain:{stamina:22,food:28}},
   carrotJuice:{level:1,ingredients:{carrot:2},gain:{stamina:18,water:32}},
+  roastedSweetPotato:{level:1,ingredients:{sweetPotato:2},gain:{stamina:26,food:32}},
   warmMilk:{level:2,ingredients:{milk:1},gain:{stamina:32,food:18}},
+  pumpkinSoup:{level:2,ingredients:{pumpkin:2,milk:1},gain:{stamina:30,water:32,food:24}},
+  roastedPeanuts:{level:2,ingredients:{peanut:2},gain:{stamina:18,food:50}},
   berrySmoothie:{level:4,ingredients:{strawberry:2,goatMilk:1},gain:{stamina:40,food:32,water:18}},
   grapeJuice:{level:5,ingredients:{grape:2,carrot:1},gain:{stamina:45,water:55}},
   milkTea:{level:6,ingredients:{tea:1,milk:1},gain:{stamina:55,water:40,food:28}},
@@ -154,7 +160,7 @@ export const buildings = {
   bag:{name:'Túi ghé vườn',icon:'🎒',costs:[55,110,290,680],xp:[0,0,440,950],
     notes:[1,2,3,4,5].map(bag=>visitLimit({bag})+' lượt/ngày, trong giới hạn của làng')},
   workshop:{name:'Xưởng máy',icon:'⚙️',base:0,costs:[120,260,520,600,1350,2800],xp:[40,100,180,560,1220,2200],
-    notes:['Chưa xây','Dâu, bánh mì và nước ép cà rốt','Nho và sữa ấm','Trà thượng hạng · truffle cần 350 XP','Sinh tố dâu','Nước ép nho','Trà sữa']},
+    notes:['Chưa xây','Dâu, bánh mì, nước ép cà rốt và khoai lang nướng','Nho, sữa ấm, súp bí đỏ và đậu phộng rang','Trà thượng hạng · truffle cần 350 XP','Sinh tố dâu','Nước ép nho','Trà sữa']},
 };
 export function buildingUpgrade(farm,key){
   const definition=buildings[key], base=definition.base??1;
@@ -348,6 +354,11 @@ const workshopOrders=[
   {title:'Keo cho thợ mộc',items:[{item:'starchGlue',qty:3},{item:'corn',qty:1}]},
   {title:'Tấm cách nhiệt cho kho làng',items:[{item:'insulationMat',qty:2},{item:'milk',qty:2}]},
 ];
+export const workshopFoodOrders=[
+  {item:'roastedSweetPotato',title:'Khoai nướng cho gánh chợ'},
+  {item:'pumpkinSoup',title:'Súp bí đỏ cho bếp làng'},
+  {item:'roastedPeanuts',title:'Đậu phộng rang cho quán trà'},
+];
 export const varietyOrders=[
   {crop:'sweetPotato',title:'Khoai lang cho quán nướng',items:[{item:'sweetPotato',qty:4}]},
   {crop:'pumpkin',title:'Bí đỏ cho bếp làng',items:[{item:'pumpkin',qty:3}]},
@@ -379,7 +390,8 @@ export function orderList(day,room) {
     daily[2]={...baskets[Math.floor(day/3)%baskets.length],xp:xpRewards.basket,id:-(day+1),slot:day*3+2};
   }
   const order=workshopOrders[day%workshopOrders.length];
-  const workshopLevel=Math.max(0,...Object.values(room?.farms??{}).map(farm=>farm.workshop??0));
+  const farms=Object.values(room?.farms??{});
+  const workshopLevel=Math.max(0,...farms.map(farm=>farm.workshop??0));
   // Keep the day's template stable when a farm upgrades its workshop.
   const required=order.items.map(({item})=>recipes[item]).filter(recipe=>recipe&&recipeCategory(recipe)!=='food');
   if(required.length&&required.every(recipe=>recipe.level<=workshopLevel)&&order.items.every(({item})=>goods[item]?.sell>0)){
@@ -388,15 +400,23 @@ export function orderList(day,room) {
     const value=order.items.reduce((sum,{item,qty})=>sum+goods[item].sell*qty,0);
     daily.push({...order,category:'workshop',id,slot:id,reward:Math.ceil(value*1.25),xp:xpRewards.workshopOrder});
   }
+  const food=workshopFoodOrders[day%workshopFoodOrders.length];
+  const recipe=recipes[food.item];
+  const ingredients=Object.entries(recipe.ingredients);
+  if(farms.some(farm=>(farm.workshop??0)>=recipe.level&&ingredients.every(([key])=>!has(crops,key)||!cropRequirement(farm,key)))){
+    const id=2_000_000_000+day, qty=2;
+    const value=ingredients.reduce((sum,[key,count])=>sum+goods[key].sell*count,0);
+    daily.push({title:food.title,items:[{item:food.item,qty}],category:'workshop',id,slot:id,reward:Math.ceil(value*qty*1.25),xp:xpRewards.basket});
+  }
   const {crop,animal,title,items}=varietyOrders[day%varietyOrders.length];
-  if(Object.values(room?.farms??{}).some(farm=>crop?!cropRequirement(farm,crop):!animalRequirement(farm,animal))){
+  if(farms.some(farm=>crop?!cropRequirement(farm,crop):!animalRequirement(farm,animal))){
     const id=-(day*3+2);
     const value=items.reduce((sum,{item,qty})=>sum+goods[item].sell*qty,0);
     daily.push({title,items,category:'variety',id,slot:id,reward:Math.ceil(value*1.25),xp:xpRewards.basket});
   }
   const seafood=aquaOrders[day%aquaOrders.length];
   const {item,qty}=seafood.items[0];
-  if(Object.values(room?.farms??{}).some(farm=>!aquaRequirement(farm,item))){
+  if(farms.some(farm=>!aquaRequirement(farm,item))){
     const id=1_000_000_000+day;
     daily.push({...seafood,category:'aquatic',id,slot:id,reward:Math.ceil(goods[item].sell*qty*1.25),xp:xpRewards.basket});
   }
@@ -442,7 +462,7 @@ function villageDriveSnapshot(room,farm,time){
     id:drive.id,title,endsAt:drive.id+driveDuration,completed:drive.completedAt!==undefined,
     items:Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
     minimum:driveMinimum,rewardXp:driveXp,contributors:driveRanking(drive),previous:drive.previous,
-    mine:{quantity:me?.quantity??0,coins:me?.quantity>=driveMinimum?driveReward(me.value):0,paid:!!me?.paid},
+    mine:{quantity:me?.quantity??0,coins:me?.quantity>=driveMinimum?driveReward(me.value):0,paid:!!me?.paid,decorVoucher:!!me?.decorVoucher},
   };
 }
 function donateVillageGoods(room,farm,input,time){
@@ -470,10 +490,12 @@ function donateVillageGoods(room,farm,input,time){
     const coins=driveReward(contribution.value);
     member.coins+=coins;
     member.xp+=driveXp;
+    member.decorVouchers=(member.decorVouchers??0)+1;
+    contribution.decorVoucher=true;
     contribution.paid=true;
-    record(member,time,'Hoàn thành đơn góp hàng · +'+coins+' xu · +'+driveXp+' XP.');
+    record(member,time,'Hoàn thành đơn góp hàng · +'+coins+' xu · +'+driveXp+' XP · +1 phiếu trang trí.');
   }
-  return entry.paid?'Làng đã góp đủ hàng. Bạn nhận '+driveReward(entry.value)+' xu và '+driveXp+' XP.':'Làng đã góp đủ hàng.';
+  return entry.paid?'Làng đã góp đủ hàng. Bạn nhận '+driveReward(entry.value)+' xu, '+driveXp+' XP và 1 phiếu trang trí.':'Làng đã góp đủ hàng.';
 }
 function townOrdersAt(room,day){
   if(room.townOrders?.day===day)return room.townOrders;
@@ -650,7 +672,8 @@ function wealthRanking(room){
     const land=lots.slice(2).reduce((sum,_,i)=>sum+lotPrice(i+2),0);
     const decorations=Object.values(farm.decor??{}).reduce((sum,style)=>sum+(fences[style]?.cost??0),0);
     const livestock=farm.pens.reduce((sum,pen)=>sum+animals[pen.kind].cost,0);
-    const property=specs+extra+land+decorations+livestock;
+    const fixtures=Object.keys(farm.gardenDecor??{}).reduce((sum,item)=>sum+(gardenDecorItems[item]?.cost??0),0);
+    const property=specs+extra+land+decorations+fixtures+livestock;
     return {id:farm.id,name:farm.name,coins:farm.coins,inventory,property,total:farm.coins+inventory+property};
   }).sort((a,b)=>b.total-a.total||b.coins-a.coins||a.id.localeCompare(b.id));
 }
@@ -708,7 +731,8 @@ export function snapshot(room, farm, time) {
         kind:batch.kind,ripe:pondReady(batch),available:canCatch(batch),
       }))]));
       const ponds=Object.fromEntries(Object.entries(pondBatches).map(([i,batches])=>[i,batches.find(batch=>batch.available)??batches[0]??null]));
-      return {ponds,pondBatches,land:getLand(f),decor:f.decor,plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),wealth:wealthByFarm.get(f.id)??0,
+      const gardenDecor=Object.fromEntries(Object.entries(f.gardenDecor??{}).filter(([,spot])=>spot!==null));
+      return {ponds,pondBatches,land:getLand(f),decor:f.decor,gardenDecor,plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),wealth:wealthByFarm.get(f.id)??0,
         visiblePens:f.pens.map(p=>{
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
@@ -831,6 +855,29 @@ function applyAction(room,id,input,now,catchRoll){
     use(farm,item,qty);
     add(farm,seed,qty);
     return 'Đã giữ '+qty+' '+goods[seed].name.toLowerCase()+' để gieo lại.';
+  }
+  if(action==='placeGardenDecor'||action==='stowGardenDecor'){
+    check(has(gardenDecorItems,item),'Món trang trí không tồn tại.');
+    const owned=farm.gardenDecor??{};
+    const name=gardenDecorItems[item].name.toLowerCase();
+    if(action==='stowGardenDecor'){
+      check(owned[item],'Món này chưa được đặt trong vườn.');
+      owned[item]=null;
+      return 'Đã cất '+name+'.';
+    }
+    check(has(gardenDecorSpots,target),'Vị trí trang trí không hợp lệ.');
+    check(!gardenDecorAt(farm,target),'Vị trí này đã có món trang trí.');
+    if(!has(owned,item)){
+      check(source==='coins'||source==='voucher','Hãy chọn cách thanh toán.');
+      if(source==='coins')spend(farm,gardenDecorItems[item].cost);
+      else{
+        check((farm.decorVouchers??0)>0,'Bạn chưa có phiếu trang trí.');
+        farm.decorVouchers--;
+      }
+    }
+    owned[item]=target;
+    farm.gardenDecor=owned;
+    return 'Đã đặt '+name+' ở '+gardenDecorSpots[target].name.toLowerCase()+'.';
   }
   if(action==='buyLand'||action==='buildLand'||action==='decorate'){
     const land=getLand(farm);

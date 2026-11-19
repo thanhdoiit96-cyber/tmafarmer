@@ -42,3 +42,14 @@ export const aquaticAtlas={
   source:'/pixel/aquatic-v1.png',
   frames:{snakehead:[0,0,56,40],catfish:[56,0,56,40],fieldCrab:[112,0,56,40]},
 };
+export const gardenDecorAtlas={
+  source:'/pixel/garden-decor-v2.png',width:728,cellWidth:56,cellHeight:48,
+  frames:{
+    flowerPot:[0,0,56,48],bambooLamp:[56,0,56,48],gardenSign:[112,0,56,48],
+    bambooBench:[168,0,56,48],wheelbarrow:[224,0,56,48],waterJar:[280,0,56,48],
+    scarecrow:[336,0,56,48],lotusPot:[392,0,56,48],windChime:[448,0,56,48],
+    flowerArch:[504,0,56,48],wickerBasket:[560,0,56,48],hayBale:[616,0,56,48],birdFeeder:[672,0,56,48],
+  },
+  lampCenter:{x:35,y:24},
+  signLabel:{x:28,y:24,maxWidth:42},
+};

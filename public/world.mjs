@@ -5,7 +5,7 @@ import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawFishing,drawGardenDecor, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -354,6 +354,7 @@ export function createWorld(root, onInteract, landscape) {
         context.fillStyle='#254438d9';context.beginPath();context.roundRect(a.x-width*.5,labelY,width,9,2);context.fill();
         context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
+      else if(a.type==='garden-decor')drawGardenDecor(context,a,daylight);
       else if(a.type==='plot'&&a.index===posePlot&&pose==='plant'&&!reduce.matches&&now-poseStarted<380)
         actor(context,{...a,data:null},ambient,snapshot);
       else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);

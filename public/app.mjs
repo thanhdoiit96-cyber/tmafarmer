@@ -1,15 +1,15 @@
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
-import {coopCapacity,fenceAt,fences,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
+import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
 import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
-import {aquaticAtlas,livestockAtlas} from './pixel/frames.mjs';
+import {aquaticAtlas,gardenDecorAtlas,livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, quickGardenActions, quickGardenPreview, quickGardenTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, quickGardenActions, quickGardenPreview, quickGardenTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -218,7 +218,9 @@ function renderWorkshop(farm){
   const tabs='<div class="workshop-tabs" role="group" aria-label="Nhóm chế biến">'+Object.entries(workshopTabs).map(([key,label])=>
     btn(label,'data-workshop-tab="'+key+'" aria-pressed="'+(workshopTab===key)+'"',workshopTab===key?'primary':'subtle')).join('')+'</div>';
   const available=Object.entries(recipes).filter(([,recipe])=>recipeCategory(recipe)===workshopTab);
-  const heading=boardBar('Xưởng máy','⚙️ Cấp '+farm.workshop)+tabs;
+  const orders=state.orders.some(order=>order.category==='workshop')?
+    '<div class="actions">'+btn('Đơn Xưởng','data-panel="orders"','subtle')+'</div>':'';
+  const heading=boardBar('Xưởng máy','⚙️ Cấp '+farm.workshop)+tabs+orders;
   if(!available.length)return heading+'<p class="workshop-empty">Công cụ sẽ được triển khai sau.</p>';
   return heading+'<div class="farm-list card-grid">'+available.map(([item,recipe])=>{
     const locked=craftRequirement(farm,item), owned=farm.inventory[item]??0;
@@ -242,7 +244,9 @@ function describeItem(item){
   if(recipe){
     const upgrades=Object.values(buildings).flatMap(building=>Object.entries(building.materials??{}).
       filter(([,items])=>items[item]).map(([level,items])=>building.name+' cấp '+level+' ('+items[item]+')'));
-    const use=recipe.gain?recoveryText(recipe.gain)+'. Dùng từ Kho & túi hoặc thanh hồi phục.':
+    const kitchenOrder=workshopFoodOrders.some(order=>order.item===item);
+    const use=recipe.gain?recoveryText(recipe.gain)+'. Dùng từ Kho & túi hoặc thanh hồi phục.'+
+      (kitchenOrder?' Có thể giao đơn Xưởng.':''):
       'Giao đơn xưởng hoặc bán tại chợ.'+(upgrades.length?' Nâng cấp '+upgrades.join(', ')+'.':'');
     return [use,'Chế biến ở Xưởng máy cấp '+recipe.level+' bằng '+ingredientsText(recipe.ingredients)+'.'];
   }
@@ -561,10 +565,53 @@ function decorOptions(farm,index){
   const style=fenceAt(farm,index);
   return '<div class="actions fences">'+Object.entries(fences).map(([key,option])=>act(option.name+' · '+option.cost+' xu','decorate',key,index,key===style?'primary':'subtle',key===style||farm.coins<option.cost)).join('')+(style?act('Gỡ rào','decorate','none',index,'subtle'):'')+'</div>';
 }
+let gardenDecorScroll=0;
+function gardenDecorIcon(item){
+  const {source,width,cellHeight,frames}=gardenDecorAtlas, scale=.75;
+  return '<span class="garden-decor-icon" aria-hidden="true" style="background-image:url('+source+');background-size:'+
+    width*scale+'px '+cellHeight*scale+'px;background-position:-'+frames[item][0]*scale+'px 0"></span>';
+}
+function showGardenDecor(keepScroll=false){
+  const farm=state.me, owned=farm.gardenDecor??{}, vouchers=farm.decorVouchers??0;
+  const cards=Object.entries(gardenDecorItems).map(([item,definition])=>{
+    const spot=owned[item];
+    const status=spot?gardenDecorSpots[spot].name:Object.hasOwn(owned,item)?'Đang cất':definition.cost+' xu hoặc 1 phiếu';
+    const afford=Object.hasOwn(owned,item)||farm.coins>=definition.cost||vouchers>0;
+    return '<article class="garden-decor-card">'+gardenDecorIcon(item)+'<div><h3>'+definition.name+'</h3><p>'+status+'</p></div><div class="actions">'+
+      btn(spot?'Chuyển':'Đặt','data-garden-decor-item="'+item+'" aria-label="'+(spot?'Chuyển ':'Đặt ')+definition.name.toLowerCase()+'"','primary',!afford)+
+      (spot?btn('Cất','data-stow-garden-decor="'+item+'" aria-label="Cất '+definition.name.toLowerCase()+'"','subtle'):'')+'</div></article>';
+  }).join('');
+  modal('Trang trí vườn','<p><strong>'+formatCoins(farm.coins)+' xu · '+vouchers+' phiếu trang trí</strong></p>'+
+    '<div class="garden-decor-list" role="region" aria-label="Danh sách đồ trang trí" tabindex="0">'+cards+'</div><p id="dialog-error" role="status"></p>');
+  dialog.querySelector('.garden-decor-list').scrollTop=keepScroll?gardenDecorScroll:0;
+}
+function showGardenDecorPlacement(item){
+  if(!Object.hasOwn(gardenDecorItems,item))return;
+  gardenDecorScroll=dialog.querySelector('.garden-decor-list')?.scrollTop??0;
+  const farm=state.me, definition=gardenDecorItems[item];
+  const owned=Object.hasOwn(farm.gardenDecor??{},item);
+  const spots=Object.entries(gardenDecorSpots).map(([key,spot])=>{
+    const usedBy=gardenDecorAt(farm,key);
+    return {key,label:spot.name+(usedBy?' · '+gardenDecorItems[usedBy].name:''),disabled:!!usedBy};
+  });
+  const canPay=owned||(farm.decorVouchers??0)>0||farm.coins>=definition.cost;
+  const positions=spots.map(({key,label,disabled})=>'<option value="'+key+'"'+(disabled?' disabled':'')+'>'+label+'</option>').join('');
+  const payment=owned?'<p>Bạn có thể đặt lại miễn phí.</p>':
+    '<label>Thanh toán<select name="source" required><option value="" disabled selected>Chọn cách thanh toán</option>'+
+    '<option value="coins"'+(farm.coins<definition.cost?' disabled':'')+'>'+definition.cost+' xu</option>'+
+    '<option value="voucher"'+((farm.decorVouchers??0)<1?' disabled':'')+'>1 phiếu trang trí</option></select></label>';
+  const back=btn('Quay lại','data-garden-decor','subtle');
+  const form=spots.every(spot=>spot.disabled)?'<p>Cất một món để tạo chỗ trống.</p>'+back:
+    '<form data-form="placeGardenDecor" data-item="'+item+'"><label>Vị trí<select name="target" required>'+
+    '<option value="" disabled selected>Chọn vị trí trống</option>'+positions+'</select></label>'+payment+
+    '<div class="actions">'+back+'<button type="submit" class="btn primary"'+(canPay?'':' disabled')+'>Xác nhận đặt</button></div></form>';
+  modal('Đặt '+definition.name.toLowerCase(),form+'<p id="dialog-error" role="status"></p>');
+}
 function renderLand(farm,now){
   const lot=farm.land[selectedLot], price=lotPrice(farm.land.filter(Boolean).length);
   const grid=farm.land.map((entry,i)=>btn((i+1)+' · '+lotLabel(entry),'data-land-tab="'+i+'" aria-pressed="'+(selectedLot===i)+'"',selectedLot===i?'primary':'subtle')).join('');
-  const header='<div class="row"><h2>Quỹ đất</h2><span class="badge">'+farm.land.filter(Boolean).length+'/'+farm.land.length+' ô</span></div><div class="land-grid">'+grid+'</div>';
+  const header='<div class="row"><h2>Quỹ đất</h2><span class="badge">'+farm.land.filter(Boolean).length+'/'+farm.land.length+' ô</span></div>'+
+    '<div class="actions">'+btn('Trang trí vườn','data-garden-decor aria-haspopup="dialog"','subtle')+'</div><div class="land-grid">'+grid+'</div>';
   if(!lot)return header+'<p>Ô '+(selectedLot+1)+' chưa có chủ.</p><div class="actions">'+act('Mua ô đất · '+price+' xu','buyLand','',selectedLot,'primary',farm.coins<price)+'</div>';
   const go=btn('Tới ô '+(selectedLot+1),'data-land-go="'+selectedLot+'"','subtle');
   if(lot.kind==='empty')return header+'<p>Chọn công trình cho ô đất trống.</p><div class="actions">'+Object.entries(landTypes).map(([key,type])=>act(type.name+' · '+type.cost+' xu','buildLand',key,selectedLot,'subtle',farm.coins<type.cost)).join('')+go+'</div>';
@@ -797,17 +844,18 @@ function renderVillageDrive(farm,now){
       valueBar(delivered,required)+'<div class="row village-drive-stock"><small>Trong kho '+count+'</small>'+
       (completed||ready?'':btn('Góp','data-village-goods="'+item+'" aria-label="Góp '+escape(goods[item].name)+'"','primary',!count||endsAt<=now))+'</div></li>';
   }).join('');
-  const personal=mine.paid?'Đã nhận '+formatCoins(mine.coins)+' xu và '+rewardXp+' XP.':
+  const personal=mine.paid?'Đã nhận '+formatCoins(mine.coins)+' xu và '+rewardXp+' XP'+(mine.decorVoucher?' cùng 1 phiếu trang trí.':'.'):
     completed?'Đợt này thưởng cho vườn góp từ '+minimum+' món.':
     mine.quantity<minimum?'Góp từ '+minimum+' món để nhận thưởng khi làng hoàn thành.':
-    'Dự kiến nhận '+formatCoins(mine.coins)+' xu và '+rewardXp+' XP khi làng hoàn thành.';
+    'Dự kiến nhận '+formatCoins(mine.coins)+' xu, '+rewardXp+' XP và 1 phiếu trang trí khi làng hoàn thành.';
   const rank=contributors.length?'<details class="panel-fold" data-panel-fold="village-drive-rank"><summary>Bảng đóng góp</summary><ol>'+
     contributors.map(({name,quantity})=>'<li>'+escape(name)+' · '+quantity+' món</li>').join('')+'</ol></details>':'';
   const last=previous?'<p class="village-drive-last"><strong>Đợt trước · '+escape(previous.title)+'</strong> · '+(previous.completed?'Hoàn thành':'Hết hạn')+
     (previous.top?' · Góp nhiều nhất: '+escape(previous.top.name)+' ('+previous.top.quantity+' món)':'')+'</p>':'';
   return '<section class="village-drive" aria-label="Đơn góp hàng của làng"><div class="row"><h2>Đơn góp hàng</h2><span class="badge">'+status+'</span></div>'+
     '<h3>'+escape(title)+'</h3><ul class="village-drive-items">'+rows+'</ul>'+
-    '<p><strong>Bạn đã góp '+mine.quantity+' món.</strong> '+personal+'</p>'+rank+last+'</section>';
+    '<p><strong>Bạn đã góp '+mine.quantity+' món.</strong> '+personal+'</p>'+
+    (mine.decorVoucher?'<div class="actions">'+btn('Trang trí vườn','data-garden-decor aria-haspopup="dialog"','subtle')+'</div>':'')+rank+last+'</section>';
 }
 function showVillageGoods(item){
   const drive=state.villageDrive;
@@ -909,7 +957,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -1238,7 +1286,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','quickGarden','moveAnimal','sellAnimal','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','quickGarden','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1362,6 +1410,12 @@ document.addEventListener('click',async e=>{
     panel=d.panel;render();
     if(outsidePanel)reveal('.control-panel');
     else if(landscape.matches)setPanelOpen(true);
+  }
+  else if('gardenDecor' in d)showGardenDecor(dialog.contains(el));
+  else if('gardenDecorItem' in d)showGardenDecorPlacement(d.gardenDecorItem);
+  else if('stowGardenDecor' in d){
+    gardenDecorScroll=dialog.querySelector('.garden-decor-list')?.scrollTop??0;
+    if(await perform({action:'stowGardenDecor',item:d.stowGardenDecor})&&dialog.open)showGardenDecor(true);
   }
   else if('landTab' in d) {selectedLot=Number(d.landTab);render();}
   else if('landGo' in d) {
@@ -1597,6 +1651,10 @@ dialog.addEventListener('submit',async e=>{
       trigger?.focus({preventScroll:true});
     } else if(form.isConnected)updateQuickGarden(form);
     return;
+  } else if(mode==='placeGardenDecor'){
+    const input={action:mode,item:form.dataset.item,target:values.target};
+    if(values.source)input.source=values.source;
+    if(await perform(input)&&form.isConnected&&dialog.open)showGardenDecor(true);
   } else if(mode==='avatar'){
     if(await perform({action:'avatar',item:values.avatar}))dialog.close();
   } else if(mode==='moveAnimal'||mode==='sellAnimal'){

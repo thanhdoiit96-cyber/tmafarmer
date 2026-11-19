@@ -1,4 +1,4 @@
-import {fenceAt,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,pondOffset} from './land.mjs';
+import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 
@@ -118,6 +118,10 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(x-5,y-8,10,11));
   }
   if((id==='field'||id==='visit')&&owner) {
+    for(const [spot,{x,y}] of Object.entries(gardenDecorSpots)){
+      const kind=gardenDecorAt(owner,spot);
+      if(kind)actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name});
+    }
     if((owner.workshop??0)>0){
       const workshop={x:476,y:151,type:'workshop',level:owner.workshop,w:48,h:34,label:'Xưởng máy cấp '+owner.workshop};
       actors.push(workshop);blocks.push(rect(456,139,40,13));

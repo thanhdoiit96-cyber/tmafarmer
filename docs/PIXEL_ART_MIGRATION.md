@@ -122,3 +122,9 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 ## Thủy sản năm 2026
 
 Ảnh gốc [aquatic-v1-source.png](assets/aquatic-v1-source.png) dùng cùng bảng màu ấm với vật nuôi của Vườn Mùa Vui. Atlas dùng trong game có kích thước 168 × 40 px và ba ô 56 × 40 px theo thứ tự cá lóc, cá trê, cua đồng. Mỗi ô được thu nhỏ riêng và áp ngưỡng alpha để giữ viền pixel rõ. Tọa độ khung nằm trong `public/pixel/frames.mjs`. Chợ, Ao nuôi, Kho và đơn thủy sản dùng ảnh của cùng loài. Canvas vẽ các lứa đã thả cạnh cầu gỗ.
+
+## Vật trang trí vườn
+
+Nguồn [garden-decor-v1-source.png](assets/garden-decor-v1-source.png) được xuất thành atlas RGBA 168 × 48 px. Ba ô 56 × 48 px lần lượt là chậu hoa, đèn tre và bảng tên. Metadata trong `public/pixel/frames.mjs` định vị phần chữ trên bảng và tâm ánh sáng của đèn. Chủ vườn và khách ghé thăm dùng chung atlas.
+
+Bản mở rộng dùng nguồn [garden-decor-expansion-source.png](assets/garden-decor-expansion-source.png). Atlas V2 có 13 ô 56 × 48 px trên một hàng và kích thước 728 × 48 px. Ba ô gốc được chép nguyên từ V1. Mười ô sau lần lượt là ghế tre, xe cút kít gỗ, lu nước, bù nhìn rơm, chậu sen, chuông gió tre, vòm hoa giấy, giỏ mây, kiện rơm và máng chim. Mỗi ảnh mới được thu riêng, giữ alpha sắc nét và căn đáy ở hàng 45.

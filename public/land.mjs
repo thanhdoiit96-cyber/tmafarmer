@@ -48,3 +48,36 @@ export function fenceAt(farm,index){
   if(index===-2)return farm.decor?.[-2]??farm.decor?.[-3];
   return index<0?farm.decor?.[index]:getLand(farm)[index]?.fence;
 }
+export const gardenDecorItems={
+  flowerPot:{name:'Chậu hoa',cost:45,width:33},
+  bambooLamp:{name:'Đèn tre',cost:75,width:39},
+  gardenSign:{name:'Bảng tên',cost:60,width:50},
+  bambooBench:{name:'Ghế tre',cost:55,width:44},
+  wheelbarrow:{name:'Xe cút kít gỗ',cost:70,width:46},
+  waterJar:{name:'Lu nước',cost:50,width:37},
+  scarecrow:{name:'Bù nhìn rơm',cost:65,width:42},
+  lotusPot:{name:'Chậu sen',cost:75,width:41},
+  windChime:{name:'Chuông gió tre',cost:60,width:38},
+  flowerArch:{name:'Vòm hoa giấy',cost:110,width:48},
+  wickerBasket:{name:'Giỏ mây',cost:35,width:39},
+  hayBale:{name:'Kiện rơm',cost:40,width:45},
+  birdFeeder:{name:'Máng chim',cost:85,width:40},
+};
+export const gardenDecorSpots={
+  house:{name:'Sân nhà',x:132,y:151},
+  gate:{name:'Lối vào vườn',x:266,y:251},
+  pond:{name:'Lối ra ao',x:553,y:370},
+  marketPath:{name:'Lối sang chợ',x:264,y:44},
+  wellside:{name:'Bên giếng',x:120,y:200},
+  westMeadow:{name:'Bãi cỏ phía tây',x:115,y:277},
+  barnSide:{name:'Trước kho',x:431,y:185},
+  workshopPath:{name:'Lối cạnh xưởng',x:523,y:202},
+  pondBank:{name:'Bờ ao phía đông',x:727,y:322},
+  southPath:{name:'Lối xuống quỹ đất',x:126,y:386},
+  westLots:{name:'Bờ đất phía tây',x:28,y:476},
+  midLots:{name:'Lối giữa các ô đất',x:414,y:495},
+  eastLots:{name:'Bờ đất phía đông',x:794,y:563},
+};
+export function gardenDecorAt(farm,spot){
+  return Object.keys(gardenDecorItems).find(item=>farm.gardenDecor?.[item]===spot);
+}

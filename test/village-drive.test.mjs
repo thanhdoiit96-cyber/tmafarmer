@@ -29,6 +29,7 @@ test('village drive accepts partial contributions and pays qualifying farms once
   assert.equal(view(b).items[0].delivered,16);
   assert.equal(view(a).mine.quantity,26);
   assert.equal(view(a).mine.paid,false);
+  assert.equal(view(a).mine.decorVoucher,false);
   assert.equal(a.xp,0);
   assert.equal(a.coins,100);
   donate(b,'corn',12);
@@ -41,8 +42,11 @@ test('village drive accepts partial contributions and pays qualifying farms once
   assert.equal(view(c).mine.paid,false);
   assert.deepEqual([a.xp,b.xp,c.xp],[12,12,0]);
   assert.equal(c.coins,100);
+  assert.equal(view(a).mine.decorVoucher,true);
+  assert.deepEqual([a.decorVouchers,b.decorVouchers,c.decorVouchers],[1,1,undefined]);
   assert.throws(()=>donate(b,'corn',1),/đã góp đủ/);
   assert.equal(a.coins,355);
+  assert.deepEqual([a.decorVouchers,b.decorVouchers],[1,1]);
 });
 
 test('village drive rolls over after 48 real hours and freezes the chosen template',()=>{

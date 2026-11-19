@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {apply, gameDay, newFarm, newRoom, orderList, snapshot, stock} from '../public/game.mjs';
+import {apply, gameDay, newFarm, newRoom, orderList, snapshot, stock, workshopFoodOrders} from '../public/game.mjs';
 
 const start=1000;
 const setup=()=>{
@@ -54,7 +54,8 @@ test('a stable workshop order supplements the regular board, with a single share
   assert.equal(a.xp,30);
   assert.equal(a.inventory.woolCloth,2);
   const remaining=snapshot(room,b,start);
-  assert.deepEqual(remaining.orders.filter(order=>order.category!=='variety'),orderList(0));
+  const kitchenItems=new Set(workshopFoodOrders.map(order=>order.item));
+  assert.deepEqual(remaining.orders.filter(order=>order.category!=='variety'&&!kitchenItems.has(order.items[0].item)),orderList(0));
   assert.equal(remaining.orderCount,remaining.orders.length+1);
   assert.throws(()=>deliver('b'),/đã giao/);
   assert.throws(()=>deliver('b',start+2*gameDay),/hết hạn/);

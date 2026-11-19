@@ -3,7 +3,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -24,6 +24,7 @@ const pixelObjects=load(pixelSlice.source);
 const moreCropArt=load(cropStagesAtlas.source);
 const livestockArt=load(livestockAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
+const gardenDecorArt=load(gardenDecorAtlas.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -45,7 +46,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -499,6 +500,38 @@ export function water(c,scene,t,wind=1){
       c.strokeStyle='rgba(214,242,209,'+(.32*(1-pulse))+')';c.lineWidth=.65;
       c.beginPath();c.ellipse(fx,fy,4+pulse*16,1.5+pulse*5,0,0,Math.PI*2);c.stroke();
     }
+  }
+}
+export function drawGardenDecor(c,item,daylight){
+  if(!dim(gardenDecorArt))return;
+  const {kind,x,y,w,name}=item;
+  const [sx,sy,sw,sh]=gardenDecorAtlas.frames[kind];
+  const scale=w/sw, h=sh*scale;
+  const left=snapPixel(x-w/2), top=snapPixel(y-h);
+  shade(c,x,y,w*.34,2.7);
+  if(kind==='bambooLamp'&&daylight>.72){
+    const lx=left+gardenDecorAtlas.lampCenter.x*scale, ly=top+gardenDecorAtlas.lampCenter.y*scale;
+    const light=c.createRadialGradient(lx,ly,0,lx,ly,19);
+    light.addColorStop(0,'#ffbe5685');
+    light.addColorStop(1,'#ffd38600');
+    ellipse(c,light,lx,ly,19,19);
+  }
+  c.drawImage(gardenDecorArt,sx,sy,sw,sh,left,top,w,h);
+  if(kind==='gardenSign'&&name){
+    const label=gardenDecorAtlas.signLabel;
+    c.save();
+    c.font='bold 6px sans-serif';
+    c.textAlign='center';
+    c.textBaseline='middle';
+    c.fillStyle='#48311e';
+    const limit=label.maxWidth*scale;
+    let text=name;
+    if(c.measureText(text).width>limit){
+      const letters=Array.from(name);
+      do{letters.pop();text=letters.join('')+'…';}while(letters.length>1&&c.measureText(text).width>limit);
+    }
+    c.fillText(text,left+label.x*scale,top+label.y*scale,limit);
+    c.restore();
   }
 }
 export function landscapeEntity(c,item,t,daylight){
