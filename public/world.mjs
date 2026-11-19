@@ -1,11 +1,12 @@
+import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
 import {features, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
-import {actionPoseSeconds, facingFromDelta, fishingBobber, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawFishing,drawGardenDecor, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
+import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -110,6 +111,7 @@ export function createWorld(root, onInteract, landscape) {
       root.toggleAttribute('data-interactable',Boolean(active));
     }
   }
+  let helperJob, helperKey='', helperPaths=[], helperTime=0;
   function sync(id,data,{neighbor,selection,page=0,arrival,tasks=[]}={}){
     const visitChanged=neighbor?.id!==currentVisit;
     if(data!==snapshot)observedAt=performance.now();
@@ -131,6 +133,19 @@ export function createWorld(root, onInteract, landscape) {
     activePage=page;
     currentVisit=neighbor?.id;
     scene=features(id,data,neighbor,page);
+    helperJob=(id==='field'?data.me:id==='visit'?neighbor:null)?.gardenHelperJob;
+    const nextHelperKey=helperJob?[id,neighbor?.id??data.me.id,helperJob.startedAt].join(':'):'';
+    if(nextHelperKey!==helperKey){
+      helperKey=nextHelperKey;
+      helperTime=0;
+      let from=gardenHelperStart;
+      helperPaths=helperJob?.steps.map(({index})=>{
+        const to=gardenHelperPosition(index);
+        const path=[from,...(route(scene,from,to)??[to])];
+        from=path.at(-1);
+        return path;
+      })??[];
+    }
     const positionByTask=new Map(scene.hotspots.map(p=>[p.type+':'+p.index,p]));
     marks=id==='field'||id==='coop'?tasks.flatMap(task=>{
       const point=positionByTask.get(task.kind+':'+task.index);
@@ -329,7 +344,10 @@ export function createWorld(root, onInteract, landscape) {
       }
     }
     const player={type:'player',player:snapshot.me.id,avatar:snapshot.me.avatar,x,y};
-    const sprites=[...scene.actors,...scenery,...peers.values(),player].sort((a,b)=>a.y-b.y);
+    const observed=snapshot.now+(now-observedAt)/1000;
+    helperTime=Math.max(helperTime,observed);
+    const helper=gardenHelperPose(helperJob,helperPaths,helperTime);
+    const sprites=[...scene.actors,...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
@@ -355,6 +373,7 @@ export function createWorld(root, onInteract, landscape) {
         context.fillStyle='#fff3d3';context.fillText(name,a.x,labelY+6.4);
       } else if(a.type==='scenery')landscapeEntity(context,a,ambient,daylight);
       else if(a.type==='garden-decor')drawGardenDecor(context,a,daylight);
+      else if(a.type==='garden-helper')drawGardenHelper(context,a,a.plot===undefined?null:plotPosition(a.plot),reduce.matches);
       else if(a.type==='plot'&&a.index===posePlot&&pose==='plant'&&!reduce.matches&&now-poseStarted<380)
         actor(context,{...a,data:null},ambient,snapshot);
       else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);

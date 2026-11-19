@@ -128,3 +128,7 @@ Concept và tài liệu tham chiếu không dùng ở runtime được lưu tron
 Nguồn [garden-decor-v1-source.png](assets/garden-decor-v1-source.png) được xuất thành atlas RGBA 168 × 48 px. Ba ô 56 × 48 px lần lượt là chậu hoa, đèn tre và bảng tên. Metadata trong `public/pixel/frames.mjs` định vị phần chữ trên bảng và tâm ánh sáng của đèn. Chủ vườn và khách ghé thăm dùng chung atlas.
 
 Bản mở rộng dùng nguồn [garden-decor-expansion-source.png](assets/garden-decor-expansion-source.png). Atlas V2 có 13 ô 56 × 48 px trên một hàng và kích thước 728 × 48 px. Ba ô gốc được chép nguyên từ V1. Mười ô sau lần lượt là ghế tre, xe cút kít gỗ, lu nước, bù nhìn rơm, chậu sen, chuông gió tre, vòm hoa giấy, giỏ mây, kiện rơm và máng chim. Mỗi ảnh mới được thu riêng, giữ alpha sắc nét và căn đáy ở hàng 45.
+
+## Cô Lan
+
+Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) được xuất thành atlas 192 × 256 px, gồm 16 ô 48 × 64. Mỗi hướng có một dáng đứng, hai dáng sải chân và một dáng cúi làm việc. Chân các khung căn ở hàng 60. Bình tưới, giỏ thu hoạch và hạt hiệu ứng được vẽ riêng trên Canvas theo từng công việc.

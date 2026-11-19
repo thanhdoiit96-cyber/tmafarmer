@@ -1,90 +1,125 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {apply,crops,newFarm,newRoom,quickGardenPreview,quickGardenTargets,slotLength,snapshot,stock} from '../public/game.mjs';
+import {advanceGardenHelpers,apply,crops,gardenHelperPreview,gardenHelperTargets,newFarm,newRoom,slotLength,snapshot,stock} from '../public/game.mjs';
+import {gardenHelperPosition,gardenHelperStart} from '../public/garden-helper.mjs';
 import {plotOffset} from '../public/land.mjs';
+import {gardenHelperPose} from '../public/world-motion.mjs';
 
 const start=20_000;
 function plot(kind,now,fields={}){
   return {kind,goal:crops[kind].time,progress:0,pests:0,at:now,wetUntil:0,protectedUntil:0,picked:0,...fields};
 }
 function setup(roomCreated=start){
-  const room=newRoom(roomCreated);
-  const farm=room.farms.a=newFarm('a','Vườn A',roomCreated);
+  const room=newRoom(roomCreated), farm=room.farms.a=newFarm('a','Vườn A',roomCreated);
+  room.farms.b=newFarm('b','Vườn B',roomCreated);
   farm.land[0]={kind:'garden'};
   return {room,farm};
 }
-function send(room,item,plots,expectedSpace,now=start){
-  return apply(room,'a',{action:'quickGarden',item,plots,expectedSpace},now);
-}
+const hire=(room,item,plots,expectedSpace,now=start)=>apply(room,'a',{action:'hireGardenHelper',item,plots,expectedSpace},now);
 
-test('watering covers primary and expansion plots, includes hot-weather costs and takes no storage',()=>{
+test('hiring covers primary and expansion plots and charges only coins, even while the player rests',()=>{
   const {room,farm}=setup(start-6*slotLength);
   farm.plots[0]=plot('wheat',start);
   farm.plots[1]=plot('wheat',start,{wetUntil:start+60});
   farm.extraPlots[plotOffset]=plot('carrot',start);
   farm.inventory.wheat=30;
-  const view=snapshot(room,farm,start);
-  assert.equal(view.weather.id,'heat');
-  const targets=quickGardenTargets(view.me,'water',view.weather,start);
+  farm.wellness={water:0,food:0,stamina:0,at:start,until:{},restUntil:start+60};
+  const before=structuredClone(farm.wellness);
+  const view=snapshot(room,farm,start), targets=gardenHelperTargets(view.me,'water',view.weather,start);
   assert.deepEqual(targets.map(target=>target.index),[0,plotOffset]);
-  const preview=quickGardenPreview(view.me,'water',targets,view.weather,start);
-  assert.deepEqual(preview,{cost:{water:6,food:2,stamina:6},space:0,free:0,blocked:''});
-  assert.match(send(room,'water',[0,plotOffset],0),/Đã tưới 2 ô/);
-  assert.equal(farm.plots[0].wetUntil,start+Math.ceil(crops.wheat.time*1.15));
-  assert.equal(farm.extraPlots[plotOffset].wetUntil,start+Math.ceil(crops.carrot.time*1.15));
-  assert.equal(farm.wellness.stamina,94);
-  assert.equal(farm.wellness.water,94);
-  assert.equal(stock(farm),30);
-  assert.deepEqual(farm.journal.done,['care']);
+  const preview=gardenHelperPreview(view.me,'water',targets);
+  assert.deepEqual(preview,{cost:4,space:0,free:0,duration:23,blocked:''});
+  assert.match(hire(room,'water',[0,plotOffset],0),/Cô Lan làm 2 ô · 4 xu/);
+  assert.equal(farm.coins,96);
+  assert.equal(farm.plots[0].wetUntil,0);
+  const job=farm.gardenHelperJob;
+  assert.throws(()=>hire(room,'water',[0],0),/đang làm/);
+  assert.equal(advanceGardenHelpers(room,job.steps[0].doneAt-1),false);
+  assert.equal(advanceGardenHelpers(room,job.steps[0].doneAt),true);
+  assert.equal(farm.plots[0].wetUntil,job.steps[0].doneAt+Math.ceil(crops.wheat.time*1.15));
+  assert.equal(farm.extraPlots[plotOffset].wetUntil,0);
+  const offline=JSON.parse(JSON.stringify(room));
+  assert.equal(advanceGardenHelpers(offline,job.endsAt+3600),true);
+  assert.equal(offline.farms.a.extraPlots[plotOffset].wetUntil,job.endsAt+Math.ceil(crops.carrot.time*1.15));
+  assert.equal(advanceGardenHelpers(offline,job.endsAt+3600),false);
+  assert.deepEqual(offline.farms.a.wellness,before);
+  assert.deepEqual(offline.farms.a.journal.done,['care']);
+  assert.equal(stock(offline.farms.a),30);
 });
 
-test('batch harvest includes damage and picked produce in its estimate and fills the remaining storage exactly',()=>{
+test('harvest settles one plot at a time with reduced yield and an automatic refund if the barn fills',()=>{
   const {room,farm}=setup();
   farm.plots[0]=plot('wheat',start,{progress:crops.wheat.time,pests:20});
   farm.extraPlots[plotOffset]=plot('corn',start,{progress:crops.corn.time,fertilized:true,picked:1});
   farm.inventory.wheat=24;
   const view=snapshot(room,farm,start);
-  const targets=quickGardenTargets(view.me,'harvest',view.weather,start);
-  assert.deepEqual(targets.map(target=>target.space),[2,4]);
-  assert.equal(quickGardenPreview(view.me,'harvest',targets,view.weather,start).space,6);
-  assert.match(send(room,'harvest',[0,plotOffset],6),/Đã thu hoạch 2 ô · 6 nông sản/);
+  assert.deepEqual(gardenHelperTargets(view.me,'harvest',view.weather,start).map(target=>target.space),[2,4]);
+  hire(room,'harvest',[0,plotOffset],6);
+  const job=farm.gardenHelperJob, publicJob=snapshot(room,room.farms.b,start).neighbors[0].gardenHelperJob;
+  assert.deepEqual(Object.keys(publicJob.steps[0]),['index','arriveAt','doneAt']);
+  advanceGardenHelpers(room,job.steps[0].doneAt);
   assert.equal(farm.plots[0],null);
-  assert.equal(farm.extraPlots[plotOffset],null);
   assert.equal(farm.inventory.wheat,26);
-  assert.equal(farm.inventory.corn,4);
-  assert.equal(farm.wellness.stamina,90);
-  assert.equal(farm.xp,8);
+  farm.inventory.wheat++;
+  advanceGardenHelpers(room,job.endsAt);
+  assert.ok(farm.extraPlots[plotOffset]);
+  assert.equal(farm.xp,4);
+  assert.equal(farm.coins,96);
   assert.deepEqual(farm.journal.done,['gather']);
+  assert.deepEqual(farm.gardenHelperReport,{action:'harvest',completed:1,total:2,skipped:1,produce:2,refund:4});
+  assert.match(farm.log[0].message,/hoàn 4 xu/);
 });
 
-test('a stale selection, duplicates, insufficient storage or total effort leave all plots and resources intact',()=>{
+test('an invalid initial quote or occupied plot list never charges the farm',()=>{
   const {room,farm}=setup();
   farm.inventory.wheat=25;
   for(const i of [0,1])farm.plots[i]=plot('wheat',start,{progress:crops.wheat.time});
   farm.plots[2]=plot('wheat',start);
-  farm.wellness={water:100,food:100,stamina:9,at:start,until:{},restUntil:0};
   const unchanged=(fn,reason)=>{
     const before=structuredClone(farm);
     assert.throws(fn,reason);
     assert.deepEqual(farm,before);
   };
-  unchanged(()=>send(room,'harvest',[0,0],6),/ô trùng/);
-  unchanged(()=>send(room,'harvest',[0,999],6),/không thuộc vườn/);
-  unchanged(()=>send(room,'harvest',[0,'1'],6),/không thuộc vườn/);
-  unchanged(()=>send(room,'harvest',[0,2],6),/ô đã thay đổi/);
-  unchanged(()=>send(room,'harvest',[0,1],5),/Sản lượng đã thay đổi/);
-  unchanged(()=>send(room,'harvest',[0,1],6),/đã mệt/);
-  farm.wellness.stamina=100;
-  unchanged(()=>send(room,'harvest',[0,1],6),/Kho thiếu 1 chỗ/);
-  farm.wellness.restUntil=start+30;
-  unchanged(()=>send(room,'water',[2],0),/nghỉ xong/);
+  unchanged(()=>hire(room,'harvest',[0,0],6),/ô trùng/);
+  unchanged(()=>hire(room,'harvest',[0,999],6),/không thuộc vườn/);
+  unchanged(()=>hire(room,'harvest',[0,2],6),/ô đã thay đổi/);
+  unchanged(()=>hire(room,'harvest',[0,1],5),/Sản lượng đã thay đổi/);
+  unchanged(()=>hire(room,'harvest',[0,1],6),/Kho thiếu 1 chỗ/);
+  farm.coins=1;
+  unchanged(()=>hire(room,'water',[2],0),/chưa đủ xu/);
 });
 
-test('an unexpected rain slot prevents the entire watering batch',()=>{
-  const {room,farm}=setup(start-slotLength);
+test('weather or a different seedling can invalidate a later plot with a refund',()=>{
+  const {room,farm}=setup(start-slotLength+9);
   for(const i of [0,1])farm.plots[i]=plot('wheat',start);
-  assert.throws(()=>send(room,'water',[0,1],0),/không còn phù hợp/);
-  assert.equal(farm.plots[0].wetUntil,0);
-  assert.equal(farm.plots[1].wetUntil,0);
-  assert.equal(farm.wellness,undefined);
+  hire(room,'water',[0,1],0);
+  const job=farm.gardenHelperJob;
+  assert.ok(job.steps.every(step=>step.doneAt>=start+9));
+  advanceGardenHelpers(room,job.endsAt);
+  assert.equal(farm.gardenHelperReport.skipped,2);
+  assert.equal(farm.coins,100);
+
+  const next=setup(), current=next.farm;
+  current.plots[0]=plot('wheat',start);
+  hire(next.room,'water',[0],0);
+  const end=current.gardenHelperJob.endsAt;
+  current.plots[0]=plot('wheat',start+1,{plantedAt:start+1});
+  advanceGardenHelpers(next.room,end);
+  assert.equal(current.plots[0].wetUntil,0);
+  assert.equal(current.coins,100);
+});
+
+test('helper pose interpolates walking, works at each scheduled plot and disappears at completion',()=>{
+  const {room,farm}=setup();
+  farm.plots[0]=plot('wheat',start);
+  hire(room,'water',[0],0);
+  const job=farm.gardenHelperJob, [step]=job.steps;
+  const point=gardenHelperPosition(0);
+  const paths=[[gardenHelperStart,point]];
+  const walking=gardenHelperPose(job,paths,step.arriveAt-1);
+  assert.ok(walking.walkDistance>0);
+  assert.notEqual(walking.x,point[0]);
+  const working=gardenHelperPose(job,paths,step.arriveAt+.25);
+  assert.deepEqual([working.x,working.y,working.action], [...point,'water']);
+  assert.equal(gardenHelperPose(job,paths,step.doneAt),null);
 });

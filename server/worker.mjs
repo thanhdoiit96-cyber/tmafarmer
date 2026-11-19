@@ -1,5 +1,5 @@
 import {recentSeconds,sceneKey,social} from './social.mjs';
-import {advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
+import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -213,8 +213,9 @@ async function join(db,request,superAdminAccountId) {
     if(!row) return reply({error:'Không tìm thấy mã làng.'},404);
     const state=JSON.parse(row.state);
     const id=linked&&has(state.farms,linked.farm_id)?linked.farm_id:await farmIdFor(code);
+    const jobsUpdated=advanceGardenHelpers(state,time);
     if(admin&&has(state.farms,id)){
-      if(advanceVillageDrive(state,time)){
+      if(advanceVillageDrive(state,time)||jobsUpdated){
         const saved=await save(db,code,row.revision,state);
         if(saved.meta.changes!==1)continue;
       }
@@ -288,15 +289,16 @@ export default {
         const soilStarted=startSoilClock(state,time);
         const livestockStarted=startLivestockClock(state,time);
         const driveUpdated=advanceVillageDrive(state,time);
-        if(!input) {
+        const prior=input&&farm.recent.find(r=>r.id===input.requestId);
+        if(!input||prior) {
+          const jobsUpdated=advanceGardenHelpers(state,time);
           const promoted=advanceVillage(state,dayAt(state,time));
-          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted&&!livestockStarted&&!driveUpdated)return reply({state:view(),revision:row.revision});
+          const payload=prior?{message:prior.message}:{};
+          if(!calendarUpdated&&!promoted&&!securityStarted&&!soilStarted&&!livestockStarted&&!driveUpdated&&!jobsUpdated)return reply({...payload,state:view(),revision:row.revision});
           const migrated=await save(db,code,row.revision,state);
-          if(migrated.meta.changes===1)return reply({state:view(),revision:row.revision+1});
+          if(migrated.meta.changes===1)return reply({...payload,state:view(),revision:row.revision+1});
           continue;
         }
-        const prior=farm.recent.find(r=>r.id===input.requestId);
-        if(prior) return reply({state:view(),message:prior.message,revision:row.revision});
         let area;
         if(input.action==='rest'){
           const here=await db.prepare('SELECT scene FROM farm_presence WHERE room=? AND player=? AND seen>=?')

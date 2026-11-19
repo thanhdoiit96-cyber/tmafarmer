@@ -1,3 +1,4 @@
+import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
@@ -9,7 +10,7 @@ import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {aquaticAtlas,gardenDecorAtlas,livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, quickGardenActions, quickGardenPreview, quickGardenTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -148,7 +149,8 @@ function updateDemo() {
   const soilStarted=startSoilClock(demo,time);
   const livestockStarted=startLivestockClock(demo,time);
   const driveUpdated=advanceVillageDrive(demo,time);
-  if(advanceVillage(demo,day)||started||soilStarted||livestockStarted||driveUpdated)store.write(demoKey,demo);
+  const helpersUpdated=advanceGardenHelpers(demo,time);
+  if(advanceVillage(demo,day)||started||soilStarted||livestockStarted||driveUpdated||helpersUpdated)store.write(demoKey,demo);
   setState(snapshot(demo,demo.farms.demo,time));
 }
 async function api(path, payload, credentials=session) {
@@ -206,7 +208,7 @@ function renderField(farm) {
   const group=gardens.length?'<label class="compact-label">Vườn <select data-crop-group><option value="-1"'+(plotGroup<0?' selected':'')+'>Ruộng chính</option>'+gardens.map(i=>'<option value="'+i+'"'+(plotGroup===i?' selected':'')+'>Ô đất '+(i+1)+'</option>').join('')+'</select></label>':'';
   const damp=state.afterRainUntil>currentTime()?'<p class="farm-warning">Sau mưa: sâu dễ xuất hiện trong <strong data-until="'+state.afterRainUntil+'">'+duration(state.afterRainUntil-currentTime())+'</strong> tới.</p>':'';
   return '<div class="row area-heading"><h2>Ô canh tác</h2><span class="badge">'+indices.filter(i=>plotAt(farm,i)).length+'/'+indices.length+' ô đã gieo</span></div>'+
-    damp+group+'<div class="plot-select">'+indices.map(i=>{
+    (farm.gardenHelperJob?gardenHelperStatus(farm,currentTime()):'')+damp+group+'<div class="plot-select">'+indices.map(i=>{
       const crop=plotAt(farm,i), amount=crop?progress(crop.progress,cropGoal(crop)):0;
       const label=plotNumber(i);
       const task=tasks.find(task=>task.kind==='plot'&&task.index===i);
@@ -641,37 +643,54 @@ function renderHome(farm,now){
   return '<section class="home-guide"><div><h2>Chỗ nghỉ</h2><p>'+status+'</p></div>'+
     '<div class="actions">'+btn('Nghỉ ngay','data-recover="rest"','primary',resting||health.stamina>=100)+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
 }
+function gardenHelperStatus(farm,now){
+  const job=farm.gardenHelperJob, report=farm.gardenHelperReport;
+  if(job){
+    const completed=job.processed-job.skipped;
+    const work=job.action==='water'?'tưới cây':'thu hoạch';
+    return '<div class="helper-status" data-helper-active><strong>'+gardenHelperName+' đang '+work+'</strong>'+
+      '<p>Đã làm '+completed+'/'+job.steps.length+' ô'+(job.skipped?' · Bỏ qua '+job.skipped:'')+
+      ' · Còn <span data-until="'+job.endsAt+'">'+duration(job.endsAt-now)+'</span></p></div>';
+  }
+  if(!report)return '';
+  const work=report.action==='water'?'tưới':'thu hoạch';
+  return '<div class="helper-status" data-helper-report><p>'+gardenHelperName+' đã '+work+' '+report.completed+'/'+report.total+' ô'+
+    (report.produce?' · '+report.produce+' nông sản':'')+(report.refund?' · Hoàn '+report.refund+' xu':'')+'</p></div>';
+}
 function renderTasks(farm,now){
-  const shortcuts=Object.entries(quickGardenActions).map(([action,label])=>{
-    const count=quickGardenTargets(farm,action,state.weather,now).length;
-    return btn(label+' · '+count,'data-quick-garden="'+action+'" aria-haspopup="dialog"','subtle',!count);
+  const shortcuts=Object.entries(gardenHelperActions).map(([action,{label,fee}])=>{
+    const count=gardenHelperTargets(farm,action,state.weather,now).length;
+    return btn(label+' · '+fee+' xu/ô','data-quick-garden="'+action+'" aria-haspopup="dialog"','subtle',!count||!!farm.gardenHelperJob);
   }).join('');
-  const quick='<section class="quick-garden-tools" aria-label="Chăm vườn nhanh"><h3>Chăm vườn nhanh</h3><div class="actions">'+shortcuts+'</div></section>';
+  const status=gardenHelperStatus(farm,now);
+  const quick='<section class="quick-garden-tools" aria-label="Thuê người chăm vườn"><h3>Thuê người chăm vườn</h3>'+status+
+    (farm.gardenHelperJob&&tab!=='field'?'<div class="actions">'+btn('Xem ở vườn','data-tab="field"','subtle')+'</div>':'')+
+    '<div class="actions">'+shortcuts+'</div></section>';
   const list=tasks.length?'<div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+taskStyles[task.type].mark+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>':
     '<p>Vườn đang ổn. Bạn có thể dạo hồ hoặc sang chợ.</p>';
   return '<h2>Việc cần làm</h2>'+quick+renderJournal(farm)+list;
 }
 function showQuickGarden(action){
-  const farm=state.me, targets=quickGardenTargets(farm,action,state.weather,currentTime());
-  if(!targets.length)return;
+  const farm=state.me, targets=gardenHelperTargets(farm,action,state.weather,currentTime());
+  if(!targets.length||farm.gardenHelperJob)return;
   const rows=targets.map(({index,kind})=>{
     const lot=gardenFor(index), number=plotNumber(index);
     const name=lot<0?'Ô '+number:'Vườn ô '+(lot+1)+' · Luống '+number;
     return '<label class="quick-plot"><input type="checkbox" value="'+index+'" data-garden-plot="'+kind+'"><span><strong>'+name+'</strong><small>'+escape(nice(kind))+'</small></span><span data-garden-yield></span></label>';
   }).join('');
-  modal(quickGardenActions[action],'<form class="quick-garden-form" data-form="quickGarden" data-operation="'+action+'">'+
+  modal(gardenHelperActions[action].label,'<form class="quick-garden-form" data-form="hireGardenHelper" data-operation="'+action+'">'+
     '<div class="row"><strong>Chọn ô trong vườn</strong>'+btn('Chọn hết','data-quick-all','subtle')+'</div>'+
     '<div class="quick-garden-plots" role="group" aria-label="Các ô có thể chọn">'+rows+'</div>'+
     '<dl class="quick-garden-estimate" aria-live="polite" aria-atomic="true">'+
-      '<div><dt>Số ô</dt><dd data-quick-count></dd></div><div><dt>Thể lực cần</dt><dd data-quick-stamina></dd></div>'+
-      '<div><dt>Chỗ kho cần / trống</dt><dd data-quick-space></dd></div></dl>'+
+      '<div><dt>Số ô</dt><dd data-quick-count></dd></div><div><dt>Phí thuê</dt><dd data-quick-cost></dd></div>'+
+      '<div><dt>Thời gian</dt><dd data-quick-duration></dd></div><div><dt>Kho cần / trống</dt><dd data-quick-space></dd></div></dl>'+
     '<p data-quick-warning role="status" hidden></p><p id="dialog-error" role="status"></p>'+
-    '<button type="submit" class="btn primary" disabled>'+(action==='water'?'Xác nhận tưới':'Xác nhận thu hoạch')+'</button></form>');
+    '<button type="submit" class="btn primary" disabled>Xác nhận thuê '+gardenHelperName+'</button></form>');
   updateQuickGarden(dialog.querySelector('.quick-garden-form'));
 }
 function updateQuickGarden(form){
   const {me:farm,weather}=state, action=form.dataset.operation, now=currentTime();
-  const available=new Map(quickGardenTargets(farm,action,weather,now).map(target=>[target.index,target]));
+  const available=new Map(gardenHelperTargets(farm,action,weather,now).map(target=>[target.index,target]));
   const selected=[];
   let stale=false, validCount=0, selectedCount=0;
   for(const input of form.querySelectorAll('[data-garden-plot]')){
@@ -687,9 +706,10 @@ function updateQuickGarden(form){
     row.toggleAttribute('data-unavailable',!valid);
     row.querySelector('[data-garden-yield]').textContent=!valid?'Đã thay đổi':action==='harvest'?target.space+' món':'';
   }
-  const {cost,space,free,blocked}=quickGardenPreview(farm,action,selected,weather,now);
+  const estimate=gardenHelperPreview(farm,action,selected);
+  const {cost,space,free,blocked}=estimate;
   const warning=stale?'Có ô đã thay đổi. Bỏ chọn ô đó để tiếp tục.':blocked;
-  const estimates={count:selectedCount,stamina:stale?'—':cost.stamina,space:stale?'—':space+' / '+free};
+  const estimates={count:selectedCount,cost:stale?'—':cost+' xu',duration:stale?'—':duration(estimate.duration),space:stale?'—':space+' / '+free};
   for(const [key,value] of Object.entries(estimates)){
     const output=form.querySelector('[data-quick-'+key+']');
     if(output.textContent!==String(value))output.textContent=value;
@@ -698,9 +718,9 @@ function updateQuickGarden(form){
   if(message.textContent!==warning)message.textContent=warning;
   message.hidden=!warning;
   const all=form.querySelector('[data-quick-all]');
-  const clear=validCount===selected.length&&selectedCount>0;
+  const clear=selected.length===Math.min(gardenHelperLimit,validCount)&&selectedCount>0;
   all.toggleAttribute('data-clear-selection',clear);
-  all.textContent=clear?'Bỏ chọn hết':'Chọn hết';
+  all.textContent=clear?'Bỏ chọn hết':validCount>gardenHelperLimit?'Chọn '+gardenHelperLimit+' ô':'Chọn hết';
   all.disabled=!validCount&&!selectedCount;
   form.querySelector('button[type=submit]').disabled=busy||!selected.length||!!warning;
   return {ready:!!selected.length&&!warning,plots:selected.map(target=>target.index),space};
@@ -1276,9 +1296,7 @@ async function perform(input) {
       updateDemo();
     }
     render();
-    if(input.action==='quickGarden'){
-      if(tab==='field')for(const index of input.plots)world.particle({action:input.item,index});
-    } else if(!['removeMember','villageGoods'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
+    if(!['removeMember','villageGoods','hireGardenHelper'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
       const reel=input.action==='reel';
       const caught=reel&&[previousFarm.fishing.cast?.item,'minnow','tilapia','goldenCarp'].some(key=>key&&(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
       world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
@@ -1286,7 +1304,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','quickGarden','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1400,7 +1418,11 @@ document.addEventListener('click',async e=>{
   else if('quickAll' in d){
     if(busy)return;
     const form=el.form, clear=el.hasAttribute('data-clear-selection');
-    for(const input of form.querySelectorAll('[data-garden-plot]'))input.checked=!clear&&!input.closest('label').hasAttribute('data-unavailable');
+    let chosen=0;
+    for(const input of form.querySelectorAll('[data-garden-plot]')){
+      input.checked=!clear&&!input.closest('label').hasAttribute('data-unavailable')&&chosen<gardenHelperLimit;
+      if(input.checked)chosen++;
+    }
     form.querySelector('#dialog-error').textContent='';
     updateQuickGarden(form);
   }
@@ -1639,12 +1661,12 @@ dialog.addEventListener('submit',async e=>{
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;
     } finally { busy=false; }
-  } else if(mode==='quickGarden'){
+  } else if(mode==='hireGardenHelper'){
     const {ready,plots,space}=updateQuickGarden(form);
     if(!ready)return;
     button.disabled=true;
     const operation=form.dataset.operation;
-    const worked=await perform({action:'quickGarden',item:operation,plots,expectedSpace:space});
+    const worked=await perform({action:'hireGardenHelper',item:operation,plots,expectedSpace:space});
     if(worked&&form.isConnected){
       dialog.close();
       const trigger=panelBody.querySelector('[data-quick-garden="'+operation+'"]:enabled')??$('#task-hud button');
@@ -1677,8 +1699,11 @@ setInterval(()=>{
   if(!state||document.hidden) return;
   const now=currentTime();
   const cast=state.me.fishing.cast;
-  const boundary=[cast?.ready,cast?cast.expires+1:undefined,state.me.fishing.nextAt].some(time=>time>lastPanelTime&&time<=now);
-  if(boundary&&!busy&&(tab==='lake'||neighborId)){
+  const justReached=time=>time>lastPanelTime&&time<=now;
+  const fishingBoundary=[cast?.ready,cast?cast.expires+1:undefined,state.me.fishing.nextAt].some(justReached);
+  const visitedJob=neighborId&&state.neighbors.find(neighbor=>neighbor.id===neighborId)?.gardenHelperJob;
+  const helperBoundary=[state.me.gardenHelperJob,visitedJob].some(job=>job?.steps.some(step=>justReached(step.doneAt)));
+  if(!busy&&(helperBoundary||fishingBoundary&&(tab==='lake'||neighborId))){
     if(session)void refresh();
     else {updateDemo();render();}
   }

@@ -1,11 +1,11 @@
-import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotSize,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,pondOffset} from './land.mjs';
+import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 
 export const size = { width: 480, height: 288 };
 const wide={width:720,height:432};
 
-export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,...lotSize});
+export {lotRect,plotPosition} from './land.mjs';
 const gardenBeds=(rows,y)=>[{x:146,y,w:59,h:43*(rows-1)+36},{x:249,y,w:108,h:43*(rows-1)+36}];
 const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),43),...(rows>4?gardenBeds(rows-4,270):[])];
 const basePen={x:82,y:106,w:258,h:95};
@@ -79,12 +79,6 @@ Object.assign(maps.visit,{
   paths:maps.field.paths,trees:maps.field.trees,water:maps.field.water,
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
-export function plotPosition(index){
-  const slot=mainPlotSlot(index);
-  if(slot>=0)return {x:[176,276,329][slot%3],y:slot<plotOffset?63+Math.floor(slot/3)*43:290+Math.floor((slot-plotOffset)/3)*43};
-  const lot=lotRect(Math.floor((index-plotOffset)/3));
-  return {x:lot.x+25+(index%3)*49,y:lot.y+47};
-}
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
 export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
 const coopPosition=(i,level)=>level<4?{x:115+i%3*72,y:126+Math.floor(i/3)*48}:

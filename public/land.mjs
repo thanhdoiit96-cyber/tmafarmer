@@ -16,11 +16,18 @@ export function getLand(farm){
   if(!farm.land)return Array.from({length:lotCount},(_,i)=>i<starterLots?{kind:'empty'}:null);
   return farm.land.map(lot=>lot&&lot.kind!==pondLotKind(lot.kind)?{...lot,kind:'pond'}:lot);
 }
+export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,...lotSize});
 export const plotOffset=12;
 const upperFieldOffset=plotOffset+lotCount*3;
 export const pondOffset=2;
 export const mainPlotId=slot=>slot<plotOffset?slot:upperFieldOffset+slot-plotOffset;
 export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?index-upperFieldOffset+plotOffset:-1;
+export function plotPosition(index){
+  const slot=mainPlotSlot(index);
+  if(slot>=0)return {x:[176,276,329][slot%3],y:slot<plotOffset?63+Math.floor(slot/3)*43:290+Math.floor((slot-plotOffset)/3)*43};
+  const lot=lotRect(Math.floor((index-plotOffset)/3));
+  return {x:lot.x+25+(index%3)*49,y:lot.y+47};
+}
 export const plotAt=(farm,index)=>{
   const slot=mainPlotSlot(index);
   return slot<0?farm.extraPlots?.[index]:farm.plots[slot];

@@ -259,6 +259,8 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .quick-garden-tools{padding:8px;margin:6px 0 9px;border:1px solid #d9e2c7;border-radius:9px;background:#eef2e3}
 .quick-garden-tools .actions{margin:4px 0 0}
 .quick-garden-tools .btn{flex:1}
+.helper-status{padding:6px 8px;margin:5px 0;background:#efe5f0;border:1px solid #e0ccde;border-radius:8px;color:#533950;font-size:11px}
+.helper-status p{margin:1px 0 0}
 .quick-garden-form{margin-top:9px}
 .quick-garden-form>.row{gap:6px}
 .quick-garden-form>.row>.btn{min-height:34px}
@@ -269,7 +271,7 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .quick-plot input{width:18px;height:18px;margin:0;padding:0;accent-color:#315b43}
 .quick-plot small{display:block;color:#665f50;font-size:11px;font-weight:500}
 .quick-plot [data-garden-yield]{font-size:10px;color:#4e6048}
-.quick-garden-estimate{display:grid;grid-template-columns:.7fr 1fr 1.5fr;gap:5px;margin:7px 0;padding:6px 8px;border-radius:8px;background:#e9efdd;color:#30533b}
+.quick-garden-estimate{display:grid;grid-template-columns:.55fr 1fr 1fr 1.15fr;gap:5px;margin:7px 0;padding:6px 8px;border-radius:8px;background:#e9efdd;color:#30533b}
 .quick-garden-estimate dt{font-size:11px}
 .quick-garden-estimate dd{margin:2px 0 0;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
 .quick-garden-form [role=status]{margin:4px 0;color:#8b3e2d}

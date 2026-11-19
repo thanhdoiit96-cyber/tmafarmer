@@ -44,3 +44,27 @@ export function animalMotion(time,index,range,forage='idle'){
 export function spriteFlip(facing,sourceFacing){
   return facing!==sourceFacing;
 }
+
+export function gardenHelperPose(job,paths,time){
+  if(!job||time<job.startedAt||time>=job.endsAt)return null;
+  const index=job.steps.findIndex(step=>time<step.doneAt);
+  const {index:plot,arriveAt}=job.steps[index], path=paths[index];
+  const start=index===0?job.startedAt:job.steps[index-1].doneAt;
+  if(time>=arriveAt){
+    const [x,y]=path.at(-1);
+    return {type:'garden-helper',x,y,facing:'up',plot,action:job.action,elapsed:time-arriveAt};
+  }
+  const lengths=path.slice(1).map(([x,y],i)=>Math.hypot(x-path[i][0],y-path[i][1]));
+  const walkDistance=(time-start)/(arriveAt-start)*lengths.reduce((sum,distance)=>sum+distance,0);
+  let distance=walkDistance;
+  for(const [i,length] of lengths.entries()){
+    if(length>0&&distance<=length){
+      const [x,y]=path[i], dx=path[i+1][0]-x, dy=path[i+1][1]-y;
+      const fraction=distance/length;
+      return {type:'garden-helper',x:x+dx*fraction,y:y+dy*fraction,facing:facingFromDelta(dx,dy),walkDistance};
+    }
+    distance-=length;
+  }
+  const [x,y]=path.at(-1);
+  return {type:'garden-helper',x,y,facing:'up'};
+}

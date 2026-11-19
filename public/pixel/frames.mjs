@@ -53,3 +53,8 @@ export const gardenDecorAtlas={
   lampCenter:{x:35,y:24},
   signLabel:{x:28,y:24,maxWidth:42},
 };
+export const gardenHelperAtlas={
+  source:'/pixel/garden-helper-v1.png',cellWidth:48,cellHeight:64,feet:60,
+  directions:{down:0,up:1,left:2,right:3},
+  walk:[0,1,0,2],work:3,
+};

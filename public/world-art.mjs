@@ -1,9 +1,10 @@
+import {gardenHelperName} from './garden-helper.mjs';
 import {cropGoal, growthGoal} from './game.mjs';
 import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -25,6 +26,7 @@ const moreCropArt=load(cropStagesAtlas.source);
 const livestockArt=load(livestockAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
+const gardenHelperArt=load(gardenHelperAtlas.source);
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -46,7 +48,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -501,6 +503,50 @@ export function water(c,scene,t,wind=1){
       c.beginPath();c.ellipse(fx,fy,4+pulse*16,1.5+pulse*5,0,0,Math.PI*2);c.stroke();
     }
   }
+}
+export function drawGardenHelper(c,pose,target,reduced){
+  if(!dim(gardenHelperArt))return;
+  const {x,y,facing,walkDistance,action,elapsed}=pose;
+  const {cellWidth,cellHeight,feet,directions,walk,work}=gardenHelperAtlas;
+  const reaching=action&&(reduced||Math.floor(elapsed*4)%4!==0);
+  const frame=reaching?work:!reduced&&walkDistance!==undefined?walk[walkFrame(walkDistance,24,walk.length)]:0;
+  const mip=.72, top=snapPixel(y-feet*mip);
+  shade(c,x,y,9,2.6);
+  c.drawImage(gardenHelperArt,frame*cellWidth,directions[facing]*cellHeight,cellWidth,cellHeight,
+    snapPixel(x-cellWidth*mip/2),top,cellWidth*mip,cellHeight*mip);
+  c.save();
+  if(action==='water'){
+    const dx=reaching?6:9, dy=reaching?-15:-11;
+    box(c,'#496b67',x+dx-1,y+dy,9,7,1);
+    box(c,'#9bbdb1',x+dx,y+dy+1,6,4,0);
+    line(c,'#c4d6bd',1.4,[[x+dx+5,y+dy+1],[x+dx+1,y+dy-4],[x+dx-2,y+dy-4]]);
+    line(c,'#789fa0',2,[[x+dx,y+dy+2],[x+dx-5,y+dy-1]]);
+    if(!reduced&&target&&reaching){
+      for(let i=0;i<6;i++){
+        const progress=(elapsed*2.5+i/6)%1;
+        const px=x+(target.x-x)*progress+((i%3)-1)*3*progress;
+        const py=y-16+(target.y-(y-16))*progress-Math.sin(progress*Math.PI)*7;
+        box(c,i%2?'#d3f5e7':'#83cdde',snapPixel(px),snapPixel(py),1.4,1.8,0);
+      }
+    }
+  }else if(action==='harvest'){
+    box(c,'#5d412b',x+6,y-7,11,6,1);
+    box(c,'#b48347',x+7,y-7,9,4,1);
+    line(c,'#f4c68a',1,[[x+6,y-7],[x+9,y-11],[x+14,y-11],[x+17,y-7]]);
+    if(!reduced&&target&&reaching){
+      for(let i=0;i<3;i++){
+        const progress=(elapsed*1.8+i/3)%1;
+        const px=target.x+(x+11-target.x)*progress+i-1;
+        const py=target.y-3+(y-8-(target.y-3))*progress-Math.sin(progress*Math.PI)*8;
+        box(c,i%2?'#e8ac53':'#e8cc74',snapPixel(px),snapPixel(py),2,2.6,0);
+      }
+    }
+  }
+  c.font='600 6px sans-serif';
+  c.textAlign='center';
+  box(c,'#583b50dc',x-14,top-7,28,9,2);
+  c.fillStyle='#fff4df';c.fillText(gardenHelperName,x,top-.3);
+  c.restore();
 }
 export function drawGardenDecor(c,item,daylight){
   if(!dim(gardenDecorArt))return;
