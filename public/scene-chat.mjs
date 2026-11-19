@@ -6,8 +6,9 @@ export function createSceneChat({api,world,showToast,context}){
   const input=form.elements.message;
   const status=drawer.querySelector('[data-chat-status]');
   const count=document.querySelector('[data-scene-count]');
-  let current, stamp='', busy=false, queued=false, chatKey='-', responseTime=0, expiryTimer;
+  let current, stamp='', queued=false, chatKey='-', responseTime=0, expiryTimer;
   let recent=[];
+  let heartbeat, usingPosition=false;
   const seen=new Map(), unread=new Set();
   const where=value=>value?.session?value.session.token+'/'+value.area+'/'+(value.host??''):'';
   function updateCount(total){
@@ -76,18 +77,29 @@ export function createSceneChat({api,world,showToast,context}){
   }
   async function refresh(){
     if(!stamp||document.hidden)return;
-    if(busy){queued=true;return;}
-    busy=true;
+    if(heartbeat||usingPosition){queued=true;return;}
     const key=stamp, {session,area,host}=current;
     try {
-      const result=await api('scene',{area,host,pose:world.position()},session);
+      heartbeat=api('scene',{area,host,pose:world.position()},session);
+      const result=await heartbeat;
       if(key===stamp)applyResult(result);
     } catch {
       if(key===stamp){
         status.textContent='Đang kết nối lại…';world.setPeers([]);present=0;recent=[];renderMessages();
       }
     } finally {
-      busy=false;
+      heartbeat=undefined;
+      if(queued&&!usingPosition){queued=false;void refresh();}
+    }
+  }
+  async function withPosition(run){
+    usingPosition=true;
+    try {
+      // Finish the previous heartbeat before syncing and using the action's position.
+      await heartbeat?.catch(()=>{});
+      return await run();
+    } finally {
+      usingPosition=false;
       if(queued){queued=false;void refresh();}
     }
   }
@@ -120,7 +132,7 @@ export function createSceneChat({api,world,showToast,context}){
       if(key===stamp)showToast(error.message,true);
     } finally {button.disabled=false;}
   });
-  setInterval(()=>{if(!busy)void refresh();},1200);
+  setInterval(()=>{if(!heartbeat)void refresh();},1200);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});
-  return {sessionChanged,close};
+  return {sessionChanged,close,withPosition};
 }

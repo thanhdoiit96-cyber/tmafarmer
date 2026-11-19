@@ -7,6 +7,7 @@ await cp('server','dist/server',{recursive:true});
 await cp('public/game.mjs','dist/server/game.mjs');
 await cp('public/aqua.mjs','dist/server/aqua.mjs');
 await cp('public/land.mjs','dist/server/land.mjs');
+await cp('public/world-layout.mjs','dist/server/world-layout.mjs');
 await cp('public/garden-helper.mjs','dist/server/garden-helper.mjs');
 await cp('public/wellness.mjs','dist/server/wellness.mjs');
 await cp('public/home-rules.mjs','dist/server/home-rules.mjs');

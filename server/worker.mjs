@@ -1,5 +1,5 @@
 import {recentSeconds,sceneKey,social} from './social.mjs';
-import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
+import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, apply, avatars, dayAt, GameError, has, hasVillageProject, needsPlayerLocation, newFarm, newRoom, playerLocationBlock, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, unixNow, upgradeCalendar, villageOwner} from './engine.mjs';
 
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
@@ -300,10 +300,12 @@ export default {
           continue;
         }
         let area;
-        if(input.action==='rest'){
-          const here=await db.prepare('SELECT scene FROM farm_presence WHERE room=? AND player=? AND seen>=?')
+        if(needsPlayerLocation(input.action)){
+          const here=await db.prepare('SELECT scene,x,y FROM farm_presence WHERE room=? AND player=? AND seen>=?')
             .bind(code,id,time-recentSeconds).first();
-          if(here?.scene===sceneKey(state.farms,id,'home'))area='home';
+          area=['field','home','market','lake'].find(name=>here?.scene===sceneKey(state.farms,id,name));
+          const blocked=playerLocationBlock(input,area,here,hasVillageProject(state,'well'));
+          if(blocked)throw new GameError(blocked);
         }
         const message=apply(state,id,input,time,catchRoll,{area,superAdmin});
         farm.recent.push({id:input.requestId,message});

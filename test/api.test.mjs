@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../server/worker.mjs';
 import {homeSpawn} from '../public/home-rules.mjs';
+import {drinkingWell,plotPosition} from '../public/world-layout.mjs';
 import {dayAt,orderList,unixNow} from '../public/game.mjs';
 import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
@@ -33,8 +34,16 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal((await api('join',{name:'Vườn thử',code:a.code,avatar:'other'})).status,400);
   assert.equal((await api('state',null,a)).state.neighbors.length,2);
   assert.equal((await api('state',null,{...a,token:'0'.repeat(64)})).status,401);
+  const pose={x:140,y:180,facing:'right',walking:true};
+  const enter=(p,area,host,position=pose)=>api('scene',{area,host,pose:{...pose,...position}},p);
   const requestId=crypto.randomUUID();
   const sow={requestId,action:'plant',item:'wheat',index:0};
+  assert.match((await api('action',sow,a)).error,/đúng ô đất/);
+  assert.equal((await enter(a,'field')).status,200);
+  assert.match((await api('action',sow,a)).error,/đến gần ô đất/);
+  assert.equal((await api('state',null,a)).state.me.inventory.wheatSeed,5);
+  const plot=plotPosition(0);
+  assert.equal((await enter(a,'field',undefined,plot)).status,200);
   const requests=await Promise.all([api('action',sow,a),api('action',sow,a)]);
   assert.ok(requests.every(r=>r.status===200&&r.state.me.inventory.wheatSeed===4));
   const row=db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code);
@@ -49,6 +58,13 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal(stole.state.me.inventory.carrot,1);
   assert.match((await api('state',null,a)).state.me.log[0].message,/Vườn Bắp/);
   assert.equal((await send(b,'steal',{target:a.state.me.id,source:'garden',index:0})).status,400);
+  assert.equal((await enter(a,'field',undefined,plotPosition(1))).status,200);
+  for(const action of ['water','fertilize','spray','harvest']){
+    const far=await send(a,action,{index:0});
+    assert.equal(far.status,400);
+    assert.match(far.error,/đến gần ô đất/);
+  }
+  assert.equal((await enter(a,'field',undefined,plot)).status,200);
   assert.equal((await send(a,'harvest',{index:0})).state.me.inventory.wheat,3);
   const listed=await send(a,'list',{item:'wheat',qty:3,price:7});
   assert.equal(listed.state.listings.length,1);
@@ -59,8 +75,6 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal((await send(a,'aquaStock',{index:0,item:'tilapia',qty:1})).status,200);
   const mixed=await send(a,'aquaStock',{index:0,item:'prawn',qty:1});
   assert.deepEqual(mixed.state.me.pondBatches[0].map(batch=>batch.kind),['tilapia','prawn']);
-  const pose={x:140,y:180,facing:'right',walking:true};
-  const enter=(p,area,host)=>api('scene',{area,host,pose},p);
   assert.equal((await enter(a,'lake')).players.length,0);
   assert.equal((await api('scene',{area:'lake',pose:{...pose,x:900}},a)).status,400);
   const onLake=await enter(b,'lake');
@@ -111,6 +125,24 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const retry=await api('action',rest,a);
   assert.equal(retry.state.me.wellness.restUntil,resting.state.me.wellness.restUntil);
   assert.equal((await send(a,'plant',{item:'wheat',index:0})).status,400);
+  const lowVitals=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  const thirsty=lowVitals.farms[c.state.me.id];
+  thirsty.wellness={water:35,food:35,stamina:60,at:unixNow(),until:{},restUntil:0};
+  thirsty.inventory.bread=1;
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(lowVitals),a.code);
+  assert.equal((await enter(c,'field')).status,200);
+  assert.match((await send(c,'drink')).error,/đến gần giếng/);
+  assert.match((await send(c,'eat',{area:'home'})).error,/vào Nhà vườn/);
+  assert.equal((await send(c,'consume',{item:'bread'})).state.me.inventory.bread??0,0);
+  assert.equal((await enter(c,'visit',a.state.me.id,drinkingWell('field'))).status,200);
+  assert.match((await send(c,'drink')).error,/đến gần giếng/);
+  assert.match((await send(c,'plant',{item:'wheat',index:0})).error,/trong vườn của bạn/);
+  assert.equal((await enter(c,'lake',undefined,drinkingWell('lake',true))).status,200);
+  assert.match((await send(c,'drink')).error,/đến gần giếng/);
+  assert.equal((await enter(c,'market',undefined,drinkingWell('market'))).status,200);
+  assert.equal((await send(c,'drink')).state.me.wellness.water,83);
+  assert.equal((await enter(c,'home',undefined,{x,y})).status,200);
+  assert.equal((await send(c,'eat')).state.me.wellness.food,100);
   const current=(await api('state',null,a)).state;
   const order=orderList(current.day)[0];
   const {item,qty}=order.items[0];

@@ -1,5 +1,5 @@
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
-import {features, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
+import {features, interactionRange as range, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {speechRange} from './game.mjs';
@@ -10,7 +10,6 @@ import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawGardenDec
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
-const range=31;
 const distance=(p,x,y)=>Math.hypot(p.x-x,p.y-y);
 const effectStyle={
   till:['#b68756','#e2b983'],water:['#65b9d1','#abe1e7'],plant:['#5eac61','#d1e4a0'],fertilize:['#dcaf56','#f6d795'],

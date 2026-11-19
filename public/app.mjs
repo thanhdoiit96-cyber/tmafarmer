@@ -9,7 +9,7 @@ import {createFarmMusic} from './farm-music.mjs';
 import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {aquaticAtlas,gardenDecorAtlas,livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
-import {maps} from './world-layout.mjs';
+import {drinkingWell,maps,needsPlayerLocation,playerLocationBlock,plotWorkActions} from './world-layout.mjs';
 import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
@@ -792,6 +792,9 @@ function renderHud(farm,now){
   const priority=tasks[0];
   $('#task-hud').innerHTML='<button type="button" class="task-summary" data-panel="tasks" aria-label="Việc cần làm · '+(priority?tasks.length+' việc':'Mọi việc đang ổn')+'" aria-pressed="'+(panel==='tasks')+'"><span class="task-mark" data-pending="'+Boolean(priority)+'">'+(priority?tasks.length:'✓')+'</span><span><strong>Việc cần làm</strong><small>'+(priority?priority.title+' · '+priority.label:'Mọi việc đang ổn')+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>';
 }
+const lakeWellBuilt=()=>state.village.built.some(project=>project.id==='well');
+const currentWell=()=>drinkingWell(neighborId?'visit':tab,lakeWellBuilt());
+const locationBlock=(input,pose=world.position())=>playerLocationBlock(input,neighborId?'visit':tab,pose,lakeWellBuilt());
 function showRecovery(key){
   const info=vitals[key], now=currentTime(), health=wellnessAt(state.me,now);
   const meals=Object.keys(recipes).filter(item=>recipes[item].gain?.[key]&&(state.me.inventory[item]??0)>0);
@@ -812,10 +815,13 @@ function showRecovery(key){
     return;
   }
   const remaining=Math.max(0,(health.until[key]??0)-now);
-  const copy={water:'Uống nước để hồi tối đa 48 điểm. Mỗi lượt cách nhau 90 giây.',food:'Ăn cơm nắm để hồi tối đa 52 điểm. Mỗi lượt cách nhau 5 phút.'};
-  const actions={water:'Uống nước',food:'Ăn cơm nắm'};
+  const copy={water:'Uống nước ở giếng hoặc trong Nhà vườn để hồi tối đa 48 điểm. Mỗi lượt cách nhau 90 giây.',food:'Ăn cơm nắm trong Nhà vườn để hồi tối đa 52 điểm. Mỗi lượt cách nhau 5 phút.'};
+  const disabled=remaining>0||health[key]>=99;
+  const action=locationBlock({action:info.action})?
+    btn(key==='water'&&currentWell()?'Đến giếng':'Về Nhà vườn','data-recovery-place="'+key+'"','primary',disabled):
+    btn(key==='water'?'Uống nước':'Ăn cơm nắm','data-recover="'+info.action+'"','primary',disabled);
   modal(info.label,'<p>'+copy[key]+'</p>'+(remaining?'<p>Lượt hồi phục tiếp theo sau '+duration(remaining)+'.</p>':'')+
-    '<div class="actions">'+btn(actions[key],'data-recover="'+info.action+'"','primary',remaining>0||health[key]>=99)+'</div>'+options+'<p id="dialog-error" role="status"></p>');
+    '<div class="actions">'+action+'</div>'+options+'<p id="dialog-error" role="status"></p>');
 }
 function openTask(index){
   const task=tasks[index];
@@ -1077,17 +1083,24 @@ function goTo(area,arrival) {
   if(landscape.matches)setPanelOpen(false);
   tab=area; neighborId=null; panel='area'; render(arrival);
 }
-function guideHome(forRest=false){
+function guideHome(recovery){
   if(dialog.open)dialog.close();
-  if(tab==='home'){showRecovery('stamina');return;}
+  if(tab==='home'){showRecovery(recovery??'stamina');return;}
   const from={coop:[433,198],market:[234,34],lake:[679,402],neighbors:[234,251]}[tab];
   if(tab!=='field')goTo('field',from);
   const started=world.approach('house',undefined,()=>{
     goTo('home');
-    if(forRest)showRecovery('stamina');
+    if(recovery)showRecovery(recovery);
   });
   if(started)reveal('#world');
   else showToast('Hãy đi theo lối về phía ngôi nhà ở góc trên bên trái.',true);
+}
+function guideRecovery(key){
+  const well=key==='water'&&currentWell();
+  if(!well){guideHome(key);return;}
+  dialog.close();
+  if(world.approach(well.type,undefined,()=>showRecovery(key)))reveal('#world');
+  else showToast('Chưa tìm được đường tới giếng.',true);
 }
 function visit(id) {
   if(landscape.matches)setPanelOpen(false);
@@ -1143,7 +1156,7 @@ function interactWithWorld(target) {
     goTo('workshop');
   } else if(target.type==='craft-bench'){
     panel='area';render();reveal('.control-panel');
-  } else if(target.type==='village-well'){
+  } else if(target.type==='well'||target.type==='village-well'){
     showRecovery('water');
   } else if(target.type==='pavilion'){
     showWeather();
@@ -1171,11 +1184,6 @@ function interactWithWorld(target) {
     else {panel=pen?.lot===undefined?'area':'land';if(pen?.lot!==undefined)selectedLot=pen.lot;render();reveal(`[data-pen="${target.index}"]`);}
   } else if(target.type==='coop'||target.type==='silo') {
     panel='area';render();reveal('#board');
-  } else if(target.type==='well'&&tab==='field') {
-    panel='area';render();
-    showRecovery('water');
-  } else if(target.type==='well') {
-    showToast(tab==='market'?'Giếng làng ở giữa khu chợ.':'Giếng nước của hàng xóm.');
   } else if(target.type==='house'&&!neighborId) {
     goTo('home');
   }
@@ -1270,7 +1278,7 @@ function listingDialog() {
     '</select></label><label>Số lượng<input type="number" name="qty" min="1" max="20" value="1" required></label><label>Giá mỗi món · xu<input type="number" name="price" min="1" value="'+goods[items[0]].sell+'" required></label><button class="btn primary">Đăng lên sạp</button></form><p id="dialog-error" role="status"></p>');
 }
 function help() {
-  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chạm Thể lực → Về Nhà vườn. Khi vào nhà, chọn Nghỉ ngay. Sau 60 giây, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, đón vật nuôi rồi cho ăn. Vật nuôi lớn lên trước khi cho sản phẩm. Chọn Quản lý để chuyển chuồng hoặc bán sống. Vật nuôi lấy sản phẩm cho ít hơn sau 3 và 7 ngày thực. Khi lợn hoặc thỏ sẵn sàng, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá, tôm và cua chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
+  modal('Cách chơi','<ol><li>Dùng WASD, giữ nút mũi tên hoặc chạm bản đồ để di chuyển. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chọn thao tác trên ô cây để nhân vật tự đi tới rồi làm. Uống nước ở giếng hoặc trong Nhà vườn, ăn cơm nắm trong Nhà vườn. Đồ chế biến trong túi dùng được ở mọi khu vực.</li><li>Chạm Thể lực → Về Nhà vườn. Khi vào nhà, chọn Nghỉ ngay. Sau 60 giây, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, đón vật nuôi rồi cho ăn. Vật nuôi lớn lên trước khi cho sản phẩm. Chọn Quản lý để chuyển chuồng hoặc bán sống. Vật nuôi lấy sản phẩm cho ít hơn sau 3 và 7 ngày thực. Khi lợn hoặc thỏ sẵn sàng, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá, tôm và cua chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
 }
 async function perform(input) {
   if(busy)return false;
@@ -1282,18 +1290,33 @@ async function perform(input) {
   let updateAfter=false;
   try {
     let message;
-    if(input.action==='rest'&&actionTab!=='home')throw new GameError('Hãy vào Nhà vườn để bắt đầu nghỉ.');
+    const located=needsPlayerLocation(input.action);
+    const checkLocation=pose=>{
+      const blocked=locationBlock(input,pose);
+      if(blocked)throw new GameError(blocked);
+    };
+    if(located)checkLocation();
     if(credentials) {
-      if(input.action==='rest')await api('scene',{area:actionTab,pose:world.position()},credentials);
-      input.requestId=crypto.randomUUID();
-      let result;
-      try {
-        result=await api('action',input,credentials);
-      } catch(error) {
-        if(error.status) throw error;
-        result=await api('action',input,credentials);
-      }
-      if(credentials!==session) return false;
+      const sameLocation=()=>credentials===session&&actionTab===tab&&actionNeighbor===neighborId;
+      const submit=async()=>{
+        if(located){
+          if(!sameLocation())return null;
+          const pose=world.position();
+          checkLocation(pose);
+          await api('scene',{area:actionTab,pose},credentials);
+          if(!sameLocation())return null;
+          checkLocation();
+        }
+        input.requestId=crypto.randomUUID();
+        try {
+          return await api('action',input,credentials);
+        } catch(error) {
+          if(error.status)throw error;
+          return api('action',input,credentials);
+        }
+      };
+      const result=located?await sceneChat.withPosition(submit):await submit();
+      if(!result||credentials!==session)return false;
       revision=result.revision;
       setState(result.state);
       message=result.message;
@@ -1418,7 +1441,8 @@ document.addEventListener('click',async e=>{
     world.approach('exit',undefined,()=>interactWithWorld({type:'exit',...maps.home.exits[0]}));
     reveal('#world');
   } else if('vital' in d) showRecovery(d.vital);
-  else if('restHome' in d)guideHome(true);
+  else if('restHome' in d)guideHome('stamina');
+  else if('recoveryPlace' in d)guideRecovery(d.recoveryPlace);
   else if('recover' in d){
     const success=await perform({action:d.recover});
     if(success)dialog.close();
@@ -1570,7 +1594,7 @@ document.addEventListener('click',async e=>{
     if(d.target)input.target=d.target;
     if(d.source)input.source=d.source;
     const fishing=input.action==='cast'||input.action==='reel';
-    if(fishing||input.action==='till'||input.action==='plant'){
+    if(fishing||plotWorkActions.has(input.action)){
       if(busy)return;
       const cast=state.me.fishing.cast;
       const type=fishing?((input.source??cast?.source)==='public'?'public-fishing':'neighbor-fishing'):'plot';

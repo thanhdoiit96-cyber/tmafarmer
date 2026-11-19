@@ -3,6 +3,11 @@ import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 
 export const size = { width: 480, height: 288 };
+export const interactionRange=31;
+const plotHotspotOffset=8;
+const objectHotspotOffset=15;
+const publicWell={x:217,y:299,type:'well',w:31};
+const publicWellHotspot={...publicWell,y:publicWell.y+12,type:'village-well',label:'Uống nước ở giếng công cộng'};
 const wide={width:720,height:432};
 
 export {lotRect,plotPosition} from './land.mjs';
@@ -79,6 +84,29 @@ Object.assign(maps.visit,{
   paths:maps.field.paths,trees:maps.field.trees,water:maps.field.water,
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
+export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','harvest']);
+export const needsPlayerLocation=action=>plotWorkActions.has(action)||['drink','eat','rest'].includes(action);
+export function drinkingWell(area,hasPublicWell){
+  if(area==='lake')return hasPublicWell?publicWellHotspot:null;
+  if(area!=='field'&&area!=='market')return null;
+  const well=maps[area].objects.find(object=>object.type==='well');
+  return {...well,y:well.y+objectHotspotOffset};
+}
+function withinReach(point,pose){
+  return !!(point&&pose&&Math.hypot(point.x-pose.x,point.y-pose.y)<=interactionRange);
+}
+export function playerLocationBlock({action,index},area,pose,hasPublicWell=false){
+  if(plotWorkActions.has(action)){
+    if(area!=='field'||!Number.isSafeInteger(index)||index<0)return 'Hãy đến đúng ô đất trong vườn của bạn.';
+    const plot=plotPosition(index);
+    return withinReach({x:plot.x,y:plot.y+plotHotspotOffset},pose)?'':'Hãy đến gần ô đất để thực hiện.';
+  }
+  if(action==='drink')return area==='home'||withinReach(drinkingWell(area,hasPublicWell),pose)?'':'Hãy đến gần giếng hoặc vào Nhà vườn để uống nước.';
+  if(action==='eat')return area==='home'?'':'Hãy vào Nhà vườn để ăn cơm.';
+  if(action==='rest')return area==='home'?'':'Hãy vào Nhà vườn để bắt đầu nghỉ.';
+  return '';
+}
+
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
 export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
 const coopPosition=(i,level)=>level<4?{x:115+i%3*72,y:126+Math.floor(i/3)*48}:
@@ -104,7 +132,7 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(obj.x-obj.w*.43,obj.y-depth,obj.w*.86,depth+2));
     if(id!=='visit'||!['house','well'].includes(obj.type)){
       const drawY=obj.type==='house'?obj.y-obj.h/2:undefined;
-      hotspots.push({...obj,y:obj.y+15,drawY});
+      hotspots.push({...obj,y:obj.y+objectHotspotOffset,drawY});
     }
   }
   for(const [x,y] of map.trees) {
@@ -126,7 +154,7 @@ export function features(id, snapshot, neighbor, page=0) {
       const pos=plotPosition(i);
       actors.push({...pos,type:'plot',index:i,data,compactAt:id==='field'?owner.soilCompactsAt?.[i]:undefined,visit:id==='visit'});
       const slot=mainPlotSlot(i);
-      hotspots.push({...pos,y:pos.y+8,drawY:pos.y,type:'plot',index:i,data,label:slot>=0?'Ô đất '+(slot+1):'Vườn ô '+(Math.floor((i-plotOffset)/3)+1)+' · luống '+((i-plotOffset)%3+1)});
+      hotspots.push({...pos,y:pos.y+plotHotspotOffset,drawY:pos.y,type:'plot',index:i,data,label:slot>=0?'Ô đất '+(slot+1):'Vườn ô '+(Math.floor((i-plotOffset)/3)+1)+' · luống '+((i-plotOffset)%3+1)});
     }
     const decor=(index,rect)=>{const style=fenceAt(owner,index);if(style)ground.push({...rect,type:'fence',style});};
     for(const garden of baseGarden(Math.ceil(owner.plots.length/3))){
@@ -172,10 +200,9 @@ export function features(id, snapshot, neighbor, page=0) {
   }
   const built=project=>snapshot.village?.built.some(entry=>entry.id===project);
   if(id==='lake'&&built('well')){
-    const well={x:217,y:299,type:'well',w:31};
-    actors.push(well);
-    hotspots.push({...well,y:well.y+12,type:'village-well',label:'Uống nước ở giếng công cộng'});
-    blocks.push(rect(well.x-11,well.y-7,22,8));
+    actors.push(publicWell);
+    hotspots.push(publicWellHotspot);
+    blocks.push(rect(publicWell.x-11,publicWell.y-7,22,8));
   }
   for(const dock of docks[id]??[]){
     const batches=visiblePondBatches(owner,dock.index);

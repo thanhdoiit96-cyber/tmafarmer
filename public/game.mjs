@@ -6,7 +6,8 @@ import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSched
 export {homesteadSize} from './land.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
 
-export {advanceVillage,startVillageSecurity};
+export {advanceVillage,hasVillageProject,startVillageSecurity};
+export {needsPlayerLocation,playerLocationBlock} from './world-layout.mjs';
 export const publicFishingLimit=room=>fishing.limit+(hasVillageProject(room,'dock')?2:0);
 export const gameDay = 8 * 60 * 60;
 export const slotLength = 2 * 60 * 60;
