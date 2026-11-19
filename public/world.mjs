@@ -65,15 +65,28 @@ export function createWorld(root, onInteract, landscape) {
     context.imageSmoothingEnabled=false;
     view={width:width/scale,height:height/scale};
     pointer=null;
-    shiftCamera();
+    shiftCamera(true);
   }
   new ResizeObserver(sizeCanvas).observe(canvas);
   landscape.addEventListener('change',sizeCanvas);
 
-  function shiftCamera(){
+  function shiftCamera(immediate=false){
     const anchor=(sceneId==='field'||sceneId==='visit') ? .87 : .71;
-    const left=Math.max(0,Math.min(bounds.width-view.width,x-view.width*.5));
-    const top=Math.max(0,Math.min(bounds.height-view.height,y-view.height*anchor));
+    const horizontalInset=view.width*.22;
+    const upperInset=view.height*(anchor-.12),lowerInset=view.height*(anchor+.12);
+    let left=camera.x,top=camera.y;
+    if(immediate) {
+      left=x-view.width*.5;
+      top=y-view.height*anchor;
+    } else {
+      const screenX=x-camera.x,screenY=y-camera.y;
+      if(screenX<horizontalInset)left=x-horizontalInset;
+      else if(screenX>view.width-horizontalInset)left=x-(view.width-horizontalInset);
+      if(screenY<upperInset)top=y-upperInset;
+      else if(screenY>lowerInset)top=y-lowerInset;
+    }
+    left=Math.max(0,Math.min(bounds.width-view.width,left));
+    top=Math.max(0,Math.min(bounds.height-view.height,top));
     camera.x=Math.round(left*scale)/scale;
     camera.y=Math.round(top*scale)/scale;
   }
@@ -123,7 +136,7 @@ export function createWorld(root, onInteract, landscape) {
       root.dataset.wide=String(bounds.width>size.width);
       setPosition(arrival??maps[id].spawn);
       sizeCanvas();
-      shiftCamera();
+      shiftCamera(true);
       peers.clear();
       speech.clear();
       terrainKey='';

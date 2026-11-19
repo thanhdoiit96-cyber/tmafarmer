@@ -66,6 +66,8 @@ Chọn **Vercel** cho giao diện. Nếu muốn tạo làng, mời bạn bè, ch
 
 ### Chơi online với Cloudflare Worker và D1
 
+Lộ trình chuẩn bị sức tải cho 1.000 người chơi đồng thời được theo dõi tại [docs/SCALE_PLAN_1000.md](docs/SCALE_PLAN_1000.md). Mốc này cần load test trên staging trước khi xem là năng lực đã được xác nhận.
+
 Mở PowerShell tại thư mục chứa `package.json`, dùng Node.js 22.13+ và chạy:
 
 ```powershell
