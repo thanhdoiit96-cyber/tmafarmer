@@ -34,6 +34,7 @@ export function validateProgression() {
       const frame = cropFrame(key, stage);
       requireCheck(Boolean(frame?.source), `Crop ${key} stage ${stage + 1} needs an authored atlas frame.`);
       if (frame?.source) requireCheck(assetExists(frame.source), `Crop ${key} points to missing atlas ${frame.source}.`);
+      requireCheck(Boolean(frame?.bounds?.length === 4 && frame.bounds.every(edge => Number.isInteger(edge) && edge >= 0 && edge <= 48)), `Crop ${key} stage ${stage + 1} bounds must fit its 48x48 cell.`);
     }
   }
   const cropPng = pngInfo(progressionCropAtlas.source);

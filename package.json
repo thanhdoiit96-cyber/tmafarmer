@@ -9,7 +9,7 @@
     "build": "npm run progression:docs && node scripts/build.mjs",
     "check:progression": "node scripts/progression.mjs",
     "progression:docs": "node scripts/progression.mjs --write-docs",
-    "pixel:progression-art": "py scripts/generate-progression-art.py",
+    "pixel:progression-art": "py scripts/generate-progression-crops-v2.py",
     "test": "node --test",
     "d1:create": "npx wrangler d1 create vuon-mua-vui",
     "d1:migrate": "npx wrangler d1 migrations apply DB --remote",

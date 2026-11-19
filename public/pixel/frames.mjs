@@ -1,4 +1,5 @@
 import moreCrops from './crop-stages-frames.mjs';
+import progressionCropsV2 from './progression-crop-frames-v2.mjs';
 
 export const pixelViewport={width:640,height:384};
 export const pixelCharacter={
@@ -33,15 +34,7 @@ export const pixelSlice={
   },
 };
 export const cropStagesAtlas={source:'/pixel/crop-stages-v2.png',cell:48,crops:moreCrops};
-export const progressionCropAtlas={
-  source:'/pixel/progression-crops-v1.png',cell:48,
-  crops:{
-    coffee:{row:0,bounds:[[17,25,31,40],[13,16,36,40],[9,9,40,40],[7,8,42,40]]},
-    lotus:{row:1,bounds:[[20,27,28,40],[9,22,40,40],[19,8,29,40],[17,14,31,40]]},
-    dragonfruit:{row:2,bounds:[[21,28,27,40],[17,21,31,40],[18,11,35,40],[17,12,37,40]]},
-    blackRice:{row:3,bounds:[[18,27,29,40],[13,14,34,40],[9,7,39,40],[9,7,39,40]]},
-  },
-};
+export const progressionCropAtlas={source:'/pixel/progression-crops-v2.png',cell:48,crops:progressionCropsV2};
 export const livestockAtlas={
   source:'/pixel/livestock-v2.png',columns:4,
   frames:{goat:[0,0,56,48],sheep:[56,0,56,48],goose:[112,0,56,48],rabbit:[168,0,56,48]},

@@ -33,3 +33,10 @@ For new terrain, effects, or icons, choose dimensions that match this pixel dens
 ## Verification
 
 Check the exported PNG size, alpha, frame order, baselines, and padding at 1× and an integer zoom. Compare the actual Canvas at normal play size, including movement and the Pixel toggle. When changing runtime references, run syntax checks, `npm test`, and `npm run build`. Record completed migrations and scope in `docs/PIXEL_ART_MIGRATION.md`.
+
+## Crop quality gate
+
+- Use the established crop atlases in `docs/assets/crops-v2-source.png`, `docs/assets/crop-stages-orchard-source.png`, and the matching runtime atlas as the quality bar. Keep the rounded soil clod, layered foliage, warm upper-left highlights, dark green leaf undersides, and readable fruit or seed clusters.
+- Do not ship a new crop as a few flat polygons, thin outlines, emoji, or procedural placeholder art. A production crop needs a distinct, fuller silhouette at every stage, multiple value steps, leaf veins or fruit texture where visible, and a recognizable mature harvest.
+- Draw and approve the transparent high-resolution source first, then normalize every frame independently to 48 × 48 with hard alpha edges. Inspect the runtime-sized frames beside existing crops at 1× and 4×; detail that disappears after normalization does not count as finished detail.
+- Keep a labeled source/runtime comparison sheet in `docs/assets/` and preserve previous atlases when revising approved art.
