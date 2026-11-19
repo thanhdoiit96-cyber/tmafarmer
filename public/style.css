@@ -249,6 +249,25 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 [data-tone="urgent"] .task-mark,.task-mark[data-tone="urgent"]{color:#9b4135;background:#fae4da}
 [data-tone="care"] .task-mark,.task-mark[data-tone="care"]{color:#39688b;background:#e0edf2}
 .task-arrow{font-size:18px;color:#647a57}
+.quick-garden-tools{padding:8px;margin:6px 0 9px;border:1px solid #d9e2c7;border-radius:9px;background:#eef2e3}
+.quick-garden-tools .actions{margin:4px 0 0}
+.quick-garden-tools .btn{flex:1}
+.quick-garden-form{margin-top:9px}
+.quick-garden-form>.row{gap:6px}
+.quick-garden-form>.row>.btn{min-height:34px}
+.quick-garden-plots{display:grid;gap:4px;max-height:min(36dvh,18rem);margin:6px 0;overflow:auto;overscroll-behavior:contain}
+.quick-garden-form .quick-plot{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-height:44px;margin:0;padding:4px 8px;border:1px solid #e5ddc7;border-radius:8px;background:#fffcf2;cursor:pointer}
+.quick-plot:has(input:checked){border-color:#78916b;background:#eef2e3}
+.quick-plot[data-unavailable]{background:#f0ebe0;color:#705846}
+.quick-plot input{width:18px;height:18px;margin:0;padding:0;accent-color:#315b43}
+.quick-plot small{display:block;color:#665f50;font-size:11px;font-weight:500}
+.quick-plot [data-garden-yield]{font-size:10px;color:#4e6048}
+.quick-garden-estimate{display:grid;grid-template-columns:.7fr 1fr 1.5fr;gap:5px;margin:7px 0;padding:6px 8px;border-radius:8px;background:#e9efdd;color:#30533b}
+.quick-garden-estimate dt{font-size:11px}
+.quick-garden-estimate dd{margin:2px 0 0;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.quick-garden-form [role=status]{margin:4px 0;color:#8b3e2d}
+.quick-garden-form #dialog-error:empty{display:none}
+.quick-garden-form button[type=submit]{min-height:40px;width:100%}
 .task-list,.wealth-list{display:grid;gap:6px;margin-top:7px;padding:0}
 .task-card{display:flex;text-align:left;align-items:center;gap:8px;min-height:45px;border:1px solid #eae0cd;border-radius:9px;background:#fffaf0;color:var(--deep);padding:6px}
 .plot-select [data-flag]{box-shadow:inset 0 -3px var(--flag,#548662)}

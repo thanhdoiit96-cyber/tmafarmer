@@ -508,6 +508,71 @@ export function cropYield(plot) {
   const lost=damage>=70?Math.ceil(normal*.60):damage>=40?Math.ceil(normal*.35):damage>=20?1:0;
   return Math.max(1,normal-lost);
 }
+export const quickGardenActions={water:'Tưới nhiều ô',harvest:'Thu nhiều ô'};
+
+function plotWorkBlock(action,plot,weather,time){
+  if(!plot)return 'Hãy gieo hạt vào ô này trước.';
+  const ripe=plot.progress>=cropGoal(plot);
+  if(action==='harvest')return ripe?'':'Cây chưa đến lúc thu hoạch.';
+  if(ripe)return 'Cây đã chín. Bạn có thể thu hoạch.';
+  if(action==='water'&&(plot.wetUntil>time||weather.wet))return 'Đất đang đủ ẩm.';
+  return '';
+}
+const harvestAmount=plot=>Math.max(0,cropYield(plot)-(plot.picked??0));
+
+export function quickGardenTargets(farm,action,weather,time){
+  return cropIndexes(farm).flatMap(index=>{
+    const plot=plotAt(farm,index);
+    return plotWorkBlock(action,plot,weather,time)?[]:
+      [{index,kind:plot.kind,space:action==='harvest'?harvestAmount(plot):0}];
+  });
+}
+
+export function quickGardenPreview(farm,action,targets,weather,time){
+  const perPlot=workCost(action,weather.id), count=targets.length;
+  const cost={water:perPlot.water*count,food:perPlot.food*count,stamina:perPlot.stamina*count};
+  const space=targets.reduce((total,target)=>total+target.space,0);
+  const free=Math.max(0,capacity(farm)-stock(farm));
+  const blocked=count?(workBlock(wellnessAt(farm,time),cost,time)||
+    (space>free?'Kho thiếu '+(space-free)+' chỗ. Hãy giảm số ô hoặc dọn kho.':'')):'';
+  return {cost,space,free,blocked};
+}
+
+function prepareQuickGarden(room,farm,input,weather,time){
+  const {item:action,plots:indexes}=input;
+  check(has(quickGardenActions,action)&&Array.isArray(indexes)&&indexes.length>0,'Hãy chọn các ô và việc cần làm.');
+  const valid=new Set(cropIndexes(farm));
+  check(indexes.length<=valid.size&&new Set(indexes).size===indexes.length&&indexes.every(index=>valid.has(index)),
+    'Danh sách có ô trùng hoặc không thuộc vườn của bạn.');
+  const targets=indexes.map(index=>{
+    const plot=projectPlot(room,plotAt(farm,index),time);
+    check(!plotWorkBlock(action,plot,weather,time),'Có ô đã thay đổi hoặc không còn phù hợp. Hãy kiểm tra lại lựa chọn.');
+    return {index,plot,space:action==='harvest'?harvestAmount(plot):0};
+  });
+  const preview=quickGardenPreview(farm,action,targets,weather,time);
+  check(input.expectedSpace===preview.space,'Sản lượng đã thay đổi. Hãy xem lại số chỗ kho cần dùng.');
+  return {action,targets,...preview};
+}
+
+function waterPlot(farm,index,plot,time){
+  plot.wetUntil=time+Math.ceil(cropGoal(plot)*1.15);
+  savePlot(farm,index,plot);
+}
+function harvestPlot(farm,index,plot,time,amount,reserve=0){
+  if(amount>reserve)add(farm,plot.kind,amount-reserve);
+  if(reserve)add(farm,crops[plot.kind].seed,1);
+  savePlot(farm,index,null);
+  setSoilTime(farm,index,time);
+  farm.xp+=xpRewards.harvest;
+}
+function finishQuickGarden(farm,plan,time){
+  if(plan.action==='water'){
+    for(const {index,plot} of plan.targets)waterPlot(farm,index,plot,time);
+    return 'Đã tưới '+plan.targets.length+' ô.';
+  }
+  for(const {index,plot,space} of plan.targets)harvestPlot(farm,index,plot,time,space);
+  return 'Đã thu hoạch '+plan.targets.length+' ô · '+plan.space+' nông sản.';
+}
 function candidates(farm) {
   return Object.entries(goods).filter(([item,info])=>info.sell&&!has(recipes,item)&&own(farm,item)>=4).map(([key])=>key);
 }
@@ -710,8 +775,10 @@ export function apply(room,id,input,now,catchRoll=0.5,{area,superAdmin=false}={}
     farm.wellness=health;
     return {water:'Đã uống nước.',food:'Đã ăn cơm nắm.'}[recovery];
   }
-  const cost=workCost(input.action,weatherAt(room,now).id);
-  const blocked=workBlock(health,cost,now);
+  const weather=weatherAt(room,now);
+  const quick=input.action==='quickGarden'?prepareQuickGarden(room,farm,input,weather,now):null;
+  const cost=quick?.cost??workCost(input.action,weather.id);
+  const blocked=quick?.blocked??workBlock(health,cost,now);
   check(!blocked,blocked);
   const day=dayAt(room,now);
   if(input.action==='claimDay'){
@@ -725,8 +792,8 @@ export function apply(room,id,input,now,catchRoll=0.5,{area,superAdmin=false}={}
     return 'Đã nhận '+dayReward.coins+' xu và '+dayReward.xp+' XP từ Sổ việc hôm nay.';
   }
   const xpBefore=farm.xp;
-  const message=applyAction(room,id,input,now,catchRoll);
-  const goal=dayGoals.find(entry=>entry.actions.includes(input.action));
+  const message=quick?finishQuickGarden(farm,quick,now):applyAction(room,id,input,now,catchRoll);
+  const goal=dayGoals.find(entry=>entry.actions.includes(quick?.action??input.action));
   if(goal){
     const journal=journalAt(farm,day);
     if(!journal.done.includes(goal.id))journal.done.push(goal.id);
@@ -1072,11 +1139,10 @@ function applyAction(room,id,input,now,catchRoll){
     savePlot(farm,index,{kind:item,goal:crops[item].time,progress:0,pests:0,at:now,wetUntil:0,protectedUntil:0,fertilized:false,picked:0});
     return 'Đã gieo '+goods[item].name.toLowerCase()+'.';
   }
-  check(plot,'Hãy gieo hạt vào ô này trước.');
-  const ripe=plot.progress>=cropGoal(plot);
+  const blocked=plotWorkBlock(action,plot,action==='water'?weatherAt(room,now):null,now);
+  check(!blocked,blocked);
   if(action==='harvest') {
-    check(ripe,'Cây chưa đến lúc thu hoạch.');
-    const amount=Math.max(0,cropYield(plot)-(plot.picked??0));
+    const amount=harvestAmount(plot);
     const seed=crops[plot.kind].seed;
     const reserve=input.source==='seed'?1:0;
     if(reserve){
@@ -1084,19 +1150,15 @@ function applyAction(room,id,input,now,catchRoll){
       check(own(farm,seed)<100,'Túi đã đầy giống này.');
     }
     roomFor(farm,amount-reserve);
-    if(amount>reserve)add(farm,plot.kind,amount-reserve);
-    if(reserve)add(farm,seed,1);
-    savePlot(farm,index,null);
-    setSoilTime(farm,index,now);
-    farm.xp+=xpRewards.harvest;
+    harvestPlot(farm,index,plot,now,amount,reserve);
     if(amount===reserve)return 'Đã giữ 1 '+goods[seed].name.toLowerCase()+' để gieo lại.';
     return 'Thu được '+(amount-reserve)+' '+goods[plot.kind].name.toLowerCase()+(reserve?' và giữ lại 1 giống.':'.');
   }
-  check(!ripe,'Cây đã chín. Bạn có thể thu hoạch.');
-  if(action==='water') {
-    check(plot.wetUntil<=now&&!weatherAt(room,now).wet,'Đất đang đủ ẩm.');
-    plot.wetUntil=now+Math.ceil(cropGoal(plot)*1.15);
-  } else if(action==='fertilize') {
+  if(action==='water'){
+    waterPlot(farm,index,plot,now);
+    return 'Đã tưới nước.';
+  }
+  if(action==='fertilize') {
     check(!plot.fertilized,'Bạn đã bón phân cho cây này.');
     use(farm,'fertilizer');
     plot.fertilized=true;
@@ -1107,5 +1169,5 @@ function applyAction(room,id,input,now,catchRoll){
     plot.pests=0; plot.protectedUntil=now+Math.ceil(cropGoal(plot)*1.1);
   }
   savePlot(farm,index,plot);
-  return {water:'Đã tưới nước.',fertilize:'Đã bón phân.',spray:'Đã xử lý sâu bệnh.'}[action];
+  return {fertilize:'Đã bón phân.',spray:'Đã xử lý sâu bệnh.'}[action];
 }

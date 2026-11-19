@@ -9,7 +9,7 @@ import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {aquaticAtlas,livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {maps} from './world-layout.mjs';
-import {advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, quickGardenActions, quickGardenPreview, quickGardenTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -594,10 +594,69 @@ function renderHome(farm,now){
   return '<section class="home-guide"><div><h2>Chỗ nghỉ</h2><p>'+status+'</p></div>'+
     '<div class="actions">'+btn('Nghỉ ngay','data-recover="rest"','primary',resting||health.stamina>=100)+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
 }
-function renderTasks(farm){
-  const journal=renderJournal(farm);
-  if(!tasks.length)return journal+ '<h2>Việc cần làm</h2><p>Vườn đang ổn. Bạn có thể dạo hồ hoặc sang chợ.</p>';
-  return journal+'<h2>Việc cần làm</h2><div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+taskStyles[task.type].mark+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>';
+function renderTasks(farm,now){
+  const shortcuts=Object.entries(quickGardenActions).map(([action,label])=>{
+    const count=quickGardenTargets(farm,action,state.weather,now).length;
+    return btn(label+' · '+count,'data-quick-garden="'+action+'" aria-haspopup="dialog"','subtle',!count);
+  }).join('');
+  const quick='<section class="quick-garden-tools" aria-label="Chăm vườn nhanh"><h3>Chăm vườn nhanh</h3><div class="actions">'+shortcuts+'</div></section>';
+  const list=tasks.length?'<div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+taskStyles[task.type].mark+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>':
+    '<p>Vườn đang ổn. Bạn có thể dạo hồ hoặc sang chợ.</p>';
+  return '<h2>Việc cần làm</h2>'+quick+renderJournal(farm)+list;
+}
+function showQuickGarden(action){
+  const farm=state.me, targets=quickGardenTargets(farm,action,state.weather,currentTime());
+  if(!targets.length)return;
+  const rows=targets.map(({index,kind})=>{
+    const lot=gardenFor(index), number=plotNumber(index);
+    const name=lot<0?'Ô '+number:'Vườn ô '+(lot+1)+' · Luống '+number;
+    return '<label class="quick-plot"><input type="checkbox" value="'+index+'" data-garden-plot="'+kind+'"><span><strong>'+name+'</strong><small>'+escape(nice(kind))+'</small></span><span data-garden-yield></span></label>';
+  }).join('');
+  modal(quickGardenActions[action],'<form class="quick-garden-form" data-form="quickGarden" data-operation="'+action+'">'+
+    '<div class="row"><strong>Chọn ô trong vườn</strong>'+btn('Chọn hết','data-quick-all','subtle')+'</div>'+
+    '<div class="quick-garden-plots" role="group" aria-label="Các ô có thể chọn">'+rows+'</div>'+
+    '<dl class="quick-garden-estimate" aria-live="polite" aria-atomic="true">'+
+      '<div><dt>Số ô</dt><dd data-quick-count></dd></div><div><dt>Thể lực cần</dt><dd data-quick-stamina></dd></div>'+
+      '<div><dt>Chỗ kho cần / trống</dt><dd data-quick-space></dd></div></dl>'+
+    '<p data-quick-warning role="status" hidden></p><p id="dialog-error" role="status"></p>'+
+    '<button type="submit" class="btn primary" disabled>'+(action==='water'?'Xác nhận tưới':'Xác nhận thu hoạch')+'</button></form>');
+  updateQuickGarden(dialog.querySelector('.quick-garden-form'));
+}
+function updateQuickGarden(form){
+  const {me:farm,weather}=state, action=form.dataset.operation, now=currentTime();
+  const available=new Map(quickGardenTargets(farm,action,weather,now).map(target=>[target.index,target]));
+  const selected=[];
+  let stale=false, validCount=0, selectedCount=0;
+  for(const input of form.querySelectorAll('[data-garden-plot]')){
+    const target=available.get(Number(input.value)), valid=target?.kind===input.dataset.gardenPlot;
+    if(valid)validCount++;
+    if(input.checked){
+      selectedCount++;
+      if(valid)selected.push(target);
+      else stale=true;
+    }
+    input.disabled=!valid&&!input.checked;
+    const row=input.closest('label');
+    row.toggleAttribute('data-unavailable',!valid);
+    row.querySelector('[data-garden-yield]').textContent=!valid?'Đã thay đổi':action==='harvest'?target.space+' món':'';
+  }
+  const {cost,space,free,blocked}=quickGardenPreview(farm,action,selected,weather,now);
+  const warning=stale?'Có ô đã thay đổi. Bỏ chọn ô đó để tiếp tục.':blocked;
+  const estimates={count:selectedCount,stamina:stale?'—':cost.stamina,space:stale?'—':space+' / '+free};
+  for(const [key,value] of Object.entries(estimates)){
+    const output=form.querySelector('[data-quick-'+key+']');
+    if(output.textContent!==String(value))output.textContent=value;
+  }
+  const message=form.querySelector('[data-quick-warning]');
+  if(message.textContent!==warning)message.textContent=warning;
+  message.hidden=!warning;
+  const all=form.querySelector('[data-quick-all]');
+  const clear=validCount===selected.length&&selectedCount>0;
+  all.toggleAttribute('data-clear-selection',clear);
+  all.textContent=clear?'Bỏ chọn hết':'Chọn hết';
+  all.disabled=!validCount&&!selectedCount;
+  form.querySelector('button[type=submit]').disabled=busy||!selected.length||!!warning;
+  return {ready:!!selected.length&&!warning,plots:selected.map(target=>target.index),space};
 }
 function renderRank(me){
   const ranking=state.wealth;
@@ -830,7 +889,7 @@ function renderStock(farm){
     '<div id="stock-items" class="stock-grid card-grid">'+(cards||'<p>Chưa có nông sản.</p>')+'</div>';
 }
 function renderPanel(farm,now) {
-  if(panel==='tasks')return renderTasks(farm);
+  if(panel==='tasks')return renderTasks(farm,now);
   if(panel==='progress')return renderProgress(farm);
   if(panel==='rank')return renderRank(farm);
   if(panel==='land')return renderLand(farm,now);
@@ -850,7 +909,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -929,6 +988,8 @@ function render(arrival) {
   panelBody.dataset.context=panelContext;
   $('#world').dataset.area=tab;
   sceneChat.sessionChanged();
+  const quickGardenForm=dialog.open&&dialog.querySelector('.quick-garden-form');
+  if(quickGardenForm&&!busy)updateQuickGarden(quickGardenForm);
   if(focus&&!dialog.open){
     const control=Array.from(document.querySelectorAll(focusSelector+', [data-panel-fold]>summary')).find(el=>focusKey(el)===focus);
     control?.focus({preventScroll:true});
@@ -1167,7 +1228,9 @@ async function perform(input) {
       updateDemo();
     }
     render();
-    if(!['removeMember','villageGoods'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
+    if(input.action==='quickGarden'){
+      if(tab==='field')for(const index of input.plots)world.particle({action:input.item,index});
+    } else if(!['removeMember','villageGoods'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
       const reel=input.action==='reel';
       const caught=reel&&[previousFarm.fishing.cast?.item,'minnow','tilapia','goldenCarp'].some(key=>key&&(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
       world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
@@ -1175,7 +1238,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','moveAnimal','sellAnimal','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','quickGarden','moveAnimal','sellAnimal','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1284,6 +1347,14 @@ document.addEventListener('click',async e=>{
   else if('recover' in d){
     const success=await perform({action:d.recover});
     if(success)dialog.close();
+  }
+  else if('quickGarden' in d)showQuickGarden(d.quickGarden);
+  else if('quickAll' in d){
+    if(busy)return;
+    const form=el.form, clear=el.hasAttribute('data-clear-selection');
+    for(const input of form.querySelectorAll('[data-garden-plot]'))input.checked=!clear&&!input.closest('label').hasAttribute('data-unavailable');
+    form.querySelector('#dialog-error').textContent='';
+    updateQuickGarden(form);
   }
   else if('task' in d)openTask(Number(d.task));
   else if('panel' in d) {
@@ -1451,6 +1522,12 @@ dialog.addEventListener('input',event=>{
 dialog.addEventListener('input',event=>{
   if(event.target.id==='buy-quantity')updateBuyTotal(event.target);
 });
+dialog.addEventListener('change',event=>{
+  if(!event.target.matches('[data-garden-plot]'))return;
+  const form=event.target.form;
+  form.querySelector('#dialog-error').textContent='';
+  updateQuickGarden(form);
+});
 document.addEventListener('change',event=>{
   if(!event.target.matches('[data-crop-group]'))return;
   plotGroup=Number(event.target.value);selected=plotGroup<0?0:plotOffset+plotGroup*3;
@@ -1508,6 +1585,18 @@ dialog.addEventListener('submit',async e=>{
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;
     } finally { busy=false; }
+  } else if(mode==='quickGarden'){
+    const {ready,plots,space}=updateQuickGarden(form);
+    if(!ready)return;
+    button.disabled=true;
+    const operation=form.dataset.operation;
+    const worked=await perform({action:'quickGarden',item:operation,plots,expectedSpace:space});
+    if(worked&&form.isConnected){
+      dialog.close();
+      const trigger=panelBody.querySelector('[data-quick-garden="'+operation+'"]:enabled')??$('#task-hud button');
+      trigger?.focus({preventScroll:true});
+    } else if(form.isConnected)updateQuickGarden(form);
+    return;
   } else if(mode==='avatar'){
     if(await perform({action:'avatar',item:values.avatar}))dialog.close();
   } else if(mode==='moveAnimal'||mode==='sellAnimal'){
