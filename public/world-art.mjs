@@ -797,44 +797,6 @@ function drawFarmActionProp(c,action,frame,x,y,direction){
   c.restore();
   return true;
 }
-function pixelReachArm(c,origin,points,avatar){
-  const female=avatar!=='male';
-  const ink=female?'#58382d':'#253a35';
-  const shadeColor=female?'#754733':'#31544b';
-  const cloth=female?'#a56540':'#4b7062';
-  const light=female?'#c28152':'#78947a';
-  const skin=female?'#e7ad78':'#e2ad7e';
-  const skinLight=female?'#f5d09a':'#f2ce9b';
-  const u=pixelStep;
-  for(let segment=0;segment<points.length-1;segment++){
-    const [ax,ay]=points[segment],[bx,by]=points[segment+1];
-    const steps=Math.max(Math.abs(bx-ax),Math.abs(by-ay));
-    for(let i=0;i<=steps;i++){
-      const lx=Math.round(ax+(bx-ax)*(steps?i/steps:0));
-      const ly=Math.round(ay+(by-ay)*(steps?i/steps:0));
-      const x=origin.x+(lx-24)*u,y=origin.y+(ly-59)*u;
-      box(c,ink,x-u,y-u,3*u,3*u,0);
-      box(c,shadeColor,x-u,y-u,2*u,2*u,0);
-      box(c,cloth,x,y-u,2*u,2*u,0);
-      if((i+segment)%3===0)box(c,light,x,y-u,u,u,0);
-    }
-  }
-  const [hx,hy]=points.at(-1),handX=origin.x+(hx-24)*u,handY=origin.y+(hy-59)*u;
-  box(c,ink,handX-u,handY-u,3*u,3*u,0);
-  box(c,skin,handX,handY-u,2*u,2*u,0);
-  box(c,skinLight,handX,handY-u,u,u,0);
-}
-function drawActionArm(c,x,y,direction,action,progress,avatar){
-  if(!['water','harvest','collect'].includes(action))return;
-  const reach=Math.sin(progress*Math.PI),facingLeft=direction==='left';
-  const shoulder=facingLeft?[23,34]:[30,34];
-  const elbow=facingLeft?[14,38]:[37,38];
-  const handX=facingLeft?6:42;
-  const handY=action==='water'?43-reach*2:40+reach*4;
-  const bend=action==='water'?reach*1.5:reach*2;
-  const points=[shoulder,[elbow[0],elbow[1]+bend],[handX,handY]];
-  pixelReachArm(c,{x:snapPixel(x),y:snapPixel(y)},points,avatar);
-}
 function personTool(c,x,y,direction,t,action){
   if(action==='plant'){
     const px=x+(direction==='left'?-7:7),py=y-13+Math.sin(t/actionPoseSeconds.plant*Math.PI)*3;
@@ -933,8 +895,6 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   }
   c.drawImage(atlas,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
     snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
-  if(!actionPoseAtlas&&['water','harvest','collect'].includes(action))
-    drawActionArm(c,px,py,direction,action,actionProgress(action,elapsed),avatar);
   c.restore();
   if(!work)personTool(c,px,py,direction,elapsed,action);
 }
