@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {farmTasks} from '../public/tasks.mjs';
-import { gameDay, slotLength, animals, animalRequirement, apply, buildingUpgrade, capacity, cropRequirement, crops, cropYield, farmProgress, goods, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, varietyOrders, xpUnlocks } from '../public/game.mjs';
+import { gameDay, slotLength, animals, animalRequirement, apply, buildingUpgrade, capacity, cropRequirement, cropWeatherEffect, cropWeatherProfiles, cropPotentialYield, crops, cropYield, farmProgress, goods, newFarm, newRoom, orderList, projectAnimal, projectPlot, snapshot, varietyOrders, weatherAt, xpUnlocks } from '../public/game.mjs';
 
 const start=10_000;
 function world() {
@@ -23,6 +23,40 @@ test('care speeds up crops and rain increases pests without manual watering',()=
   const split=projectPlot(r,projectPlot(r,plot,start+slotLength+99),start+slotLength+130);
   assert.ok(Math.abs(one.progress-split.progress)<1e-7);
   assert.ok(Math.abs(one.pests-split.pests)<1e-7);
+});
+test('every crop has a weather profile that changes growth and harvest yield',()=>{
+  for(const [kind,crop] of Object.entries(crops)){
+    assert.ok(cropWeatherProfiles[crop.weather],kind+' has a weather profile');
+    for(const condition of ['sun','rain','cloud','heat','wind','fog','storm']){
+      const effect=cropWeatherEffect(kind,condition);
+      assert.ok(effect.growth>=.6&&effect.growth<=1.25,kind+' growth modifier is balanced');
+      assert.ok(effect.yield>=.6&&effect.yield<=1.25,kind+' yield modifier is balanced');
+    }
+  }
+  assert.ok(cropWeatherEffect('blackRice','rain').growth>cropWeatherEffect('blackRice','heat').growth);
+  assert.ok(cropWeatherEffect('dragonfruit','heat').growth>cropWeatherEffect('dragonfruit','storm').growth);
+  const rainCrop={kind:'blackRice',weatherExposure:{rain:600}};
+  const heatCrop={kind:'blackRice',weatherExposure:{heat:600}};
+  assert.ok(cropPotentialYield(rainCrop)>cropPotentialYield(heatCrop));
+});
+test('crop growth combines the shared weather with the variety-specific preference',()=>{
+  const r=world(), startRain=start+slotLength;
+  const plot={kind:'blackRice',at:startRain,progress:0,pests:0,wetUntil:0,protectedUntil:0};
+  const rain=weatherAt(r,startRain), preference=cropWeatherEffect('blackRice',rain.id);
+  const grown=projectPlot(r,plot,startRain+60);
+  assert.ok(Math.abs(grown.progress-60*rain.crop*preference.growth*1.38)<1e-7);
+  assert.equal(grown.weatherExposure.rain,60);
+});
+test('weather yield exposure is accumulated across changes and remains stable when projected in pieces',()=>{
+  const r=world(), edge=start+slotLength;
+  const plot={kind:'blackRice',at:edge-90,progress:0,pests:0,wetUntil:0,protectedUntil:0};
+  const whole=projectPlot(r,plot,edge+90);
+  const split=projectPlot(r,projectPlot(r,plot,edge+10),edge+90);
+  assert.equal(whole.weatherExposure.sun,90);
+  assert.equal(whole.weatherExposure.rain,90);
+  for(const weather of ['sun','rain'])
+    assert.ok(Math.abs(whole.weatherExposure[weather]-split.weatherExposure[weather])<1e-7);
+  assert.ok(Math.abs(cropPotentialYield(whole)-cropPotentialYield(split))<1e-7);
 });
 test('farming, harvest, sales, and orders conserve stock and reject repeated harvest',()=>{
   const r=world(), a=r.farms.a;
@@ -110,7 +144,7 @@ test('late-game ranks, crops, livestock and production buildings have staggered 
 });
 test('new crops can be bought, grown, harvested and saved as seed at their milestones',()=>{
   for(const kind of ['sweetPotato','pumpkin','peanut']){
-    const room=world(), farm=room.farms.a, {seed,time,xp,workshop=0,yield:qty}=crops[kind];
+    const room=world(), farm=room.farms.a, {seed,time,xp,workshop=0}=crops[kind];
     farm.coins=500;
     farm.workshop=workshop;
     farm.xp=xp-1;
@@ -129,9 +163,10 @@ test('new crops can be bought, grown, harvested and saved as seed at their miles
     assert.throws(()=>action(room,'a','harvest',{index:0},10),/chưa đến/);
     const ripe=projectPlot(room,farm.plots[0],start+time);
     assert.equal(ripe.progress,time);
+    const expectedYield=cropYield(ripe);
     assert.ok(farmTasks(snapshot(room,farm,start+time)).some(task=>task.title==='Thu hoạch'&&task.label.includes(goods[kind].name)));
     action(room,'a','harvest',{index:0,source:'seed'},time);
-    assert.equal(farm.inventory[kind],qty-1);
+    assert.equal(farm.inventory[kind],expectedYield-1);
     assert.equal(farm.inventory[seed],1);
   }
 });
@@ -265,8 +300,9 @@ test('dry soil slows growth in the same weather and pest damage reduces the actu
   const plot={kind:'corn',goal:1500,at:start,progress:0,pests:0,wetUntil:0,protectedUntil:0,picked:0};
   const dry=projectPlot(r,plot,start+100);
   const wet=projectPlot(r,{...plot,wetUntil:start+40},start+100);
-  assert.equal(dry.progress,65);
-  assert.ok(Math.abs(wet.progress-(40*1.38+60*.65))<1e-7);
+  const sun=cropWeatherEffect('corn','sun').growth;
+  assert.ok(Math.abs(dry.progress-100*.65*sun)<1e-7);
+  assert.ok(Math.abs(wet.progress-(40*1.38*sun+60*.65*sun))<1e-7);
   for(const [index,pests,expected] of [[0,0,4],[1,22,3],[2,42,2],[3,79,1]]){
     farm.plots[index]={...plot,pests,progress:1500};
     const before=farm.inventory.corn??0;

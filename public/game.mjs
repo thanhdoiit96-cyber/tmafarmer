@@ -78,21 +78,45 @@ export const goods = {
   insulationMat:{name:'Tấm cách nhiệt',icon:'🧶',sell:245},
   ...aquaGoods,
 };
+export const cropWeatherProfiles={
+  grain:{label:'Ngũ cốc',note:'Lúa mì chịu thời tiết khá tốt; mưa nhẹ giúp tăng trưởng, dông làm giảm sản lượng.',
+    growth:{rain:1.08,cloud:1.02,storm:.92},yield:{rain:1.20,storm:.78}},
+  root:{label:'Củ rễ',note:'Cà rốt hợp đất ẩm và nhiều mây; nắng nóng kéo dài làm giảm tốc độ và sản lượng.',
+    growth:{rain:1.10,cloud:1.06,heat:.88,storm:.92},yield:{rain:1.20,cloud:1.12,heat:.78,storm:.75}},
+  sun:{label:'Ưa nắng',note:'Bắp, cà chua, hướng dương, bí đỏ và nho phát triển tốt khi nắng; dông làm giảm sản lượng.',
+    growth:{sun:1.08,heat:1.08,rain:.95,cloud:.96,storm:.82},yield:{sun:1.18,heat:1.16,rain:.84,storm:.76}},
+  cool:{label:'Ưa mát',note:'Dâu và trà hợp trời nhiều mây, sương sớm; nắng nóng làm giảm tốc độ và sản lượng.',
+    growth:{cloud:1.10,fog:1.08,rain:1.03,heat:.82,storm:.88},yield:{cloud:1.16,fog:1.16,rain:1.12,heat:.76,storm:.74}},
+  shade:{label:'Ưa sương',note:'Nấm truffle phát triển tốt khi trời mát, ẩm và có sương; nắng nóng hoặc dông làm giảm sản lượng.',
+    growth:{fog:1.18,cloud:1.10,rain:1.06,heat:.72,sun:.92,storm:.82},yield:{fog:1.22,cloud:1.16,rain:1.12,heat:.68,sun:.84,storm:.72}},
+  tropical:{label:'Nhiệt đới',note:'Khoai lang, đậu phộng và cà phê chịu nắng tốt; mưa vừa có lợi, dông mạnh gây bất lợi.',
+    growth:{sun:1.06,heat:1.10,rain:1.03,storm:.88},yield:{sun:1.16,heat:1.18,rain:1.12,storm:.78}},
+  wetland:{label:'Ưa nước',note:'Sen và nếp cẩm hợp mưa, sương và đất ẩm; nắng nóng kéo dài làm giảm sản lượng.',
+    growth:{rain:1.18,fog:1.12,heat:.78,sun:.96,storm:1.02},yield:{rain:1.20,fog:1.16,heat:.74,storm:.90}},
+  desert:{label:'Chịu hạn',note:'Thanh long ưa nắng nóng; mưa dông kéo dài làm giảm tốc độ và sản lượng.',
+    growth:{sun:1.12,heat:1.22,rain:.84,fog:.88,storm:.68},yield:{sun:1.18,heat:1.20,rain:.76,fog:.80,storm:.65}},
+};
+export const cropWeatherEffect=(kind,condition)=>{
+  const profile=cropWeatherProfiles[crops[kind]?.weather];
+  return {growth:profile?.growth[condition]??1,yield:profile?.yield[condition]??1};
+};
 export const crops = {
-  wheat:{seed:'wheatSeed', time:8*60, legacy:60, yield:3}, carrot:{seed:'carrotSeed', time:15*60, legacy:110, yield:3},
-  corn:{seed:'cornSeed', time:25*60, legacy:175, yield:4},
-  tomato:{seed:'tomatoSeed',time:32*60,yield:4,xp:25}, sunflower:{seed:'sunflowerSeed',time:38*60,yield:4,xp:50},
-  strawberry:{seed:'strawberrySeed',time:45*60,yield:5,workshop:1,quality:true},
-  grape:{seed:'grapeSeed',time:60*60,yield:5,workshop:2,quality:true},
-  tea:{seed:'teaSeed',time:75*60,yield:6,workshop:3,quality:true},
-  truffle:{seed:'truffleSeed',time:120*60,yield:3,workshop:3,xp:350,quality:true},
-  sweetPotato:{seed:'sweetPotatoSeed',time:22*60,yield:4,xp:18},
-  pumpkin:{seed:'pumpkinSeed',time:40*60,yield:4,xp:60},
-  peanut:{seed:'peanutSeed',time:50*60,yield:5,workshop:1,xp:100},
-  coffee:{seed:'coffeeSeed',time:95*60,yield:5,workshop:7,xp:3200,quality:true},
-  lotus:{seed:'lotusSeed',time:115*60,yield:5,workshop:8,xp:5600,quality:true},
-  dragonfruit:{seed:'dragonfruitSeed',time:145*60,yield:6,workshop:9,xp:9600,quality:true},
-  blackRice:{seed:'blackRiceSeed',time:175*60,yield:6,workshop:9,xp:16000,quality:true},
+  wheat:{seed:'wheatSeed',time:8*60,legacy:60,yield:3,weather:'grain'},
+  carrot:{seed:'carrotSeed',time:15*60,legacy:110,yield:3,weather:'root'},
+  corn:{seed:'cornSeed',time:25*60,legacy:175,yield:4,weather:'sun'},
+  tomato:{seed:'tomatoSeed',time:32*60,yield:4,xp:25,weather:'sun'},
+  sunflower:{seed:'sunflowerSeed',time:38*60,yield:4,xp:50,weather:'sun'},
+  strawberry:{seed:'strawberrySeed',time:45*60,yield:5,workshop:1,quality:true,weather:'cool'},
+  grape:{seed:'grapeSeed',time:60*60,yield:5,workshop:2,quality:true,weather:'sun'},
+  tea:{seed:'teaSeed',time:75*60,yield:6,workshop:3,quality:true,weather:'cool'},
+  truffle:{seed:'truffleSeed',time:120*60,yield:3,workshop:3,xp:350,quality:true,weather:'shade'},
+  sweetPotato:{seed:'sweetPotatoSeed',time:22*60,yield:4,xp:18,weather:'tropical'},
+  pumpkin:{seed:'pumpkinSeed',time:40*60,yield:4,xp:60,weather:'sun'},
+  peanut:{seed:'peanutSeed',time:50*60,yield:5,workshop:1,xp:100,weather:'tropical'},
+  coffee:{seed:'coffeeSeed',time:95*60,yield:5,workshop:7,xp:3200,quality:true,weather:'tropical'},
+  lotus:{seed:'lotusSeed',time:115*60,yield:5,workshop:8,xp:5600,quality:true,weather:'wetland'},
+  dragonfruit:{seed:'dragonfruitSeed',time:145*60,yield:6,workshop:9,xp:9600,quality:true,weather:'desert'},
+  blackRice:{seed:'blackRiceSeed',time:175*60,yield:6,workshop:9,xp:16000,quality:true,weather:'wetland'},
 };
 export const animals = {
   chicken:{name:'Gà mái',icon:'🐔',cost:35, grow:20*60, time:15*60,legacy:70, product:'egg', yield:3, food:1, level:1},
@@ -328,6 +352,8 @@ export const productGoal=pen=>pen.productGoal??animals[pen.kind].legacy??animals
 export function projectPlot(room, plot, now) {
   if (!plot) return null;
   const result={...plot};
+  const weatherExposure={...(plot.weatherExposure??{})};
+  result.weatherExposure=weatherExposure;
   if (result.progress>=cropGoal(plot)) return result;
   eachWeather(room,plot.at,now,(w,from,to)=>{
     const goal=cropGoal(plot);
@@ -338,7 +364,8 @@ export function projectPlot(room, plot, now) {
       const exposed=t>=(plot.protectedUntil??0);
       const damp=t<dampUntil;
       const pestRate=(damp?Math.max(.44,w.pests):w.pests)*120/goal;
-      const rate=w.crop*(wet?1.38:dryGrowthFactor)*(result.pests>=40?.68:1)*(plot.fertilized?1.3:1);
+      const effect=cropWeatherEffect(plot.kind,w.id);
+      const rate=w.crop*effect.growth*(wet?1.38:dryGrowthFactor)*(result.pests>=40?.68:1)*(plot.fertilized?1.3:1);
       const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<plot.protectedUntil?plot.protectedUntil:to,damp?dampUntil:to);
       const pestThreshold=exposed&&result.pests<40?(40-result.pests)/pestRate:Infinity;
       const duration=Math.min(end-t,pestThreshold,(goal-result.progress)/rate);
@@ -347,6 +374,7 @@ export function projectPlot(room, plot, now) {
         else result.progress=goal;
         continue;
       }
+      weatherExposure[w.id]=(weatherExposure[w.id]??0)+duration;
       result.progress=duration===(goal-result.progress)/rate?goal:result.progress+duration*rate;
       if(exposed) result.pests=duration===pestThreshold?40:Math.min(90,result.pests+duration*pestRate);
       t+=duration;
@@ -568,8 +596,15 @@ function record(farm,time,message) {
   farm.log.unshift({time,message});
   farm.log=farm.log.slice(0,14);
 }
+export function cropPotentialYield(plot){
+  const exposure=plot.weatherExposure??{};
+  const duration=Object.values(exposure).reduce((sum,value)=>sum+value,0);
+  const weatherYield=duration?Object.entries(exposure).reduce((sum,[condition,seconds])=>
+    sum+seconds*cropWeatherEffect(plot.kind,condition).yield,0)/duration:1;
+  return Math.max(1,Math.round((crops[plot.kind].yield+Number(!!plot.fertilized))*weatherYield));
+}
 export function cropYield(plot) {
-  const normal=crops[plot.kind].yield+Number(!!plot.fertilized);
+  const normal=cropPotentialYield(plot);
   const damage=Math.max(plot.pestPeak??0,plot.pests??0);
   const lost=damage>=70?Math.ceil(normal*.60):damage>=40?Math.ceil(normal*.35):damage>=20?1:0;
   return Math.max(1,normal-lost);

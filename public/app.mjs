@@ -11,7 +11,7 @@ import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
 import {aquaticAtlas,gardenDecorAtlas,livestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {drinkingWell,maps,needsPlayerLocation,playerLocationBlock,plotWorkActions} from './world-layout.mjs';
-import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, cropWeatherEffect, cropWeatherProfiles, cropPotentialYield, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -255,7 +255,7 @@ function describeItem(item){
   }
   if(supplyUses[item])return [supplyUses[item],'Mua tại Chợ làng, mục Vật tư.'];
   const crop=Object.keys(crops).find(key=>crops[key].seed===item);
-  if(crop)return ['Gieo trên ô đất trống để trồng '+goods[crop].name.toLowerCase()+'.','Mua ở Chợ làng hoặc đổi '+goods[crop].name.toLowerCase()+' thành giống trong Kho & túi.'];
+  if(crop)return ['Gieo trên ô đất trống để trồng '+goods[crop].name.toLowerCase()+'. '+cropWeatherProfiles[crops[crop].weather].note,'Mua ở Chợ làng hoặc đổi '+goods[crop].name.toLowerCase()+' thành giống trong Kho & túi.'];
   const species=Object.values(aquatic).find(value=>value.seed===item);
   if(species){
     const needs=[species.xp?species.xp+' XP':'',species.barn?'Kho cấp '+species.barn:''].filter(Boolean);
@@ -341,17 +341,23 @@ function renderCropTools(farm,now) {
   if(!plot&&farm.soilCompactsAt[selected]<=now)return '<h2>Đất đã chai</h2><p>Ô này bỏ trống ít nhất 8 giờ. Cuốc đất để làm tơi rồi gieo hạt.</p><div class="actions">'+act('Cuốc đất','till','',selected,'primary')+'</div>';
   if(!plot) return '<h2>Gieo hạt</h2><p>Chọn giống cho ô '+plotNumber(selected)+'. Một số giống cần Xưởng máy.</p><div class="actions crop-actions">'+Object.entries(crops).map(([key,crop])=>{
     const locked=cropRequirement(farm,key);
-    return act(nice(key)+(locked?' · 🔒 '+locked:' · '+(farm.inventory[crop.seed]||0)),'plant',key,selected,crop.quality?'gold':'',!!locked||!farm.inventory[crop.seed]);
+    const weatherLabel=cropWeatherProfiles[crop.weather].label;
+    return act(nice(key)+' · '+weatherLabel+(locked?' · 🔒 '+locked:' · '+(farm.inventory[crop.seed]||0)),'plant',key,selected,crop.quality?'gold':'',!!locked||!farm.inventory[crop.seed]);
   }).join('')+'</div>';
   const goal=cropGoal(plot), ripe=plot.progress>=goal;
   const wet=plot.wetUntil>now||state.weather.wet;
   const yieldTotal=cropYield(plot);
   const remaining=Math.max(0,yieldTotal-(plot.picked??0));
-  const normal=crops[plot.kind].yield+Number(!!plot.fertilized);
+  const normal=cropPotentialYield(plot);
+  const weatherHint=cropWeatherProfiles[crops[plot.kind].weather];
+  const currentEffect=cropWeatherEffect(plot.kind,state.weather.id);
+  const weatherGrowthChange=Math.round((currentEffect.growth-1)*100);
+  const weatherYieldChange=Math.round((currentEffect.yield-1)*100);
+  const signedChange=value=>(value>0?'+':'')+value+'%';
   const forecast=(ripe?'Có thể thu '+remaining:'Dự kiến '+remaining)+' / '+normal+' món'+(normal>yieldTotal?' · Sâu đã làm mất '+(normal-yieldTotal)+' món':'')+'.';
   return '<div class="row"><h2>'+goods[plot.kind].name+'</h2><span class="badge">'+(ripe?'Đã chín':progress(plot.progress,goal)+'% lớn')+'</span></div>'+
     (!ripe?'<p>Còn ~'+duration(goal-plot.progress)+' theo tốc độ cơ sở · '+(wet?'Đất ẩm':'Đất khô · '+Math.round(dryGrowthFactor*100)+'% tốc độ cơ sở')+' · Sâu '+Math.floor(plot.pests)+'%'+(plot.fertilized?' · Đã bón phân':'')+'</p>':'')+
-    '<p>'+forecast+'</p>'+valueBar(plot.progress,goal)+
+    '<p>'+forecast+'</p><p class="crop-weather-hint">'+escape(weatherHint.note)+' Thời tiết hiện tại ('+state.weather.name+') tác động riêng: '+signedChange(weatherGrowthChange)+' tốc độ, '+signedChange(weatherYieldChange)+' sản lượng. Sản lượng cộng dồn theo thời tiết cây gặp trong lúc phát triển; độ ẩm và hệ số thời tiết chung vẫn áp dụng.</p>'+valueBar(plot.progress,goal)+
     '<div class="actions">'+btn('4 giai đoạn','data-crop-growth="'+selected+'"','subtle')+(ripe?act('Thu hoạch','harvest','',selected,'primary')+
       '<button type="button" class="btn subtle" data-action="harvest" data-index="'+selected+'" data-source="seed"'+(!remaining||(farm.inventory[crops[plot.kind].seed]??0)>=100?' disabled':'')+'>Thu và giữ 1 giống</button>':
       act('💧 Tưới nước','water','',selected,'primary',wet)+
