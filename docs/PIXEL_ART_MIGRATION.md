@@ -141,3 +141,15 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Atlas frame metadata and per-stage bounds live in `public/pixel/frames.mjs`; runtime selects these frames instead of procedural crop art or recolored chicken/cow sprites.
 - Regenerate both atlases with `npm run pixel:progression-art`; the progression checker verifies PNG dimensions, RGBA alpha, frame coverage, unlock data, and upgrade table consistency.
 - Art quality revision: preserved V1 for comparison and replaced runtime crop art with `public/pixel/progression-crops-v2.png`. The 768 x 768 transparent master is `docs/assets/progression-crops-v2-source.png`; the labeled, equal-size source/runtime comparison is `docs/assets/progression-crops-v2-preview.png`. Regenerate with `py scripts/generate-progression-crops-v2.py`.
+
+## Pixel interior pass 2026
+
+- Replaced the photoreal farmhouse interior runtime backdrop with a native Canvas pixel-grid room in `public/world-art.mjs`, using the approved warm wood, muted teal-green and upper-left daylight palette.
+- Kept the bed interaction at `(395, 165)`, the room bounds, spawn, exit and walkable corridor unchanged. Room furniture is decorative and stays clear of the spawn-to-exit route.
+- Removed the unused `public/nha-vuon.webp` runtime illustration so the obsolete style is not shipped with the game.
+
+## Pixel weather pass 2026
+
+- Rain streaks are drawn as short, camera-aligned pixel cells instead of antialiased vector lines. The storm uses denser, longer drops; ordinary rain stays lighter. Lightning and water splashes keep their existing behavior.
+- Fog uses slow, stepped pixel wisps with low opacity. It keeps crop, character, and interaction silhouettes readable. Reduced-motion mode freezes the wisps and suppresses rain drift, flashes, splashes, and sparkles.
+- The world already loads `public/pixel/terrain-materials-v3.png` and repeats mirrored material cells. The remaining terrain task is to author distinct pixel transitions at region edges, not to add a second repeating texture system.

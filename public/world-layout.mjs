@@ -86,6 +86,15 @@ Object.assign(maps.visit,{
 });
 export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','harvest']);
 export const needsPlayerLocation=action=>plotWorkActions.has(action)||['drink','eat','rest'].includes(action);
+export function taskMarkers(sceneId,hotspots,tasks){
+  if(sceneId!=='field'&&sceneId!=='coop')return [];
+  const positions=new Map(hotspots.map(point=>[point.type+':'+point.index,point]));
+  return tasks.flatMap(task=>{
+    if(!['plot','animal','pond'].includes(task.kind)||task.kind==='pond'&&sceneId!=='field')return [];
+    const point=positions.get(task.kind+':'+task.index);
+    return point?[{point,task}]:[];
+  });
+}
 export function drinkingWell(area,hasPublicWell){
   if(area==='lake')return hasPublicWell?publicWellHotspot:null;
   if(area!=='field'&&area!=='market')return null;

@@ -3,7 +3,7 @@ import test from 'node:test';
 import {newFarm} from '../public/game.mjs';
 import {houseDoor} from '../public/home-rules.mjs';
 import {pixelSlice} from '../public/pixel/frames.mjs';
-import {features,maps,neighborHouseTier,route,walkable} from '../public/world-layout.mjs';
+import {features,maps,neighborHouseTier,route,taskMarkers,walkable} from '../public/world-layout.mjs';
 
 const neighbors=Array.from({length:11},(_,i)=>({id:String(i),name:'Vườn '+i,plots:Array(12).fill(null)}));
 const me=newFarm('me','Vườn nhà',0);
@@ -78,4 +78,15 @@ test('expanded maps expose reachable pond docks and keep shoreline water impassa
   const lake=features('lake',data);
   assert.equal(walkable(lake,400,150),false);
   assert.equal(walkable(lake,179,67),true);
+});
+
+test('farm care markers include pond tasks at the dock, while coop markers stay local',()=>{
+  const task={kind:'pond',index:0,type:'ready'};
+  const field=features('field',data);
+  const marker=taskMarkers('field',field.hotspots,[task]);
+  assert.equal(marker.length,1);
+  assert.equal(marker[0].point.type,'pond');
+  assert.equal(marker[0].point.index,0);
+  assert.equal(taskMarkers('coop',features('coop',data).hotspots,[task]).length,0);
+  assert.equal(taskMarkers('neighbors',features('neighbors',data).hotspots,[task]).length,0);
 });

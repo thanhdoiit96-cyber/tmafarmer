@@ -68,7 +68,7 @@ Chọn **Vercel** cho giao diện. Nếu muốn tạo làng, mời bạn bè, ch
 
 ### Chơi online với Cloudflare Worker và D1
 
-Lộ trình chuẩn bị sức tải cho 1.000 người chơi đồng thời được theo dõi tại [docs/SCALE_PLAN_1000.md](docs/SCALE_PLAN_1000.md). Mốc này cần load test trên staging trước khi xem là năng lực đã được xác nhận.
+Lộ trình chuẩn bị sức tải cho 1.000 người chơi đồng thời được theo dõi tại [docs/SCALE_PLAN_1000.md](docs/SCALE_PLAN_1000.md). Quy trình đo lường và load test từ 100 đến 5.000 người chơi nằm trong [docs/SCALE_TESTING.md](docs/SCALE_TESTING.md). Mốc tải chỉ được xem là đạt sau khi có số liệu staging xác nhận.
 
 Mở PowerShell tại thư mục chứa `package.json`, dùng Node.js 22.13+ và chạy:
 

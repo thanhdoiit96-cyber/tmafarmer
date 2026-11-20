@@ -1,5 +1,5 @@
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
-import {features, interactionRange as range, maps, plotPosition, route, size, walkable} from './world-layout.mjs';
+import {features, interactionRange as range, maps, plotPosition, route, size, taskMarkers, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {speechRange} from './game.mjs';
@@ -158,12 +158,7 @@ export function createWorld(root, onInteract, landscape) {
         return path;
       })??[];
     }
-    const positionByTask=new Map(scene.hotspots.map(p=>[p.type+':'+p.index,p]));
-    marks=id==='field'||id==='coop'?tasks.flatMap(task=>{
-      const point=positionByTask.get(task.kind+':'+task.index);
-      if(!point)return [];
-      return [{point,style:taskStyles[task.type]}];
-    }):[];
+    marks=taskMarkers(id,scene.hotspots,tasks).map(({point,task})=>({point,style:taskStyles[task.type]}));
     const visual=JSON.stringify(scene.ground);
     if(terrainKey!==visual){
       terrainKey=visual;

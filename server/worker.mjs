@@ -4,6 +4,21 @@ import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, apply, avatar
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{
   status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
 });
+const observeDatabase=(database,metrics)=>database&&({
+  prepare(sql){
+    const statement=database.prepare(sql);
+    return {bind(...values){
+      const query=statement.bind(...values);
+      const measure=method=>async(...args)=>{
+        const started=performance.now();
+        metrics.dbQueries++;
+        try{return await query[method](...args);}
+        finally{metrics.dbMs+=performance.now()-started;}
+      };
+      return {first:measure('first'),all:measure('all'),run:measure('run')};
+    }};
+  },
+});
 const readRoom=(db,code)=>db.prepare('SELECT revision, state FROM farm_rooms WHERE code = ?').bind(code).first();
 const hex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 const random=length=>hex(crypto.getRandomValues(new Uint8Array(length)));
@@ -15,41 +30,6 @@ const save=(db,code,revision,state)=>db.prepare('UPDATE farm_rooms SET state = ?
 const codePattern=/^[A-F0-9]{8}$/;
 const accountSessionLifetime=30*24*60*60;
 const isSuperAdmin=(session,accountId)=>Boolean(accountId&&session?.username==='ntdoi'&&session.account_id===accountId);
-const runSql=async(db,statement,params=[] )=>{
-  const prepared=db.prepare(statement);
-  if(typeof prepared.run==='function') return await prepared.run(...params);
-  return await prepared.bind(...params).run();
-};
-const ensureAccountTables=async db=>{
-  const sql=[
-    `CREATE TABLE IF NOT EXISTS farm_accounts (
-      id TEXT PRIMARY KEY,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS farm_account_sessions (
-      id TEXT PRIMARY KEY,
-      account_id TEXT NOT NULL,
-      token TEXT UNIQUE NOT NULL,
-      device_id TEXT,
-      created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL,
-      FOREIGN KEY(account_id) REFERENCES farm_accounts(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS farm_account_links (
-      id TEXT PRIMARY KEY,
-      account_id TEXT NOT NULL,
-      room_code TEXT NOT NULL,
-      farm_id TEXT NOT NULL,
-      is_primary INTEGER NOT NULL DEFAULT 0,
-      last_used_at INTEGER NOT NULL,
-      UNIQUE(account_id, room_code, farm_id),
-      FOREIGN KEY(account_id) REFERENCES farm_accounts(id)
-    )`,
-  ];
-  for(const statement of sql) await runSql(db,statement);
-};
 const lookupAccountSession=async(db,token)=>{
   if(!token) return null;
   const now=unixNow();
@@ -233,15 +213,13 @@ async function join(db,request,superAdminAccountId) {
   }
   return reply({error:'Làng đang bận. Thử lại sau vài giây.'},409);
 }
-export default {
-  async fetch(request,env) {
+async function handleFarmRequest(request,env,metrics) {
     const {pathname}=new URL(request.url);
     const method=request.method;
-    const db=env.DB;
+    const db=observeDatabase(env.DB,metrics);
     if(!pathname.startsWith('/api/')) return env.ASSETS?.fetch(request)??new Response('Not found',{status:404});
     if(pathname==='/api/health') return reply({ok:!!db},db?200:503);
     if(!db) return reply({error:'Máy chủ chưa kết nối cơ sở dữ liệu.'},503);
-    await ensureAccountTables(db);
     try {
       if(pathname==='/api/account/register'&&method==='POST') return await registerAccount(db,request);
       if(pathname==='/api/account/login'&&method==='POST') return await loginAccount(db,request);
@@ -319,5 +297,16 @@ export default {
       console.error('Farm request failed',error);
       return reply({error:'Máy chủ đang bận. Vui lòng thử lại.'},500);
     }
+}
+
+export default {
+  async fetch(request,env) {
+    const started=performance.now();
+    const metrics={dbQueries:0,dbMs:0};
+    const response=await handleFarmRequest(request,env,metrics);
+    if(!new URL(request.url).pathname.startsWith('/api/'))return response;
+    const headers=new Headers(response.headers);
+    headers.set('server-timing',`app;dur=${(performance.now()-started).toFixed(1)}, db;dur=${metrics.dbMs.toFixed(1)}, dbq;desc="${metrics.dbQueries}"`);
+    return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
 };

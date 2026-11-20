@@ -185,20 +185,31 @@ export function buildingUpgrade(farm,key){
   return {level,max:base+definition.costs.length,cost:definition.costs[index],xp:definition.xp[index]??0,
     benefit:definition.notes[index],nextBenefit:definition.notes[index+1],materials:definition.materials?.[level+1]??{}};
 }
+function progressionUses(item){
+  if(!goods[item])return [];
+  const recipesUsing=Object.entries(recipes).filter(([,recipe])=>recipe.ingredients[item]).map(([key])=>goods[key]?.name).filter(Boolean);
+  const upgradesUsing=Object.values(buildings).flatMap(building=>Object.entries(building.materials??[])
+    .filter(([,materials])=>materials[item]).map(([level])=>building.name+' cấp '+level));
+  return [...new Set([...recipesUsing,...upgradesUsing])].slice(0,3);
+}
 export const xpUnlocks=[
   ...Object.entries(crops).filter(([,info])=>info.xp).map(([item,info])=>({
-    xp:info.xp,label:goods[item].name,requires:info.workshop?'Xưởng máy cấp '+info.workshop:'',
+    xp:info.xp,item,uses:progressionUses(item),label:goods[item].name,requires:info.workshop?'Xưởng máy cấp '+info.workshop:'',
+    destination:{tab:'field',label:'Vườn nhà'},
   })),
   ...Object.values(animals).filter(info=>info.xp).map(info=>({
-    xp:info.xp,label:info.name,requires:'Chuồng cấp '+info.level,
+    xp:info.xp,item:info.product,uses:progressionUses(info.product),label:info.name,requires:'Chuồng cấp '+info.level,
+    destination:{tab:'coop',label:'Chuồng trại'},
   })),
-  ...Object.values(aquatic).filter(info=>info.xp).map(info=>({
-    xp:info.xp,label:info.name,requires:info.barn?'Kho cấp '+info.barn:'',
+  ...Object.entries(aquatic).filter(([,info])=>info.xp).map(([item,info])=>({
+    xp:info.xp,item,uses:progressionUses(item),label:info.name,requires:info.barn?'Kho cấp '+info.barn:'',
+    destination:{tab:'field',panel:'ponds',label:'Ao nuôi'},
   })),
   ...Object.values(buildings).flatMap(info=>info.xp.flatMap((xp,index)=>{
     const level=(info.base??1)+index;
     const materials=Object.entries(info.materials?.[level+1]??{}).map(([key,count])=>count+' '+goods[key].name.toLowerCase());
     return xp?[{xp,label:info.name+' cấp '+(level+1),requires:[level?info.name+' cấp '+level:'',info.costs[index]+' xu',...materials].filter(Boolean).join(' + '),
+      destination:{panel:'buildings',label:'Công trình'},
       reward:info.notes[index+1]}]:[];
   })),
 ].sort((a,b)=>a.xp-b.xp);

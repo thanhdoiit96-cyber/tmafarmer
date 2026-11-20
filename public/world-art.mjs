@@ -16,7 +16,6 @@ const load = source => {
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const landscapeArt=load('/canh-quan.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
-const homeArt=load('/nha-vuon.webp');
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
 const malePoses=load(maleCharacter.poses);
@@ -50,7 +49,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),homeArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -352,38 +351,87 @@ function landscapeGround(c,decor){
   }
 }
 function homeFloor(c){
-  if(dim(homeArt))c.drawImage(homeArt,0,0,width,height);
-  else {
-    box(c,'#98643f',0,0,width,height,0);
-    box(c,'#704b32',0,0,width,82,0);
-    box(c,'#caa877',335,76,111,78,4);
-    box(c,'#668760',338,101,105,49,3);
+  // Replace the old painted backdrop with a play-grid interior matching the
+  // approved warm wood, muted green and upper-left light of the pixel slice.
+  box(c,'#68452f',0,0,width,height,0);
+  box(c,'#8c5c3b',0,0,width,98,0);
+  box(c,'#684833',0,77,width,22,0);
+  for(let x=8;x<width;x+=44){
+    box(c,'#704a32',x,4,3,74,0);
+    box(c,'#a8794d',x+3,4,1,72,0);
   }
-  c.save();
-  // Retain the room's furniture and walls around the playable part of the floor.
-  c.beginPath();c.moveTo(25,144);c.lineTo(142,144);c.lineTo(152,105);c.lineTo(300,105);
-  c.lineTo(323,157);c.lineTo(447,158);c.lineTo(447,256);c.lineTo(265,266);c.lineTo(212,266);c.lineTo(25,256);c.closePath();c.clip();
-  c.globalAlpha=.76;box(c,texture(c,'wood'),0,102,width,166,0);c.globalAlpha=1;
-  const light=c.createLinearGradient(45,91,289,230);
-  light.addColorStop(0,'#ffe6a56b');light.addColorStop(1,'#ffe4a600');
-  for(let i=0;i<4;i++){
-    c.fillStyle=light;c.beginPath();c.moveTo(24+i*13,100);c.lineTo(37+i*13,100);
-    c.lineTo(214+i*11,217);c.lineTo(193+i*11,217);c.closePath();c.fill();
+  for(let y=12;y<77;y+=22){
+    line(c,'#986b45',1,[[0,y],[width,y]]);
+    line(c,'#5d402e',1,[[0,y+2],[width,y+2]]);
   }
-  box(c,'#513d33a0',165,154,152,63,6);
-  box(c,'#d4ab73',166,151,148,62,5);
-  box(c,'#416753',171,156,138,52,3);
-  box(c,'#759474',177,160,126,44,2);
-  for(let x=184;x<=296;x+=14){
-    for(const y of [165,199])ellipse(c,'#dcd39f',x,y,2.5,1.3);
+  // Window and shutters bring daylight from the upper-left without a soft,
+  // photoreal glow that would blur the pixel silhouettes.
+  box(c,'#4a3529',28,13,87,59,2);
+  box(c,'#bb8950',32,16,79,52,1);
+  box(c,'#719264',36,20,71,43,0);
+  box(c,'#a9b978',38,22,67,38,0);
+  box(c,'#d8c27c',40,25,31,32,0);
+  box(c,'#86a76d',73,26,31,31,0);
+  for(const x of [37,43,49,55,61,67,77,83,89,95,101])box(c,'#476344',x,20,2,43,0);
+  box(c,'#6c4930',69,20,3,43,0);
+  for(const x of [30,105]){
+    box(c,'#a66c3f',x,17,7,50,1);
+    for(let y=24;y<62;y+=9)line(c,'#d3a566',1,[[x+1,y],[x+6,y+3]]);
   }
-  for(let x=179;x<310;x+=4){
-    c.fillStyle='#f5d89a';c.fillRect(x,149,1.5,3);c.fillRect(x,213,1.5,3);
+  box(c,'#d39a54',30,68,84,4,1);
+
+  // A shallow shelf, pottery, tea basket and framed family field sketch.
+  box(c,'#50392c',139,26,91,39,1);
+  box(c,'#9b6940',142,28,85,34,0);
+  box(c,'#b98952',140,43,89,4,0);
+  box(c,'#5c402e',143,59,86,4,0);
+  for(const [x,color] of [[151,'#71909a'],[166,'#c39255'],[186,'#778c6c'],[207,'#bd8051']]){
+    box(c,'#4d3a2d',x,31,10,11,2);box(c,color,x+1,33,8,8,2);
+    box(c,'#e0ba79',x+3,30,4,2,0);
   }
-  for(const x of [219,240,261]){
-    line(c,'#e6ca89',1.2,[[x-4,182],[x,176],[x+4,182],[x,188],[x-4,182]]);
+  box(c,'#4d392c',250,15,43,43,1);box(c,'#d6b275',253,18,37,37,0);
+  box(c,'#94a66c',256,21,31,24,0);line(c,'#5c774f',2,[[258,42],[269,29],[284,39]]);
+  box(c,'#704a31',253,48,37,3,0);
+
+  // Open floor: individually banded plank rows, a woven mat, and a low tea table.
+  box(c,texture(c,'wood'),0,98,width,190,0);
+  for(let y=103,row=0;y<286;y+=13,row++){
+    line(c,row%2?'#69472f':'#d09a5d',.8,[[0,y],[width,y]]);
+    const offset=row%2?24:0;
+    for(let x=offset;x<width;x+=72)line(c,'#704a31',.7,[[x,y],[x,y+13]]);
+    line(c,'#e0ae6d55',.7,[[0,y+2],[width,y+2]]);
   }
-  c.restore();
+  box(c,'#68472f',170,177,105,49,2);box(c,'#bd8d55',173,180,99,43,1);
+  for(let y=184;y<221;y+=5)line(c,'#d3a56c',.7,[[174,y],[271,y]]);
+  for(let x=178;x<271;x+=7)box(c,'#987044',x,181,1,41,0);
+  box(c,'#86603c',178,185,89,3,0);box(c,'#86603c',178,215,89,3,0);
+  // Tea table stays outside the spawn and walking corridor.
+  box(c,'#59402d',42,111,68,35,2);box(c,'#b87d47',39,105,70,10,2);
+  box(c,'#d29a58',42,107,64,5,1);box(c,'#8a5b39',45,115,3,28,0);box(c,'#8a5b39',100,115,3,28,0);
+  box(c,'#e1c18a',64,99,19,9,2);box(c,'#6d8b72',67,101,13,5,1);
+  box(c,'#bd8c53',71,97,5,3,1);box(c,'#f0d89b',88,103,6,5,2);
+
+  // Bed placement preserves the existing interaction point at (395, 165).
+  shade(c,397,173,53,8);
+  box(c,'#49352a',335,89,118,91,3);
+  box(c,'#98623a',338,89,112,25,2);box(c,'#c28a4d',341,92,106,17,1);
+  for(let x=345;x<445;x+=12)box(c,'#815333',x,93,2,15,0);
+  box(c,'#62442e',340,111,108,60,2);
+  box(c,'#d8c18d',344,108,101,59,3);
+  box(c,'#f0dfb5',346,111,97,16,3);
+  box(c,'#fff0ca',350,113,35,11,3);box(c,'#fff0ca',392,113,35,11,3);
+  box(c,'#667e59',344,128,101,34,2);box(c,'#7f9868',347,131,95,27,1);
+  for(let y=134;y<157;y+=7)line(c,'#9fb081',1,[[350,y],[439,y]]);
+  for(let x=355;x<439;x+=14)box(c,'#536d4e',x,132,2,24,0);
+  box(c,'#c49355',338,164,7,12,1);box(c,'#c49355',441,164,7,12,1);
+
+  // Crock plant and a small lantern make the far corners feel lived in.
+  shade(c,462,253,13,3);box(c,'#754a34',454,239,17,13,3);box(c,'#a96943',456,241,13,8,2);
+  for(const [x,y,w] of [[460,238,9],[455,235,7],[465,232,8],[461,228,6]]){
+    line(c,'#42603b',1.2,[[461,241],[x,y]]);ellipse(c,'#6d944e',x,y,w*.45,2.4,-.5);
+  }
+  box(c,'#61432e',24,219,8,12,2);box(c,'#e0ac54',26,216,4,8,1);box(c,'#f4d18a',27,218,2,4,0);
+  box(c,'#65462f',0,276,width,12,0);box(c,'#ba8951',0,276,width,3,0);
 }
 function workshopFloor(c){
   box(c,'#383e36',0,0,width,height,0);
@@ -1013,6 +1061,25 @@ export function gate(c,a,t){
   line(c,'#4e6544',1.3,[[-2.8,-.3+d],[0,-3+d],[2.8,-.3+d]]);
   c.restore();
 }
+function pixelRain(c,x,y,slant,length,color){
+  const cell=pixelStep;
+  c.fillStyle=color;
+  for(let i=0;i<length;i++){
+    const drift=Math.round(i*slant/Math.max(1,length-1));
+    c.fillRect(snapPixel(x-drift*cell),snapPixel(y+i*cell),cell,cell);
+  }
+}
+function pixelMist(c,x,y,widthPx,phase,alpha){
+  const cell=pixelStep,step=cell*5;
+  const offsets=[0,1,0,-1,0,1,0,-1,0];
+  c.fillStyle=`rgba(222,235,224,${alpha})`;
+  for(let i=0;i<offsets.length;i++){
+    const at=(i*step+phase)%(widthPx+step*2)-step;
+    const px=snapPixel(x+at),py=snapPixel(y+offsets[i]*cell);
+    c.fillRect(px,py,step*1.4,cell*2);
+    if(i%2===0)c.fillRect(px+step*.4,py-cell,step*.8,cell);
+  }
+}
 export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
   if(w==='rain'||w==='storm'){
     const storm=w==='storm';
@@ -1024,8 +1091,8 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
 
     // Several rain planes keep the shower from looking like one flat moving grid.
     const planes=storm
-      ? [[54,178,5.5,11,.34],[58,228,7.5,16,.52],[45,292,10,22,.72]]
-      : [[34,125,2.5,7,.25],[37,166,3.7,10,.42],[26,215,5.5,14,.62]];
+      ? [[48,178,3,8,.28],[58,228,5,10,.42],[48,292,7,12,.58]]
+      : [[30,125,1,5,.22],[36,166,2,7,.36],[30,215,4,9,.52]];
     const gust=reduce?0:Math.sin(t*.43)*1.4+Math.sin(t*.17+1.8)*.8;
     c.save();c.lineCap='round';
     planes.forEach(([count,speed,slant,length,alpha],layer)=>{
@@ -1037,9 +1104,8 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
         const drift=reduce?0:t*(storm?34:20)+Math.sin(i*2.7+t*.55)*3;
         const x=(lane+drift)%(width+70)-20;
         const lean=slant+gust+(i%4-1.5)*.35;
-        c.strokeStyle=`rgba(${layer===2?'224,242,244':'183,215,224'},${alpha})`;
-        c.lineWidth=layer===2?.82:.42+layer*.12;
-        c.beginPath();c.moveTo(x,y);c.lineTo(x-lean,y+length+(i%3));c.stroke();
+        const tint=layer===2?'224,242,244':'183,215,224';
+        pixelRain(c,x,y,lean,Math.max(2,Math.round(length+(i%3))),`rgba(${tint},${alpha})`);
       }
     });
     c.restore();
@@ -1059,23 +1125,18 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
     }
   } else if(w==='fog'){
     const cool=c.createLinearGradient(0,0,0,height);
-    cool.addColorStop(0,'#bcd7cf24');cool.addColorStop(.52,'#dbe8d80d');cool.addColorStop(1,'#9fbfb51f');
+    cool.addColorStop(0,'#bcd7cf16');cool.addColorStop(.52,'#dbe8d806');cool.addColorStop(1,'#9fbfb510');
     box(c,cool,0,0,width,height,0);
-    c.save();
-    for(let i=0;i<7;i++){
-      const drift=reduce?0:Math.sin(t*(.18+i%3*.035)+i*1.7)*28;
+    for(let i=0;i<6;i++){
+      const drift=reduce?0:Math.sin(t*(.12+i%3*.025)+i*1.7)*16;
       const x=(i*89+34+drift)%(width+100)-50;
-      const y=78+(i*47)%190+(reduce?0:Math.sin(t*.31+i)*7);
-      c.save();c.translate(x,y);c.scale(1.9+i%2*.55,.42+i%3*.06);
-      const bank=c.createRadialGradient(0,0,2,0,0,38);
-      bank.addColorStop(0,i%2?'#e5eee0a0':'#d8e9e18c');
-      bank.addColorStop(.48,i%2?'#deeadc5e':'#d0e2dc52');bank.addColorStop(1,'#d9e8df00');
-      ellipse(c,bank,0,0,38,38);c.restore();
+      const y=72+(i*43)%195+(reduce?0:Math.sin(t*.22+i)*3);
+      pixelMist(c,x,y,66+i%3*16,reduce?0:Math.sin(t*.1+i)*pixelStep*2,.045+i%3*.012);
     }
-    c.restore();
     if(!reduce)for(let i=0;i<9;i++){
       const glow=.28+.18*Math.sin(t*1.25+i*2.3);
-      ellipse(c,`rgba(238,244,205,${glow})`,26+(i*61)%width,42+(i*37)%210,.65,.65);
+      const px=snapPixel(26+(i*61)%width),py=snapPixel(42+(i*37)%210);
+      c.fillStyle=`rgba(238,244,205,${glow})`;c.fillRect(px,py,pixelStep,pixelStep);
     }
   } else if(w==='heat'||w==='cloud'){
     box(c,w==='heat'?'#f4b35f20':'#63818a26',0,0,width,height,0);

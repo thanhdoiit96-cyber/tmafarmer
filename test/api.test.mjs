@@ -10,7 +10,7 @@ import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
 test('two guest sessions share durable D1-style state with atomic sales, presence and area chat',async()=>{
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0000_rooms','0001_scene_social'])db.exec(readFileSync(new URL('../drizzle/'+migration+'.sql',import.meta.url),'utf8'));
+  for(const migration of ['0000_rooms','0001_scene_social','0002_accounts'])db.exec(readFileSync(new URL('../drizzle/'+migration+'.sql',import.meta.url),'utf8'));
   const DB={prepare(sql){
     const query=db.prepare(sql);
     return {bind(...params){return {first:async()=>query.get(...params),all:async()=>({results:query.all(...params)}),run:async()=>({meta:query.run(...params)})};}};
@@ -21,12 +21,13 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
     const response=await worker.fetch(new Request('https://farm.example/api/'+path,{
       method:data?'POST':'GET',headers,body:data?JSON.stringify(data):undefined,
     }),{DB,CHAT});
-    return {status:response.status,...await response.json()};
+    return {status:response.status,serverTiming:response.headers.get('server-timing'),...await response.json()};
   };
   const a=await api('join',{name:'Vườn Sen'});
   const b=await api('join',{name:'Vườn Bắp',code:a.code,avatar:'male'});
   const c=await api('join',{name:'Vườn Lúa',code:a.code});
   assert.equal(a.status,201);
+  assert.match(a.serverTiming,/^app;dur=[\d.]+, db;dur=[\d.]+, dbq;desc="\d+"$/);
   assert.equal(b.status,201);
   assert.equal(a.state.canManageMembers,true);
   assert.equal((await api('state',null,b)).state.canManageMembers,false);
@@ -237,7 +238,7 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
 
 test('registered account can attach to a room and persist its session', async()=>{
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0000_rooms','0001_scene_social'])db.exec(readFileSync(new URL('../drizzle/'+migration+'.sql',import.meta.url),'utf8'));
+  for(const migration of ['0000_rooms','0001_scene_social','0002_accounts'])db.exec(readFileSync(new URL('../drizzle/'+migration+'.sql',import.meta.url),'utf8'));
   const DB={prepare(sql){
     const query=db.prepare(sql);
     return {bind(...params){return {first:async()=>query.get(...params),all:async()=>({results:query.all(...params)}),run:async()=>({meta:query.run(...params)})};}};
