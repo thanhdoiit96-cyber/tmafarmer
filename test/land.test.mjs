@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/game.mjs';
+import {optionalIndex} from '../public/action-input.mjs';
 import {getLand,lotPrice,mainPlotId} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 

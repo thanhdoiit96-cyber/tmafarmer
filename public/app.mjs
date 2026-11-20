@@ -1,4 +1,5 @@
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
+import {optionalIndex} from './action-input.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
@@ -1592,7 +1593,7 @@ document.addEventListener('click',async e=>{
     backToDemo();
   } else if('action' in d) {
     const input={action:d.action,item:d.item||''};
-    if(d.index!==undefined) input.index=Number(d.index);
+    if(d.index!==undefined) input.index=optionalIndex(d.index);
     if(d.qty) input.qty=Number(d.qty);
     if(d.target)input.target=d.target;
     if(d.source)input.source=d.source;
