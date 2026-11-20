@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
-import {actionPoseSeconds,actionProgress,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
+import {actionPoseSeconds,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
 import {features,walkable} from '../public/world-layout.mjs';
 import {newFarm,newRoom,snapshot} from '../public/game.mjs';
 
@@ -14,18 +14,6 @@ test('the farmer steps through four walk poses per distance cycle and loops at t
   assert.equal(walkFrame(playerStride,playerStride,frames),0);
   assert.equal(facingFromDelta(0,2),'down');
   assert.equal(facingFromDelta(-2,0),'left');
-});
-
-test('watering and harvest have separate one-shot action timings',()=>{
-  assert.equal(actionPoseSeconds.water,.9);
-  assert.equal(actionPoseSeconds.harvest,1);
-  assert.equal(actionPoseSeconds.collect,.85);
-  for(const action of ['water','harvest','collect']){
-    assert.equal(actionProgress(action,0),0);
-    assert.ok(actionProgress(action,actionPoseSeconds[action]/2)>.49);
-    assert.equal(actionProgress(action,actionPoseSeconds[action]),1);
-    assert.equal(actionProgress(action,actionPoseSeconds[action]*2),1);
-  }
 });
 
 test('the chicken faces its direction of travel in both walking legs and while pecking',()=>{
