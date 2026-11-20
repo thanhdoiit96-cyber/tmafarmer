@@ -6,7 +6,7 @@ import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
-import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
+import {actionPoseSeconds,actionProgress,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -783,6 +783,13 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   sprite(c,kind,x,y-bob,w,h,direction==='left');
   c.restore();
 }
+function pixelBasket(c,x,y){
+  const u=pixelStep,px=snapPixel(x-3*u),py=snapPixel(y-4*u);
+  c.fillStyle='#563d2d';c.fillRect(px,py,6*u,u);c.fillRect(px+u,py+u,4*u,u);
+  c.fillStyle='#b77e45';c.fillRect(px+u,py+2*u,4*u,u);c.fillRect(px+2*u,py+3*u,2*u,u);
+  c.fillStyle='#845533';c.fillRect(px,py+2*u,u,2*u);c.fillRect(px+5*u,py+2*u,u,2*u);
+  c.fillStyle='#e0b16a';c.fillRect(px+u,py+2*u,u,u);c.fillRect(px+4*u,py+2*u,u,u);
+}
 function personTool(c,x,y,direction,t,action){
   if(action==='plant'){
     const px=x+(direction==='left'?-7:7),py=y-13+Math.sin(t/actionPoseSeconds.plant*Math.PI)*3;
@@ -790,13 +797,39 @@ function personTool(c,x,y,direction,t,action){
     box(c,'#d9b07a',px-2,py-1,4,4,1);
     line(c,'#f5dfa5',.8,[[px-2,py],[px+2,py]]);
   } else if(action==='water'){
-    const px=x+(direction==='left'?-8:8),py=y-11+Math.sin(t*12);
-    box(c,'#bed9d0',px-2,py,5,4,1);line(c,'#9dc8c6',.85,[[px+2,py+1],[px+5,py-.8],[px+6,py-.1]]);
+    const progress=actionProgress('water',t),pour=Math.sin(progress*Math.PI);
+    const side=direction==='left'?-1:1,px=snapPixel(x+8*side),py=snapPixel(y-12+pour*1.5),u=pixelStep;
+    // Small enamel watering can, held at the hand and tipped toward the bed.
+    box(c,'#4c594b',px-2*u,py,6*u,5*u,1);
+    box(c,'#c5d7bd',px-1*u,py+u,4*u,3*u,1);
+    box(c,'#e1d29a',px-1*u,py,4*u,u,0);
+    line(c,'#805b39',u,[[px+side*2*u,py+u],[px+side*4*u,py-u],[px+side*6*u,py-u]]);
+    line(c,'#d6a966',u,[[px-2*u,py+u],[px-3*u,py+2*u],[px-2*u,py+4*u]]);
+    if(progress>.2&&progress<.88){
+      c.fillStyle='#9ad9d4';
+      for(let i=0;i<3;i++){
+        const fall=((progress*13+i*2.4)%5)*u;
+        c.fillRect(snapPixel(px+side*(6+i%2)*u),snapPixel(py+2*u+fall),u,u);
+      }
+    }
   } else if(action==='till'){
     const side=direction==='left'?-1:1, toolX=x+8*side, toolY=y-7+Math.sin(t*15)*3;
     line(c,'#8d6540',1.4,[[toolX-4*side,toolY-7],[toolX+3*side,toolY+1]]);
     line(c,'#c0bcb1',1.7,[[toolX+3*side,toolY+1],[toolX+6*side,toolY-2]]);
-  } else if(action==='harvest'||action==='collect'||action==='steal')sprite(c,'basket',x+(direction==='left'?-8:8),y-7,8,6);
+  } else if(action==='harvest'||action==='collect'||action==='steal'){
+    const progress=action==='harvest'?actionProgress('harvest',t):action==='collect'?actionProgress('collect',t):1;
+    const side=direction==='left'?-1:1,lift=Math.sin(progress*Math.PI)*2;
+    const bx=snapPixel(x+side*8),by=snapPixel(y-8-lift);
+    pixelBasket(c,bx,by);
+    if(progress>.48){
+      const fill=Math.min(3,Math.floor((progress-.42)*7));
+      const produce=['#d5963f','#a64f3b','#71914c'];
+      for(let i=0;i<fill;i++){
+        const px=snapPixel(bx-2.5+(i%2)*3),py=snapPixel(by-7-Math.floor(i/2)*1.5);
+        box(c,produce[i],px,py,2,2,0);box(c,'#f0c777',px,py,1,1,0);
+      }
+    }
+  }
 }
 export function drawFishing(c,x,y,dock,{action,elapsed,ambient,bite,caught,reduced}){
   const phase=action==='hold'?1:Math.min(1,elapsed/actionPoseSeconds[action]);
@@ -851,8 +884,10 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   if(style==='trader')c.filter='hue-rotate(26deg) saturate(.82)';
   const unit=pixelStep*scale;
   const left=px-cellWidth/2*unit,top=py-59*unit;
-  if(action==='plant'){
-    const lean=Math.sin(Math.min(1,elapsed/actionPoseSeconds.plant)*Math.PI)*.075;
+  if(['plant','water','harvest','collect'].includes(action)){
+    const progress=actionProgress(action,elapsed);
+    const amount=action==='plant'?.075:action==='water'?.035:.065;
+    const lean=Math.sin(progress*Math.PI)*amount;
     c.translate(px,py);c.rotate(direction==='left'?-lean:lean);c.translate(-px,-py);
   }
   c.drawImage(atlas,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,

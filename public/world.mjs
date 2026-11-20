@@ -247,7 +247,7 @@ export function createWorld(root, onInteract, landscape) {
     if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {
       facing=facingFromDelta(target.x-x,target.y-y);
     }
-    const delay={till:350,plant:320,cast:420}[input.action]??0;
+    const delay={till:350,plant:320,water:360,harvest:480,collect:330,cast:420}[input.action]??0;
     effects.push({x:spot.x,y:spot.y,time:poseStarted+delay,palette});
     if(input.action==='plant'&&target&&!reduce.matches){
       effects.push({x:spot.x,y:spot.y,fromX:x,fromY:y-14,time:poseStarted+90,palette,seeds:true});

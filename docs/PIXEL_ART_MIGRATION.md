@@ -153,3 +153,8 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Rain streaks are drawn as short, camera-aligned pixel cells instead of antialiased vector lines. The storm uses denser, longer drops; ordinary rain stays lighter. Lightning and water splashes keep their existing behavior.
 - Fog uses slow, stepped pixel wisps with low opacity. It keeps crop, character, and interaction silhouettes readable. Reduced-motion mode freezes the wisps and suppresses rain drift, flashes, splashes, and sparkles.
 - The world already loads `public/pixel/terrain-materials-v3.png` and repeats mirrored material cells. The remaining terrain task is to author distinct pixel transitions at region edges, not to add a second repeating texture system.
+
+## Farm action animation pass 2026
+
+- Watering, harvesting and animal collection now have distinct action durations and foot-anchored body leans. Watering draws a tipped pixel watering can with short falling droplets; harvesting/collection animate a pixel basket that fills as the action completes.
+- These actions reuse the approved character atlas and add small Canvas pixel props/effects, so character scale, alpha edges, frame origin and walk animation stay unchanged. A dedicated high-resolution sprite atlas for these actions remains a later art task; no replacement character frames were fabricated from the hoe poses.
