@@ -153,3 +153,10 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Rain streaks are drawn as short, camera-aligned pixel cells instead of antialiased vector lines. The storm uses denser, longer drops; ordinary rain stays lighter. Lightning and water splashes keep their existing behavior.
 - Fog uses slow, stepped pixel wisps with low opacity. It keeps crop, character, and interaction silhouettes readable. Reduced-motion mode freezes the wisps and suppresses rain drift, flashes, splashes, and sparkles.
 - The world already loads `public/pixel/terrain-materials-v3.png` and repeats mirrored material cells. The remaining terrain task is to author distinct pixel transitions at region edges, not to add a second repeating texture system.
+
+## Farmer action sprites 2026
+
+- Added full-body action atlases for both avatars: watering, applying fertilizer, spraying crops, harvesting, and feeding livestock. Each atlas has four frames per action, four directions, 48 × 64 runtime cells, and real RGBA transparency.
+- Tools and action details are part of the sprite cells. The renderer switches to these full-body frames while the action timer runs, avoiding a second arm or a separate Canvas tool overlay. Hoeing, planting, and fishing keep their existing animation paths.
+- Runtime atlases are `public/pixel/farmer-action-atlas-v1-female.png` and `public/pixel/farmer-action-atlas-v1-male.png`. Their 4× nearest-neighbor masters are in `docs/assets/`; the approved concept remains at `docs/assets/farmer-action-design-sample-v1.png`.
+- Regenerate the atlases with `npm run pixel:farmer-actions`. Metadata and action timing are in `public/pixel/frames.mjs` and `public/world-motion.mjs`.

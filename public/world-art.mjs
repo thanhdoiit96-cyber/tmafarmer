@@ -4,7 +4,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -28,6 +28,7 @@ const progressionCropArt=load(progressionCropAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
 const gardenHelperArt=load(gardenHelperAtlas.source);
+const farmerActionArt={female:load(farmerActionAtlas.female),male:load(farmerActionAtlas.male)};
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -49,7 +50,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -834,13 +835,20 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   const work=action==='till';
   const male=avatar==='male'&&dim(malePoses);
   const walkAtlas=male?maleWalk:farmerWalk;
+  const actionType=['water','fertilize','spray'].includes(action)?action:
+    action==='harvest'||action==='collect'?'harvest':action==='feed'?'feed':'';
+  const actionAtlas=actionType&&dim(farmerActionArt[avatar==='male'?'male':'female'])?
+    farmerActionArt[avatar==='male'?'male':'female']:null;
   const moving=walking&&!work&&dim(walkAtlas);
   const {cellWidth,cellHeight,directions,states}=pixelCharacter;
   const anim=states[work?'work':moving?'walk':'idle'];
+  const actionSequence=actionAtlas?Math.min(farmerActionAtlas[actionType].frames-1,
+    Math.floor(Math.min(1,elapsed/actionPoseSeconds[action])*farmerActionAtlas[actionType].frames)):0;
   const step=moving?walkFrame(walkDistance,stride,anim.frames):Math.floor((work?elapsed:t)*anim.fps);
   const sequence=work?Math.min(anim.frames-1,step):step%anim.frames;
-  const frame=male?(moving?sequence:work?maleCharacter.workFrames[sequence]:0):anim.first+sequence;
-  const atlas=moving?walkAtlas:male?malePoses:pixelCharacters;
+  const frame=actionAtlas?farmerActionAtlas[actionType].first+actionSequence:
+    male?(moving?sequence:work?maleCharacter.workFrames[sequence]:0):anim.first+sequence;
+  const atlas=actionAtlas??(moving?walkAtlas:male?malePoses:pixelCharacters);
   const row=directions[direction]??0;
   const px=snapPixel(x),py=snapPixel(y);
   const standing=style==='player'||style==='peer';
@@ -858,7 +866,7 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   c.drawImage(atlas,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
     snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
   c.restore();
-  if(!work)personTool(c,px,py,direction,elapsed,action);
+  if(!work&&!actionAtlas)personTool(c,px,py,direction,elapsed,action);
 }
 function pixelHouse(c,x,y,w,h=w*pixelSlice.house.h/pixelSlice.house.w){
   const frame=pixelSlice.house;

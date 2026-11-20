@@ -65,3 +65,10 @@ export const gardenHelperAtlas={
   directions:{down:0,up:1,left:2,right:3},
   walk:[0,1,0,2],work:3,
 };
+export const farmerActionAtlas={
+  cellWidth:48,cellHeight:64,frames:4,directions:{down:0,up:1,left:2,right:3},
+  female:'/pixel/farmer-action-atlas-v1-female.png',
+  male:'/pixel/farmer-action-atlas-v1-male.png',
+  water:{first:0,frames:4},fertilize:{first:4,frames:4},spray:{first:8,frames:4},
+  harvest:{first:12,frames:4},feed:{first:16,frames:4},
+};

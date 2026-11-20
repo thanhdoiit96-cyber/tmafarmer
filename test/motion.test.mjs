@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
+import {farmerActionAtlas,maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
 import {actionPoseSeconds,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
 import {features,walkable} from '../public/world-layout.mjs';
 import {newFarm,newRoom,snapshot} from '../public/game.mjs';
@@ -48,6 +48,20 @@ test('the male avatar atlases align with the walk and tool frames',()=>{
   }
   assert.equal(maleCharacter.workFrames.length,states.work.frames);
   assert.ok(maleCharacter.workFrames.every(frame=>frame>=1&&frame<=3));
+});
+
+test('farmer action atlases contain five full-body actions in four transparent directions',()=>{
+  const actions=['water','fertilize','spray','harvest','feed'];
+  assert.deepEqual(Object.keys(farmerActionAtlas).filter(key=>actions.includes(key)),actions);
+  for(const avatar of ['female','male']){
+    const png=readFileSync(new URL('../public'+farmerActionAtlas[avatar],import.meta.url));
+    assert.equal(png.toString('ascii',12,16),'IHDR');
+    assert.equal(png.readUInt32BE(16),farmerActionAtlas.cellWidth*4*actions.length);
+    assert.equal(png.readUInt32BE(20),farmerActionAtlas.cellHeight*Object.keys(farmerActionAtlas.directions).length);
+    assert.equal(png[25],6,'action sprites keep real RGBA alpha');
+    for(const action of actions)
+      assert.equal(farmerActionAtlas[action].frames,4);
+  }
 });
 
 test('animals pause inside their pen and honor reduced motion',()=>{

@@ -1,6 +1,9 @@
 export const playerSpeed=76;
 export const playerStride=64;
-export const actionPoseSeconds={till:.85,plant:.85,cast:.55,reel:.72};
+export const actionPoseSeconds={
+  till:.85,plant:.85,water:.8,fertilize:.8,spray:.8,harvest:.85,feed:.85,collect:.8,
+  cast:.55,reel:.72,
+};
 
 export function fishingBobber(dock){
   const dx=dock.side==='left'?-36:dock.side==='right'?36:19;
