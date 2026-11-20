@@ -4,7 +4,7 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
+import {aquaticAtlas,cropStagesAtlas,farmActionAtlas,farmActionCharacterAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,actionProgress,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
@@ -28,6 +28,8 @@ const progressionCropArt=load(progressionCropAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
 const gardenHelperArt=load(gardenHelperAtlas.source);
+const farmActionArt=load(farmActionAtlas.source);
+const farmActionCharacterArt={female:load(farmActionCharacterAtlas.female),male:load(farmActionCharacterAtlas.male)};
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -49,7 +51,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),landscapeArt.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmActionArt.decode(),farmActionCharacterArt.female.decode(),farmActionCharacterArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -783,12 +785,55 @@ function legacyPerson(c,x,y,direction,t,moving,style,walkDistance){
   sprite(c,kind,x,y-bob,w,h,direction==='left');
   c.restore();
 }
-function pixelBasket(c,x,y){
-  const u=pixelStep,px=snapPixel(x-3*u),py=snapPixel(y-4*u);
-  c.fillStyle='#563d2d';c.fillRect(px,py,6*u,u);c.fillRect(px+u,py+u,4*u,u);
-  c.fillStyle='#b77e45';c.fillRect(px+u,py+2*u,4*u,u);c.fillRect(px+2*u,py+3*u,2*u,u);
-  c.fillStyle='#845533';c.fillRect(px,py+2*u,u,2*u);c.fillRect(px+5*u,py+2*u,u,2*u);
-  c.fillStyle='#e0b16a';c.fillRect(px+u,py+2*u,u,u);c.fillRect(px+4*u,py+2*u,u,u);
+function drawFarmActionProp(c,action,frame,x,y,direction){
+  if(!dim(farmActionArt))return false;
+  const row=action==='water'?farmActionAtlas.water.y:farmActionAtlas.harvest.y;
+  const side=direction==='left'?-1:1,u=pixelStep;
+  const left=snapPixel(x+side*9*u-9*u),top=snapPixel(y-13*u);
+  c.save();c.imageSmoothingEnabled=false;
+  if(side<0){c.translate(left*2+18*u,0);c.scale(-1,1);}
+  c.drawImage(farmActionArt,frame*farmActionAtlas.cellWidth*2,row*2,
+    farmActionAtlas.cellWidth*2,farmActionAtlas.cellHeight*2,left,top,18*u,12*u);
+  c.restore();
+  return true;
+}
+function pixelReachArm(c,origin,points,avatar){
+  const female=avatar!=='male';
+  const ink=female?'#58382d':'#253a35';
+  const shadeColor=female?'#754733':'#31544b';
+  const cloth=female?'#a56540':'#4b7062';
+  const light=female?'#c28152':'#78947a';
+  const skin=female?'#e7ad78':'#e2ad7e';
+  const skinLight=female?'#f5d09a':'#f2ce9b';
+  const u=pixelStep;
+  for(let segment=0;segment<points.length-1;segment++){
+    const [ax,ay]=points[segment],[bx,by]=points[segment+1];
+    const steps=Math.max(Math.abs(bx-ax),Math.abs(by-ay));
+    for(let i=0;i<=steps;i++){
+      const lx=Math.round(ax+(bx-ax)*(steps?i/steps:0));
+      const ly=Math.round(ay+(by-ay)*(steps?i/steps:0));
+      const x=origin.x+(lx-24)*u,y=origin.y+(ly-59)*u;
+      box(c,ink,x-u,y-u,3*u,3*u,0);
+      box(c,shadeColor,x-u,y-u,2*u,2*u,0);
+      box(c,cloth,x,y-u,2*u,2*u,0);
+      if((i+segment)%3===0)box(c,light,x,y-u,u,u,0);
+    }
+  }
+  const [hx,hy]=points.at(-1),handX=origin.x+(hx-24)*u,handY=origin.y+(hy-59)*u;
+  box(c,ink,handX-u,handY-u,3*u,3*u,0);
+  box(c,skin,handX,handY-u,2*u,2*u,0);
+  box(c,skinLight,handX,handY-u,u,u,0);
+}
+function drawActionArm(c,x,y,direction,action,progress,avatar){
+  if(!['water','harvest','collect'].includes(action))return;
+  const reach=Math.sin(progress*Math.PI),facingLeft=direction==='left';
+  const shoulder=facingLeft?[23,34]:[30,34];
+  const elbow=facingLeft?[14,38]:[37,38];
+  const handX=facingLeft?6:42;
+  const handY=action==='water'?43-reach*2:40+reach*4;
+  const bend=action==='water'?reach*1.5:reach*2;
+  const points=[shoulder,[elbow[0],elbow[1]+bend],[handX,handY]];
+  pixelReachArm(c,{x:snapPixel(x),y:snapPixel(y)},points,avatar);
 }
 function personTool(c,x,y,direction,t,action){
   if(action==='plant'){
@@ -797,20 +842,12 @@ function personTool(c,x,y,direction,t,action){
     box(c,'#d9b07a',px-2,py-1,4,4,1);
     line(c,'#f5dfa5',.8,[[px-2,py],[px+2,py]]);
   } else if(action==='water'){
-    const progress=actionProgress('water',t),pour=Math.sin(progress*Math.PI);
-    const side=direction==='left'?-1:1,px=snapPixel(x+8*side),py=snapPixel(y-12+pour*1.5),u=pixelStep;
-    // Small enamel watering can, held at the hand and tipped toward the bed.
-    box(c,'#4c594b',px-2*u,py,6*u,5*u,1);
-    box(c,'#c5d7bd',px-1*u,py+u,4*u,3*u,1);
-    box(c,'#e1d29a',px-1*u,py,4*u,u,0);
-    line(c,'#805b39',u,[[px+side*2*u,py+u],[px+side*4*u,py-u],[px+side*6*u,py-u]]);
-    line(c,'#d6a966',u,[[px-2*u,py+u],[px-3*u,py+2*u],[px-2*u,py+4*u]]);
-    if(progress>.2&&progress<.88){
-      c.fillStyle='#9ad9d4';
-      for(let i=0;i<3;i++){
-        const fall=((progress*13+i*2.4)%5)*u;
-        c.fillRect(snapPixel(px+side*(6+i%2)*u),snapPixel(py+2*u+fall),u,u);
-      }
+    const progress=actionProgress('water',t),frame=Math.min(3,Math.floor(progress*4));
+    const lift=Math.sin(progress*Math.PI)*1.5*pixelStep;
+    if(!drawFarmActionProp(c,'water',frame,x,y-lift,direction)){
+      const side=direction==='left'?-1:1,px=snapPixel(x+8*side),py=snapPixel(y-12+lift),u=pixelStep;
+      box(c,'#4c594b',px-2*u,py,6*u,5*u,1);box(c,'#c5d7bd',px-u,py+u,4*u,3*u,1);
+      if(progress>.2&&progress<.88){c.fillStyle='#9ad9d4';c.fillRect(px+side*6*u,py+3*u,u,u);}
     }
   } else if(action==='till'){
     const side=direction==='left'?-1:1, toolX=x+8*side, toolY=y-7+Math.sin(t*15)*3;
@@ -819,15 +856,10 @@ function personTool(c,x,y,direction,t,action){
   } else if(action==='harvest'||action==='collect'||action==='steal'){
     const progress=action==='harvest'?actionProgress('harvest',t):action==='collect'?actionProgress('collect',t):1;
     const side=direction==='left'?-1:1,lift=Math.sin(progress*Math.PI)*2;
-    const bx=snapPixel(x+side*8),by=snapPixel(y-8-lift);
-    pixelBasket(c,bx,by);
-    if(progress>.48){
-      const fill=Math.min(3,Math.floor((progress-.42)*7));
-      const produce=['#d5963f','#a64f3b','#71914c'];
-      for(let i=0;i<fill;i++){
-        const px=snapPixel(bx-2.5+(i%2)*3),py=snapPixel(by-7-Math.floor(i/2)*1.5);
-        box(c,produce[i],px,py,2,2,0);box(c,'#f0c777',px,py,1,1,0);
-      }
+    const frame=Math.min(3,Math.floor(progress*4));
+    if(!drawFarmActionProp(c,'harvest',frame,x,y-lift,direction)){
+      const bx=snapPixel(x+side*8),by=snapPixel(y-8-lift);
+      box(c,'#563d2d',bx-3,by-4,6,1,0);box(c,'#b77e45',bx-2,by-3,4,3,0);
     }
   }
 }
@@ -867,13 +899,19 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   const work=action==='till';
   const male=avatar==='male'&&dim(malePoses);
   const walkAtlas=male?maleWalk:farmerWalk;
+  const actionAvatar=avatar==='male'?'male':'female';
+  const actionType=action==='water'?'water':['harvest','collect'].includes(action)?'harvest':'';
+  const actionPoseAtlas=actionType&&dim(farmActionCharacterArt[actionAvatar])?farmActionCharacterArt[actionAvatar]:null;
   const moving=walking&&!work&&dim(walkAtlas);
   const {cellWidth,cellHeight,directions,states}=pixelCharacter;
   const anim=states[work?'work':moving?'walk':'idle'];
+  const actionSequence=actionPoseAtlas?Math.min(farmActionCharacterAtlas[actionType].frames-1,
+    Math.floor(actionProgress(actionType==='harvest'&&action==='collect'?'collect':actionType,elapsed)*farmActionCharacterAtlas[actionType].frames)):0;
   const step=moving?walkFrame(walkDistance,stride,anim.frames):Math.floor((work?elapsed:t)*anim.fps);
   const sequence=work?Math.min(anim.frames-1,step):step%anim.frames;
-  const frame=male?(moving?sequence:work?maleCharacter.workFrames[sequence]:0):anim.first+sequence;
-  const atlas=moving?walkAtlas:male?malePoses:pixelCharacters;
+  const frame=actionPoseAtlas?farmActionCharacterAtlas[actionType].first+actionSequence:
+    male?(moving?sequence:work?maleCharacter.workFrames[sequence]:0):anim.first+sequence;
+  const atlas=actionPoseAtlas??(moving?walkAtlas:male?malePoses:pixelCharacters);
   const row=directions[direction]??0;
   const px=snapPixel(x),py=snapPixel(y);
   const standing=style==='player'||style==='peer';
@@ -886,12 +924,17 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   const left=px-cellWidth/2*unit,top=py-59*unit;
   if(['plant','water','harvest','collect'].includes(action)){
     const progress=actionProgress(action,elapsed);
-    const amount=action==='plant'?.075:action==='water'?.035:.065;
-    const lean=Math.sin(progress*Math.PI)*amount;
-    c.translate(px,py);c.rotate(direction==='left'?-lean:lean);c.translate(-px,-py);
+    const reach=Math.sin(progress*Math.PI);
+    const amount=action==='water'?.055:action==='harvest'?.085:action==='collect'?.07:.075;
+    const lean=reach*amount*(direction==='left'?-1:1);
+    const crouch=reach*(action==='water'?.012:action==='plant'?.018:.04);
+    // Keep the feet planted while the farmer reaches for water or lowers into a harvest.
+    c.translate(px,py);c.rotate(lean);c.scale(1,1-crouch);c.translate(-px,-py);
   }
   c.drawImage(atlas,frame*cellWidth,row*cellHeight,cellWidth,cellHeight,
     snapPixel(left),snapPixel(top),cellWidth*unit,cellHeight*unit);
+  if(!actionPoseAtlas&&['water','harvest','collect'].includes(action))
+    drawActionArm(c,px,py,direction,action,actionProgress(action,elapsed),avatar);
   c.restore();
   if(!work)personTool(c,px,py,direction,elapsed,action);
 }

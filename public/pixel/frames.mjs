@@ -65,3 +65,13 @@ export const gardenHelperAtlas={
   directions:{down:0,up:1,left:2,right:3},
   walk:[0,1,0,2],work:3,
 };
+export const farmActionAtlas={
+  source:'/pixel/farm-action-atlas-v1.png',cellWidth:48,cellHeight:32,frames:4,
+  water:{x:0,y:0},harvest:{x:0,y:32},
+};
+export const farmActionCharacterAtlas={
+  cellWidth:48,cellHeight:64,frames:6,directions:4,
+  female:'/pixel/farmer-action-poses-v1-female.png',
+  male:'/pixel/farmer-action-poses-v1-male.png',
+  water:{first:0,frames:6},harvest:{first:6,frames:6},
+};

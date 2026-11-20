@@ -9,6 +9,8 @@
     "build": "npm run progression:docs && node scripts/build.mjs",
     "check:progression": "node scripts/progression.mjs",
     "progression:docs": "node scripts/progression.mjs --write-docs",
+    "pixel:farm-actions": "py scripts/generate-farm-action-atlas.py",
+    "pixel:farm-action-poses": "py scripts/generate-farm-action-character-atlases.py",
     "pixel:progression-art": "py scripts/generate-progression-crops-v2.py",
     "test": "node --test",
     "test:scale": "node scripts/scale-load.mjs",

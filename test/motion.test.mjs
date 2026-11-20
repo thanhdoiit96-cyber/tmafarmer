@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
+import {farmActionCharacterAtlas,maleCharacter,pixelCharacter,pixelSlice} from '../public/pixel/frames.mjs';
 import {actionPoseSeconds,actionProgress,animalMotion,facingFromDelta,fishingBobber,playerSpeed,playerStride,spriteFlip,walkFrame} from '../public/world-motion.mjs';
 import {features,walkable} from '../public/world-layout.mjs';
 import {newFarm,newRoom,snapshot} from '../public/game.mjs';
@@ -60,6 +60,21 @@ test('the male avatar atlases align with the walk and tool frames',()=>{
   }
   assert.equal(maleCharacter.workFrames.length,states.work.frames);
   assert.ok(maleCharacter.workFrames.every(frame=>frame>=1&&frame<=3));
+});
+
+test('female and male watering and harvest pose atlases match the four-direction runtime grid',()=>{
+  const {cellWidth,cellHeight,directions,frames,water,harvest}=farmActionCharacterAtlas;
+  assert.equal(frames,6);
+  assert.equal(water.first,0);
+  assert.equal(water.frames,frames);
+  assert.equal(harvest.first,frames);
+  assert.equal(harvest.frames,frames);
+  for(const source of [farmActionCharacterAtlas.female,farmActionCharacterAtlas.male]){
+    const png=readFileSync(new URL('../public'+source,import.meta.url));
+    assert.equal(png.toString('ascii',12,16),'IHDR');
+    assert.equal(png.readUInt32BE(16),cellWidth*frames*2);
+    assert.equal(png.readUInt32BE(20),cellHeight*directions);
+  }
 });
 
 test('animals pause inside their pen and honor reduced motion',()=>{
