@@ -157,6 +157,8 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 ## Farmer action sprites 2026
 
 - Added full-body action atlases for both avatars: watering, applying fertilizer, spraying crops, harvesting, and feeding livestock. Each atlas has four frames per action, four directions, 48 × 64 runtime cells, and real RGBA transparency.
+- The spray action uses a handheld pressure tank, pump handle, wand, and changing mist burst across its four frames; its prop and effect stay attached to the full-body sprite in every direction.
+- The planting action uses a seed pouch and a four-beat scattering motion, with seeds landing beside the farmer. Both planting and spraying replace the old separate Canvas prop drawing while active.
 - Tools and action details are part of the sprite cells. The renderer switches to these full-body frames while the action timer runs, avoiding a second arm or a separate Canvas tool overlay. Hoeing, planting, and fishing keep their existing animation paths.
 - Runtime atlases are `public/pixel/farmer-action-atlas-v1-female.png` and `public/pixel/farmer-action-atlas-v1-male.png`. Their 4× nearest-neighbor masters are in `docs/assets/`; the approved concept remains at `docs/assets/farmer-action-design-sample-v1.png`.
 - Regenerate the atlases with `npm run pixel:farmer-actions`. Metadata and action timing are in `public/pixel/frames.mjs` and `public/world-motion.mjs`.

@@ -835,7 +835,7 @@ export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walk
   const work=action==='till';
   const male=avatar==='male'&&dim(malePoses);
   const walkAtlas=male?maleWalk:farmerWalk;
-  const actionType=['water','fertilize','spray'].includes(action)?action:
+  const actionType=['water','fertilize','spray','plant'].includes(action)?action:
     action==='harvest'||action==='collect'?'harvest':action==='feed'?'feed':'';
   const actionAtlas=actionType&&dim(farmerActionArt[avatar==='male'?'male':'female'])?
     farmerActionArt[avatar==='male'?'male':'female']:null;

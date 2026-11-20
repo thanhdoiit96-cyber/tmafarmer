@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CELL_W, CELL_H = 48, 64
 SCALE = 4
 FRAMES = 4
-ACTIONS = ("water", "fertilize", "spray", "harvest", "feed")
+ACTIONS = ("water", "fertilize", "spray", "plant", "harvest", "feed")
 DIRECTIONS = 4
 ATLAS_COLUMNS = len(ACTIONS) * FRAMES
 
@@ -39,6 +39,7 @@ def action_body(base, action, frame):
         "water": (0, 0, 1, 0),
         "fertilize": (0, 1, 2, 0),
         "spray": (0, 1, 2, 0),
+        "plant": (0, 2, 4, 1),
         "harvest": (0, 1, 3, 1),
         "feed": (0, 1, 3, 1),
     }[action][frame]
@@ -90,24 +91,35 @@ def draw_fertilizer(draw, x, y, frame):
 
 
 def draw_spray(draw, x, y, frame):
-    ink, shade, bottle, light = "#3c4937", "#557b4d", "#87aa67", "#d4dca0"
-    draw.polygon([(x+4,y+3),(x+10,y+3),(x+11,y+5),(x+10,y+11),
-                  (x+3,y+11),(x+2,y+9),(x+3,y+5)], fill=ink)
-    draw.polygon([(x+4,y+4),(x+9,y+4),(x+10,y+5),(x+9,y+10),
-                  (x+4,y+10),(x+3,y+9),(x+4,y+5)], fill=bottle)
-    draw.rectangle((x+5,y+1,x+8,y+3), fill=ink)
-    draw.rectangle((x+6,y,x+9,y+2), fill=shade)
-    draw.point((x+7,y+1), fill=light)
-    draw.line([(x+3,y+6),(x+1,y+5),(x,y+5)], fill=ink, width=1)
-    draw.point((x+4,y+6), fill=light)
+    """Draw a hand pump, grip, wand, and a short animated mist burst."""
+    ink, shade, tank, light = "#3c4937", "#557b4d", "#87aa67", "#d4dca0"
+    # Rounded pressure tank with a clear shoulder, base, liquid window and strap.
+    draw.polygon([(x+3,y+5),(x+9,y+5),(x+11,y+7),(x+10,y+13),
+                  (x+3,y+13),(x+1,y+11),(x+2,y+7)], fill=ink)
+    draw.polygon([(x+4,y+6),(x+8,y+6),(x+10,y+8),(x+9,y+12),
+                  (x+4,y+12),(x+3,y+11),(x+3,y+8)], fill=tank)
+    draw.rectangle((x+4,y+9,x+5,y+11), fill=light)
+    draw.point((x+8,y+10), fill=shade)
+    draw.line([(x+2,y+7),(x+1,y+10),(x+3,y+12)], fill="#b18b54", width=1)
+    # Neck, pump handle, trigger grip and a narrow metal spray lance.
+    draw.rectangle((x+5,y+3,x+8,y+5), fill=ink)
+    draw.rectangle((x+6,y+2,x+8,y+4), fill=shade)
+    draw.line([(x+8,y+4),(x+11,y+3),(x+12,y+4)], fill=ink, width=1)
+    draw.line([(x+9,y+5),(x+11,y+5)], fill="#a88a5e", width=1)
+    draw.line([(x+10,y+4),(x+14,y+1)], fill=ink, width=2)
+    draw.line([(x+11,y+4),(x+14,y+2)], fill="#c5c2a0", width=1)
+    draw.point((x+14,y+1), fill=light)
     if frame in (1, 2, 3):
-        count = 2 if frame == 1 else 4
-        for index in range(count):
-            dx = 12 + (index % 2) * 2 + ((frame + index) % 2)
-            dy = 4 + (index * 3 + frame) % 7
-            draw.point((x+dx,y+dy), fill="#a9d4a1")
-            if frame >= 2 and index % 2 == 0:
-                draw.point((x+dx+1,y+dy), fill="#d8e5ad")
+        bursts = {
+            1: ((15,1),(16,0)),
+            2: ((15,1),(16,0),(16,3),(17,1),(18,0),(17,4)),
+            3: ((16,1),(17,0),(17,3)),
+        }[frame]
+        for index, (dx, dy) in enumerate(bursts):
+            color = "#d9e9b1" if index % 3 == 0 else "#a9d4a1"
+            draw.point((x+dx,y+dy), fill=color)
+            if frame == 2 and index % 2 == 0:
+                draw.point((x+dx+1,y+dy), fill="#d9e9b1")
 
 
 def draw_harvest(draw, x, y, frame):
@@ -127,6 +139,29 @@ def draw_harvest(draw, x, y, frame):
         draw.point((x+9,y), fill="#789451")
     if frame == 3:
         draw.point((x+12,y+2), fill="#a8bf69")
+
+
+def draw_seed(draw, x, y, frame):
+    """Draw a small seed pouch and seeds dropping toward the ground."""
+    ink, shade, cloth, light = "#513e2c", "#805d3c", "#c19a60", "#ead19a"
+    draw.polygon([(x+3,y+4),(x+5,y+2),(x+10,y+3),(x+12,y+6),
+                  (x+11,y+13),(x+4,y+13),(x+2,y+11)], fill=ink)
+    draw.polygon([(x+4,y+5),(x+6,y+3),(x+9,y+4),(x+11,y+6),
+                  (x+10,y+12),(x+4,y+12),(x+3,y+10)], fill=cloth)
+    draw.line([(x+4,y+5),(x+7,y+6),(x+10,y+5)], fill=light, width=1)
+    draw.line([(x+4,y+9),(x+9,y+9)], fill=shade, width=1)
+    draw.point((x+6,y+8), fill=light)
+    draw.point((x+8,y+10), fill=shade)
+    if frame >= 1:
+        draw.point((x+12,y+8), fill="#d9bd74")
+    if frame == 2:
+        for dx, dy in ((13,10),(15,12),(12,14),(16,15)):
+            draw.point((x+dx,y+dy), fill="#c99d4b")
+            draw.point((x+dx+1,y+dy), fill="#ead19a")
+    elif frame == 3:
+        for dx, dy in ((14,15),(16,17),(12,16)):
+            draw.point((x+dx,y+dy), fill="#c99d4b")
+            draw.point((x+dx+1,y+dy), fill="#ead19a")
 
 
 def draw_feed(draw, x, y, frame):
@@ -151,13 +186,15 @@ def draw_feed(draw, x, y, frame):
 
 
 DRAW_TOOL = {"water": draw_water, "fertilize": draw_fertilizer, "spray": draw_spray,
+             "plant": draw_seed,
              "harvest": draw_harvest, "feed": draw_feed}
 
 
 def tool_origin(direction, action, frame):
-    x = 30
+    x = 29 if action in ("spray", "plant") else 30
     y = {"water": (34,34,35,34), "fertilize": (36,37,38,36),
          "spray": (36,37,38,36),
+         "plant": (37,39,41,38),
          "harvest": (37,38,39,37), "feed": (38,39,41,38)}[action][frame]
     return x, y
 

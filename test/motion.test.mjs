@@ -50,17 +50,21 @@ test('the male avatar atlases align with the walk and tool frames',()=>{
   assert.ok(maleCharacter.workFrames.every(frame=>frame>=1&&frame<=3));
 });
 
-test('farmer action atlases contain five full-body actions in four transparent directions',()=>{
-  const actions=['water','fertilize','spray','harvest','feed'];
+test('farmer action atlases contain six full-body actions in four transparent directions',()=>{
+  const actions=['water','fertilize','spray','plant','harvest','feed'];
   assert.deepEqual(Object.keys(farmerActionAtlas).filter(key=>actions.includes(key)),actions);
+  assert.equal(actionPoseSeconds.spray,.8);
+  assert.equal(actionPoseSeconds.plant,.85);
+  actions.forEach((action,index)=>{
+    assert.equal(farmerActionAtlas[action].first,index*4);
+    assert.equal(farmerActionAtlas[action].frames,4);
+  });
   for(const avatar of ['female','male']){
     const png=readFileSync(new URL('../public'+farmerActionAtlas[avatar],import.meta.url));
     assert.equal(png.toString('ascii',12,16),'IHDR');
     assert.equal(png.readUInt32BE(16),farmerActionAtlas.cellWidth*4*actions.length);
     assert.equal(png.readUInt32BE(20),farmerActionAtlas.cellHeight*Object.keys(farmerActionAtlas.directions).length);
     assert.equal(png[25],6,'action sprites keep real RGBA alpha');
-    for(const action of actions)
-      assert.equal(farmerActionAtlas[action].frames,4);
   }
 });
 

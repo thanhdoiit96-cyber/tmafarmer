@@ -70,5 +70,5 @@ export const farmerActionAtlas={
   female:'/pixel/farmer-action-atlas-v1-female.png',
   male:'/pixel/farmer-action-atlas-v1-male.png',
   water:{first:0,frames:4},fertilize:{first:4,frames:4},spray:{first:8,frames:4},
-  harvest:{first:12,frames:4},feed:{first:16,frames:4},
+  plant:{first:12,frames:4},harvest:{first:16,frames:4},feed:{first:20,frames:4},
 };
