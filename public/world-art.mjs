@@ -7,6 +7,7 @@ import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds} from './pix
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
+import {yardPets,yardPetPose} from './yard-pets.mjs';
 import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
@@ -21,6 +22,7 @@ const parcelShelterArt=load(parcelShelter.source);
 const workshopBuildingArt=load(homesteadWorkshop.source);
 const parcelPondArt=load('/pixel/parcel-pond-v2.png');
 const pondDockArt=load('/pixel/pond-dock-v5.png');
+const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
@@ -57,7 +59,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),pondDockArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -264,10 +266,10 @@ function decorativeSprite(c,item,t=0,dusk=0){
   c.restore();
 }
 const railPaint={wood:['#785236','#bd8d55','#dfb27b'],white:['#827c61','#dfdacc','#f7eccf'],bamboo:['#515b36','#819356','#bcba76']};
-function fence(c,{x,y,w,h,style}){
+function fence(c,{x,y,w,h,style},front=true){
   const [dark,middle,light]=railPaint[style];
   const gap=11,middleX=x+w/2;
-  const edges=[[[x,y],[x+w,y]],[[x,y],[x,y+h]],[[x+w,y],[x+w,y+h]],[[x,y+h],[middleX-gap,y+h]],[[middleX+gap,y+h],[x+w,y+h]]];
+  const edges=[[[x,y],[x+w,y]],[[x,y],[x,y+h]],[[x+w,y],[x+w,y+h]],...(front?[[[x,y+h],[middleX-gap,y+h]],[[middleX+gap,y+h],[x+w,y+h]]]:[])];
   for(const [a,b] of edges){
     for(const dy of [-4,-1]){
       line(c,dark,2.25,[[a[0],a[1]+dy],[b[0],b[1]+dy]]);
@@ -597,7 +599,7 @@ export function grass(c,scene,kind,features){
     for(const area of features.ground)if(area.type==='lot')drawLot(c,area);
     // The main pond is painted into the plate; expansion ponds are dynamic.
     for(const area of features.water)if(area.y>=365)pond(c,area);
-    for(const area of features.ground)if(area.type==='fence')fence(c,area);
+    for(const area of features.ground)if(area.type==='fence')fence(c,area,kind!=='field'&&kind!=='visit');
     return;
   }
   const landscape=landscapeFor(kind);
@@ -860,7 +862,7 @@ function critter(c,a,t){
   if(!dim(art))return;
   const large=!['chicken','duck','quail'].includes(visual);
   const rabbit=visual==='rabbit';
-  const motion=animalMotion(t,index,a.roam??(large?11:15),rabbit?'idle':large?'graze':'peck');
+  const motion=a.motion??animalMotion(t,index,a.roam??(large?11:15),rabbit?'idle':large?'graze':'peck');
   const walking=motion.state==='walk';
   const phase=motion.distance/(large?9:7.5)*Math.PI*2;
   const step=Math.sin(phase);
@@ -868,7 +870,7 @@ function critter(c,a,t){
   const bend=foraging ? .5-.5*Math.cos(motion.elapsed*(large?4.7:9.3)) : 0;
   const size=animalScale(data),[width,height]=animalSizes[data.kind];
   const w=width*size,h=height*size;
-  const x=snapPixel(a.x+motion.offset),y=snapPixel(a.y);
+  const x=snapPixel(a.x+(motion.offset??0)),y=snapPixel(a.y);
   const [sx,sy,sw,sh]=additionalFrame??livestockFrame??frames[visual];
   const poses=additionalLivestockAtlas.poses[visual]??progressionLivestockAtlas.poses[visual];
   if(poses){
@@ -1126,6 +1128,20 @@ function neighborHouse(c,a,t){
   }
 }
 export function actor(c,a,t,state){
+  if(a.type==='yard-pet'){
+    const pose=a.motion?a:yardPetPose(a.species,t,t===0);
+    if(a.species==='chicken')return critter(c,{...a,...pose,data:{kind:'chicken'}},t);
+    const pet=yardPets.find(p=>p.species===a.species),art=yardPetArt[a.species];
+    if(!dim(art))return;
+    const {motion,x,y}=pose;
+    const frame=motion.state==='walk'?1+Math.floor(motion.distance/5)%2:motion.state==='sniff'?3:0;
+    const px=snapPixel(x),py=snapPixel(y);
+    shade(c,px,py,pet.w*.36,2);
+    c.save();c.translate(px,py);if(motion.facing<0)c.scale(-1,1);
+    c.drawImage(art,(frame%2)*64,Math.floor(frame/2)*56,64,56,-pet.w/2,-52/56*pet.h,pet.w,pet.h);
+    c.restore();return;
+  }
+  if(a.type==='fence-front')return fenceFront(c,a.area);
   if(drawAtlasActor(c,a,t,state))return;
   const {x,y,type,w,style}=a;
   if(type==='coop'&&a.parcel&&dim(parcelShelterArt)){

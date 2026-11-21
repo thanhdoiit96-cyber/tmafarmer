@@ -1,5 +1,72 @@
 # Vườn nhà: bố cục đã duyệt và triển khai V2
 
+## Sân nhà và bố cục có công năng V6
+
+### Gà, chó, mèo
+
+`public/yard-pets.mjs` định nghĩa ba bạn nhỏ ambient, đường đi khép kín và
+các nhịp đứng/ngửi/mổ thóc. Chó đi ở sân đường cong, mèo quanh bậc hiên, gà
+ở khoảng sân cạnh giếng. Chúng không nằm trong `farm.pens`, không dùng sức
+chứa chuồng hoặc tạo sản phẩm. Chủ vườn và khách đều thấy chúng.
+
+Chó/mèo có atlas 2 × 2: idle, walk A, walk B, sniff. Mỗi ô 64 × 56, alpha
+thật, chân tại y=52, cùng tỷ lệ giữa các pose. Render bằng frame toàn thân,
+không ghép thêm tay/chân. Gà dùng các pose đã có trong atlas vật nuôi. Tọa độ
+di chuyển cập nhật trước khi sắp lớp sprite; ảnh không nhảy khi quay lại đầu
+vòng. Khi hệ điều hành yêu cầu giảm chuyển động, ba con vật nghỉ ở ba chỗ riêng.
+
+Nguồn: `assets/yard-dog-v1-source.png`, `assets/yard-cat-v1-source.png`.
+Xuất lại bằng `py scripts/normalize-yard-pets-v1.py`; script crop từng quadrant
+độc lập, dùng chung hệ số scale cho bốn pose, căn chân và threshold alpha.
+Runtime: `public/pixel/yard-dog-v1.png`, `public/pixel/yard-cat-v1.png`.
+
+Artwork được tạo bằng built-in imagegen, lấy cừu trong `livestock-v2.png` làm
+mẫu. Prompt set: cùng một nhân vật trong lưới 2 × 2, nhìn sang phải, camera
+hơi từ trên xuống, pixel-art tròn ấm, alpha thật, bốn pose toàn thân riêng;
+không nền, bóng đổ vẽ sẵn, caption hoặc bộ phận thừa. Dog: chó vàng nhỏ, mõm
+và ngực kem, tai cụp và đuôi cuộn. Cat: mèo mướp cam kem, bàn chân trắng,
+mặt tròn và đuôi cong dựng. Giữ silhouette và baseline đồng nhất, có padding
+để tai/đuôi không chạm mép ô.
+
+### Đồ trang trí theo cảnh
+
+Các vị trí giờ gắn với công năng thay vì chia đều trên bãi cỏ:
+
+- Hiên nhà: chậu hoa, lu nước, chuông gió.
+- Cổng nam: cổng hoa ôm chính đường đá, bảng tên và đèn đứng bên cạnh.
+- Kho: xe đẩy bên góc sân phải, rơm bên góc trái, không đè cầu ao hoặc lối cửa.
+- Ruộng: người rơm đứng ở bờ cỏ phía đông.
+- Ao: ghế nghỉ và chậu sen cạnh nhau; giỏ mây cạnh Xưởng, máng chim cạnh giếng.
+
+`gardenDecorRecommendedSpots` là bảng gợi ý rõ theo từng loại. Giao diện đặt
+đồ đưa gợi ý lên đầu, vẫn giữ đặt thủ công. Nút **Sắp xếp theo bối cảnh** gọi
+`arrangeGardenDecor` để sắp lại toàn bộ món đang đặt trong một lần. Không
+mua thêm, không trừ xu/phiếu, không tự đặt những món đang cất và gọi lại an toàn.
+Không tự ghi lại vị trí đã lưu chỉ vì người chơi mở game.
+
+### Luống và hàng rào
+
+Ba cột vườn chính giảm bước ngang từ 45 xuống 42, bước hàng từ 40 xuống 34.
+Vườn tăng thêm giảm bước ngang xuống 42; khoảng cách với đường đá vẫn được
+kiểm tra ở mọi giai đoạn cây. Ba luống trong mỗi ô mở rộng giảm bước từ 61
+xuống 46 và cân giữa ô. Hàng rào vườn mở rộng ôm cụm luống bằng `gardenParcelRect`.
+
+Rào sau và hai bên được vẽ ở nền; rào trước là actor `fence-front` có độ sâu
+tại cạnh dưới. Nhờ đó đất/cây không xóa mất rào trước; nhân vật đi phía trước
+hoặc phía sau rào được che đúng. Culling xét chiều rộng thật của rào để tránh
+mất một đoạn khi camera chỉ nhìn thấy mép. Giữ ID, số ô và cơ chế chăm sóc.
+
+### Xác minh
+
+Ảnh `assets/homestead-life-runtime-v6.png` gồm toàn cảnh và hai viewport
+640 × 384. `assets/yard-companions-runtime-v6.gif` ghi 20 frame từ Canvas
+`createWorld()` đang chạy với animation bật. Kiểm tra riêng trạng thái giảm
+chuyển động; kiểm tra Canvas không truyền tọa độ không hữu hạn khi vẽ gà.
+Thử nút sắp xếp qua giao diện thật với dữ liệu chơi thử trong profile Edge
+riêng: xu giữ nguyên và món đang cất vẫn cất. Không sửa database người chơi.
+Test bổ sung kiểm tra đường đi liên tục/an toàn, RGBA atlas, lớp rào trước,
+bố cục gợi ý, sắp xếp miễn phí và khả năng lặp lại.
+
 ## Cập nhật đường đi, trang trí và cầu ao V5
 
 - Dãy luống chính từ số 13 chuyển từ y=280 xuống y=302, cách hàng 26,

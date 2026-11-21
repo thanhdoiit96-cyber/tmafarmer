@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply,gameDay,goods,mealCooldown,newFarm,newRoom,orderList,recipes,snapshot,stock,workshopFoodOrders} from '../public/game.mjs';
 import {features} from '../public/world-layout.mjs';
-import {gardenDecorItems,gardenDecorSpots,homesteadSize} from '../public/land.mjs';
+import {gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,homesteadSize} from '../public/land.mjs';
 import {gardenDecorAtlas} from '../public/pixel/frames.mjs';
 
 const start=10_000;
@@ -111,4 +111,20 @@ test('all thirteen decorations can be placed together and render at the same poi
   assert.deepEqual(features('visit',view,host).actors.filter(actor=>actor.type==='garden-decor'),ownerActors);
   assert.deepEqual(ownerActors.map(actor=>actor.kind),items.map(([item])=>item));
   assert.equal(a.coins,1000-items.reduce((total,[,item])=>total+item.cost,0));
+});
+
+test('arranging existing decorations groups them by use without spending or placing stored items',()=>{
+  assert.deepEqual(Object.keys(gardenDecorRecommendedSpots),Object.keys(gardenDecorItems));
+  assert.equal(new Set(Object.values(gardenDecorRecommendedSpots)).size,Object.keys(gardenDecorItems).length);
+  const room=setup(),farm=room.farms.a;
+  assert.throws(()=>send(room,'a',{action:'arrangeGardenDecor'}),/ít nhất/);
+  farm.gardenDecor={flowerArch:'house',bambooBench:'gate',wheelbarrow:'pond',scarecrow:'midLots',flowerPot:null};
+  const coins=farm.coins,vouchers=farm.decorVouchers;
+  send(room,'a',{action:'arrangeGardenDecor'});
+  for(const kind of ['flowerArch','bambooBench','wheelbarrow','scarecrow'])assert.equal(farm.gardenDecor[kind],gardenDecorRecommendedSpots[kind]);
+  assert.equal(farm.gardenDecor.flowerPot,null);
+  assert.equal(farm.coins,coins);assert.equal(farm.decorVouchers,vouchers);
+  const arranged=structuredClone(farm.gardenDecor);
+  send(room,'a',{action:'arrangeGardenDecor'});
+  assert.deepEqual(farm.gardenDecor,arranged);
 });

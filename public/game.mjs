@@ -1,6 +1,6 @@
 import {addVillageIncome,advanceVillage,contributeVillage,hasVillageProject,recordVillageTheft,startVillageSecurity,villageLevels,villageSnapshot,villageTheftsLeft} from './village.mjs';
 import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
-import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
+import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
@@ -1001,6 +1001,13 @@ function applyAction(room,id,input,now,catchRoll){
     use(farm,item,qty);
     add(farm,seed,qty);
     return 'Đã giữ '+qty+' '+goods[seed].name.toLowerCase()+' để gieo lại.';
+  }
+  if(action==='arrangeGardenDecor'){
+    const owned=farm.gardenDecor??{};
+    const placed=Object.keys(gardenDecorItems).filter(kind=>owned[kind]);
+    check(placed.length>0,'Hãy đặt ít nhất một món trang trí trước.');
+    for(const kind of placed)owned[kind]=gardenDecorRecommendedSpots[kind];
+    return 'Đã sắp xếp đồ trang trí theo bối cảnh vườn.';
   }
   if(action==='placeGardenDecor'||action==='stowGardenDecor'){
     check(has(gardenDecorItems,item),'Món trang trí không tồn tại.');

@@ -5,6 +5,7 @@ import {pixelViewport} from './pixel/frames.mjs';
 import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
+import {yardPetPose} from './yard-pets.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
 import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
@@ -355,14 +356,15 @@ export function createWorld(root, onInteract, landscape) {
     const observed=snapshot.now+(now-observedAt)/1000;
     helperTime=Math.max(helperTime,observed);
     const helper=gardenHelperPose(helperJob,helperPaths,helperTime);
-    const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)),...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
+    const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)).map(item=>item.type==='yard-pet'?{...item,...yardPetPose(item.species,ambient,reduce.matches)}:item),...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
     const fishingHere=cast&&cast.expires>=gameNow&&(sceneId==='lake'&&cast.source==='public'||sceneId==='visit'&&cast.source==='pond'&&cast.target===currentVisit);
     const dock=fishingDock??(fishingHere&&nearestFishingDock(cast.index));
     for(const a of sprites) {
-      if(a.x<cameraX-75||a.y<cameraY-28||a.x>cameraX+view.width+75||a.y>cameraY+view.height+95)continue;
+      const reach=a.type==='fence-front'?a.area.w/2+4:75;
+      if(a.x<cameraX-reach||a.y<cameraY-28||a.x>cameraX+view.width+reach||a.y>cameraY+view.height+95)continue;
       if(a.type==='player'){
         const elapsed=(now-poseStarted)/1000;
         const action=!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';

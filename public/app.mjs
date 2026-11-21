@@ -3,7 +3,7 @@ import {optionalIndex} from './action-input.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
-import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
+import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
@@ -603,6 +603,7 @@ function showGardenDecor(keepScroll=false){
       (spot?btn('Cất','data-stow-garden-decor="'+item+'" aria-label="Cất '+definition.name.toLowerCase()+'"','subtle'):'')+'</div></article>';
   }).join('');
   modal('Trang trí vườn','<p><strong>'+formatCoins(farm.coins)+' xu · '+vouchers+' phiếu trang trí</strong></p>'+
+    '<div class="actions">'+btn('Sắp xếp theo bối cảnh','data-arrange-garden-decor','subtle',!Object.values(owned).some(Boolean))+'</div>'+
     '<div class="garden-decor-list" role="region" aria-label="Danh sách đồ trang trí" tabindex="0">'+cards+'</div><p id="dialog-error" role="status"></p>');
   dialog.querySelector('.garden-decor-list').scrollTop=keepScroll?gardenDecorScroll:0;
 }
@@ -613,8 +614,9 @@ function showGardenDecorPlacement(item){
   const owned=Object.hasOwn(farm.gardenDecor??{},item);
   const spots=Object.entries(gardenDecorSpots).map(([key,spot])=>{
     const usedBy=gardenDecorAt(farm,key);
-    return {key,label:spot.name+(usedBy?' · '+gardenDecorItems[usedBy].name:''),disabled:!!usedBy};
-  });
+    const recommended=key===gardenDecorRecommendedSpots[item];
+    return {key,label:(recommended?'Gợi ý · ':'')+spot.name+(usedBy?' · '+gardenDecorItems[usedBy].name:''),disabled:!!usedBy,recommended};
+  }).sort((a,b)=>Number(b.recommended)-Number(a.recommended));
   const canPay=owned||(farm.decorVouchers??0)>0||farm.coins>=definition.cost;
   const positions=spots.map(({key,label,disabled})=>'<option value="'+key+'"'+(disabled?' disabled':'')+'>'+label+'</option>').join('');
   const payment=owned?'<p>Bạn có thể đặt lại miễn phí.</p>':
@@ -1029,7 +1031,7 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor]';
+const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -1373,7 +1375,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');
@@ -1509,6 +1511,9 @@ document.addEventListener('click',async e=>{
   }
   else if('gardenDecor' in d)showGardenDecor(dialog.contains(el));
   else if('gardenDecorItem' in d)showGardenDecorPlacement(d.gardenDecorItem);
+  else if('arrangeGardenDecor' in d){
+    if(await perform({action:'arrangeGardenDecor'})&&dialog.open)showGardenDecor(true);
+  }
   else if('stowGardenDecor' in d){
     gardenDecorScroll=dialog.querySelector('.garden-decor-list')?.scrollTop??0;
     if(await perform({action:'stowGardenDecor',item:d.stowGardenDecor})&&dialog.open)showGardenDecor(true);

@@ -29,10 +29,10 @@ export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?
 export function plotPosition(index){
   const slot=mainPlotSlot(index);
   if(slot>=0)return slot<plotOffset
-    ?{x:255+(slot%3)*45,y:96+Math.floor(slot/3)*40}
-    :{x:255+((slot-plotOffset)%6)*45,y:302+Math.floor((slot-plotOffset)/6)*26};
+    ?{x:255+(slot%3)*42,y:96+Math.floor(slot/3)*34}
+    :{x:255+((slot-plotOffset)%6)*42,y:302+Math.floor((slot-plotOffset)/6)*26};
   const lot=lotRect(Math.floor((index-plotOffset)/3));
-  return {x:lot.x+34+((index-plotOffset)%3)*61,y:lot.y+27};
+  return {x:lot.x+49+((index-plotOffset)%3)*46,y:lot.y+27};
 }
 export const plotAt=(farm,index)=>{
   const slot=mainPlotSlot(index);
@@ -81,19 +81,25 @@ export const gardenDecorItems={
 };
 export const gardenDecorSpots={
   house:{name:'Bậc hiên bên trái nhà',x:95,y:184},
-  gate:{name:'Bên cổng vườn',x:154,y:599},
-  pond:{name:'Bãi cỏ dưới ao',x:600,y:350},
-  marketPath:{name:'Góc nghỉ dưới xưởng',x:154,y:445},
-  wellside:{name:'Bãi cỏ cạnh giếng',x:157,y:298},
-  westMeadow:{name:'Bãi cỏ phía tây',x:88,y:494},
+  gate:{name:'Đèn bên cổng vườn',x:154,y:570},
+  pond:{name:'Bảng tên cạnh cổng',x:155,y:603},
+  marketPath:{name:'Ghế nghỉ bên ao',x:600,y:334},
+  wellside:{name:'Sân dụng cụ cạnh kho',x:474,y:210},
+  westMeadow:{name:'Góc lu nước bên hiên',x:66,y:184},
   barnSide:{name:'Bờ cỏ cạnh ruộng',x:532,y:350},
-  workshopPath:{name:'Sân hoa dưới xưởng',x:82,y:444},
-  pondBank:{name:'Góc cỏ cạnh bờ ao',x:682,y:350},
-  southPath:{name:'Bên đường xuống vườn',x:155,y:503},
-  westLots:{name:'Vườn hoa phía tây',x:93,y:549},
-  midLots:{name:'Góc nghỉ phía tây nam',x:152,y:552},
-  eastLots:{name:'Góc cỏ cuối vườn',x:94,y:605},
+  workshopPath:{name:'Chậu sen cạnh ghế nghỉ',x:640,y:341},
+  pondBank:{name:'Chuông gió bên hiên',x:181,y:184},
+  southPath:{name:'Cổng hoa trên lối vào',x:205,y:610},
+  westLots:{name:'Giỏ mây bên xưởng',x:166,y:400},
+  midLots:{name:'Góc rơm cạnh kho',x:386,y:210},
+  eastLots:{name:'Máng chim dưới giếng',x:83,y:300},
 };
+export const gardenDecorRecommendedSpots={
+  flowerPot:'house',bambooLamp:'gate',gardenSign:'pond',bambooBench:'marketPath',
+  wheelbarrow:'wellside',waterJar:'westMeadow',scarecrow:'barnSide',lotusPot:'workshopPath',
+  windChime:'pondBank',flowerArch:'southPath',wickerBasket:'westLots',hayBale:'midLots',birdFeeder:'eastLots',
+};
+export const gardenParcelRect=i=>{const area=lotRect(i);return {...area,x:area.x+24,y:area.y+8,w:142,h:36};};
 export function gardenDecorAt(farm,spot){
   return Object.keys(gardenDecorItems).find(item=>farm.gardenDecor?.[item]===spot);
 }

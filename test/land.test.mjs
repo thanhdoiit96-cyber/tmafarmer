@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, crops, newFarm, newRoom, snapshot} from '../public/game.mjs';
 import {optionalIndex} from '../public/action-input.mjs';
-import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond} from '../public/land.mjs';
+import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond,gardenDecorItems,gardenDecorRecommendedSpots} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from '../public/pixel/homestead-buildings.mjs';
 import {animalMotion} from '../public/world-motion.mjs';
 import {cropPlacement} from '../public/pixel/crop-layout.mjs';
+import {gardenDecorAtlas} from '../public/pixel/frames.mjs';
 
 const now=1000;
 const setup=()=>{
@@ -25,16 +26,20 @@ test('all growth stages from bed thirteen clear the painted horizontal stone pat
     }
   }
 });
-test('even the widest decoration clears every upgraded crop bed, livestock yard and workshop',()=>{
+test('recommended decor clusters clear crops and pens while framing the entrance',()=>{
   const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-  const reserved=[mainPond,{x:60,y:304,w:110,h:88},
-    ...Array.from({length:8},(_,i)=>coopRect(i)),
+  const reserved=[mainPond,...Array.from({length:8},(_,i)=>coopRect(i)),
     ...Array.from({length:30},(_,slot)=>{const p=plotPosition(mainPlotId(slot));return {x:p.x-20,y:p.y-13,w:40,h:26};})];
-  const decorations=Object.entries(gardenDecorSpots).map(([key,p])=>({key,x:p.x-25,y:p.y-43,w:50,h:43}));
+  const decorations=Object.entries(gardenDecorRecommendedSpots).map(([kind,key])=>{
+    const p=gardenDecorSpots[key],width=gardenDecorItems[kind].width,scale=width/56;
+    const [left,top,right,bottom]=gardenDecorAtlas.bounds[kind];
+    return {kind,x:p.x-width/2+left*scale,y:p.y+(top-45)*scale,w:(right-left)*scale,h:(bottom-top)*scale};
+  });
   for(const decor of decorations){
-    assert.ok(reserved.every(r=>!overlaps(decor,r)),decor.key+' clears production areas');
-    assert.ok(decorations.every(other=>decor===other||!overlaps(decor,other)),decor.key+' clears other decorations');
-    if(decor.y>=238)assert.ok(decor.x+decor.w<190||decor.x>221,decor.key+' clears stone lane');
+    assert.ok(reserved.every(r=>!overlaps(decor,r)),decor.kind+' clears production areas');
+    assert.ok(decorations.every(other=>decor===other||!overlaps(decor,other)),decor.kind+' clears other decorations');
+    if(decor.kind==='flowerArch')assert.equal(gardenDecorSpots.southPath.x,205,'arch frames the stone entrance');
+    else if(decor.y>=238)assert.ok(decor.x+decor.w<190||decor.x>221,decor.kind+' clears stone lane');
   }
 });
 test('larger parcel shelters leave room for two moving buffalo and the workshop door stays reachable',()=>{

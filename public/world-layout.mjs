@@ -1,7 +1,8 @@
-import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
+import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
+import {yardPets} from './yard-pets.mjs';
 
 export const size = { width: 480, height: 288 };
 export const interactionRange=31;
@@ -14,8 +15,8 @@ const wide={width:720,height:432};
 export {lotRect,plotPosition} from './land.mjs';
 // Three tidy planting columns sit east of the north-south path. The open seam
 // keeps the village approach and expansion routes clear.
-const gardenBeds=(rows,y,step=40)=>[{x:232,y,w:137,h:step*(rows-1)+28}];
-const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),82),...(rows>4?[{x:232,y:288,w:272,h:Math.ceil((rows-4)/2)*26}]:[])];
+const gardenBeds=(rows,y,step=34)=>[{x:232,y,w:130,h:step*(rows-1)+40}];
+const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),76),...(rows>4?[{x:232,y:288,w:256,h:Math.max(0,Math.ceil((rows-4)/2)-1)*26+30}]:[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
   field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:650,y:315,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
@@ -159,6 +160,7 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(x-5,y-8,10,11));
   }
   if((id==='field'||id==='visit')&&owner) {
+    for(const [index,pet] of yardPets.entries())actors.push({type:'yard-pet',species:pet.species,index,x:pet.path[0][0],y:pet.path[0][1]});
     for(const [spot,{x,y}] of Object.entries(gardenDecorSpots)){
       const kind=gardenDecorAt(owner,spot);
       if(kind)actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name});
@@ -185,7 +187,7 @@ export function features(id, snapshot, neighbor, page=0) {
       const lot=land[i], area=lotRect(i), x=area.x+area.w*.5, y=area.y+area.h+7;
       ground.push({...area,type:'lot',lot,index:i});
       if(id==='field')hotspots.push({x,y,type:'land',index:i,label:(lot?.kind&&lot.kind!=='empty'?landTypes[lot.kind].name:lot?'Đất trống':'Mua đất')+' · Ô '+(i+1)});
-      if(lot?.fence&&lot.kind!=='pond'&&lot.kind!=='coop')ground.push({...area,type:'fence',style:lot.fence});
+      if(lot?.fence&&lot.kind==='garden')ground.push({...gardenParcelRect(i),type:'fence',style:lot.fence});
       if(lot?.kind==='pond'){
         const section={x:area.x+lotPondInset.x,y:area.y+lotPondInset.y,w:area.w-lotPondInset.w,h:area.h-lotPondInset.h,shape:'rect'};
         water.push(section);
@@ -258,6 +260,7 @@ export function features(id, snapshot, neighbor, page=0) {
       hotspots.push({...pos,y:pos.y+13,type:data.mine?'own-house':'neighbor',id:data.id,label:data.name+(data.mine?' · Nhà của bạn':'')});
     }
   }
+  if(id==='field'||id==='visit')for(const area of ground.filter(a=>a.type==='fence'))actors.push({type:'fence-front',x:area.x+area.w/2,y:area.y+area.h,area});
   return {actors,hotspots,blocks,water,ground,bounds:map.bounds??size};
 }
 export function walkable(scene,x,y){

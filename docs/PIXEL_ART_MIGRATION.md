@@ -215,3 +215,6 @@ Expanded parcel livestock yards preserve the central lane; animals have larger b
 
 ### Homestead road and pond dock V5
 Moved beds 13–30 and their fence south of the painted road, adjusted expansion-row spacing, anchored decoration feet to the atlas alpha baseline and relocated northern props onto usable ground. Added an authored transparent pond jetty with shore-facing placement. See HOMESTEAD_LAYOUT_V2.md and homestead-road-dock-runtime-v5.png.
+
+### Homestead life and composition V6
+Added authored animated dog/cat companions and the existing chicken poses on continuous yard routes. Decorations now have semantic clusters, recommended slots and a free arrange action. Tightened crop spacing and split front fences into depth-sorted sprites. Source masters, export workflow, Canvas screenshot and animation GIF are documented in HOMESTEAD_LAYOUT_V2.md.

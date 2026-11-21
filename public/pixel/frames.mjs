@@ -59,6 +59,10 @@ export const aquaticAtlas={
 export const gardenDecorAtlas={
   source:'/pixel/garden-decor-v2.png',width:728,cellWidth:56,cellHeight:48,
   ground:45,
+  bounds:{flowerPot:[8,5,47,45],bambooLamp:[11,2,44,45],gardenSign:[2,12,54,45],
+    bambooBench:[3,17,52,45],wheelbarrow:[3,8,53,45],waterJar:[11,7,45,45],
+    scarecrow:[10,2,45,45],lotusPot:[8,8,48,45],windChime:[15,2,41,45],
+    flowerArch:[5,2,51,45],wickerBasket:[10,7,45,45],hayBale:[7,14,49,45],birdFeeder:[10,3,45,45]},
   frames:{
     flowerPot:[0,0,56,48],bambooLamp:[56,0,56,48],gardenSign:[112,0,56,48],
     bambooBench:[168,0,56,48],wheelbarrow:[224,0,56,48],waterJar:[280,0,56,48],
