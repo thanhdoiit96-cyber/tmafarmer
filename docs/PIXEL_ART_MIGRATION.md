@@ -203,3 +203,6 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Added pig and duck idle, alternating walk, and feed sprites using the approved sheep as the style reference. Runtime art is in `public/pixel/additional-livestock-v1.png`, with a transparent 4× master in `docs/assets/additional-livestock-v1-source.png` and comparison sheet in `docs/assets/additional-livestock-v1-preview.png`.
 - All ten farm animals now have authored pixel illustrations in both the farm scene and animal cards. Crop produce and seeds use the crop's mature atlas frame in inventory, market, orders, and workshop recipe ingredient links; fish illustrations remain on the existing aquatic atlas.
 - Regenerate pig/duck art with `npm run pixel:additional-livestock-art`.
+
+### Homestead layout V2
+Approved layout, separate dynamic soil, two-column expansion parcels, authored alpha shelter and pond sprites: see [HOMESTEAD_LAYOUT_V2.md](HOMESTEAD_LAYOUT_V2.md). Runtime comparison images and export steps are recorded there. Saved parcel IDs and aquatic capacity are preserved.

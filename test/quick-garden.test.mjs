@@ -28,7 +28,7 @@ test('hiring covers primary and expansion plots and charges only coins, even whi
   const view=snapshot(room,farm,start), targets=gardenHelperTargets(view.me,'water',view.weather,start);
   assert.deepEqual(targets.map(target=>target.index),[0,plotOffset]);
   const preview=gardenHelperPreview(view.me,'water',targets);
-  assert.deepEqual(preview,{cost:4,space:0,seeds:0,free:0,duration:23,blocked:''});
+  assert.deepEqual(preview,{cost:4,space:0,seeds:0,free:0,duration:19,blocked:''});
   assert.match(hire(room,'water',[0,plotOffset],0),/Cô Lan làm 2 ô · 4 xu/);
   assert.equal(farm.coins,96);
   assert.equal(farm.plots[0].wetUntil,0);
@@ -149,11 +149,11 @@ test('an invalid initial quote or occupied plot list never charges the farm',()=
 });
 
 test('weather or a different seedling can invalidate a later plot with a refund',()=>{
-  const {room,farm}=setup(start-slotLength+9);
+  const {room,farm}=setup(start-slotLength+7);
   for(const i of [0,1])farm.plots[i]=plot('wheat',start);
   hire(room,'water',[0,1],0);
   const job=farm.gardenHelperJob;
-  assert.ok(job.steps.every(step=>step.doneAt>=start+9));
+  assert.ok(job.steps.every(step=>step.doneAt>=start+7));
   advanceGardenHelpers(room,job.endsAt);
   assert.equal(farm.gardenHelperReport.skipped,2);
   assert.equal(farm.coins,100);

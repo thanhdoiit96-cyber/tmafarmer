@@ -13,11 +13,11 @@ const wide={width:720,height:432};
 export {lotRect,plotPosition} from './land.mjs';
 // Three tidy planting columns sit east of the north-south path. The open seam
 // keeps the village approach and expansion routes clear.
-const gardenBeds=(rows,y)=>[{x:232,y,w:174,h:56*(rows-1)+48}];
-const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),55),...(rows>4?gardenBeds(rows-4,300):[])];
+const gardenBeds=(rows,y,step=40)=>[{x:232,y,w:137,h:step*(rows-1)+28}];
+const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),82),...(rows>4?[{x:232,y:266,w:272,h:Math.ceil((rows-4)/2)*28}]:[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
-  field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:583,y:375,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
+  field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:650,y:315,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
   visit:[{x:480,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
   lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };
@@ -26,10 +26,10 @@ const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival
 export const maps = {
   field: {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[188,221], bounds:homesteadSize,
-    paths:[[[0,188],[70,188],[106,178],[128,164],[164,184],[188,188],[188,155],[184,96],[188,51],[188,0]],[[188,188],[270,188],[354,190],[410,205],[476,232],[480,234],[521,289],[528,358],[530,405],[582,407],[589,382],[583,375]],[[188,188],[188,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[84,225],[106,194],[128,164]],[[438,212],[438,128]],[[188,286],[184,333],[188,409],[188,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
+    paths:[[[133,177],[140,191],[181,215],[205,238],[205,620]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,610]],[[242,355],[716,355]],[[242,413],[716,413]],[[242,471],[716,471]],[[242,529],[716,529]],[[242,587],[716,587]],[[94,285],[151,285],[205,285]],[[115,367],[164,367],[205,367]]],
     trees:[[34,45],[38,268],[29,560],[100,622],[786,44],[790,151],[790,305],[786,495],[755,613],[540,630],[684,630]],
     water:[mainPond],
-    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:438,y:130,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:84,y:225,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
+    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
     exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
   home: {
@@ -43,7 +43,7 @@ export const maps = {
     name:'Xưởng máy',subtitle:'KHU CHẾ TẠO',spawn:[238,244],water:[],trees:[],objects:[],
     blocks:[rect(0,0,480,62),rect(0,62,25,226),rect(455,62,25,226),rect(45,75,108,50),rect(327,75,108,50),rect(56,159,88,43),rect(336,159,88,43)],
     hotspots:[{x:238,y:107,type:'craft-bench',label:'Bàn chế biến'}],
-    exits:[exit(238,274,'Ra vườn','field',[476,168],'down')],
+    exits:[exit(238,274,'Ra vườn','field',[115,367],'down')],
   },
   coop: {
     name:'Chuồng trại', subtitle:'KHU CHĂN NUÔI', spawn:[29,220],
@@ -163,8 +163,8 @@ export function features(id, snapshot, neighbor, page=0) {
       if(kind)actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name});
     }
     if((owner.workshop??0)>0){
-      const workshop={x:476,y:151,type:'workshop',level:owner.workshop,w:48,h:34,label:'Xưởng máy cấp '+owner.workshop};
-      actors.push(workshop);blocks.push(rect(456,139,40,13));
+      const workshop={x:115,y:350,type:'workshop',level:owner.workshop,w:48,h:34,label:'Xưởng máy cấp '+owner.workshop};
+      actors.push(workshop);blocks.push(rect(workshop.x-20,workshop.y-12,40,13));
       if(id==='field')hotspots.push({...workshop,y:workshop.y+12});
     }
     for(const i of owner.plotIndexes??owner.plots.map((_,slot)=>mainPlotId(slot))) {
@@ -190,16 +190,18 @@ export function features(id, snapshot, neighbor, page=0) {
         const section={x:area.x+lotPondInset.x,y:area.y+lotPondInset.y,w:area.w-lotPondInset.w,h:area.h-lotPondInset.h,shape:'rect'};
         water.push(section);
         const batches=visiblePondBatches(owner,pondOffset+i);
-        const dock={x,y:y-12,index:i+pondOffset,side:'up',label:landTypes[lot.kind].name+' · Ô '+(i+1)};
+        const dock={x,y:y-12,index:i+pondOffset,side:'up',waterTarget:{x:section.x+section.w/2,y:section.y+section.h/2},label:landTypes[lot.kind].name+' · Ô '+(i+1)};
         actors.push({...dock,type:'dock',batches});
         if(id==='field')hotspots.push({...dock,type:'pond'});
         else hotspots.push({...dock,type:'neighbor-fishing'});
       }
       if(lot?.kind==='coop'){
-        actors.push({x:area.x+area.w*.5,y:area.y+37,type:'coop',w:51});
+        if(!lot.fence)ground.push({...area,type:'fence',style:'wood'});
+        actors.push({x:area.x+area.w*.5,y:area.y+38,type:'coop',w:54,parcel:true});
+        blocks.push(rect(area.x+area.w*.5-16,area.y+15,32,12));
         const pens=id==='field'?farm.pens:owner.visiblePens??[];
         pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
-          const point={x:area.x+37+seat*65,y:area.y+57,index,data};
+          const point={x:area.x+43+seat*102,y:area.y+36,index,data};
           actors.push({...point,type:'animal'});
           if(id==='field')hotspots.push({...point,type:'animal',label:'Chăm vật nuôi'});
         });

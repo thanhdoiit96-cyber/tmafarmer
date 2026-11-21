@@ -6,6 +6,7 @@ export const actionPoseSeconds={
 };
 
 export function fishingBobber(dock){
+  if(dock.waterTarget)return {...dock.waterTarget};
   const dx=dock.side==='left'?-36:dock.side==='right'?36:19;
   return {x:dock.x+dx,y:dock.y-(dock.side==='up'?42:0)};
 }

@@ -1,9 +1,9 @@
 export const starterLots=2;
 export const homesteadSize={width:820,height:640};
 export const lotCount=8;
-export const lotSize={w:148,h:81};
-export const mainPond={x:500,y:110,w:320,h:250,shape:'rect'};
-export const lotPondInset={x:9,y:8,w:18,h:24};
+export const lotSize={w:190,h:48};
+export const mainPond={x:500,y:160,w:280,h:145,shape:'rect'};
+export const lotPondInset={x:9,y:8,w:18,h:16};
 export const landTypes={
   garden:{name:'Vườn',cost:45},
   pond:{name:'Ao nuôi',cost:55},
@@ -16,9 +16,9 @@ export function getLand(farm){
   if(!farm.land)return Array.from({length:lotCount},(_,i)=>i<starterLots?{kind:'empty'}:null);
   return farm.land.map(lot=>lot&&lot.kind!==pondLotKind(lot.kind)?{...lot,kind:'pond'}:lot);
 }
-// Keep the four-column parcel grid regular so the two current rows can grow
-// southward without changing saved land indexes.
-export const lotRect=i=>({x:54+(i%4)*190,y:423+Math.floor(i/4)*108,...lotSize});
+// Saved parcel indexes stay stable; only their world placement changes.
+// Keep all eight parcels east of the stone lane and inside the leafy border.
+export const lotRect=i=>({x:260+(i%2)*246,y:365+Math.floor(i/2)*58,...lotSize});
 export const plotOffset=12;
 const upperFieldOffset=plotOffset+lotCount*3;
 export const pondOffset=2;
@@ -26,9 +26,11 @@ export const mainPlotId=slot=>slot<plotOffset?slot:upperFieldOffset+slot-plotOff
 export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?index-upperFieldOffset+plotOffset:-1;
 export function plotPosition(index){
   const slot=mainPlotSlot(index);
-  if(slot>=0)return {x:[260,318,376][slot%3],y:slot<plotOffset?80+Math.floor(slot/3)*56:300+Math.floor((slot-plotOffset)/3)*52};
+  if(slot>=0)return slot<plotOffset
+    ?{x:255+(slot%3)*45,y:96+Math.floor(slot/3)*40}
+    :{x:255+((slot-plotOffset)%6)*45,y:280+Math.floor((slot-plotOffset)/6)*28};
   const lot=lotRect(Math.floor((index-plotOffset)/3));
-  return {x:lot.x+25+(index%3)*49,y:lot.y+47};
+  return {x:lot.x+34+((index-plotOffset)%3)*61,y:lot.y+27};
 }
 export const plotAt=(farm,index)=>{
   const slot=mainPlotSlot(index);
@@ -49,8 +51,8 @@ export function pondCapacity(farm,index){
   // The starter pond keeps its existing six-slot gameplay capacity even as
   // the shoreline artwork grows to fill the redesigned right-side basin.
   if(index===0)return 6;
-  const area=(lotSize.w-lotPondInset.w)*(lotSize.h-lotPondInset.h);
-  return Math.ceil(area/5500);
+  // Capacity is a gameplay rule, independent of the visual parcel footprint.
+  return 2;
 }
 export function coopCapacity(farm,lot){
   if(lot===undefined)return farm.coop*2;

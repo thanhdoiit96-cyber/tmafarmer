@@ -15,6 +15,9 @@ const load = source => {
 };
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
+const homesteadSoilArt=load('/pixel/scene-background-homestead-v1.png');
+const parcelShelterArt=load('/pixel/parcel-shelter-v2.png');
+const parcelPondArt=load('/pixel/parcel-pond-v2.png');
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
@@ -51,7 +54,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),parcelPondArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -298,8 +301,6 @@ export function coopForeground(c,scene){
 function drawLot(c,a){
   const {x,y,w,h,index,lot}=a;
   c.save();
-  const lineColor=lot?'#e9d49b':'#d5c68e';
-  box(c,lot?'#435c382b':'#52694728',x,y,w,h,3);
   if(!lot){
     // Locked land reads as a quiet grove under preparation rather than an
     // empty outlined UI card. These marks stay inside the parcel footprint.
@@ -312,21 +313,21 @@ function drawLot(c,a){
   }else if(lot.kind==='empty'){
     for(const [dx,dy] of [[22,22],[w-29,h-18],[w*.51,h*.66]])grassClump(c,x+dx,y+dy,seed(index,dx));
   }
-  c.lineWidth=1;c.strokeStyle=lineColor;
-  if(!lot)c.setLineDash([2,4]);
-  c.beginPath();c.roundRect(x,y,w,h,3);c.stroke();
+  // Quiet corner stakes leave the authored meadow visible between parcels.
+  for(const px of [x+3,x+w-5]){
+    box(c,'#765537',px,y+2,3,7,1);box(c,'#dfbc79',px,y+2,1,5,0);
+  }
   c.restore();
   box(c,lot?'#f2dca9':'#d5c798',x+4,y+4,13,8,1.5);
   c.fillStyle='#3d5035';c.font='bold 5px sans-serif';c.textAlign='center';
   c.fillText(String(index+1),x+10.5,y+9.8);
-  if(!lot){
-    box(c,'#e5d8adcc',x+22,y+4,32,8,2);
-    c.fillStyle='#536447';c.font='bold 4px sans-serif';c.textAlign='left';
-    c.fillText('CHỜ MỞ',x+26,y+9.8);
-  }
 }
 function pond(c,r){
   const {x,y,w,h}=r, mx=x+w/2,my=y+h/2;
+  if(r.shape==='rect'&&y>=365&&dim(parcelPondArt)){
+    c.drawImage(parcelPondArt,x-5,y-5,w+10,h+10);
+    return;
+  }
   const grad=c.createLinearGradient(x,y,x+w,y+h);
   grad.addColorStop(0,'#80b5a2');grad.addColorStop(.45,'#559994');grad.addColorStop(1,'#396977');
   if(r.shape==='rect'){
@@ -591,6 +592,8 @@ export function grass(c,scene,kind,features){
   const {width,height}=scene.bounds??size;
   if(sceneBackground(c,kind,width,height)){
     for(const area of features.ground)if(area.type==='lot')drawLot(c,area);
+    // The main pond is painted into the plate; expansion ponds are dynamic.
+    for(const area of features.water)if(area.y>=365)pond(c,area);
     for(const area of features.ground)if(area.type==='fence')fence(c,area);
     return;
   }
@@ -757,6 +760,19 @@ function plot(c,a,t,state,paintCrops=true){
   const compact=!data&&a.compactAt<=state.now;
   const fraction=visit?(data?.stage??(data?.ripe?3:2))/3:data?data.progress/cropGoal(data):0;
   const ripe=fraction>=1;
+  if(dim(homesteadSoilArt)){
+    c.save();
+    c.beginPath();c.roundRect(x-20,y-13,40,26,4);c.clip();
+    c.imageSmoothingEnabled=false;
+    c.drawImage(homesteadSoilArt,416,139,66,48,x-20,y-13,40,26);
+    if(wet){c.fillStyle='#30281d55';c.fillRect(x-20,y-13,40,26);}
+    if(compact){
+      c.fillStyle='#c9b58a66';c.fillRect(x-20,y-13,40,26);
+      line(c,'#6e543b',1,[[x-15,y-5],[x-6,y],[x+2,y-4],[x+12,y+3]]);
+    }
+    c.restore();
+    if(!paintCrops||!data)return;
+  }
   shade(c,x,y+9,27,5);
   box(c,wet?'#674730':'#775433',x-23,y-13,46,25,4);
   const dirt=c.createLinearGradient(x,y-14,x,y+10);
@@ -1109,12 +1125,16 @@ function neighborHouse(c,a,t){
 export function actor(c,a,t,state){
   if(drawAtlasActor(c,a,t,state))return;
   const {x,y,type,w,style}=a;
+  if(type==='coop'&&a.parcel&&dim(parcelShelterArt)){
+    c.drawImage(parcelShelterArt,x-w/2,y-w*.8,w,w*.8);
+    return;
+  }
   if(type==='dock'){
     const angle=a.side==='left'?-Math.PI/2:a.side==='right'?Math.PI/2:0;
     c.save();
-    c.translate(x,y);
+    c.translate(x,y-(a.waterTarget?12:a.side==='up'?25:0));
     c.rotate(angle);
-    const dockWidth=a.upgraded?26:18,dockLength=a.upgraded?38:29;
+    const dockWidth=a.waterTarget?14:a.upgraded?26:18,dockLength=a.waterTarget?12:a.upgraded?38:29;
     c.fillStyle='#4e4937';c.fillRect(-dockWidth/2+2,2,dockWidth-4,dockLength-4);
     c.fillStyle='#805a3a';c.fillRect(-dockWidth/2,0,dockWidth,dockLength-4);
     c.fillStyle='#bf9255';c.fillRect(-dockWidth/2+2,1,dockWidth-4,2);
@@ -1172,7 +1192,8 @@ export function actor(c,a,t,state){
   if(type==='workshop'){
     const level=a.level??1;
     shade(c,x+2,y,22+level*2,5);
-    pixelSceneBuilding(c,{...a,type:'barn',w:45+level*3});
+    if(dim(parcelShelterArt))c.drawImage(parcelShelterArt,x-27,y-45,54,45);
+    else pixelSceneBuilding(c,{...a,type:'barn',w:45+level*3});
     box(c,'#52685a',x-16,y-19,32,6,2);
     c.fillStyle='#f2dfaa';c.font='700 4.5px system-ui';c.textAlign='center';c.fillText('XƯỞNG MÁY '+level,x,y-14.5);
     const spin=t*(.5+level*.16);

@@ -17,7 +17,7 @@ export const sceneBackgroundAtlases={
       neighbor:[816,490,800,480],
     },
   },
-  homestead:{source:'/pixel/scene-background-homestead-v1.png'},
+  homestead:{source:'/pixel/scene-background-homestead-v2.png'},
 };
 
 export const sceneBackgrounds={

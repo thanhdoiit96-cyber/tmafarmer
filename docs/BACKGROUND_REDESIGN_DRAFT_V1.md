@@ -70,3 +70,6 @@ V1 chỉ dựng lại bố cục bằng các khối Canvas đơn giản, không 
 - `public/pixel/scene-backgrounds.mjs` là nơi duy nhất định nghĩa vùng atlas và cảnh sử dụng từng artwork. Nhân vật, cây trồng, vật nuôi, thao tác, hàng rào nâng cấp và lô đất mở rộng tiếp tục được vẽ động; công trình đã nằm trong nền được ẩn khỏi lớp actor để tránh vẽ chồng.
 - Căn lối chính về x≈188 và cụm luống về ba cột `[260, 318, 376]` theo nền vườn production; ID đất giữ nguyên. Bờ ao mở rộng theo hình nền nhưng ao chính vẫn giữ sức chứa 6 vật nuôi thủy sản.
 - Tọa độ tương tác, va chạm, đường đi và ID đất vẫn thuộc các module gameplay hiện có. Mọi lần sửa artwork tiếp theo cần được chụp và đối chiếu ở viewport 640 × 384 trước khi đánh dấu hoàn tất.
+
+### Vườn nhà: bố cục V2 đã duyệt
+Phần lưới mở rộng bốn cột ở trên đã được thay bằng hai cột × bốn hàng. Nền vườn dùng bản trống để không vẽ trùng luống. Xem [HOMESTEAD_LAYOUT_V2.md](HOMESTEAD_LAYOUT_V2.md) và ảnh renderer đi kèm.

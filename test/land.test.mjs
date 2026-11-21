@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/game.mjs';
 import {optionalIndex} from '../public/action-input.mjs';
-import {getLand,lotPrice,mainPlotId} from '../public/land.mjs';
+import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 
 const now=1000;
@@ -12,6 +12,28 @@ const setup=()=>{
   return room;
 };
 const act=(world,id,action,index,item,elapsed=0)=>apply(world,id,{action,index,item},now+elapsed);
+test('homestead parcels clear the stone lane and every maximum-level bed stays outside parcels',()=>{
+  const room=setup(), farm=room.farms.a;
+  farm.plots=Array(30).fill(null);
+  farm.land=Array.from({length:8},(_,i)=>({kind:i%2?'pond':'coop'}));
+  const areas=Array.from({length:8},(_,i)=>lotRect(i));
+  assert.equal(new Set(areas.map(a=>a.x)).size,2);
+  assert.equal(new Set(areas.map(a=>a.y)).size,4);
+  for(const area of areas){
+    assert.ok(area.x>=250&&area.x+area.w<=710);
+    assert.ok(area.y>=365&&area.y+area.h<=590);
+    for(let slot=0;slot<30;slot++){
+      const p=plotPosition(mainPlotId(slot));
+      assert.ok(p.y+13<area.y||p.y-13>area.y+area.h||p.x+20<area.x||p.x-20>area.x+area.w);
+    }
+  }
+  assert.equal(pondCapacity(farm,0),6);
+  assert.equal(pondCapacity(farm,3),2);
+  const scene=features('field',snapshot(room,farm,now));
+  for(const spot of scene.hotspots.filter(p=>['land','pond','plot'].includes(p.type))){
+    assert.ok(route(scene,maps.field.spawn,[spot.x,spot.y]),spot.label);
+  }
+});
 test('equal starter land, ownership checks and existing farm fallback',()=>{
   const room=setup(),a=room.farms.a,b=room.farms.b;
   delete b.land;
