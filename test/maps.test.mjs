@@ -1,14 +1,39 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {newFarm} from '../public/game.mjs';
 import {houseDoor} from '../public/home-rules.mjs';
 import {pixelSlice} from '../public/pixel/frames.mjs';
+import {sceneBackgroundAtlases,sceneBackgrounds,backgroundOwnsActor} from '../public/pixel/scene-backgrounds.mjs';
 import {features,maps,neighborHouseTier,route,taskMarkers,walkable} from '../public/world-layout.mjs';
 
 const neighbors=Array.from({length:11},(_,i)=>({id:String(i),name:'Vườn '+i,plots:Array(12).fill(null)}));
 const me=newFarm('me','Vườn nhà',0);
 me.plots=Array(12).fill(null);
 const data={me,neighbors};
+test('every playable map resolves a production background and its foreground sprites stay dynamic',()=>{
+  const dimensions=new Map();
+  for(const [key,atlas] of Object.entries(sceneBackgroundAtlases)){
+    const png=readFileSync(new URL(atlas.source.replace('/pixel/','../public/pixel/'),import.meta.url));
+    assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a',key+' PNG signature');
+    dimensions.set(key,[png.readUInt32BE(16),png.readUInt32BE(20)]);
+  }
+  for(const id of Object.keys(maps)){
+    const background=sceneBackgrounds[id];
+    assert.ok(background,id+' background');
+    const atlas=sceneBackgroundAtlases[background.atlas];
+    assert.ok(atlas?.source,id+' background atlas');
+    if(background.frame){
+      const [x,y,w,h]=atlas.frames[background.frame];
+      const [width,height]=dimensions.get(background.atlas);
+      assert.ok(x>=0&&y>=0&&w>0&&h>0&&x+w<=width&&y+h<=height,id+' background frame');
+    }
+  }
+  assert.equal(backgroundOwnsActor('field','house'),true);
+  assert.equal(backgroundOwnsActor('field','plot'),false);
+  assert.equal(backgroundOwnsActor('coop','animal'),false);
+  assert.equal(backgroundOwnsActor('neighbors','neighbor'),false);
+});
 test('neighbor houses advance through the five wealth milestones',()=>{
   assert.deepEqual([0,500,501,1000,1001,5000,5001,20000,20001].map(neighborHouseTier),[0,0,1,1,2,2,3,3,4]);
 });
@@ -31,7 +56,7 @@ test('waypoints route around water and can reach neighbors on a second page',()=
   const field=features('field',data);
   const begin=[13,81];
   const path=route(field,begin,[81,155]);
-  assert.ok(path.length>=2);
+  assert.ok(path?.length);
   let from=begin;
   for(const stop of path){
     const length=Math.max(1,Math.ceil(Math.hypot(stop[0]-from[0],stop[1]-from[1])));

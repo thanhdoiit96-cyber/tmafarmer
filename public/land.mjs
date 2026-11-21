@@ -2,7 +2,7 @@ export const starterLots=2;
 export const homesteadSize={width:820,height:640};
 export const lotCount=8;
 export const lotSize={w:148,h:81};
-export const mainPond={x:547,y:125,w:145,h:211,shape:'rect'};
+export const mainPond={x:500,y:110,w:320,h:250,shape:'rect'};
 export const lotPondInset={x:9,y:8,w:18,h:24};
 export const landTypes={
   garden:{name:'Vườn',cost:45},
@@ -26,7 +26,7 @@ export const mainPlotId=slot=>slot<plotOffset?slot:upperFieldOffset+slot-plotOff
 export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?index-upperFieldOffset+plotOffset:-1;
 export function plotPosition(index){
   const slot=mainPlotSlot(index);
-  if(slot>=0)return {x:[182,272,320][slot%3],y:slot<plotOffset?63+Math.floor(slot/3)*43:290+Math.floor((slot-plotOffset)/3)*43};
+  if(slot>=0)return {x:[260,318,376][slot%3],y:slot<plotOffset?80+Math.floor(slot/3)*56:300+Math.floor((slot-plotOffset)/3)*52};
   const lot=lotRect(Math.floor((index-plotOffset)/3));
   return {x:lot.x+25+(index%3)*49,y:lot.y+47};
 }
@@ -46,7 +46,10 @@ export function pondIndexes(farm){
 }
 export function pondCapacity(farm,index){
   if(!Number.isInteger(index)||!pondIndexes(farm).includes(index))return 0;
-  const area=index===0?mainPond.w*mainPond.h:(lotSize.w-lotPondInset.w)*(lotSize.h-lotPondInset.h);
+  // The starter pond keeps its existing six-slot gameplay capacity even as
+  // the shoreline artwork grows to fill the redesigned right-side basin.
+  if(index===0)return 6;
+  const area=(lotSize.w-lotPondInset.w)*(lotSize.h-lotPondInset.h);
   return Math.ceil(area/5500);
 }
 export function coopCapacity(farm,lot){

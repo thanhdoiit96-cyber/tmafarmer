@@ -48,3 +48,10 @@ Check the exported PNG size, alpha, frame order, baselines, and padding at 1× a
 - Use the same authored sprite for Canvas scenes and HTML animal illustrations. Do not let an authored species fall back to emoji or a differently styled legacy atlas in one view.
 - Keep full silhouettes and feet inside the transparent 56 × 48 runtime cells. Inspect the source and 4× nearest-neighbor preview beside the sheep before shipping; retain the previous atlas for comparison.
 - Every species in `animals` must resolve to an authored sprite in gameplay and in shop/pen cards; do not leave newly added animals as emoji fallbacks. Keep crop produce and seed icons tied to each crop's mature frame from `cropFrame(kind, 3)` anywhere inventory, market, orders, or workshop recipes show that crop.
+
+## Scene background quality gate
+
+- Treat an approved scene concept as the production art target. Do not reduce a detailed approved scene to procedural rectangles, flat polygons, or a loose palette match.
+- Author background plates at the scene's world dimensions and composition. Keep camera movement, exits, hotspots, collision bounds, and expansion space aligned with the existing map; bake static scenery only when its duplicate runtime actors are suppressed.
+- Keep characters, crops, livestock, weather, user decorations, and unlockable parcels on their dynamic layers. Confirm that interaction hotspots still point at the visible doors, beds, stalls, ponds, and workbenches.
+- Render and inspect every affected Canvas scene at the 640 × 384 pixel viewport and normal play size. Compare against the approved concept before declaring the work complete or committing it; run the project test suite and build after runtime references change.

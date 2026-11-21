@@ -6,7 +6,7 @@ import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -130,7 +130,7 @@ export function createWorld(root, onInteract, landscape) {
     snapshot=data;selectedPlot=selection;
     if(sceneId!==id||id==='visit'&&visitChanged||arrival){
       sceneId=id;
-      scenery=landscapeFor(id).decor.map(item=>({...item,type:'scenery'}));
+      scenery=hasSceneBackground(id)?[]:landscapeFor(id).decor.map(item=>({...item,type:'scenery'}));
       root.dataset.scene=id;
       bounds=maps[id].bounds??size;
       root.dataset.wide=String(bounds.width>size.width);
@@ -354,7 +354,7 @@ export function createWorld(root, onInteract, landscape) {
     const observed=snapshot.now+(now-observedAt)/1000;
     helperTime=Math.max(helperTime,observed);
     const helper=gardenHelperPose(helperJob,helperPaths,helperTime);
-    const sprites=[...scene.actors,...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
+    const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)),...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
@@ -385,7 +385,7 @@ export function createWorld(root, onInteract, landscape) {
         actor(context,{...a,data:null},ambient,snapshot);
       else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
-    if(sceneId==='coop')coopForeground(context,scene);
+    if(sceneId==='coop'&&!hasSceneBackground(sceneId))coopForeground(context,scene);
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');
       const resting=snapshot.me.wellness.restUntil>gameNow;

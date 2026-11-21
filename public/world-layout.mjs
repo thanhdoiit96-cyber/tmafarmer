@@ -11,26 +11,26 @@ const publicWellHotspot={...publicWell,y:publicWell.y+12,type:'village-well',lab
 const wide={width:720,height:432};
 
 export {lotRect,plotPosition} from './land.mjs';
-// Three tidy planting columns sit around the north-south path. The open seam
-// is intentional: it keeps the market and expansion routes clear.
-const gardenBeds=(rows,y)=>[{x:159,y,w:47,h:43*(rows-1)+36},{x:249,y,w:95,h:43*(rows-1)+36}];
-const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),43),...(rows>4?gardenBeds(rows-4,270):[])];
+// Three tidy planting columns sit east of the north-south path. The open seam
+// keeps the village approach and expansion routes clear.
+const gardenBeds=(rows,y)=>[{x:232,y,w:174,h:56*(rows-1)+48}];
+const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),55),...(rows>4?gardenBeds(rows-4,300):[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
-  field:[{x:530,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:583,y:350,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
-  visit:[{x:530,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
+  field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:583,y:375,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
+  visit:[{x:480,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
   lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };
 const rect = (x, y, w, h) => ({ x, y, w, h });
 const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival, side, type:'exit' });
 export const maps = {
   field: {
-    name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[236,221], bounds:homesteadSize,
-    paths:[[[0,234],[72,236],[123,219],[182,226],[234,224],[237,155],[229,96],[235,51],[234,0]],[[234,224],[313,230],[367,210],[428,218],[476,232],[530,224],[521,289],[528,358],[530,405],[582,407],[589,382],[583,350]],[[234,224],[236,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[89,188],[79,153],[82,121],[98,116],[houseDoor.x,110],[houseDoor.x,houseDoor.y]],[[389,212],[389,128]],[[236,286],[229,333],[234,409],[234,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
-    trees:[[30,33],[47,75],[14,135],[15,181],[412,46],[448,89],[465,29],[39,271],[91,268],[416,271],[472,265],[487,70],[540,61],[658,49],[702,116],[709,251],[701,375],[655,406],[505,377],[389,351],[295,400],[156,359],[80,388]],
-    water:[rect(21,92,43,106),rect(28,198,24,19),mainPond],
-    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:397,y:146,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:91,y:184,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
-    exits:[exit(234,13,'Đường sang chợ','market',[238,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(234,273,'Sang xóm bên','neighbors',[238,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
+    name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[188,221], bounds:homesteadSize,
+    paths:[[[0,188],[70,188],[106,178],[128,164],[164,184],[188,188],[188,155],[184,96],[188,51],[188,0]],[[188,188],[270,188],[354,190],[410,205],[476,232],[480,234],[521,289],[528,358],[530,405],[582,407],[589,382],[583,375]],[[188,188],[188,291]],[[530,405],[591,400],[627,408],[699,402]],[[80,235],[84,225],[106,194],[128,164]],[[438,212],[438,128]],[[188,286],[184,333],[188,409],[188,620]],[[38,410],[784,410]],[[38,515],[784,515]],[[38,623],[784,623]]],
+    trees:[[34,45],[38,268],[29,560],[100,622],[786,44],[790,151],[790,305],[786,495],[755,613],[540,630],[684,630]],
+    water:[mainPond],
+    objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:438,y:130,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:84,y:225,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
+    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
   home: {
     name:'Nhà vườn', spawn:homeSpawn, water:[], objects:[], trees:[],
@@ -59,7 +59,7 @@ export const maps = {
     trees:[[27,47],[58,80],[27,144],[440,69],[452,119],[416,46],[30,254],[69,269],[427,258],[458,241]],
     water:[rect(410,153,46,59)],
     objects:[{x:105,y:98,type:'market',style:'red',label:'Quầy vật tư',w:65,h:37}, {x:237,y:89,type:'market',style:'green',label:'Sạp nông sản',w:72,h:37}, {x:380,y:98,type:'market',style:'gold',label:'Quầy bán nhanh',w:65,h:37}, {x:237,y:195,type:'well',label:'Giếng làng',w:27,h:18}],
-    exits:[exit(238,273,'Về vườn nhà','field',[234,34],'down')],
+    exits:[exit(238,273,'Về vườn nhà','field',[188,34],'down')],
   },
   neighbors: {
     name:'Đường làng', subtitle:'XÓM MÙA VUI', spawn:[238,30],
@@ -67,7 +67,7 @@ export const maps = {
     trees:[[27,44],[64,31],[422,47],[453,73],[29,168],[441,165],[25,258],[93,268],[402,261],[450,260]],
     water:[rect(7,79,32,55),rect(438,78,28,64)],
     objects:[],
-    exits:[exit(238,14,'Về vườn nhà','field',[234,251],'up'),exit(463,217,'Sang chuồng trại','coop',[238,248],'right')],
+    exits:[exit(238,14,'Về vườn nhà','field',[188,251],'up'),exit(463,217,'Sang chuồng trại','coop',[238,248],'right')],
   },
   lake: {
     name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:[36,309],bounds:wide,

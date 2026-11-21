@@ -1,6 +1,6 @@
 # Phác thảo cải tổ bối cảnh và mặt bằng
 
-**Trạng thái: đã triển khai bản cải tổ nền V1.** Hai bảng dưới đây giữ vai trò phác thảo và lưu lại hướng đã duyệt. Renderer hiện đã dùng đạo cụ pixel theo palette của game, bố trí lại luống/vệt đường và trang trí các lô đất đang khóa.
+**Trạng thái: phác thảo đã duyệt; triển khai Canvas V1 trước đây không đạt yêu cầu mỹ thuật và đã được thay bằng artwork cảnh V2.** Hai bảng dưới đây lưu lại concept và bố cục đã duyệt.
 
 ## Bảng phác thảo
 
@@ -59,4 +59,14 @@ Thực hiện theo từng lớp có thể kiểm tra: trước hết khóa lư�
 - Xóa `public/canh-quan.webp` và metadata atlas ảnh thật không còn dùng; nền chỉ tải texture pixel đã có trong `public/pixel/terrain-materials-v3.png`.
 - Đã chạy `node --test` (94/94 đạt), `npm.cmd run build`; bộ test bản đồ xác nhận spawn, hotspot, đường ra/vào, ao và các ô đất vẫn tới được.
 
-**Phạm vi V1:** bản triển khai này làm mới renderer và mặt bằng dữ liệu; ảnh concept vẫn là phác thảo tham khảo, không được đóng gói làm ảnh nền gameplay. Các điểm trang trí được vẽ bằng Canvas để tiếp tục mở rộng mà không cần thêm bộ atlas riêng cho từng cảnh.
+**Ghi chú lịch sử V1 (đã thay thế):** bản triển khai đầu chỉ làm mới renderer và mặt bằng dữ liệu; ảnh concept chưa được chuyển thành artwork gameplay. Bản đó không còn là kết quả hiện hành.
+
+## Sửa sai lệch concept trong artwork production V2
+
+V1 chỉ dựng lại bố cục bằng các khối Canvas đơn giản, không chuyển mức độ hoàn thiện của concept vào game. Bản đó không đạt yêu cầu và không còn được dùng làm chuẩn mỹ thuật.
+
+- Production art nằm trong `public/pixel/scene-backgrounds-concept-v1.png`, `public/pixel/scene-backgrounds-environments-v1.png` và `public/pixel/scene-background-homestead-v1.png`; bản gốc độ phân giải cao được lưu trong `docs/assets/`.
+- Atlas concept cung cấp phòng ngủ, xưởng máy, quảng trường làng và sân vườn. Atlas môi trường cung cấp chợ, chuồng, hồ và sân nhà hàng xóm. Bản đồ vườn có artwork riêng theo khung 820 × 640 để phần đất mở rộng không bị cắt theo viewport.
+- `public/pixel/scene-backgrounds.mjs` là nơi duy nhất định nghĩa vùng atlas và cảnh sử dụng từng artwork. Nhân vật, cây trồng, vật nuôi, thao tác, hàng rào nâng cấp và lô đất mở rộng tiếp tục được vẽ động; công trình đã nằm trong nền được ẩn khỏi lớp actor để tránh vẽ chồng.
+- Căn lối chính về x≈188 và cụm luống về ba cột `[260, 318, 376]` theo nền vườn production; ID đất giữ nguyên. Bờ ao mở rộng theo hình nền nhưng ao chính vẫn giữ sức chứa 6 vật nuôi thủy sản.
+- Tọa độ tương tác, va chạm, đường đi và ID đất vẫn thuộc các module gameplay hiện có. Mọi lần sửa artwork tiếp theo cần được chụp và đối chiếu ở viewport 640 × 384 trước khi đánh dấu hoàn tất.

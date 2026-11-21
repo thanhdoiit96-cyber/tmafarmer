@@ -164,6 +164,15 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Locked parcels now read as future orchard/meadow space with stone corner markers and short grass. This is background-only and adds no collision blocks.
 - Reworked the workshop’s center into a single workbench with a clear entry aisle. Kept the workshop action point, bedroom interaction, scene bounds, water and exits stable.
 - See `docs/BACKGROUND_REDESIGN_DRAFT_V1.md` for the approved layout rationale and the V1 scope.
+
+## Scene background art correction V2 2026
+
+- Replaced the flat Canvas reconstructions in the eight playable scenes with authored high-resolution scene art in `public/pixel/scene-backgrounds-concept-v1.png`, `public/pixel/scene-backgrounds-environments-v1.png`, and `public/pixel/scene-background-homestead-v1.png`.
+- The first atlas follows the approved bedroom, workshop, village-square, and farmyard concept. The environment atlas supplies the market, coop, lake, and neighbor courtyard. The full-size homestead plate leaves the expansion meadow visible beyond the starter plots.
+- Atlas regions and scene-to-art mapping are centralized in `public/pixel/scene-backgrounds.mjs`. Dynamic crops, livestock, characters, helper actors, unlocked parcels, and weather effects remain runtime layers; baked buildings and border trees are suppressed to avoid double drawing. Hotspots, collisions, and stored plot IDs remain owned by `world-layout.mjs` and `land.mjs`.
+- Aligned the homestead path, house door, starter beds, and pond docks to the production illustration while keeping saved crop IDs and the starter pond's six-slot capacity stable.
+- Original high-resolution masters are kept under `docs/assets/`. Check each scene at the 640 × 384 pixel viewport before accepting further revisions; do not substitute procedural rectangles for an approved production scene.
+- Verification: `node --test` (95 passed), syntax checks for both world modules, and `npm.cmd run build` passed.
 - Verification: `node --test` (94 passed) and `npm.cmd run build`.
 
 ## Farmer action sprites 2026

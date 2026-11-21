@@ -3,6 +3,7 @@ import {cropGoal, growthGoal} from './game.mjs';
 import frames from './sprite-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
+import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds} from './pixel/scene-backgrounds.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
@@ -14,6 +15,7 @@ const load = source => {
 };
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
+const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
 const malePoses=load(maleCharacter.poses);
@@ -49,7 +51,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -430,6 +432,22 @@ function landscapeGround(c,decor){
     if(kind==='banyan'||kind==='bamboo')grassClump(c,x-span*.48,y+unit,seed(y,x));
   }
 }
+export {backgroundOwnsActor};
+export const hasSceneBackground=kind=>Object.hasOwn(sceneBackgrounds,kind);
+function sceneBackground(c,kind,width,height){
+  const use=sceneBackgrounds[kind];
+  if(!use)return false;
+  const art=sceneBackgroundArt[use.atlas];
+  if(!dim(art))return false;
+  c.save();
+  c.imageSmoothingEnabled=true;
+  if(use.frame){
+    const [sx,sy,sw,sh]=sceneBackgroundAtlases[use.atlas].frames[use.frame];
+    c.drawImage(art,sx,sy,sw,sh,0,0,width,height);
+  }else c.drawImage(art,0,0,art.naturalWidth,art.naturalHeight,0,0,width,height);
+  c.restore();
+  return true;
+}
 function homeFloor(c){
   // Replace the old painted backdrop with a play-grid interior matching the
   // approved warm wood, muted green and upper-left light of the pixel slice.
@@ -571,8 +589,11 @@ function workshopFloor(c){
 }
 export function grass(c,scene,kind,features){
   const {width,height}=scene.bounds??size;
-  if(kind==='home')return homeFloor(c);
-  if(kind==='workshop')return workshopFloor(c);
+  if(sceneBackground(c,kind,width,height)){
+    for(const area of features.ground)if(area.type==='lot')drawLot(c,area);
+    for(const area of features.ground)if(area.type==='fence')fence(c,area);
+    return;
+  }
   const landscape=landscapeFor(kind);
   box(c,texture(c,landscape.floor),0,0,width,height,0);
   for(const layer of landscape.terrain)region(c,layer);
