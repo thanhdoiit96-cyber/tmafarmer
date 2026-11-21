@@ -148,7 +148,9 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .upgrade-materials li[data-ready="false"] strong{color:#805627}
 .item-link{border:0;background:transparent;padding:1px 0;color:#305b41;text-align:left;font-weight:800;font-size:11px;text-decoration:underline;text-underline-offset:2px}
 .aqua-icon{display:inline-block;flex:none;width:28px;height:20px;vertical-align:middle;background:url('/pixel/aquatic-v1.png') no-repeat;background-size:84px 20px;image-rendering:pixelated}
-.item-link .aqua-icon{margin-right:3px}
+.item-link .aqua-icon,.item-link .crop-item-icon{margin-right:3px}
+.crop-item-icon{display:inline-block;flex:none;width:24px;height:24px;vertical-align:middle;background-repeat:no-repeat;image-rendering:pixelated}
+.stock-icon .crop-item-icon{width:24px;height:24px;margin:-4px}
 .aqua-stock{display:flex;align-items:center;gap:3px;text-align:left}
 .aqua-stock small{display:block;font-size:10px;line-height:1.25}
 .item-link:hover{color:#6d491e}

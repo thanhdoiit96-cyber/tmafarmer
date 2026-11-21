@@ -40,7 +40,14 @@ export function validateProgression() {
   const cropPng = pngInfo(progressionCropAtlas.source);
   const livestockPng = pngInfo(progressionLivestockAtlas.source);
   requireCheck(cropPng?.width === 192 && cropPng?.height === 192 && cropPng.colorType === 6, 'Progression crop atlas must be a 192x192 RGBA PNG.');
-  requireCheck(livestockPng?.width === 112 && livestockPng?.height === 48 && livestockPng.colorType === 6, 'Progression livestock atlas must be a 112x48 RGBA PNG.');
+  requireCheck(livestockPng?.width === 224 && livestockPng?.height === 192 && livestockPng.colorType === 6, 'Progression livestock atlas must be a 224x192 RGBA PNG.');
+  for (const kind of ['chicken','cow','quail','buffalo']) {
+    const poses = progressionLivestockAtlas.poses[kind];
+    requireCheck(Boolean(poses && ['idle','walkA','walkB','feed'].every(name => {
+      const frame=poses[name];
+      return frame?.length===4&&frame[0]>=0&&frame[1]>=0&&frame[2]===56&&frame[3]===48&&frame[0]+frame[2]<=224&&frame[1]+frame[3]<=192;
+    })), `Animal ${kind} needs four valid 56x48 action poses.`);
+  }
 
   const authoredAnimals = new Set([
     'chicken','duck','pig','cow','goat','sheep','goose','rabbit',

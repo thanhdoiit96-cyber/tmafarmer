@@ -4,9 +4,9 @@ import frames from './sprite-frames.mjs';
 import landscapeFrames from './landscape-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
+import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
-import {actionPoseSeconds,animalMotion,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
+import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -24,6 +24,7 @@ const pixelObjects=load(pixelSlice.source);
 const moreCropArt=load(cropStagesAtlas.source);
 const livestockArt=load(livestockAtlas.source);
 const progressionLivestockArt=load(progressionLivestockAtlas.source);
+const additionalLivestockArt=load(additionalLivestockAtlas.source);
 const progressionCropArt=load(progressionCropAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
@@ -747,10 +748,11 @@ function animalScale(data){
 const animalSizes={chicken:[16,15],duck:[21,17],quail:[23,21],pig:[35,24],cow:[42,29],buffalo:[47,33],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
 function critter(c,a,t){
   const {data,index=0}=a;
-  const visual={duck:'chicken'}[data.kind]??data.kind;
+  const visual=data.kind;
+  const additionalFrame=additionalLivestockAtlas.frames[visual];
   const progressionFrame=progressionLivestockAtlas.frames[visual];
   const livestockFrame=progressionFrame??livestockAtlas.frames[visual];
-  const art=progressionFrame?progressionLivestockArt:livestockFrame?livestockArt:atlas;
+  const art=additionalFrame?additionalLivestockArt:progressionFrame?progressionLivestockArt:livestockFrame?livestockArt:atlas;
   if(!dim(art))return;
   const large=!['chicken','duck','quail'].includes(visual);
   const rabbit=visual==='rabbit';
@@ -763,13 +765,24 @@ function critter(c,a,t){
   const size=animalScale(data),[width,height]=animalSizes[data.kind];
   const w=width*size,h=height*size;
   const x=snapPixel(a.x+motion.offset),y=snapPixel(a.y);
-  const [sx,sy,sw,sh]=livestockFrame??frames[visual];
+  const [sx,sy,sw,sh]=additionalFrame??livestockFrame??frames[visual];
+  const poses=additionalLivestockAtlas.poses[visual]??progressionLivestockAtlas.poses[visual];
+  if(poses){
+    const [px,py,pw,ph]=poses[animalPose(motion,large?9:7.5)];
+    const bob=walking?Math.abs(step)*.35*size:Math.sin((foraging?motion.elapsed:t)*2.2+index)*.22*size;
+    shade(c,x,y,w*.48,walking?3.2:3.8);
+    c.save();
+    c.translate(x,y);
+    if(spriteFlip(motion.facing,1))c.scale(-1,1);
+    c.drawImage(progressionLivestockArt,px,py,pw,ph,-w/2,snapPixel(-h-bob),w,h);
+    c.restore();
+    return;
+  }
   const cut=Math.round(sh*(livestockAtlas.legStart[visual]??(large?.72:.79))), body=h*cut/sh;
   const half=Math.floor(sw/2), split=w*half/sw;
   const bob=Math.abs(step)*(large?.48:.7)*size;
   shade(c,x,y,w*.48,walking?3.2:3.8);
   c.save();
-  if(data.kind==='duck')c.filter='hue-rotate(36deg) saturate(.72) brightness(1.12)';
   c.translate(x,y);
   if(spriteFlip(motion.facing,1))c.scale(-1,1);
   if(rabbit&&walking){
@@ -911,22 +924,6 @@ function drawAtlasActor(c,a,t,state){
       c.drawImage(source,crop.sx,crop.sy,crop.w,crop.h,crop.x,crop.y,crop.width,crop.height);
       return true;
     }
-  }
-  if((a.type==='animal'||a.type==='wildlife')&&a.data?.kind==='chicken'){
-    const info=pixelSlice.chicken,motion=animalMotion(t,a.index??0,15,'peck');
-    const animation=info.states[motion.state],walking=motion.state==='walk';
-    const step=walking?walkFrame(motion.distance,info.stride,animation.frames):Math.floor(motion.elapsed*animation.fps)%animation.frames;
-    const frame=animation.first+step;
-    const sx=info.x+(frame%info.columns)*info.cell,sy=info.y+Math.floor(frame/info.columns)*info.cell;
-    const chickenX=snapPixel(a.x+motion.offset), unit=pixelStep*.65*animalScale(a.data);
-    const width=Math.round(info.cell*unit/pixelStep)*pixelStep;
-    shade(c,chickenX,py,width*.23,walking?2.3:2.9);
-    c.save();
-    c.translate(chickenX,0);
-    if(spriteFlip(motion.facing,animation.sourceFacing))c.scale(-1,1);
-    c.drawImage(pixelObjects,sx,sy,info.cell,info.cell,-width/2,snapPixel(py-animation.feet*unit),width,width);
-    c.restore();
-    return true;
   }
   return false;
 }

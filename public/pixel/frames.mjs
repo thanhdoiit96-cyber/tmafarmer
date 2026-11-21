@@ -1,5 +1,7 @@
 import moreCrops from './crop-stages-frames.mjs';
 import progressionCropsV4 from './progression-crop-frames-v4.mjs';
+import progressionLivestockFrames from './progression-livestock-frames-v2.mjs';
+import additionalLivestockFrames from './additional-livestock-frames-v1.mjs';
 
 export const pixelViewport={width:640,height:384};
 export const pixelCharacter={
@@ -41,9 +43,14 @@ export const livestockAtlas={
   legStart:{goat:.73,sheep:.8,goose:.88},
 };
 export const progressionLivestockAtlas={
-  source:'/pixel/progression-livestock-v1.png',columns:2,
-  frames:{quail:[0,0,56,48],buffalo:[56,0,56,48]},
-  legStart:{quail:.79,buffalo:.79},
+  source:'/pixel/progression-livestock-v2.png',columns:4,rows:4,cellWidth:56,cellHeight:48,
+  frames:Object.fromEntries(Object.entries(progressionLivestockFrames).map(([kind,poses])=>[kind,poses.idle])),
+  poses:progressionLivestockFrames,
+};
+export const additionalLivestockAtlas={
+  source:'/pixel/additional-livestock-v1.png',columns:2,rows:4,cellWidth:56,cellHeight:48,
+  frames:Object.fromEntries(Object.entries(additionalLivestockFrames).map(([kind,poses])=>[kind,poses.idle])),
+  poses:additionalLivestockFrames,
 };
 export const aquaticAtlas={
   source:'/pixel/aquatic-v1.png',

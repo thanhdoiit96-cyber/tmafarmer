@@ -172,3 +172,15 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Regenerate V4 with `npm run pixel:progression-art`. This invokes `scripts/normalize-progression-crops-v4.py` and writes the atlas, frame metadata, source sheet, and comparison preview.
 - Crop weather profiles affect each variety's growth and yield; accumulated exposure remains stable when crop progress is projected in smaller time intervals.
 - Repositioned the main-coop rows so quails fit inside the rear and front rails. Their runtime size is 23 × 21 world units, and the front fence draws over only the feet. Automated layout coverage checks sixteen seats.
+
+## Livestock style unification 2026
+
+- Replaced the mismatched emoji/legacy illustrations for chicken, dairy cow, quail, and water buffalo with a shared atlas drawn to the sheep's rounded silhouette, warm outline, and upper-left light.
+- The atlas has four 56 × 48 poses per species: idle, alternating walk poses, and feeding. Canvas animation and coop/shop illustrations read from the same source, so the UI and world no longer show different art for the same animal.
+- Runtime output is `public/pixel/progression-livestock-v2.png`; the 4× master and sheep-reference comparison are `docs/assets/progression-livestock-v2-source.png` and `docs/assets/progression-livestock-v2-preview.png`. The original generated master is retained for revisions.
+- Regenerate the atlas with `npm run pixel:livestock-art`. Pose metadata is in `public/pixel/progression-livestock-frames-v2.mjs` and is loaded through `public/pixel/frames.mjs`.
+### Livestock and crop item illustrations
+
+- Added pig and duck idle, alternating walk, and feed sprites using the approved sheep as the style reference. Runtime art is in `public/pixel/additional-livestock-v1.png`, with a transparent 4× master in `docs/assets/additional-livestock-v1-source.png` and comparison sheet in `docs/assets/additional-livestock-v1-preview.png`.
+- All ten farm animals now have authored pixel illustrations in both the farm scene and animal cards. Crop produce and seeds use the crop's mature atlas frame in inventory, market, orders, and workshop recipe ingredient links; fish illustrations remain on the existing aquatic atlas.
+- Regenerate pig/duck art with `npm run pixel:additional-livestock-art`.

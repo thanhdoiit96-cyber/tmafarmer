@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cropFrame,cropGrowthLabels,cropPlacement,cropTaskPosition} from '../public/pixel/crop-layout.mjs';
+import {cropItemFrame,cropItemKind} from '../public/pixel/item-art.mjs';
 import {cropGoal,crops} from '../public/game.mjs';
 
 test('crop stages share a centered footprint and keep their marker clear of the canopy',()=>{
@@ -18,6 +19,18 @@ test('crop stages share a centered footprint and keep their marker clear of the 
     }
   }
   assert.equal(cropPlacement({x:176,y:106,data:{kind:'unknown'}}),null);
+});
+
+test('every crop uses an authored atlas frame for its inventory and trade illustration',()=>{
+  for(const kind of Object.keys(crops)){
+    const frame=cropFrame(kind,3);
+    assert.ok(frame,`${kind} has a mature frame`);
+    assert.ok(!frame.procedural,`${kind} does not use a procedural fallback`);
+    assert.ok(frame.source.startsWith('/pixel/'));
+    assert.equal(cropItemKind(kind),kind);
+    assert.deepEqual(cropItemFrame(kind),frame);
+    assert.deepEqual(cropItemFrame(crops[kind].seed),frame,`${kind} seed uses its crop illustration`);
+  }
 });
 
 test('visitors see the actual growth stage and each new atlas row fits the 48 pixel cells',()=>{

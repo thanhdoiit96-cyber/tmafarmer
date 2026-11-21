@@ -10,6 +10,8 @@
     "check:progression": "node scripts/progression.mjs",
     "progression:docs": "node scripts/progression.mjs --write-docs",
     "pixel:progression-art": "py scripts/normalize-progression-crops-v4.py",
+    "pixel:livestock-art": "py scripts/normalize-progression-livestock-v2.py",
+    "pixel:additional-livestock-art": "py scripts/normalize-additional-livestock-v1.py",
     "pixel:farmer-actions": "py scripts/generate-farmer-action-atlases.py",
     "test": "node --test",
     "test:scale": "node scripts/scale-load.mjs",

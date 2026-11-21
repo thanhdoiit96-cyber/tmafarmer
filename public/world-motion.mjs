@@ -44,6 +44,12 @@ export function animalMotion(time,index,range,forage='idle'){
   return {offset:facing*range,facing,state:'idle',elapsed,distance:0};
 }
 
+export function animalPose(motion,stride=9){
+  if(motion.state==='walk')return Math.floor(motion.distance/stride*2)%2?'walkA':'walkB';
+  if(motion.state==='peck'||motion.state==='graze')return 'feed';
+  return 'idle';
+}
+
 export function spriteFlip(facing,sourceFacing){
   return facing!==sourceFacing;
 }

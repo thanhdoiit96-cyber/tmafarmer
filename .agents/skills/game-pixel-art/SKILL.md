@@ -40,3 +40,11 @@ Check the exported PNG size, alpha, frame order, baselines, and padding at 1× a
 - Do not ship a new crop as a few flat polygons, thin outlines, emoji, or procedural placeholder art. A production crop needs a distinct, fuller silhouette at every stage, multiple value steps, leaf veins or fruit texture where visible, and a recognizable mature harvest.
 - Draw and approve the transparent high-resolution source first, then normalize every frame independently to 48 × 48 with hard alpha edges. Inspect the runtime-sized frames beside existing crops at 1× and 4×; detail that disappears after normalization does not count as finished detail.
 - Keep a labeled source/runtime comparison sheet in `docs/assets/` and preserve previous atlases when revising approved art.
+
+## Livestock quality gate
+
+- Use the sheep in `public/pixel/livestock-v2.png` as the style reference for rounded proportions, warm dark outlines, compact faces, upper-left highlights, and muted shadows. New species should read as members of the same game, while keeping their own silhouettes and markings.
+- Keep one camera angle, scale registration, and ground baseline across each species' animation poses. Production animal sheets should include idle, alternating walk poses, and feeding; the pose must be selected by the shared livestock motion state.
+- Use the same authored sprite for Canvas scenes and HTML animal illustrations. Do not let an authored species fall back to emoji or a differently styled legacy atlas in one view.
+- Keep full silhouettes and feet inside the transparent 56 × 48 runtime cells. Inspect the source and 4× nearest-neighbor preview beside the sheep before shipping; retain the previous atlas for comparison.
+- Every species in `animals` must resolve to an authored sprite in gameplay and in shop/pen cards; do not leave newly added animals as emoji fallbacks. Keep crop produce and seed icons tied to each crop's mature frame from `cropFrame(kind, 3)` anywhere inventory, market, orders, or workshop recipes show that crop.

@@ -8,7 +8,8 @@ import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYie
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
 import {cropFrame,cropGrowthLabels} from './pixel/crop-layout.mjs';
-import {aquaticAtlas,gardenDecorAtlas,livestockAtlas} from './pixel/frames.mjs';
+import {cropItemFrame} from './pixel/item-art.mjs';
+import {additionalLivestockAtlas,aquaticAtlas,gardenDecorAtlas,livestockAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {drinkingWell,maps,needsPlayerLocation,playerLocationBlock,plotWorkActions} from './world-layout.mjs';
 import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, cropWeatherEffect, cropWeatherProfiles, cropPotentialYield, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
@@ -92,8 +93,17 @@ function aquaIllustration(item){
   if(!frame)return '';
   return '<span class="aqua-icon" style="background-position:-'+frame[0]/2+'px 0" aria-hidden="true"></span>';
 }
+function cropIllustration(item){
+  const frame=cropItemFrame(item);
+  if(!frame||frame.procedural)return '';
+  const sizes={'/pixel/vertical-slice-v2-hd.png':[384,128],'/pixel/crop-stages-v2.png':[96,216],'/pixel/progression-crops-v4.png':[96,96]};
+  const [width,height]=sizes[frame.source]??[];
+  if(!width)return '';
+  return '<span class="crop-item-icon" style="background-image:url('+frame.source+');background-size:'+width+'px '+height+'px;background-position:-'+frame.x/2+'px -'+frame.y/2+'px" aria-hidden="true"></span>';
+}
+function itemIllustration(item){return aquaIllustration(item)||cropIllustration(item);}
 function itemLink(key,label=nice(key)){
-  const art=aquaIllustration(key);
+  const art=itemIllustration(key);
   if(art&&label.startsWith(goods[key].icon+' '))label=label.slice(goods[key].icon.length+1);
   return '<button type="button" class="item-link" data-item-info="'+key+'" aria-label="Xem chi tiết '+escape(goods[key].name)+'">'+art+escape(label)+'</button>';
 }
@@ -381,11 +391,12 @@ function upgrade(farm,key) {
     '</div><p>'+escape(benefit)+'</p>'+next+(required?'<ul class="recipe-ingredients upgrade-materials" aria-label="Vật tư nâng cấp">'+required+'</ul>':'')+'</article>';
 }
 function animalIllustration(kind){
-  const frame=livestockAtlas.frames[kind];
+  const atlas=additionalLivestockAtlas.frames[kind]?additionalLivestockAtlas:progressionLivestockAtlas.frames[kind]?progressionLivestockAtlas:livestockAtlas;
+  const frame=atlas.frames[kind];
   if(!frame)return '<span class="animal-icon" aria-hidden="true">'+animals[kind].icon+'</span>';
-  const [x]=frame;
-  return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+livestockAtlas.source+
-    ');background-size:'+livestockAtlas.columns*42+'px 36px;background-position:-'+x*.75+'px 0"></span>';
+  const [x,y]=frame;
+  return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+atlas.source+
+    ');background-size:'+atlas.columns*42+'px '+(atlas.rows??1)*36+'px;background-position:-'+x*.75+'px -'+y*.75+'px"></span>';
 }
 function renderCoop(farm,now,lot){
   const pens=farm.pens.map((pen,i)=>({pen,i})).filter(entry=>entry.pen.lot===lot);
@@ -989,7 +1000,7 @@ function renderStock(farm){
     const {name,icon:picture}=goods[item];
     const locked=Boolean(stockLock(farm,item));
     return '<button type="button" class="stock-card" data-stock-item data-item-info="'+item+'" aria-haspopup="dialog">'+
-      '<span class="stock-icon" aria-hidden="true">'+(aquaIllustration(item)||picture)+'</span><span class="stock-name">'+escape(name)+'</span>'+
+      '<span class="stock-icon" aria-hidden="true">'+(itemIllustration(item)||picture)+'</span><span class="stock-name">'+escape(name)+'</span>'+
       '<span class="stock-quantity">× '+(farm.inventory[item]??0)+'</span>'+
       '<span class="stock-status" data-locked="'+locked+'">'+(locked?'Đang khóa':'Đã mở')+'</span></button>';
   }).join('');
