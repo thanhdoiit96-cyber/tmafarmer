@@ -1,5 +1,5 @@
 import moreCrops from './crop-stages-frames.mjs';
-import progressionCropsV2 from './progression-crop-frames-v2.mjs';
+import progressionCropsV4 from './progression-crop-frames-v4.mjs';
 
 export const pixelViewport={width:640,height:384};
 export const pixelCharacter={
@@ -34,7 +34,7 @@ export const pixelSlice={
   },
 };
 export const cropStagesAtlas={source:'/pixel/crop-stages-v2.png',cell:48,crops:moreCrops};
-export const progressionCropAtlas={source:'/pixel/progression-crops-v2.png',cell:48,crops:progressionCropsV2};
+export const progressionCropAtlas={source:'/pixel/progression-crops-v4.png',cell:48,crops:progressionCropsV4};
 export const livestockAtlas={
   source:'/pixel/livestock-v2.png',columns:4,
   frames:{goat:[0,0,56,48],sheep:[56,0,56,48],goose:[112,0,56,48],rabbit:[168,0,56,48]},

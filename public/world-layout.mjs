@@ -118,8 +118,15 @@ export function playerLocationBlock({action,index},area,pose,hasPublicWell=false
 
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
 export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
-const coopPosition=(i,level)=>level<4?{x:115+i%3*72,y:126+Math.floor(i/3)*48}:
-  {x:113+i%4*61,y:126+Math.floor(i/4)*36};
+const coopPosition=(i,level)=>{
+  const capacity=Math.max(2,level*2);
+  if(capacity<=6){
+    const rows=Math.ceil(capacity/3),ys=rows===1?[150]:[127,174];
+    return {x:115+i%3*72,y:ys[Math.floor(i/3)]};
+  }
+  const rows=Math.ceil(capacity/4),ys=rows===2?[131,174]:rows===3?[127,158,189]:[127,148,169,190];
+  return {x:113+i%4*61,y:ys[Math.floor(i/4)]};
+};
 const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
 export function features(id, snapshot, neighbor, page=0) {
   const map=maps[id];

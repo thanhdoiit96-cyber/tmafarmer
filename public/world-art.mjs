@@ -231,6 +231,26 @@ function fence(c,{x,y,w,h,style}){
     }
   }
 }
+function fenceFront(c,{x,y,w,h,style='wood'}){
+  const [dark,middle,light]=railPaint[style]??railPaint.wood;
+  const bottom=y+h,mid=x+w/2,gap=11;
+  for(const [left,right] of [[x,mid-gap],[mid+gap,x+w]]){
+    for(const dy of [-4,-1]){
+      line(c,dark,2.25,[[left,bottom+dy],[right,bottom+dy]]);
+      line(c,middle,1.3,[[left,bottom+dy-.4],[right,bottom+dy-.4]]);
+    }
+    const count=Math.max(1,Math.floor((right-left)/13));
+    for(let i=0;i<=count;i++){
+      const px=left+(right-left)*i/count;
+      box(c,dark,px-1.4,bottom-6.7,3.2,8.6,.7);
+      box(c,light,px-1.1,bottom-6.5,1.6,7.8,.5);
+    }
+  }
+}
+export function coopForeground(c,scene){
+  const builtFence=scene.ground.find(item=>item.type==='fence'&&item.x<100&&item.y<120);
+  fenceFront(c,builtFence??{x:77,y:104,w:261,h:97,style:'wood'});
+}
 function drawLot(c,a){
   const {x,y,w,h,index,lot}=a;
   c.save();
@@ -523,7 +543,7 @@ export function grass(c,scene,kind,features){
       box(c,'#987247',x,104,17,2.3,1);box(c,'#caa777',x,104,17,.8,.4);
       box(c,'#755337',x,101,3,10,1);box(c,'#b28d62',x+.3,101,1.5,9,.6);
     }
-    for(const x of [77,337])for(let y=111;y<184;y+=9){
+    for(const x of [77,337])for(let y=111;y<201;y+=9){
       box(c,'#a78452',x,y,2.2,11,1);
       if(y%2)box(c,'#725738',x-1,y,3.5,6,1);
     }
@@ -724,7 +744,7 @@ function plot(c,a,t,state,paintCrops=true){
 function animalScale(data){
   return data.age===undefined?1:.72+.28*Math.min(1,data.age/growthGoal(data));
 }
-const animalSizes={chicken:[16,15],duck:[21,17],quail:[18,16],pig:[35,24],cow:[42,29],buffalo:[47,33],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
+const animalSizes={chicken:[16,15],duck:[21,17],quail:[23,21],pig:[35,24],cow:[42,29],buffalo:[47,33],goat:[36,31],sheep:[38,33],goose:[31,27],rabbit:[26,23]};
 function critter(c,a,t){
   const {data,index=0}=a;
   const visual={duck:'chicken'}[data.kind]??data.kind;

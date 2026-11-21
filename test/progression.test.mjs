@@ -41,6 +41,6 @@ test('every crop and animal gate is covered by the progression art and content c
   assert.ok(Object.keys(crops).includes('coffee'));
   assert.ok(Object.keys(animals).includes('buffalo'));
   for (const key of ['coffee', 'lotus', 'dragonfruit', 'blackRice']) {
-    for (let stage = 0; stage < 4; stage++) assert.equal(cropFrame(key, stage).source, '/pixel/progression-crops-v2.png');
+    for (let stage = 0; stage < 4; stage++) assert.equal(cropFrame(key, stage).source, '/pixel/progression-crops-v4.png');
   }
 });

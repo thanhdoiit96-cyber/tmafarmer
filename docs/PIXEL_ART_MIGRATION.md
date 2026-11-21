@@ -140,7 +140,9 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Added distinct quail and water buffalo sprites to `public/pixel/progression-livestock-v1.png` (112 x 48, 56 x 48 cells), with 4x source at `docs/assets/progression-livestock-v1-source.png`.
 - Atlas frame metadata and per-stage bounds live in `public/pixel/frames.mjs`; runtime selects these frames instead of procedural crop art or recolored chicken/cow sprites.
 - Regenerate both atlases with `npm run pixel:progression-art`; the progression checker verifies PNG dimensions, RGBA alpha, frame coverage, unlock data, and upgrade table consistency.
-- Art quality revision: preserved V1 for comparison and replaced runtime crop art with `public/pixel/progression-crops-v2.png`. The 768 x 768 transparent master is `docs/assets/progression-crops-v2-source.png`; the labeled, equal-size source/runtime comparison is `docs/assets/progression-crops-v2-preview.png`. Regenerate with `py scripts/generate-progression-crops-v2.py`.
+- Art quality revision V2: preserved V1 for comparison and replaced runtime crop art with `public/pixel/progression-crops-v2.png`. The 768 x 768 transparent master is `docs/assets/progression-crops-v2-source.png`; the labeled, equal-size source/runtime comparison is `docs/assets/progression-crops-v2-preview.png`.
+- Art quality revision V3: preserved V2 and redrew the four late-game crops on a crisp 48px pixel grid. `public/pixel/progression-crops-v3.png` is the runtime atlas; the 768 x 768 transparent master and 4x source/runtime comparison are `docs/assets/progression-crops-v3-source.png` and `docs/assets/progression-crops-v3-preview.png`. Regenerate with `npm run pixel:progression-art`.
+- Main coop: animal seats now adapt from 3x2 up to 4x4 within the existing pen bounds. The foreground rail is drawn after the sorted actors, and quails render at 23 x 21 world units. The land test verifies all 16 seats remain inside the pen and reachable.
 
 ## Pixel interior pass 2026
 
@@ -162,3 +164,11 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Tools and action details are part of the sprite cells. The renderer switches to these full-body frames while the action timer runs, avoiding a second arm or a separate Canvas tool overlay. Hoeing, planting, and fishing keep their existing animation paths.
 - Runtime atlases are `public/pixel/farmer-action-atlas-v1-female.png` and `public/pixel/farmer-action-atlas-v1-male.png`. Their 4× nearest-neighbor masters are in `docs/assets/`; the approved concept remains at `docs/assets/farmer-action-design-sample-v1.png`.
 - Regenerate the atlases with `npm run pixel:farmer-actions`. Metadata and action timing are in `public/pixel/frames.mjs` and `public/world-motion.mjs`.
+
+## Late-game crops and coop polish 2026
+
+- Replaced the V3 runtime progression crop atlas with the approved V4 sheet for coffee, lotus, dragon fruit, and black sticky rice. V1–V3 remain available for comparison; the runtime atlas uses sixteen 48 × 48 RGBA cells and per-stage silhouette bounds.
+- The cleaned 4× source and 4× nearest-neighbor comparison sheet are `docs/assets/progression-crops-v4-source.png` and `docs/assets/progression-crops-v4-preview.png`. The raw generated master is retained separately for future revisions.
+- Regenerate V4 with `npm run pixel:progression-art`. This invokes `scripts/normalize-progression-crops-v4.py` and writes the atlas, frame metadata, source sheet, and comparison preview.
+- Crop weather profiles affect each variety's growth and yield; accumulated exposure remains stable when crop progress is projected in smaller time intervals.
+- Repositioned the main-coop rows so quails fit inside the rear and front rails. Their runtime size is 23 × 21 world units, and the front fence draws over only the feet. Automated layout coverage checks sixteen seats.

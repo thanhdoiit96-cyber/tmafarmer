@@ -6,7 +6,7 @@ import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -385,6 +385,7 @@ export function createWorld(root, onInteract, landscape) {
         actor(context,{...a,data:null},ambient,snapshot);
       else actor(context,a.type==='neighbor'?{...a,selected:(pending?.id===a.id||active?.id===a.id)}:a,ambient,snapshot);
     }
+    if(sceneId==='coop')coopForeground(context,scene);
     if(sceneId==='home'){
       const bed=scene.hotspots.find(item=>item.type==='bed');
       const resting=snapshot.me.wellness.restUntil>gameNow;

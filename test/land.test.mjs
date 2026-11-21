@@ -107,17 +107,20 @@ test('higher main field levels preserve garden plot IDs and add reachable beds f
     }
   }
 });
-test('upgraded main coop seats twelve reachable animals without changing parcel capacity',()=>{
+test('upgraded main coop seats sixteen reachable animals inside the pen without changing parcel capacity',()=>{
   const room=setup(),a=room.farms.a;
-  Object.assign(a,{coins:9900,xp:1950,coop:3});
-  Object.assign(a.inventory,{woolCloth:2,insulationMat:2});
-  for(let level=4;level<=6;level++)act(room,'a','upgrade',undefined,'coop');
-  for(let i=0;i<12;i++)act(room,'a','animal',undefined,'chicken');
+  Object.assign(a,{coins:50000,xp:20000,coop:3});
+  Object.assign(a.inventory,{woolCloth:10,insulationMat:20,starchGlue:10});
+  for(let level=4;level<=8;level++)act(room,'a','upgrade',undefined,'coop');
+  for(let i=0;i<16;i++)act(room,'a','animal',undefined,'chicken');
   assert.throws(()=>act(room,'a','animal',undefined,'chicken'),/hết chỗ/);
   const scene=features('coop',snapshot(room,a,now));
   const seats=scene.hotspots.filter(spot=>spot.type==='animal');
-  assert.equal(new Set(seats.map(spot=>spot.x+','+spot.y)).size,12);
-  for(const spot of seats)assert.ok(route(scene,maps.coop.spawn,[spot.x,spot.y]));
+  assert.equal(new Set(seats.map(spot=>spot.x+','+spot.y)).size,16);
+  for(const spot of seats){
+    assert.ok(spot.x>=82&&spot.x<=340&&spot.y>=106&&spot.y<=190,`animal seat must stay inside pen: ${spot.x},${spot.y}`);
+    assert.ok(route(scene,maps.coop.spawn,[spot.x,spot.y]));
+  }
   act(room,'a','buildLand',0,'coop');
   for(let i=0;i<2;i++)act(room,'a','animal',0,'chicken');
   assert.throws(()=>act(room,'a','animal',0,'chicken'),/hết chỗ/);
