@@ -121,6 +121,8 @@ Trình duyệt gọi `/api/*` trên tên miền Vercel. Vercel chuyển tiếp s
 
 ## Kiểm thử nhanh sau triển khai
 
+Rà soát dung lượng và tài nguyên cũ: xem [báo cáo dọn project 21/11/2026](docs/PROJECT_CLEANUP_2026-11-21.md), gồm danh sách file đã loại, backup và lệnh khôi phục. Chạy `npm run check:assets` để kiểm tra tham chiếu tài nguyên trước khi deploy.
+
 - Khách A tạo làng. Khách B nhập cùng mã từ trình duyệt khác. Cả hai thấy nhau trong Hàng xóm.
 - A thu tối thiểu 4 sản phẩm cùng loại vào kho. B ghé kho và lấy 1. B không thể lấy lần hai ở cùng vườn trong cùng ngày. Tải lại và đối chiếu kho cùng nhật ký.
 - A đăng bán nông sản. B mua. Sạp biến mất, tiền chuyển cho A và nông sản xuất hiện trong kho B.
