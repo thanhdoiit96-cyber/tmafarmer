@@ -13,6 +13,7 @@ test('crop stages share a centered footprint and keep their marker clear of the 
       const plot={x:176,y:106,data};
       const art=cropPlacement(plot);
       const badge=cropTaskPosition(plot);
+      assert.equal(badge.x,plot.x,'task icon stays centered over its plot');
       assert.ok(Math.abs(art.x+art.width/2-plot.x)<=.375);
       assert.ok(Math.abs(art.y+art.height-(plot.y+6))<=.375);
       assert.ok(badge.y+6.8<art.y);

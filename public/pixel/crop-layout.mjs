@@ -49,5 +49,5 @@ export function cropPlacement({x,y,data,visit}){
 export function cropTaskPosition(plot){
   const {x,y,data}=plot;
   const art=cropPlacement(plot);
-  return {x:x+(data?17:0),y:Math.min(y-(data?27:23),(art?.y??y-17)-8)};
+  return {x,y:Math.min(y-(data?27:23),(art?.y??y-17)-8)};
 }

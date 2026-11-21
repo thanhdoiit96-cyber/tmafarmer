@@ -631,3 +631,4 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .care-icon{display:inline-block;flex:none;width:24px;height:24px;vertical-align:middle;background-image:url('/pixel/crop-care-icons-v1.png');background-size:96px 24px;background-repeat:no-repeat;image-rendering:pixelated}
 .care-icon-harvest{background-position:0 0}.care-icon-pests{background-position:-24px 0}.care-icon-weeds{background-position:-48px 0}.care-icon-water{background-position:-72px 0}
 .actions button .care-icon{margin-right:5px}
+.task-card .task-mark:has(.care-icon){background:transparent;border-radius:0}

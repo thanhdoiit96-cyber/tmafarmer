@@ -31,7 +31,7 @@ const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
 const gardenFenceArt=load('/pixel/garden-fences-v1.png');
-const careIconArt=load('/pixel/crop-care-icons-v1.png');
+const careIconArt=load('/pixel/crop-care-icons-v1.png?v=3');
 const plotGrassArt=load('/pixel/plot-edge-grass-v2.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
@@ -1529,16 +1529,17 @@ export function drawTask(c,x,y,style){
     c.save();c.imageSmoothingEnabled=false;
     // The authored dark outline separates the symbol from foliage without
     // covering the garden with a solid badge or a white backing plate.
-    c.drawImage(careIconArt,frame*32,0,32,32,snapPixel(x-8),snapPixel(y-8),16,16);
+    c.drawImage(careIconArt,frame*32,0,32,32,snapPixel(x-7),snapPixel(y-7),14,14);
     c.restore();return;
   }
-  shade(c,x,y,6,2.4);
-  ellipse(c,'#fff5d9',x,y,6.8,6.8);
-  ellipse(c,style.color,x,y,5.5,5.5);
+  // No backing plate, including the loading/soil/animal fallback marks.
+  c.save();
+  c.shadowColor='#293d2b';c.shadowBlur=0;c.shadowOffsetY=.75;
   c.fillStyle='#fffaf1';
   c.font='bold 6.5px system-ui';
   c.textAlign='center';
   c.fillText(style.mark,x,y+2.1);
+  c.restore();
 }
 
 export function createMapCursor(){

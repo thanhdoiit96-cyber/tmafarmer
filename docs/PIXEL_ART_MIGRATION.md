@@ -274,3 +274,7 @@ Replaced generic plot task marks with four authored symbols: harvest basket, cat
 ### Garden HUD refinement V2
 
 Removed the opaque white/cream plate and shadow from the four crop-care map symbols; their authored transparent silhouettes and dark outlines remain. Garden/visited-garden painted terrain is cached at 86% saturation and 98% brightness, including its expansion, while crops, actors and effects keep their original colors. Mini map width is reduced to 78px desktop / 48px mobile (52px narrow non-mobile layout), with 72% group opacity and a lighter frame. No collision, camera or task-priority changes. Actual Canvas comparison: `assets/crop-care-icons-v2-canvas.png`; game capture: `assets/garden-quiet-ui-v2.png`; desktop HUD: `assets/garden-quiet-ui-v2-desktop.png`. Syntax, 128 tests and production build pass.
+
+### Crop marker alignment V3
+
+Removed the legacy +17 horizontal offset: task symbols now sit on the plot centerline, retaining canopy clearance. Reduced their footprint from 16 to 14 world units, removed pale circles from fallback marks, and removed task-card backing colors around authored icons. Versioned the atlas URL to refresh cached images. Actual farm capture: `assets/crop-care-centered-v3.png`. The crop-layout test now checks centered task anchors for every species and growth stage; all 128 tests and build pass.
