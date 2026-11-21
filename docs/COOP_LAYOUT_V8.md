@@ -1,5 +1,48 @@
 # Chuồng trại V8 — căn bối cảnh và lối vào
 
+## Chuyển động đàn V9 — thay bước tại chỗ
+
+V9 thay cơ chế ±2 đơn vị của V8 tại scene Chuồng trại bằng controller cục bộ
+`public/coop-motion.mjs`. Nền và atlas/pose đã duyệt giữ nguyên.
+[Đoạn ghi Canvas 16 giây](assets/coop-motion-runtime-v9.gif),
+[khung hình thực tế](assets/coop-motion-runtime-v9.png).
+
+- Mỗi sân có12 điểm đi/nghỉ (4 cột × 3 hàng), tối đa8 vật nuôi nên luôn có
+  chỗ trống để đổi vị trí. Đây là điểm di chuyển, không phải tăng sức chứa.
+  Các hàng y=167.5/194.5/221.5; vật nuôi lớn căn nhẹ tỷ lệ .76 để chừa đủ
+  khoảng chiều sâu cho lối đi, chim vẫn1.1. Thay thông số .82/±2 của V8.
+- Giữ cả nguồn và đích trong suốt bước đi. Chỉ đi vào điểm trống, đi chéo
+  khi hai góc kề cũng trống và được giữ chỗ. Không vượt rào, vào đường giữa
+  hoặc cắt ngang thân con khác, kể cả16 trâu trưởng thành/16 chim cút.
+- Đi ngang44 đơn vị, đổi hàng27 đơn vị, có đường chéo khi sân thoáng.
+  Tăng/giảm tốc mềm; chọn frame bước theo quãng đường, dừng nghỉ và cúi ăn
+  theo nhịp riêng. Không liên tục đảo tới/lui một đoạn ngắn.
+- Giữ vị trí bằng ID qua snapshot; thêm/bớt con không xếp lại cả đàn.
+  Chuyển scene khởi tạo lại phần trình bày, không lưu chuyển động vào database.
+  Hidden tab không gây nhảy vị trí khi quay lại; reduced-motion đóng băng pose.
+- Cập nhật vị trí actor, hotspot và task marker trước khi sắp lớp theo y.
+  Khi tiếp cận/chọn con vật, giữ nó đứng tại vị trí hiện tại trong lúc nhân vật
+  đi đến, nghỉ thêm2.5 giây sau đó. Hủy đường đi bỏ trạng thái giữ vô thời hạn.
+  Những con khác vẫn hoạt động, `world.approach()` và hành động cũ vẫn được dùng.
+- Không áp dụng controller này cho vật nuôi ở các mảnh trong Vườn nhà; tỷ lệ
+  và animation của chúng giữ nguyên. Không đổi ảnh nguồn hay ghép thêm chi.
+
+Test V9 bao phủ120 giây chuyển động ở sức chứa tối đa, cả pixel snapping và
+biên cơ thể, các nhịp idle/walk/feed, đường chéo sân thưa, giữ đứng khi tiếp cận,
+snapshot, thêm/bớt ID và reduced-motion. GIF ghi từ Canvas thật, không phải
+sprite sheet hay concept; chạy lặp để xem lại đoạn quay nên đầu/cuối không nối
+thành một chu kỳ animation.
+
+Browser V9: snapshot trong lúc `world.approach('animal',0)` đang đi không làm
+con được chọn nhảy về ô cũ; callback đến nơi chạy thành công. UI thật sau khi
+đàn đi dạo8 giây: Cho ăn index0 đi tới [104,196], feed20→19; Thu hoạch đi tới
+cùng con, trứng0→3. Các con khác vẫn đi. GIF40 frame khác nhau,400ms/frame,
+palette128 dùng riêng cho bản ghi; không thay chất lượng atlas/runtime.
+
+Kết quả V9: **115/115 test đạt**, build thành công; worker đóng gói import
+được, module chuyển động và các phụ thuộc trả200. Fixture QA đã xóa trước
+build và trả404. Thay đổi V9 chưa commit/push/deploy.
+
 ## Vấn đề và kết quả
 
 Tọa độ cũ x=113–296, y=127–190 dùng sân chuồng của bố cục cũ. Trên background

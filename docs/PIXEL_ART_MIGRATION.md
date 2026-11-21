@@ -1,5 +1,12 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### Đàn vật nuôi Chuồng trại V9
+
+Đã thay bước tại chỗ bằng đi giữa các vị trí trống, đổi hàng/đi chéo khi có
+chỗ, nghỉ và ăn lệch nhịp. Dùng pose đã có, không tạo hoặc sửa atlas.
+Hotspot/marker theo vị trí thật; con được chọn dừng để người chơi tiếp cận.
+[Chi tiết](COOP_LAYOUT_V8.md), [GIF Canvas thật](assets/coop-motion-runtime-v9.gif).
+
 ### Chuồng trại V8
 
 Đã căn lại scene theo [bố cục V8](COOP_LAYOUT_V8.md): plate riêng cùng phong cách,

@@ -3,7 +3,6 @@ import test from 'node:test';
 import {newFarm,newRoom,snapshot} from '../public/game.mjs';
 import {coopGate,coopYards} from '../public/coop-layout.mjs';
 import {features,maps,route,walkable} from '../public/world-layout.mjs';
-import {animalMotion} from '../public/world-motion.mjs';
 import {backgroundOwnsActor} from '../public/pixel/scene-backgrounds.mjs';
 
 function setup(kind='buffalo'){
@@ -36,25 +35,22 @@ test('every coop entry uses the front gate and its path reaches all sixteen anim
   assert.equal(JSON.stringify(farm),before,'layout does not rewrite saved animals');
 });
 
-test('sixteen mature buffalo and quail stay inside their yards and do not overlap while walking',()=>{
+test('sixteen mature buffalo and quail have clear rest positions inside the painted yards',()=>{
   for(const [kind,width,height] of [['buffalo',47,33],['quail',23,21]]){
     const {room,farm}=setup(kind),scene=features('coop',snapshot(room,farm,1000));
     const animals=scene.actors.filter(point=>point.type==='animal');
     assert.equal(animals.filter(a=>a.x<240).length,8);
     assert.equal(animals.filter(a=>a.x>240).length,8);
-    for(let t=0;t<40;t+=.125){
-      const boxes=animals.map(a=>{
-        const motion=animalMotion(t,a.index,a.roam,'graze');
-        const x=Math.round((a.x+motion.offset)/.75)*.75,w=width*a.visualScale,h=height*a.visualScale;
-        const yard=coopYards[a.x<240?0:1];
-        assert.ok(x-w/2>=yard.x&&x+w/2<=yard.x+yard.w,kind+' clears the side fence and central path');
-        assert.ok(a.y-h-.75>=yard.y&&a.y+.75<=yard.y+yard.h,kind+' clears both fence lines');
-        return {x:x-w/2,y:a.y-h,w,h};
-      });
-      for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
-        const a=boxes[i],b=boxes[j];
-        assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,kind+' bodies stay separate');
-      }
+    const boxes=animals.map(a=>{
+      const x=Math.round(a.x/.75)*.75,w=width*a.visualScale,h=height*a.visualScale;
+      const yard=coopYards[a.x<240?0:1];
+      assert.ok(x-w/2>=yard.x&&x+w/2<=yard.x+yard.w,kind+' clears the side fence and central path');
+      assert.ok(a.y-h-.75>=yard.y&&a.y+.75<=yard.y+yard.h,kind+' clears both fence lines');
+      return {x:x-w/2,y:a.y-h,w,h};
+    });
+    for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+      const a=boxes[i],b=boxes[j];
+      assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,kind+' bodies stay separate');
     }
   }
 });

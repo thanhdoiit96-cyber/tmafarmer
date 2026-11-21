@@ -870,7 +870,7 @@ function critter(c,a,t){
   if(!dim(art))return;
   const large=!['chicken','duck','quail'].includes(visual);
   const rabbit=visual==='rabbit';
-  const motion=a.motion??animalMotion(t,index,a.roam??(large?11:15),rabbit?'idle':large?'graze':'peck');
+  const motion=a.motion??(a.roam===0?{offset:0,facing:1,state:'idle',elapsed:0,distance:0}:animalMotion(t,index,a.roam??(large?11:15),rabbit?'idle':large?'graze':'peck'));
   const walking=motion.state==='walk';
   const phase=motion.distance/(large?9:7.5)*Math.PI*2;
   const step=Math.sin(phase);

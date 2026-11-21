@@ -6,6 +6,7 @@ import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {yardPetPose} from './yard-pets.mjs';
+import {createCoopHerd} from './coop-motion.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
 import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
@@ -42,6 +43,27 @@ export function createWorld(root, onInteract, landscape) {
   let sceneId, scene, snapshot, currentVisit, selectedPlot, camera={x:0,y:0}, bounds=size, view=size, activePage, marks=[];
   let observedAt=performance.now(), terrainKey='', peers=new Map(), speech=new Map(), scenery=[];
   let pointer=null, routeMarker=null;
+  let coopHerd=createCoopHerd(),heldAnimal,heldAnimalId,animalHoldUntil=0;
+  function holdAnimal(target){
+    if(sceneId==='coop'&&target?.type==='animal'){
+      heldAnimal=target.index;heldAnimalId=target.data?.id;animalHoldUntil=Infinity;
+    }
+  }
+  function updateCoopAnimals(time){
+    if(sceneId!=='coop')return;
+    const animals=scene.actors.filter(a=>a.type==='animal');
+    const heldIndex=heldAnimalId===undefined?heldAnimal:animals.find(a=>a.data.id===heldAnimalId)?.index;
+    const held=new Set(time<animalHoldUntil&&heldIndex!==undefined?[heldIndex]:[]);
+    const poses=coopHerd.update(animals,time,{reduced:reduce.matches,held});
+    const points=new Map(scene.hotspots.filter(p=>p.type==='animal').map(p=>[p.index,p]));
+    for(const pose of poses){
+      const actor=animals.find(a=>a.index===pose.index);
+      Object.assign(actor,pose);
+      const point=points.get(pose.index);
+      if(point){point.x=pose.x;point.y=pose.y;}
+      if(pending?.type==='animal'&&pending.index===pose.index){pending.x=pose.x;pending.y=pose.y;}
+    }
+  }
 
   function paintTerrain(){
     terrain.width=Math.ceil(bounds.width*scale);
@@ -111,7 +133,10 @@ export function createWorld(root, onInteract, landscape) {
     x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;fishingDock=null;
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
-  function stop() {waypoints=[];pending=null;onArrival=null;walking=false;}
+  function stop() {
+    waypoints=[];pending=null;onArrival=null;walking=false;
+    if(animalHoldUntil===Infinity)animalHoldUntil=performance.now()/1000+2.5;
+  }
   function closest() {
     return scene?.hotspots.reduce((best,p)=>p.type!=='exit'&&distance(p,x,y)<=range&&(!best||distance(p,x,y)<distance(best,x,y))?p:best,null);
   }
@@ -130,6 +155,7 @@ export function createWorld(root, onInteract, landscape) {
     if(data!==snapshot)observedAt=performance.now();
     snapshot=data;selectedPlot=selection;
     if(sceneId!==id||id==='visit'&&visitChanged||arrival){
+      coopHerd=createCoopHerd();heldAnimal=undefined;heldAnimalId=undefined;animalHoldUntil=0;
       sceneId=id;
       scenery=hasSceneBackground(id)?[]:landscapeFor(id).decor.map(item=>({...item,type:'scenery'}));
       root.dataset.scene=id;
@@ -147,6 +173,11 @@ export function createWorld(root, onInteract, landscape) {
     activePage=page;
     currentVisit=neighbor?.id;
     scene=features(id,data,neighbor,page);
+    if(id==='coop'&&pending?.type==='animal'){
+      const current=scene.hotspots.find(p=>p.type==='animal'&&p.index===pending.index);
+      if(!current||pending.data?.id!==undefined&&current.data?.id!==pending.data.id)stop();
+    }
+    updateCoopAnimals(performance.now()/1000);
     helperJob=(id==='field'?data.me:id==='visit'?neighbor:null)?.gardenHelperJob;
     const nextHelperKey=helperJob?[id,neighbor?.id??data.me.id,helperJob.startedAt].join(':'):'';
     if(nextHelperKey!==helperKey){
@@ -173,6 +204,7 @@ export function createWorld(root, onInteract, landscape) {
   }
   function use(target=closest()){
     if(!target)return;
+    holdAnimal(target);
     stop();
     onInteract(target);
     refreshHint();
@@ -180,6 +212,8 @@ export function createWorld(root, onInteract, landscape) {
   function walkTo(px,py,target,callback) {
     const path=route(scene,[x,y],[px,py]);
     if(!path)return false;
+    if(target?.type!=='animal'&&animalHoldUntil===Infinity)animalHoldUntil=performance.now()/1000;
+    holdAnimal(target);
     waypoints=path;
     pending=target??null;
     onArrival=callback;
@@ -203,8 +237,12 @@ export function createWorld(root, onInteract, landscape) {
     const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index))??[];
     const dock=points.sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
     if(!dock)return false;
+    holdAnimal(dock);
+    updateCoopAnimals(performance.now()/1000);
     if(distance(dock,x,y)<16){stop();callback?.();return true;}
-    return walkTo(dock.x,dock.y,dock,callback);
+    const started=walkTo(dock.x,dock.y,dock,callback);
+    if(!started&&heldAnimal===dock.index)animalHoldUntil=performance.now()/1000;
+    return started;
   }
   function move(dx,dy,dt) {
     const len=Math.hypot(dx,dy);
@@ -283,6 +321,7 @@ export function createWorld(root, onInteract, landscape) {
     const dt=Math.min(Math.max(0,(now-previousTime)/1000),.035);
     previousTime=now;
     if(!scene||document.hidden){requestAnimationFrame(frame);return;}
+    updateCoopAnimals(now/1000);
     walking=false;
     if(!document.querySelector('dialog[open]')){
       if(keys.size||touchKeys.size) {
