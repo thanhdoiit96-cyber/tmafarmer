@@ -20,6 +20,7 @@ const homesteadSoilArt=load('/pixel/scene-background-homestead-v1.png');
 const parcelShelterArt=load(parcelShelter.source);
 const workshopBuildingArt=load(homesteadWorkshop.source);
 const parcelPondArt=load('/pixel/parcel-pond-v2.png');
+const pondDockArt=load('/pixel/pond-dock-v5.png');
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
 const farmerWalk=load(pixelCharacter.states.walk.source);
@@ -56,7 +57,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),pondDockArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -715,7 +716,7 @@ export function drawGardenDecor(c,item,daylight){
   const {kind,x,y,w,name}=item;
   const [sx,sy,sw,sh]=gardenDecorAtlas.frames[kind];
   const scale=w/sw, h=sh*scale;
-  const left=snapPixel(x-w/2), top=snapPixel(y-h);
+  const left=snapPixel(x-w/2), top=snapPixel(y-gardenDecorAtlas.ground*scale);
   shade(c,x,y,w*.34,2.7);
   if(kind==='bambooLamp'&&daylight>.72){
     const lx=left+gardenDecorAtlas.lampCenter.x*scale, ly=top+gardenDecorAtlas.lampCenter.y*scale;
@@ -1133,9 +1134,14 @@ export function actor(c,a,t,state){
   }
   if(type==='dock'){
     const angle=a.side==='left'?-Math.PI/2:a.side==='right'?Math.PI/2:0;
+    const authored=Number.isInteger(a.index)&&dim(pondDockArt);
     c.save();
-    c.translate(x,y-(a.waterTarget?12:a.side==='up'?25:0));
+    c.translate(x,y-(authored?0:a.waterTarget?12:a.side==='up'?25:0));
     c.rotate(angle);
+    if(authored){
+      const width=a.waterTarget?18:26,height=a.waterTarget?22:40;
+      c.drawImage(pondDockArt,-width/2,-height,width,height);
+    }else{
     const dockWidth=a.waterTarget?14:a.upgraded?26:18,dockLength=a.waterTarget?12:a.upgraded?38:29;
     c.fillStyle='#4e4937';c.fillRect(-dockWidth/2+2,2,dockWidth-4,dockLength-4);
     c.fillStyle='#805a3a';c.fillRect(-dockWidth/2,0,dockWidth,dockLength-4);
@@ -1148,9 +1154,10 @@ export function actor(c,a,t,state){
       c.fillStyle='#654632';c.fillRect(postX,dockLength-8,3,8);
       c.fillStyle='#d0a368';c.fillRect(postX,dockLength-8,1,5);
     }
+    }
     c.restore();
     if(a.batches.length){
-      const ax=a.side==='right'?x+23:a.side==='left'?x-23:x+12,ay=a.side==='up'?y-25:y-7;
+      const target=fishingBobber(a),ax=target.x,ay=target.y;
       c.save();c.globalAlpha=.68;
       a.batches.forEach(({kind},i)=>{
         const phase=t+i*2;

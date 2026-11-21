@@ -1,5 +1,36 @@
 # Vườn nhà: bố cục đã duyệt và triển khai V2
 
+## Cập nhật đường đi, trang trí và cầu ao V5
+
+- Dãy luống chính từ số 13 chuyển từ y=280 xuống y=302, cách hàng 26,
+  vẫn 6 cột và giữ nguyên ID. Luống 13–30 được kiểm tra bằng footprint ảnh
+  thực của mọi giống, cả bốn giai đoạn: đất và tán đều ở phía nam vùng đường
+  đá kết thúc tại y=274. Hàng rào vườn tăng thêm bắt đầu y=288 thay vì y=266.
+- Tám ô mở rộng bắt đầu y=375, cách hàng 56 (thay vì y=365, cách 58) để chừa
+  khoảng đệm dưới dãy ruộng. Hai cột, diện tích/sức chứa và lối giữa không đổi.
+  Hàng cuối kết thúc y=591, trước viền trang trí phía nam.
+- Dời điểm hiên nhà về góc bậc hiên trái; chuyển điểm trên rặng cây phía bắc
+  thành góc nghỉ dưới Xưởng và bờ cỏ cạnh ruộng/ao. Cụm chậu, ghế, lu, giỏ và
+  rơm phía tây giữ khoảng đệm với đường đá và công trình. Tên vị trí trong
+  giao diện cập nhật tương ứng; key và quyền sở hữu đồ trang trí giữ nguyên.
+- Atlas trang trí có alpha kết thúc ở hàng 45, không phải hàng 48. Renderer
+  căn chân tại hàng 45 để chân vật và bóng tiếp xúc cùng mặt đất, đồng thời
+  giữ đúng vị trí chữ bảng tên và tâm đèn so với ảnh.
+- Cầu ao nuôi dùng artwork gỗ pixel-art alpha thật: vân ván, cọc gỗ và dây
+  buộc cùng chất liệu với nhà. Đầu cầu hướng vào nước theo từng bờ; ao chính
+  hiển thị 26 × 40, ao mở rộng 18 × 22. Cá hiển thị quanh đích phao trong ao.
+  Giữ cầu hồ công cộng và cơ chế câu/cho ăn/thu hoạch hiện có.
+
+Nguồn `assets/pond-dock-v5-source.png`, runtime `public/pixel/pond-dock-v5.png`
+(52 × 80), xuất bằng `py scripts/normalize-pond-dock-v5.py`. Dùng built-in
+imagegen với nền V2 làm tham chiếu; yêu cầu một cầu gỗ ngắn hướng lên mặt nước,
+ván gỗ mật ong, cọc tròn và dây buộc, ánh sáng trái trên, nền alpha thật, không
+vẽ nước/bờ/cây/người/chữ vào sprite. Giữ bản nguồn và threshold alpha khi xuất.
+
+Ảnh `assets/homestead-road-dock-runtime-v5.png` chụp toàn cảnh, Canvas game
+đang chạy với cây trưởng thành và vùng ao ở 640 × 384. Dữ liệu kiểm tra có
+30 luống, tám ô mở rộng, 13 món trang trí và vật nuôi, không sửa DB người chơi.
+
 ## Cập nhật trải nghiệm V4
 
 - Sân chuồng mở rộng từ 190 lên 220 world units theo chiều ngang, nới ra phía

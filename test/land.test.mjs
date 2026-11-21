@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/game.mjs';
+import {apply, aquatic, fishing, crops, newFarm, newRoom, snapshot} from '../public/game.mjs';
 import {optionalIndex} from '../public/action-input.mjs';
 import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from '../public/pixel/homestead-buildings.mjs';
 import {animalMotion} from '../public/world-motion.mjs';
+import {cropPlacement} from '../public/pixel/crop-layout.mjs';
 
 const now=1000;
 const setup=()=>{
@@ -14,6 +15,16 @@ const setup=()=>{
   return room;
 };
 const act=(world,id,action,index,item,elapsed=0)=>apply(world,id,{action,index,item},now+elapsed);
+test('all growth stages from bed thirteen clear the painted horizontal stone path',()=>{
+  for(let slot=12;slot<30;slot++){
+    const p=plotPosition(mainPlotId(slot));
+    assert.ok(p.y-13>=274,'soil clears the road');
+    for(const kind of Object.keys(crops))for(let stage=0;stage<4;stage++){
+      const crop=cropPlacement({...p,data:{kind,stage},visit:true});
+      assert.ok(crop.y>=274,`${kind} stage ${stage}, bed ${slot+1} clears the road`);
+    }
+  }
+});
 test('even the widest decoration clears every upgraded crop bed, livestock yard and workshop',()=>{
   const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
   const reserved=[mainPond,{x:60,y:304,w:110,h:88},
@@ -68,7 +79,7 @@ test('homestead parcels clear the stone lane and every maximum-level bed stays o
   assert.equal(new Set(areas.map(a=>a.y)).size,4);
   for(const area of areas){
     assert.ok(area.x>=250&&area.x+area.w<=710);
-    assert.ok(area.y>=365&&area.y+area.h<=590);
+    assert.ok(area.y>=375&&area.y+area.h<=596);
     for(let slot=0;slot<30;slot++){
       const p=plotPosition(mainPlotId(slot));
       assert.ok(p.y+13<area.y||p.y-13>area.y+area.h||p.x+20<area.x||p.x-20>area.x+area.w);

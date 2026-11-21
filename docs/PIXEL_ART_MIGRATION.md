@@ -212,3 +212,6 @@ Dedicated workshop art at 110 × 88 world units and a wide two-stall parcel shel
 
 ### Homestead usability V4
 Expanded parcel livestock yards preserve the central lane; animals have larger bounded movement. Repositioned all thirteen decoration spots, removed pond fences and ambient chicken, and removed map exit markers/hit targets while retaining click navigation. See HOMESTEAD_LAYOUT_V2.md and homestead-usability-runtime-v4.png for verification.
+
+### Homestead road and pond dock V5
+Moved beds 13–30 and their fence south of the painted road, adjusted expansion-row spacing, anchored decoration feet to the atlas alpha baseline and relocated northern props onto usable ground. Added an authored transparent pond jetty with shore-facing placement. See HOMESTEAD_LAYOUT_V2.md and homestead-road-dock-runtime-v5.png.

@@ -18,7 +18,7 @@ export function getLand(farm){
 }
 // Saved parcel indexes stay stable; only their world placement changes.
 // Keep all eight parcels east of the stone lane and inside the leafy border.
-export const lotRect=i=>({x:260+(i%2)*246,y:365+Math.floor(i/2)*58,...lotSize});
+export const lotRect=i=>({x:260+(i%2)*246,y:375+Math.floor(i/2)*56,...lotSize});
 // Livestock yards grow outward, preserving the central 56-unit access lane.
 export const coopRect=i=>{const area=lotRect(i);return {...area,x:area.x-(i%2===0?30:0),w:area.w+30};};
 export const plotOffset=12;
@@ -30,7 +30,7 @@ export function plotPosition(index){
   const slot=mainPlotSlot(index);
   if(slot>=0)return slot<plotOffset
     ?{x:255+(slot%3)*45,y:96+Math.floor(slot/3)*40}
-    :{x:255+((slot-plotOffset)%6)*45,y:280+Math.floor((slot-plotOffset)/6)*28};
+    :{x:255+((slot-plotOffset)%6)*45,y:302+Math.floor((slot-plotOffset)/6)*26};
   const lot=lotRect(Math.floor((index-plotOffset)/3));
   return {x:lot.x+34+((index-plotOffset)%3)*61,y:lot.y+27};
 }
@@ -80,14 +80,14 @@ export const gardenDecorItems={
   birdFeeder:{name:'Máng chim',cost:85,width:40},
 };
 export const gardenDecorSpots={
-  house:{name:'Tiểu cảnh sân phía tây',x:82,y:444},
+  house:{name:'Bậc hiên bên trái nhà',x:95,y:184},
   gate:{name:'Bên cổng vườn',x:154,y:599},
   pond:{name:'Bãi cỏ dưới ao',x:600,y:350},
-  marketPath:{name:'Góc vườn phía bắc',x:402,y:65},
+  marketPath:{name:'Góc nghỉ dưới xưởng',x:154,y:445},
   wellside:{name:'Bãi cỏ cạnh giếng',x:157,y:298},
   westMeadow:{name:'Bãi cỏ phía tây',x:88,y:494},
-  barnSide:{name:'Viền cỏ sau ruộng',x:326,y:65},
-  workshopPath:{name:'Sân dưới xưởng',x:154,y:447},
+  barnSide:{name:'Bờ cỏ cạnh ruộng',x:532,y:350},
+  workshopPath:{name:'Sân hoa dưới xưởng',x:82,y:444},
   pondBank:{name:'Góc cỏ cạnh bờ ao',x:682,y:350},
   southPath:{name:'Bên đường xuống vườn',x:155,y:503},
   westLots:{name:'Vườn hoa phía tây',x:93,y:549},

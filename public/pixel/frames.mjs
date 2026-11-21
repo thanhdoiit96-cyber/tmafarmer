@@ -58,6 +58,7 @@ export const aquaticAtlas={
 };
 export const gardenDecorAtlas={
   source:'/pixel/garden-decor-v2.png',width:728,cellWidth:56,cellHeight:48,
+  ground:45,
   frames:{
     flowerPot:[0,0,56,48],bambooLamp:[56,0,56,48],gardenSign:[112,0,56,48],
     bambooBench:[168,0,56,48],wheelbarrow:[224,0,56,48],waterJar:[280,0,56,48],

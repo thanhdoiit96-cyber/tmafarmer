@@ -15,7 +15,7 @@ export {lotRect,plotPosition} from './land.mjs';
 // Three tidy planting columns sit east of the north-south path. The open seam
 // keeps the village approach and expansion routes clear.
 const gardenBeds=(rows,y,step=40)=>[{x:232,y,w:137,h:step*(rows-1)+28}];
-const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),82),...(rows>4?[{x:232,y:266,w:272,h:Math.ceil((rows-4)/2)*28}]:[])];
+const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),82),...(rows>4?[{x:232,y:288,w:272,h:Math.ceil((rows-4)/2)*26}]:[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
   field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:650,y:315,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
