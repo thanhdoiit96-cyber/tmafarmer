@@ -156,6 +156,16 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 - Fog uses slow, stepped pixel wisps with low opacity. It keeps crop, character, and interaction silhouettes readable. Reduced-motion mode freezes the wisps and suppresses rain drift, flashes, splashes, and sparkles.
 - The world already loads `public/pixel/terrain-materials-v3.png` and repeats mirrored material cells. The remaining terrain task is to author distinct pixel transitions at region edges, not to add a second repeating texture system.
 
+## Scene background redesign V1 2026
+
+- Replaced the photoreal `public/canh-quan.webp` landscape atlas and small environment buildings with crisp Canvas pixel art that shares the game’s warm highlights, earthy greens, and teal-brown shadows. The renderer covers banyan and fruit trees, saplings, flowers, bamboo, reeds, lotus, rocks, lanterns, hay, stalls, coops, barns, wells, pavilions, and docks.
+- Reduced decorative clutter around routes and clearings across the field, coop, market, village, lake, and visited-farm scenes. Player-placed tree props now use the same pixel renderer as the static landscape.
+- Grouped the 12 main field plots into three compact columns around the existing open route to the north and south. Plot indexes and crop state stay unchanged; the four-column expansion parcels remain in their existing coordinates.
+- Locked parcels now read as future orchard/meadow space with stone corner markers and short grass. This is background-only and adds no collision blocks.
+- Reworked the workshop’s center into a single workbench with a clear entry aisle. Kept the workshop action point, bedroom interaction, scene bounds, water and exits stable.
+- See `docs/BACKGROUND_REDESIGN_DRAFT_V1.md` for the approved layout rationale and the V1 scope.
+- Verification: `node --test` (94 passed) and `npm.cmd run build`.
+
 ## Farmer action sprites 2026
 
 - Added full-body action atlases for both avatars: watering, applying fertilizer, spraying crops, harvesting, and feeding livestock. Each atlas has four frames per action, four directions, 48 × 64 runtime cells, and real RGBA transparency.

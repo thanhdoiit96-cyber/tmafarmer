@@ -11,7 +11,9 @@ const publicWellHotspot={...publicWell,y:publicWell.y+12,type:'village-well',lab
 const wide={width:720,height:432};
 
 export {lotRect,plotPosition} from './land.mjs';
-const gardenBeds=(rows,y)=>[{x:146,y,w:59,h:43*(rows-1)+36},{x:249,y,w:108,h:43*(rows-1)+36}];
+// Three tidy planting columns sit around the north-south path. The open seam
+// is intentional: it keeps the market and expansion routes clear.
+const gardenBeds=(rows,y)=>[{x:159,y,w:47,h:43*(rows-1)+36},{x:249,y,w:95,h:43*(rows-1)+36}];
 const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),43),...(rows>4?gardenBeds(rows-4,270):[])];
 const basePen={x:82,y:106,w:258,h:95};
 const docks = {
