@@ -4,7 +4,7 @@ import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
 import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
-import {taskStyles} from './tasks.mjs';
+import {taskStyles,taskIcon} from './tasks.mjs';
 import {yardPetPose} from './yard-pets.mjs';
 import {createCoopHerd} from './coop-motion.mjs';
 import {marketShoppers,marketShopperPose} from './market-life.mjs';
@@ -192,7 +192,7 @@ export function createWorld(root, onInteract, landscape) {
         return path;
       })??[];
     }
-    marks=taskMarkers(id,scene.hotspots,tasks).map(({point,task})=>({point,style:taskStyles[task.type]}));
+    marks=taskMarkers(id,scene.hotspots,tasks).map(({point,task})=>({point,style:{...taskStyles[task.type],icon:taskIcon(task)}}));
     const visual=JSON.stringify(scene.ground);
     if(terrainKey!==visual){
       terrainKey=visual;

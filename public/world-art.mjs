@@ -31,6 +31,7 @@ const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
 const gardenFenceArt=load('/pixel/garden-fences-v1.png');
+const careIconArt=load('/pixel/crop-care-icons-v1.png');
 const plotGrassArt=load('/pixel/plot-edge-grass-v2.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
@@ -70,7 +71,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -829,8 +830,6 @@ function plotWeeds(c,{x,y,data}){
     const dx=[-10,11,0][i],dy=[5,8,1][i];
     c.drawImage(plotGrassArt,(i%4)*48,0,48,32,snapPixel(x+dx-8),snapPixel(y+dy-10),16,11);
   }
-  box(c,'#655023',x+7,y+10,20,8,2);
-  c.save();c.fillStyle='#ffe3a0';c.font='700 6px system-ui';c.textAlign='center';c.fillText('Cỏ',x+17,y+16);c.restore();
 }
 function plot(c,a,t,state,paintCrops=true){
   const {x,y,data,index,visit}=a;
@@ -1522,6 +1521,15 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
 }
 
 export function drawTask(c,x,y,style){
+  const frame={harvest:0,pests:1,weeds:2,water:3}[style.icon];
+  if(frame!==undefined&&dim(careIconArt)){
+    c.save();c.imageSmoothingEnabled=false;
+    shade(c,x,y+3,8,2);
+    box(c,'#513e2b',snapPixel(x-9),snapPixel(y-9),18,18,4);
+    box(c,'#fff1cb',snapPixel(x-8),snapPixel(y-8),16,16,3);
+    c.drawImage(careIconArt,frame*32,0,32,32,snapPixel(x-8),snapPixel(y-8),16,16);
+    c.restore();return;
+  }
   shade(c,x,y,6,2.4);
   ellipse(c,'#fff5d9',x,y,6.8,6.8);
   ellipse(c,style.color,x,y,5.5,5.5);

@@ -4,7 +4,7 @@ import {neighborHomes,neighborPage,neighborPageSize,neighborHouseTier} from './n
 import {avatarDetails,avatarKey,ageCharacterAtlases} from './avatar-models.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
-import {farmTasks,taskStyles} from './tasks.mjs';
+import {farmTasks,taskStyles,taskIcon} from './tasks.mjs';
 import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotCount,gardenUpgradeCost,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
@@ -87,7 +87,8 @@ const lotLabel=lot=>lot?.kind==='empty'?'Đất trống':landTypes[lot?.kind]?.n
 const gardenFor=gardenForPlot;
 const plotNumber=index=>gardenFor(index)<0?mainPlotSlot(index)+1:gardenPlotSlot(index)+1;
 const btn=(label,attrs='',kind='',disabled=false)=>'<button type="button" class="btn '+kind+'" '+attrs+(disabled?' disabled':'')+'>'+label+'</button>';
-const act=(label,action,item='',index='',kind='',disabled=false,qty=1)=>btn(label,`data-action="${action}" data-item="${item}" data-index="${index}" data-qty="${qty}"`,kind,disabled);
+const careIcon=key=>'<span class="care-icon care-icon-'+key+'" aria-hidden="true"></span>';
+const act=(label,action,item='',index='',kind='',disabled=false,qty=1)=>btn(({harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]?careIcon({harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]):'')+label.replace(/^(💧|🧴) /u,''),`data-action="${action}" data-item="${item}" data-index="${index}" data-qty="${qty}"`,kind,disabled);
 const nice=(key)=>goods[key].icon+' '+goods[key].name;
 function aquaIllustration(item){
   const kind=goods[item].illustration;
@@ -695,7 +696,7 @@ function renderTasks(farm,now){
   const quick='<section class="quick-garden-tools" aria-label="Thuê người chăm vườn"><h3>Thuê người chăm vườn</h3>'+status+
     (farm.gardenHelperJob&&tab!=='field'?'<div class="actions">'+btn('Xem ở vườn','data-tab="field"','subtle')+'</div>':'')+
     '<div class="actions">'+shortcuts+'</div></section>';
-  const list=tasks.length?'<div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+taskStyles[task.type].mark+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>':
+  const list=tasks.length?'<div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+(taskIcon(task)?careIcon(taskIcon(task)):taskStyles[task.type].mark)+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>':
     '<p>Vườn đang ổn. Bạn có thể dạo hồ hoặc sang chợ.</p>';
   return '<h2>Việc cần làm</h2>'+quick+renderJournal(farm)+list;
 }

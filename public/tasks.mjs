@@ -7,6 +7,11 @@ export const taskStyles={
   ready:{color:'#266746',mark:'✓'},
   care:{color:'#3e6d94',mark:'+'},
 };
+// Keep task priority independent from its visual meaning.
+export function taskIcon(task){
+  if(task.kind!=='plot')return null;
+  return {'Thu hoạch':'harvest','Nhổ cỏ':'weeds','Trị sâu':'pests','Tưới nước':'water'}[task.title]??null;
+}
 export function farmTasks(snapshot,now=snapshot.now){
   const {me,weather}=snapshot, tasks=[];
   const highRisk=weather.wet||snapshot.afterRainUntil>now;

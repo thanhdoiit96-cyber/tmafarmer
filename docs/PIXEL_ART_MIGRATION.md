@@ -266,3 +266,7 @@ Replaced sparse pixel marks with four authored layered grass variants. Four 13�
 ### Farmer ages V1
 
 Added four authored Vietnamese farmer variants (middle-aged and elderly, female and male) alongside the two original young farmers. Each variant includes four-direction idle, walk, hoe, water, fertilize, spray, sow, harvest and feed frames. Gender and age can be selected during registration, village entry or in-game appearance changes. Existing avatar IDs and farm progress remain compatible. See [FARMER_AGES_V1.md](FARMER_AGES_V1.md) for source art, export rules, persistence scope and verification. All 128 tests and the production build pass.
+
+### Crop care icons V1
+
+Replaced generic plot task marks with four authored symbols: harvest basket, caterpillar, rooted weed and water drop. Canvas markers, task cards and crop action buttons share `pixel/crop-care-icons-v1.png` (four 32 × 32 RGBA cells). Priority and gameplay rules remain unchanged; animal/pond tasks retain their existing marks. Removed the redundant ground-level Cỏ text badge while retaining actual weed clusters. Generated transparent master: `assets/crop-care-icons-v1-source.png`; re-export using `py scripts/normalize-crop-care-icons-v1.py`. Integer-zoom preview: `assets/crop-care-icons-v1-preview.png`; actual renderer comparison on the farm: `assets/crop-care-icons-v1-canvas.png` (comparison overlay, not shipped UI). Checked syntax, all 128 tests and production build.
