@@ -9,6 +9,7 @@ import {cropPlacement} from './pixel/crop-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
 import {yardPets,yardPetPose} from './yard-pets.mjs';
 import {fitGateName} from './neighbors-layout.mjs';
+import {ageCharacterAtlases} from './avatar-models.mjs';
 import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
@@ -47,6 +48,7 @@ const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
 const gardenHelperArt=load(gardenHelperAtlas.source);
 const farmerActionArt={female:load(farmerActionAtlas.female),male:load(farmerActionAtlas.male)};
+const ageCharacterArt=Object.fromEntries(Object.entries(ageCharacterAtlases).map(([key,info])=>[key,{base:load(info.base),actions:load(info.actions)}]));
 const surfaces={};
 const floors=['meadow','forest','stone','lakebank','wood','slate','straw','gravel'];
 const terrainColors={meadow:'#7b9759',forest:'#416646',stone:'#b8a07e',lakebank:'#557d66',wood:'#9a643e',slate:'#677769',straw:'#a98a5e',gravel:'#bba278'};
@@ -68,7 +70,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -1041,6 +1043,25 @@ export function drawFishing(c,x,y,dock,{action,elapsed,ambient,bite,caught,reduc
   }
 }
 export function drawPerson(c,x,y,direction,t,{avatar='female',walking=false,walkDistance=0,style='player',action='',elapsed=0,stride=playerStride}={}){
+  const variant=ageCharacterArt[avatar];
+  if(variant&&dim(variant.base)&&dim(variant.actions)){
+    const row=pixelCharacter.directions[direction]??0;
+    const actionType=['water','fertilize','spray','plant'].includes(action)?action:
+      action==='harvest'||action==='collect'?'harvest':action==='feed'?'feed':'';
+    const work=action==='till'||action==='weed',info=ageCharacterAtlases[avatar];
+    const phase=Math.min(3,Math.floor(Math.min(1,elapsed/(actionPoseSeconds[action]??.85))*4));
+    const frame=actionType?farmerActionAtlas[actionType].first+phase:work?info.work+phase:
+      walking?info.walk+walkFrame(walkDistance,stride,4):info.idle+Math.floor(t*3)%4;
+    const scale=style==='player'||style==='peer'?1:.875,unit=pixelStep*scale;
+    const px=snapPixel(x),py=snapPixel(y);
+    shade(c,px,py,10.5*scale,3.5);
+    c.drawImage(actionType?variant.actions:variant.base,frame*48,row*64,48,64,
+      snapPixel(px-24*unit),snapPixel(py-59*unit),48*unit,64*unit);
+    // Fishing/eating retain the existing small props; authored care poses already
+    // contain both hands and their tool, so never add extra arms over them.
+    if(!actionType&&!work)personTool(c,px,py,direction,elapsed,action);
+    return;
+  }
   if(!dim(pixelCharacters)){
     legacyPerson(c,x,y,direction,t,walking,style,walkDistance*playerStride/stride);
     personTool(c,x,y,direction,elapsed,action);

@@ -1,6 +1,7 @@
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {optionalIndex} from './action-input.mjs';
 import {neighborHomes,neighborPage,neighborPageSize,neighborHouseTier} from './neighbors-layout.mjs';
+import {avatarDetails,avatarKey,ageCharacterAtlases} from './avatar-models.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
@@ -1253,8 +1254,9 @@ function showMusic(){
     '<div class="actions">'+btn('Tắt tiếng','data-music-mute aria-pressed="'+music.muted+'"',music.muted?'primary':'subtle')+'</div>');
 }
 function avatarOptions(current){
-  return '<fieldset class="avatar-options"><legend>Nhân vật</legend>'+Object.entries(avatars).map(([key,label])=>
-    '<label><input type="radio" name="avatar" value="'+key+'"'+(avatarOf(current)===key?' checked':'')+'><span class="avatar-portrait" data-avatar="'+key+'" aria-hidden="true"></span><strong>'+label+'</strong></label>').join('')+'</fieldset>';
+  const selected=avatarOf(current),details=avatarDetails[selected];
+  return '<fieldset class="avatar-picker"><legend>Chọn nhân vật</legend><div class="avatar-filters"><label>Giới tính<select data-avatar-gender>'+[['female','Nữ'],['male','Nam']].map(([key,label])=>'<option value="'+key+'"'+(details.gender===key?' selected':'')+'>'+label+'</option>').join('')+'</select></label><label>Độ tuổi<select data-avatar-age>'+[['young','Thanh niên'],['middle','Trung niên'],['elder','Cao tuổi']].map(([key,label])=>'<option value="'+key+'"'+(details.age===key?' selected':'')+'>'+label+'</option>').join('')+'</select></label></div><div class="avatar-options">'+Object.entries(avatarDetails).map(([key,info])=>
+    '<label><input type="radio" name="avatar" value="'+key+'"'+(selected===key?' checked':'')+'><span class="avatar-portrait" data-avatar="'+key+'"'+(ageCharacterAtlases[key]?' style="background-image:url('+ageCharacterAtlases[key].base+');background-size:576px 256px"':'')+' aria-hidden="true"></span><strong>'+info.name+'</strong><small>'+info.label+'</small></label>').join('')+'</div><p class="small">Ngoại hình không thay đổi tốc độ, thể lực hay khả năng chăm vườn. Bạn có thể đổi miễn phí trong lúc chơi.</p></fieldset>';
 }
 function showAvatar(){
   if(!state)return;
@@ -1268,7 +1270,7 @@ function showAccountModal(mode='login') {
   const room=mode==='register'?guestSession()?.code:null;
   const formMode=mode==='register'?'register':'login';
   const title=formMode==='register'?'Tạo tài khoản':'Đăng nhập';
-  modal(title,'<div class="actions">'+btn('Đăng nhập','data-account-mode="login"',''+(formMode==='login'?'primary':'subtle'))+btn('Tạo tài khoản','data-account-mode="register"',''+(formMode==='register'?'primary':'subtle'))+'</div><form data-form="account" data-account-mode="'+formMode+'"><label>Tên tài khoản<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" placeholder="Ví dụ: demo_user"></label><label>Mật khẩu<input type="password" name="password" required minlength="6" maxlength="128" placeholder="Ít nhất 6 ký tự"></label>'+(room?'<p class="small">Làng hiện tại sẽ được gắn vào tài khoản '+room+'</p>':'')+'<button class="btn primary">'+(formMode==='register'?'Tạo tài khoản':'Đăng nhập')+'</button></form><p id="dialog-error" role="status"></p>');
+  modal(title,'<div class="actions">'+btn('Đăng nhập','data-account-mode="login"',''+(formMode==='login'?'primary':'subtle'))+btn('Tạo tài khoản','data-account-mode="register"',''+(formMode==='register'?'primary':'subtle'))+'</div><form data-form="account" data-account-mode="'+formMode+'"><label>Tên tài khoản<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" placeholder="Ví dụ: demo_user"></label><label>Mật khẩu<input type="password" name="password" required minlength="6" maxlength="128" placeholder="Ít nhất 6 ký tự"></label>'+(formMode==='register'?avatarOptions(state?.me.avatar):'')+(room?'<p class="small">Làng hiện tại sẽ được gắn vào tài khoản '+room+'</p>':'')+'<button class="btn primary">'+(formMode==='register'?'Tạo tài khoản':'Đăng nhập')+'</button></form><p id="dialog-error" role="status"></p>');
 }
 function showRoom() {
   if(session) {
@@ -1458,6 +1460,19 @@ panelBody.addEventListener('focusout',event=>{
 });
 window.addEventListener('scroll',hideStockTooltip,{capture:true,passive:true});
 window.addEventListener('resize',hideStockTooltip);
+document.addEventListener('change',event=>{
+  const picker=event.target.closest('.avatar-picker');
+  if(!picker)return;
+  const gender=picker.querySelector('[data-avatar-gender]'),age=picker.querySelector('[data-avatar-age]');
+  if(event.target.matches('[data-avatar-gender],[data-avatar-age]')){
+    const key=avatarKey(gender.value,age.value);
+    const option=[...picker.querySelectorAll('input[name=avatar]')].find(input=>input.value===key);
+    if(option)option.checked=true;
+  }else if(event.target.matches('input[name=avatar]')){
+    const info=avatarDetails[event.target.value];
+    if(info){gender.value=info.gender;age.value=info.age;}
+  }
+});
 document.addEventListener('click',async e=>{
   const el=e.target.closest('button');
   if(!el) return;
@@ -1751,6 +1766,7 @@ dialog.addEventListener('submit',async e=>{
       showToast(method==='register'?'Đã tạo tài khoản thành công.':'Đăng nhập tài khoản thành công.');
       busy=false;
       if(resumeRoom)await refresh(true);
+      if(method==='register')await perform({action:'avatar',item:avatarOf(values.avatar)});
     } catch(error) {
       const inline=$('#dialog-error');
       if(inline) inline.textContent=error.message;

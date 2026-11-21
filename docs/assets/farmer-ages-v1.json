@@ -1,0 +1,80 @@
+{
+  "tool": "built-in imagegen",
+  "runtime": {
+    "cell": [
+      48,
+      64
+    ],
+    "base": [
+      576,
+      256
+    ],
+    "actions": [
+      1152,
+      256
+    ],
+    "footBaseline": 59
+  },
+  "references": [
+    "public/pixel/farmer-male-poses.png",
+    "public/pixel/farmer-walk-v4.png",
+    "public/pixel/farmer-action-atlas-v1-male.png"
+  ],
+  "characters": [
+    {
+      "id": "female-middle",
+      "identity": "Vietnamese middle-aged aunt farmer, kind mature face, dark hair in low bun visible under conical straw hat, muted plum-purple ao ba ba, dark trousers and brown sandals",
+      "basePrompt": "Create a production full-body PIXEL-ART farmer animation atlas matching references. Character identity: Vietnamese middle-aged aunt farmer, kind mature face, dark hair in low bun visible under conical straw hat, muted plum-purple ao ba ba, dark trousers and brown sandals. Match exact established Vietnamese farming game chibi proportions, warm dark outlines, top-left sunlight, muted teal-brown shadows, crisp authored pixel clusters. TRUE TRANSPARENT background, no checkerboard, no shadows, no captions. EXACT TWELVE COLUMNS x FOUR ROWS equally spaced grid (48 complete sprites). Each row ONE direction: row0 front facing camera DOWN, row1 BACK view facing UP, row2 side LEFT, row3 side RIGHT. Each row columns0-3: four subtle IDLE poses, empty hands. Columns4-7: four actual WALK poses, alternating left/right footfall, feet together between steps, natural arm swing. Columns8-11: four HOEING poses matching the hoe reference: ready, lift hoe high, swing down, ground contact/recovery. Keep tool in normal hands with only two arms, no duplicate arms, no detached tools. Whole body and full tool silhouette INSIDE every cell with consistent ground baseline, body scale and identity. Same outfit in all48 sprites. No walking while idle. Do not omit rows or columns. This is an evenly spaced technical sprite sheet, not a collage. Runtime cells will be48x64 so readable simple fine detail rather than blur.",
+      "actionsPrompt": "Create a production action sprite atlas. FIRST reference defines exact character identity, clothes, age and face: Vietnamese middle-aged aunt farmer, kind mature face, dark hair in low bun visible under conical straw hat, muted plum-purple ao ba ba, dark trousers and brown sandals. SECOND reference defines EXACT atlas layout and action poses, replace the young male in every cell with the FIRST reference character. Preserve SECOND image grid: EXACT TWENTY-FOUR columns FOUR rows, total96 full-body sprites. ROWS down/front, up/back, left, right respectively. Columns0-3 WATERING with little watering can; 4-7 FERTILIZING with seed/fertilizer bag and scattering grains; 8-11 SPRAYING with hand sprayer and wand; 12-15 SOWING seeds from small bag; 16-19 HARVESTING bending to pick into basket; 20-23 FEEDING animals scattering feed from wicker basket. Four clear continuous phases per action: ready, reach/tilt, active tool use/bend, recover. Same face, silhouette, costume and feet baseline across all cells; preserve exact direction per row. Each character is drawn complete with ONLY TWO ARMS, both old arm positions must be redrawn when hands move, no extra limbs, no detached tools. Tool must remain naturally in hand, no unrelated hoe in these six actions. Crisp detailed cozy Vietnamese pixel art matching references, warm outlines upper-left highlights. True transparent background, NO shadow, NO text, NO labels, NO background. Generous gutters; entire hands, hats, tools fit within each equal cell. Important technical atlas: 24 complete sprites in EACH of4 rows, no missing or merged cells."
+    },
+    {
+      "id": "male-middle",
+      "identity": "Vietnamese middle-aged uncle farmer, kind mature face, short black hair, subtle dark moustache, conical straw hat, muted indigo-teal ao ba ba, dark brown trousers, brown sandals",
+      "basePrompt": "Create a production full-body PIXEL-ART farmer animation atlas matching references. Character identity: Vietnamese middle-aged uncle farmer, kind mature face, short black hair, subtle dark moustache, conical straw hat, muted indigo-teal ao ba ba, dark brown trousers, brown sandals. Match exact established Vietnamese farming game chibi proportions, warm dark outlines, top-left sunlight, muted teal-brown shadows, crisp authored pixel clusters. TRUE TRANSPARENT background, no checkerboard, no shadows, no captions. EXACT TWELVE COLUMNS x FOUR ROWS equally spaced grid (48 complete sprites). Each row ONE direction: row0 front facing camera DOWN, row1 BACK view facing UP, row2 side LEFT, row3 side RIGHT. Each row columns0-3: four subtle IDLE poses, empty hands. Columns4-7: four actual WALK poses, alternating left/right footfall, feet together between steps, natural arm swing. Columns8-11: four HOEING poses matching the hoe reference: ready, lift hoe high, swing down, ground contact/recovery. Keep tool in normal hands with only two arms, no duplicate arms, no detached tools. Whole body and full tool silhouette INSIDE every cell with consistent ground baseline, body scale and identity. Same outfit in all48 sprites. No walking while idle. Do not omit rows or columns. This is an evenly spaced technical sprite sheet, not a collage. Runtime cells will be48x64 so readable simple fine detail rather than blur.",
+      "actionsPrompt": "Create a production action sprite atlas. FIRST reference defines exact character identity, clothes, age and face: Vietnamese middle-aged uncle farmer, kind mature face, short black hair, subtle dark moustache, conical straw hat, muted indigo-teal ao ba ba, dark brown trousers, brown sandals. SECOND reference defines EXACT atlas layout and action poses, replace the young male in every cell with the FIRST reference character. Preserve SECOND image grid: EXACT TWENTY-FOUR columns FOUR rows, total96 full-body sprites. ROWS down/front, up/back, left, right respectively. Columns0-3 WATERING with little watering can; 4-7 FERTILIZING with seed/fertilizer bag and scattering grains; 8-11 SPRAYING with hand sprayer and wand; 12-15 SOWING seeds from small bag; 16-19 HARVESTING bending to pick into basket; 20-23 FEEDING animals scattering feed from wicker basket. Four clear continuous phases per action: ready, reach/tilt, active tool use/bend, recover. Same face, silhouette, costume and feet baseline across all cells; preserve exact direction per row. Each character is drawn complete with ONLY TWO ARMS, both old arm positions must be redrawn when hands move, no extra limbs, no detached tools. Tool must remain naturally in hand, no unrelated hoe in these six actions. Crisp detailed cozy Vietnamese pixel art matching references, warm outlines upper-left highlights. True transparent background, NO shadow, NO text, NO labels, NO background. Generous gutters; entire hands, hats, tools fit within each equal cell. Important technical atlas: 24 complete sprites in EACH of4 rows, no missing or merged cells."
+    },
+    {
+      "id": "female-elder",
+      "identity": "Vietnamese elderly grandmother farmer, warm older face with gentle eye creases, silver-grey hair in low bun visible under conical straw hat, muted indigo-purple ao ba ba, dark trousers, simple brown sandals. Active and able farmer, no cane",
+      "basePrompt": "Create a production full-body PIXEL-ART farmer animation atlas matching references. Character identity: Vietnamese elderly grandmother farmer, warm older face with gentle eye creases, silver-grey hair in low bun visible under conical straw hat, muted indigo-purple ao ba ba, dark trousers, simple brown sandals. Active and able farmer, no cane. Match exact established Vietnamese farming game chibi proportions, warm dark outlines, top-left sunlight, muted teal-brown shadows, crisp authored pixel clusters. TRUE TRANSPARENT background, no checkerboard, no shadows, no captions. EXACT TWELVE COLUMNS x FOUR ROWS equally spaced grid (48 complete sprites). Each row ONE direction: row0 front facing camera DOWN, row1 BACK view facing UP, row2 side LEFT, row3 side RIGHT. Each row columns0-3: four subtle IDLE poses, empty hands. Columns4-7: four actual WALK poses, alternating left/right footfall, feet together between steps, natural arm swing. Columns8-11: four HOEING poses matching the hoe reference: ready, lift hoe high, swing down, ground contact/recovery. Keep tool in normal hands with only two arms, no duplicate arms, no detached tools. Whole body and full tool silhouette INSIDE every cell with consistent ground baseline, body scale and identity. Same outfit in all48 sprites. No walking while idle. Do not omit rows or columns. This is an evenly spaced technical sprite sheet, not a collage. Runtime cells will be48x64 so readable simple fine detail rather than blur.",
+      "actionsPrompt": "Create a production action sprite atlas. FIRST reference defines exact character identity, clothes, age and face: Vietnamese elderly grandmother farmer, warm older face with gentle eye creases, silver-grey hair in low bun visible under conical straw hat, muted indigo-purple ao ba ba, dark trousers, simple brown sandals. Active and able farmer, no cane. SECOND reference defines EXACT atlas layout and action poses, replace the young male in every cell with the FIRST reference character. Preserve SECOND image grid: EXACT TWENTY-FOUR columns FOUR rows, total96 full-body sprites. ROWS down/front, up/back, left, right respectively. Columns0-3 WATERING with little watering can; 4-7 FERTILIZING with seed/fertilizer bag and scattering grains; 8-11 SPRAYING with hand sprayer and wand; 12-15 SOWING seeds from small bag; 16-19 HARVESTING bending to pick into basket; 20-23 FEEDING animals scattering feed from wicker basket. Four clear continuous phases per action: ready, reach/tilt, active tool use/bend, recover. Same face, silhouette, costume and feet baseline across all cells; preserve exact direction per row. Each character is drawn complete with ONLY TWO ARMS, both old arm positions must be redrawn when hands move, no extra limbs, no detached tools. Tool must remain naturally in hand, no unrelated hoe in these six actions. Crisp detailed cozy Vietnamese pixel art matching references, warm outlines upper-left highlights. True transparent background, NO shadow, NO text, NO labels, NO background. Generous gutters; entire hands, hats, tools fit within each equal cell. Important technical atlas: 24 complete sprites in EACH of4 rows, no missing or merged cells."
+    },
+    {
+      "id": "male-elder",
+      "identity": "Vietnamese elderly grandfather farmer, warm older face with gentle creases, silver sideburns and a short grey moustache, conical straw hat, warm umber-brown ao ba ba, dark trousers, brown sandals. Active and able farmer, no cane",
+      "basePrompt": "Create a production full-body PIXEL-ART farmer animation atlas matching references. Character identity: Vietnamese elderly grandfather farmer, warm older face with gentle creases, silver sideburns and a short grey moustache, conical straw hat, warm umber-brown ao ba ba, dark trousers, brown sandals. Active and able farmer, no cane. Match exact established Vietnamese farming game chibi proportions, warm dark outlines, top-left sunlight, muted teal-brown shadows, crisp authored pixel clusters. TRUE TRANSPARENT background, no checkerboard, no shadows, no captions. EXACT TWELVE COLUMNS x FOUR ROWS equally spaced grid (48 complete sprites). Each row ONE direction: row0 front facing camera DOWN, row1 BACK view facing UP, row2 side LEFT, row3 side RIGHT. Each row columns0-3: four subtle IDLE poses, empty hands. Columns4-7: four actual WALK poses, alternating left/right footfall, feet together between steps, natural arm swing. Columns8-11: four HOEING poses matching the hoe reference: ready, lift hoe high, swing down, ground contact/recovery. Keep tool in normal hands with only two arms, no duplicate arms, no detached tools. Whole body and full tool silhouette INSIDE every cell with consistent ground baseline, body scale and identity. Same outfit in all48 sprites. No walking while idle. Do not omit rows or columns. This is an evenly spaced technical sprite sheet, not a collage. Runtime cells will be48x64 so readable simple fine detail rather than blur.",
+      "actionsPrompt": "Create full-body pixel-art action atlas of elderly Vietnamese grandfather farmer in FIRST reference: grey moustache and sideburns, warm brown ao ba ba, dark trousers, straw conical hat, brown sandals. Preserve exact older face and outfit. SECOND reference defines exact24 columns4rows grid, replace every young man with this grandfather. EXACT 24 sprites EACH row, four rows down/front, up/back, left, right. Column groups of FOUR frames:0-3 watering can;4-7 fertilizer bag scattering;8-11 spray hand pump and wand;12-15 seed sowing;16-19 bending to harvest into basket;20-23 feeding animals from basket. Continuous four-phase ready/reach/use/recover motions, naturally redrawn arms, ONLY TWO arms, complete full-body silhouette not overlay tools over idle hands. No extra hoe, no cane. Same body scale and feet baseline in every cell, tools and hat contained with transparent separation. Match reference Vietnamese cozy chibi pixel-art exactly, warm dark outlines, top-left sunlight. True transparent background, no text, no labels, no shadows or ground. Technical equally spaced 24x4 sprite atlas, no missing cells."
+    }
+  ],
+  "normalization": "scripts/normalize-farmer-ages-v1.py",
+  "femaleElderActionHolds": {
+    "sourceColumns": 22,
+    "outputColumns": 24,
+    "mapping": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      10,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      19,
+      20,
+      21
+    ]
+  }
+}

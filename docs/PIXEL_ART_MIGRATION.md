@@ -262,3 +262,7 @@ Replaced thin procedural rails with authored honey-wood, warm ivory and bamboo m
 
 ### Crop-bed grass V2
 Replaced sparse pixel marks with four authored layered grass variants. Four 13–15-unit clusters decorate each bed's corners with stable variation and mirroring, drawn before crops to keep produce readable. Empty plots and mature crops were inspected on the native Canvas. Source, exact prompt, export script and runtime screenshots are recorded in `assets/plot-edge-grass-v2.json`. All 122 tests and the production build pass.
+
+### Farmer ages V1
+
+Added four authored Vietnamese farmer variants (middle-aged and elderly, female and male) alongside the two original young farmers. Each variant includes four-direction idle, walk, hoe, water, fertilize, spray, sow, harvest and feed frames. Gender and age can be selected during registration, village entry or in-game appearance changes. Existing avatar IDs and farm progress remain compatible. See [FARMER_AGES_V1.md](FARMER_AGES_V1.md) for source art, export rules, persistence scope and verification. All 128 tests and the production build pass.

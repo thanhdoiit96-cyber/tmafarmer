@@ -85,6 +85,9 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal((await send(b,'avatar',{item:'female'})).state.me.avatar,'female');
   assert.equal((await send(b,'avatar',{item:'other'})).status,400);
   assert.equal((await enter(a,'lake')).players[0].avatar,'female');
+  assert.equal((await send(b,'avatar',{item:'male-elder'})).state.me.avatar,'male-elder');
+  assert.equal((await enter(a,'lake')).players[0].avatar,'male-elder');
+  assert.equal((await send(b,'avatar',{item:'female'})).state.me.avatar,'female');
   assert.equal((await enter(c,'market')).players.length,0);
   assert.equal((await api('chat',{area:'lake',text:'Chào hồ',nonce:crypto.randomUUID()},c)).status,409);
   const message={area:'lake',text:'  Chào  hồ làng! ',nonce:crypto.randomUUID()};

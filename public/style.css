@@ -189,6 +189,10 @@ dialog p{margin:9px 0}
 dialog label{display:grid;gap:5px;font-size:12px;font-weight:700;margin:10px 0}
 dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px;padding:10px;background:#fffcf1;font-size:14px}
 .avatar-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;border:0;margin:12px 0;padding:0}
+.avatar-picker{border:0;padding:0;min-width:0;margin:12px 0}
+.avatar-picker>legend{font-weight:800;color:#31503a}
+.avatar-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.avatar-picker small{display:block;font-size:11px;line-height:1.4}
 .avatar-options legend{color:#31503a;font-size:12px;font-weight:800;margin-bottom:6px}
 .avatar-options label{position:relative;place-items:center;margin:0;padding:4px 7px 6px;border:1px solid #d8d6bc;border-radius:9px;background:#f5efdf;color:#375742;cursor:pointer}
 .avatar-options label:has(:checked){background:#e6eedb;border-color:#709668}
