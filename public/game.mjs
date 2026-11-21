@@ -44,7 +44,7 @@ export const goods = {
   tomatoSeed:{name:'Giống cà chua',icon:'🍅',buy:24}, sunflowerSeed:{name:'Giống hướng dương',icon:'🌻',buy:28},
   strawberrySeed:{name:'Giống dâu chất lượng cao',icon:'🍓',buy:38}, grapeSeed:{name:'Giống nho chất lượng cao',icon:'🍇',buy:55},
   teaSeed:{name:'Giống trà thượng hạng',icon:'🍵',buy:72},
-  truffleSeed:{name:'Giống nấm truffle',icon:'🍄',buy:180},
+  truffleSeed:{name:'Giống nấm truffle',icon:'🍄',buy:85},
   coffeeSeed:{name:'Giống cà phê',icon:'☕',buy:95},
   lotusSeed:{name:'Giống sen',icon:'🪷',buy:125},
   dragonfruitSeed:{name:'Giống thanh long',icon:'🐉',buy:160},
@@ -59,7 +59,7 @@ export const goods = {
   egg:{name:'Trứng',icon:'🥚',sell:11}, duckEgg:{name:'Trứng vịt',icon:'🪺',sell:16},
   milk:{name:'Sữa',icon:'🥛',sell:22},
   goatMilk:{name:'Sữa dê',icon:'🍼',sell:30}, wool:{name:'Len cừu',icon:'🧶',sell:42},
-  pork:{name:'Thịt lợn',icon:'🍖',sell:32}, truffle:{name:'Nấm truffle',icon:'🍄',sell:95},
+  pork:{name:'Thịt lợn',icon:'🍖',sell:32}, truffle:{name:'Nấm truffle',icon:'🍄',sell:60},
   sweetPotato:{name:'Khoai lang',icon:'🍠',sell:12}, pumpkin:{name:'Bí đỏ',icon:'🎃',sell:21},
   peanut:{name:'Đậu phộng',icon:'🥜',sell:29}, gooseEgg:{name:'Trứng ngỗng',icon:'🥚',sell:26},
   rabbitMeat:{name:'Thịt thỏ',icon:'🍖',sell:38},
@@ -110,7 +110,7 @@ export const crops = {
   strawberry:{seed:'strawberrySeed',time:45*60,yield:5,workshop:1,quality:true,weather:'cool'},
   grape:{seed:'grapeSeed',time:60*60,yield:5,workshop:2,quality:true,weather:'sun'},
   tea:{seed:'teaSeed',time:75*60,yield:6,workshop:3,quality:true,weather:'cool'},
-  truffle:{seed:'truffleSeed',time:120*60,yield:3,workshop:3,xp:350,quality:true,weather:'shade'},
+  truffle:{seed:'truffleSeed',time:120*60,yield:3,workshop:3,xp:2200,quality:true,weather:'shade'},
   sweetPotato:{seed:'sweetPotatoSeed',time:22*60,yield:4,xp:18,weather:'tropical'},
   pumpkin:{seed:'pumpkinSeed',time:40*60,yield:4,xp:60,weather:'sun'},
   peanut:{seed:'peanutSeed',time:50*60,yield:5,workshop:1,xp:100,weather:'tropical'},
@@ -348,11 +348,19 @@ function eachWeather(room, from, to, visit) {
 }
 export const cropGoal=plot=>plot.goal??crops[plot.kind].legacy??crops[plot.kind].time;
 export const cropStage=plot=>Math.max(0,Math.min(3,Math.floor(4*(plot.progress??0)/cropGoal(plot))));
+export const weedWeatherRate={sun:.14,rain:.46,cloud:.18,heat:.04,wind:.09,fog:.28,storm:.36};
+export const cropHazard=plot=>plot?.hazard==='weeds'?'weeds':'pests';
+function plantedHazard(farm,index,now,weather){
+  const key=Array.from(farm.id).reduce((sum,char)=>Math.imul(sum,31)+char.codePointAt(0),0);
+  const roll=((Math.imul(now,31)^Math.imul(index+1,2654435761)^key)>>>0)%10000/10000;
+  const weeds=weedWeatherRate[weather.id]??.14;
+  return roll<weeds/(weeds+weather.pests)?'weeds':'pests';
+}
 export const growthGoal=pen=>pen.growGoal??animals[pen.kind].legacy??animals[pen.kind].grow;
 export const productGoal=pen=>pen.productGoal??animals[pen.kind].legacy??animals[pen.kind].time;
 export function projectPlot(room, plot, now) {
   if (!plot) return null;
-  const result={...plot};
+  const result={...plot,weeds:plot.weeds??0};
   const weatherExposure={...(plot.weatherExposure??{})};
   result.weatherExposure=weatherExposure;
   if (result.progress>=cropGoal(plot)) return result;
@@ -362,26 +370,31 @@ export function projectPlot(room, plot, now) {
     const dampUntil=afterRainUntil(room,from);
     for(let t=from;t<to&&result.progress<goal;) {
       const wet=w.wet||t<plot.wetUntil;
-      const exposed=t>=(plot.protectedUntil??0);
+      const weeds=cropHazard(plot)==='weeds';
+      const protection=weeds?(plot.weedProtectedUntil??0):(plot.protectedUntil??0);
+      const exposed=t>=protection;
       const damp=t<dampUntil;
-      const pestRate=(damp?Math.max(.44,w.pests):w.pests)*120/goal;
+      const baseRisk=weeds?(weedWeatherRate[w.id]??.14):w.pests;
+      const pestRate=(damp?Math.max(.44,baseRisk):baseRisk)*120/goal;
+      const pressure=weeds?result.weeds:result.pests;
       const effect=cropWeatherEffect(plot.kind,w.id);
-      const rate=w.crop*effect.growth*(wet?1.38:dryGrowthFactor)*(result.pests>=40?.68:1)*(plot.fertilized?1.3:1);
-      const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<plot.protectedUntil?plot.protectedUntil:to,damp?dampUntil:to);
-      const pestThreshold=exposed&&result.pests<40?(40-result.pests)/pestRate:Infinity;
+      const rate=w.crop*effect.growth*(wet?1.38:dryGrowthFactor)*(pressure>=40?.68:1)*(plot.fertilized?1.3:1);
+      const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<protection?protection:to,damp?dampUntil:to);
+      const pestThreshold=exposed&&pressure<40?(40-pressure)/pestRate:Infinity;
       const duration=Math.min(end-t,pestThreshold,(goal-result.progress)/rate);
       if(duration<=1e-8) {
-        if(pestThreshold<=1e-8) result.pests=40;
+        if(pestThreshold<=1e-8) result[weeds?'weeds':'pests']=40;
         else result.progress=goal;
         continue;
       }
       weatherExposure[w.id]=(weatherExposure[w.id]??0)+duration;
       result.progress=duration===(goal-result.progress)/rate?goal:result.progress+duration*rate;
-      if(exposed) result.pests=duration===pestThreshold?40:Math.min(90,result.pests+duration*pestRate);
+      if(exposed) result[weeds?'weeds':'pests']=duration===pestThreshold?40:Math.min(90,pressure+duration*pestRate);
       t+=duration;
     }
   });
   result.pestPeak=Math.max(plot.pestPeak??0,result.pests);
+  result.weedPeak=Math.max(plot.weedPeak??0,result.weeds);
   result.at=now;
   return result;
 }
@@ -606,7 +619,7 @@ export function cropPotentialYield(plot){
 }
 export function cropYield(plot) {
   const normal=cropPotentialYield(plot);
-  const damage=Math.max(plot.pestPeak??0,plot.pests??0);
+  const damage=Math.max(plot.pestPeak??0,plot.pests??0,plot.weedPeak??0,plot.weeds??0);
   const lost=damage>=70?Math.ceil(normal*.60):damage>=40?Math.ceil(normal*.35):damage>=20?1:0;
   return Math.max(1,normal-lost);
 }
@@ -615,6 +628,8 @@ function plotWorkBlock(action,plot,weather,time){
   const ripe=plot.progress>=cropGoal(plot);
   if(action==='harvest')return ripe?'':'Cây chưa đến lúc thu hoạch.';
   if(ripe)return 'Cây đã chín. Bạn có thể thu hoạch.';
+  if(action==='weed'&&(cropHazard(plot)!=='weeds'||!(plot.weeds>0)))return 'Ô này không có cỏ dại cần nhổ.';
+  if(action==='spray'&&cropHazard(plot)==='weeds')return 'Hãy nhổ cỏ dại; thuốc trừ sâu không xử lý được cỏ.';
   if(action==='water'&&(plot.wetUntil>time||weather.wet))return 'Đất đang đủ ẩm.';
   return '';
 }
@@ -823,7 +838,7 @@ function wealthRanking(room){
   }).sort((a,b)=>b.total-a.total||b.coins-a.coins||a.id.localeCompare(b.id));
 }
 export const dayGoals=[
-  {id:'care',label:'Chăm cây',actions:['till','plant','water','fertilize','spray'],area:'field'},
+  {id:'care',label:'Chăm cây',actions:['till','plant','water','fertilize','spray','weed'],area:'field'},
   {id:'gather',label:'Thu hoạch hay lấy sản phẩm',actions:['harvest','collect','aquaHarvest'],panel:'tasks'},
   {id:'market',label:'Bán nông sản hoặc giao đơn',actions:['sell','order'],area:'market'},
 ];
@@ -870,7 +885,7 @@ export function snapshot(room, farm, time) {
       const items=candidates(f);
       const publicPlot=i=>{
         const p=projectPlot(room,plotAt(f,i),time);
-        return p?{kind:p.kind,stage:cropStage(p),ripe:p.progress>=cropGoal(p),available:p.progress>=cropGoal(p)&&cropYield(p)-(p.picked||0)>=3}:null;
+        return p?{kind:p.kind,stage:cropStage(p),weeds:p.weeds??0,hazard:cropHazard(p),ripe:p.progress>=cropGoal(p),available:p.progress>=cropGoal(p)&&cropYield(p)-(p.picked||0)>=3}:null;
       };
       const indexes=cropIndexes(f);
       const plots=f.plots.map((_,slot)=>publicPlot(mainPlotId(slot)));
@@ -1332,7 +1347,7 @@ function applyAction(room,id,input,now,catchRoll){
     }
     return takeFrom(room,farm,other,product,source==='garden'?'vườn':'kho',now,limits);
   }
-  check(['till','plant','water','fertilize','spray','harvest'].includes(action),'Thao tác không hợp lệ.');
+  check(['till','plant','water','fertilize','spray','weed','harvest'].includes(action),'Thao tác không hợp lệ.');
   check(Number.isInteger(index)&&cropIndexes(farm).includes(index),'Ô đất không tồn tại.');
   const plot=projectPlot(room,plotAt(farm,index),now);
   if(action==='till'){
@@ -1346,7 +1361,7 @@ function applyAction(room,id,input,now,catchRoll){
     check(!cropRequirement(farm,item),cropRequirement(farm,item));
     check(now<compactAt(room,farm,index,now),'Đất đã chai. Hãy cuốc đất trước khi gieo.');
     use(farm,crops[item].seed);
-    savePlot(farm,index,{kind:item,goal:crops[item].time,progress:0,pests:0,at:now,plantedAt:now,wetUntil:0,protectedUntil:0,fertilized:false,picked:0});
+    savePlot(farm,index,{kind:item,goal:crops[item].time,progress:0,pests:0,weeds:0,hazard:plantedHazard(farm,index,now,weatherAt(room,now)),at:now,plantedAt:now,wetUntil:0,protectedUntil:0,weedProtectedUntil:0,fertilized:false,picked:0});
     return 'Đã gieo '+goods[item].name.toLowerCase()+'.';
   }
   const blocked=plotWorkBlock(action,plot,action==='water'?weatherAt(room,now):null,now);
@@ -1368,7 +1383,10 @@ function applyAction(room,id,input,now,catchRoll){
     waterPlot(farm,index,plot,now);
     return 'Đã tưới nước.';
   }
-  if(action==='fertilize') {
+  if(action==='weed'){
+    plot.weedPeak=Math.max(plot.weedPeak??0,plot.weeds);
+    plot.weeds=0;plot.weedProtectedUntil=now+20*60;
+  } else if(action==='fertilize') {
     check(!plot.fertilized,'Bạn đã bón phân cho cây này.');
     use(farm,'fertilizer');
     plot.fertilized=true;
@@ -1379,5 +1397,5 @@ function applyAction(room,id,input,now,catchRoll){
     plot.pests=0; plot.protectedUntil=now+Math.ceil(cropGoal(plot)*1.1);
   }
   savePlot(farm,index,plot);
-  return {fertilize:'Đã bón phân.',spray:'Đã xử lý sâu bệnh.'}[action];
+  return {fertilize:'Đã bón phân.',spray:'Đã xử lý sâu bệnh.',weed:'Đã nhổ cỏ. Cỏ không mọc lại trong 20 phút; tổn thất đã xảy ra vẫn được giữ.'}[action];
 }

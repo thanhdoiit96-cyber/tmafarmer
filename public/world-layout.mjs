@@ -99,7 +99,7 @@ Object.assign(maps.visit,{
   paths:maps.field.paths,trees:maps.field.trees,water:maps.field.water,
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
-export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','harvest']);
+export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','weed','harvest']);
 export const needsPlayerLocation=action=>plotWorkActions.has(action)||['drink','eat','rest'].includes(action);
 export function taskMarkers(sceneId,hotspots,tasks){
   if(sceneId!=='field'&&sceneId!=='coop')return [];

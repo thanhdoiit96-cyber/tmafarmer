@@ -819,6 +819,17 @@ function plotEdgeGrass(c,{x,y,index=0}){
   if(seed(index,53)>.25)grassClump(c,x-21,y+5+seed(index,97)*5,seed(index,31));
   if(seed(index,71)>.62)grassClump(c,x-13+seed(index,89)*25,y+14,seed(index,47));
 }
+function plotWeeds(c,{x,y,data}){
+  const pressure=data?.weeds??0;
+  if(pressure<5||!dim(plotGrassArt))return;
+  const count=pressure>=40?3:pressure>=15?2:1;
+  for(let i=0;i<count;i++){
+    const dx=[-10,11,0][i],dy=[5,8,1][i];
+    c.drawImage(plotGrassArt,(i%4)*48,0,48,32,snapPixel(x+dx-8),snapPixel(y+dy-10),16,11);
+  }
+  box(c,'#655023',x+7,y+10,20,8,2);
+  c.save();c.fillStyle='#ffe3a0';c.font='700 6px system-ui';c.textAlign='center';c.fillText('Cỏ',x+17,y+16);c.restore();
+}
 function plot(c,a,t,state,paintCrops=true){
   const {x,y,data,index,visit}=a;
   const wet=data&&!visit&&(data.wetUntil>state.now||state.weather.wet);
@@ -837,6 +848,7 @@ function plot(c,a,t,state,paintCrops=true){
     }
     c.restore();
     plotEdgeGrass(c,a);
+    plotWeeds(c,a);
     if(!paintCrops||!data)return;
   }
   shade(c,x,y+9,27,5);
@@ -846,6 +858,7 @@ function plot(c,a,t,state,paintCrops=true){
   dirt.addColorStop(1,compact?'#927858':wet?'#73533e':'#9e7046');
   box(c,dirt,x-22,y-13,44,23,4);
   plotEdgeGrass(c,a);
+  plotWeeds(c,a);
   if(compact){
     line(c,'#6e543b',1,[[x-21,y-2],[x-11,y-6],[x-5,y-1],[x+1,y-4],[x+9,y+1],[x+20,y-6]]);
     line(c,'#7a5f44',.8,[[x-11,y-6],[x-12,y-11]]);

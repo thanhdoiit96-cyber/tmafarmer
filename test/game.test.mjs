@@ -111,7 +111,7 @@ test('farm progression shows real XP thresholds and upgrades never spend XP',()=
   const room=world(), farm=room.farms.a;
   assert.equal(farmProgress(farm).rank.name,'Tân nông');
   assert.equal(farmProgress(farm).next.xp,18);
-  assert.deepEqual(xpUnlocks.filter(unlock=>unlock.xp<=350).map(unlock=>unlock.xp),[18,20,25,40,50,60,70,90,100,100,100,130,160,170,180,260,350]);
+  assert.deepEqual(xpUnlocks.filter(unlock=>unlock.xp<=350).map(unlock=>unlock.xp),[18,20,25,40,50,60,70,90,100,100,100,130,160,170,180,260]);
   farm.coins=150;
   farm.xp=40;
   assert.match(action(room,'a','upgrade',{item:'workshop'}),/\+10 XP/);
@@ -158,6 +158,7 @@ test('new crops can be bought, grown, harvested and saved as seed at their miles
     action(room,'a','buy',{item:seed});
     assert.equal(farm.coins,500-goods[seed].buy);
     action(room,'a','plant',{item:kind,index:0});
+    farm.plots[0].hazard='pests'; // This scenario exercises preventive pesticide care.
     action(room,'a','water',{index:0});
     action(room,'a','spray',{index:0});
     assert.throws(()=>action(room,'a','harvest',{index:0},10),/chưa đến/);
@@ -329,11 +330,11 @@ test('pork orders accept meat and the market locks truffle seed behind workshop 
   assert.equal(farm.inventory.truffle,3);
   assert.throws(()=>action(r,'a','buy',{item:'truffleSeed'}),/Xưởng máy cấp 3/);
   farm.workshop=3;
-  assert.throws(()=>action(r,'a','buy',{item:'truffleSeed'}),/350 XP/);
-  farm.xp=350;
+  assert.throws(()=>action(r,'a','buy',{item:'truffleSeed'}),/2200 XP/);
+  farm.xp=2200;
   const coins=farm.coins;
   action(r,'a','buy',{item:'truffleSeed'});
-  assert.equal(farm.coins,coins-180);
+  assert.equal(farm.coins,coins-85);
   action(r,'a','plant',{item:'truffle',index:0});
   assert.equal(farm.plots[0].kind,'truffle');
 });

@@ -16,6 +16,7 @@ export function farmTasks(snapshot,now=snapshot.now){
     const label=slot>=0?'Ô '+(slot+1):'Vườn ô '+(gardenForPlot(index)+1)+' · luống '+(gardenPlotSlot(index)+1);
     const task=!plot?(me.soilCompactsAt?.[index]<=now?['care','Cuốc đất']:null):
       plot.progress>=cropGoal(plot)?['ready','Thu hoạch']:
+      (plot.weeds??0)>=(highRisk?12:15)?['urgent','Nhổ cỏ']:
       plot.pests>=(highRisk?12:15)&&plot.protectedUntil<=now?['urgent','Trị sâu']:
       !weather.wet&&plot.wetUntil<=now?['care','Tưới nước']:null;
     if(task)tasks.push({type:task[0],title:task[1],label:plot?label+' · '+goods[plot.kind].name:label,kind:'plot',index});

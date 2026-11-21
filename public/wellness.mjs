@@ -4,7 +4,7 @@ export const vitals = {
   stamina:{label:'Thể lực',icon:'bolt',gain:75,action:'rest'},
 };
 const costs={
-  till:[2,1,5],plant:[3,2,5], water:[2,1,3], fertilize:[2,2,4], spray:[2,2,4], harvest:[2,2,5],
+  till:[2,1,5],weed:[2,1,5],plant:[3,2,5], water:[2,1,3], fertilize:[2,2,4], spray:[2,2,4], harvest:[2,2,5],
   feed:[2,2,4],collect:[2,2,4],aquaStock:[3,3,6],aquaFeed:[2,2,4],aquaHarvest:[4,4,9],
   cast:[1,1,3],reel:[1,1,2],steal:[3,3,7],buildLand:[4,4,9],upgrade:[4,4,9],decorate:[2,2,4],
 };

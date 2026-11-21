@@ -15,7 +15,7 @@ const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLe
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
 const distance=(p,x,y)=>Math.hypot(p.x-x,p.y-y);
 const effectStyle={
-  till:['#b68756','#e2b983'],water:['#65b9d1','#abe1e7'],plant:['#5eac61','#d1e4a0'],fertilize:['#dcaf56','#f6d795'],
+  till:['#b68756','#e2b983'],weed:['#638343','#c1bd6d'],water:['#65b9d1','#abe1e7'],plant:['#5eac61','#d1e4a0'],fertilize:['#dcaf56','#f6d795'],
   spray:['#8fbb7f','#cde2ae'],harvest:['#df9b43','#ffe387'],feed:['#bf9a58','#f4d986'],
   collect:['#e7c674','#fff0c8'],steal:['#df9e5a','#ffeab1'],upgrade:['#d6a354','#f9dd89'],
   aquaStock:['#81b792','#bce6c2'],aquaFeed:['#c49054','#ead38d'],aquaHarvest:['#79c5cb','#d0f1dd'],
@@ -270,7 +270,7 @@ export function createWorld(root, onInteract, landscape) {
     const palette=effectStyle[input.action];
     if(!palette||!scene)return;
     let target=null;
-    if(['till','water','plant','fertilize','spray','harvest'].includes(input.action)&&sceneId==='field') target=plotPosition(input.index);
+    if(['till','weed','water','plant','fertilize','spray','harvest'].includes(input.action)&&sceneId==='field') target=plotPosition(input.index);
     if(['feed','collect'].includes(input.action)&&sceneId==='coop') target=scene.hotspots.find(a=>a.type==='animal'&&a.index===input.index);
     if(input.action.startsWith('aqua')&&sceneId==='field') target=scene.hotspots.find(a=>a.type==='pond'&&a.index===input.index);
     if(input.action==='cast'||input.action==='reel'){
@@ -283,13 +283,13 @@ export function createWorld(root, onInteract, landscape) {
     }
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
-    pose=input.action;
+    pose=input.action==='weed'?'till':input.action;
     posePlot=input.index;
     poseStarted=performance.now();
     if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {
       facing=facingFromDelta(target.x-x,target.y-y);
     }
-    const delay={till:350,plant:320,cast:420}[input.action]??0;
+    const delay={till:350,weed:350,plant:320,cast:420}[input.action]??0;
     effects.push({x:spot.x,y:spot.y,time:poseStarted+delay,palette});
     if(input.action==='plant'&&target&&!reduce.matches){
       effects.push({x:spot.x,y:spot.y,fromX:x,fromY:y-14,time:poseStarted+90,palette,seeds:true});

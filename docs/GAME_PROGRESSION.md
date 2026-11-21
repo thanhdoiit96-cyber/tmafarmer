@@ -35,7 +35,7 @@ XP là tiến trình tổng hợp, không bị trừ khi mở khóa. Các điề
 | Dâu chất lượng cao | 0 XP | Xưởng 1 |
 | Nho chất lượng cao | 0 XP | Xưởng 2 |
 | Trà thượng hạng | 0 XP | Xưởng 3 |
-| Nấm truffle | 350 XP | Xưởng 3 |
+| Nấm truffle | 2200 XP | Xưởng 3 |
 | Khoai lang | 18 XP | — |
 | Bí đỏ | 60 XP | — |
 | Đậu phộng | 100 XP | Xưởng 1 |
@@ -113,7 +113,6 @@ XP là tiến trình tổng hợp, không bị trừ khi mở khóa. Các điề
 | 170 | Cá trê | — |
 | 180 | Xưởng máy cấp 3 | Xưởng máy cấp 2 + 520 xu |
 | 260 | Cua đồng | Kho cấp 2 |
-| 350 | Nấm truffle | Xưởng máy cấp 3 |
 | 360 | Hàng rào cấp 2 | Hàng rào cấp 1 + 160 xu |
 | 420 | Kho cấp 4 | Kho cấp 3 + 320 xu |
 | 440 | Túi ghé vườn cấp 4 | Túi ghé vườn cấp 3 + 290 xu |
@@ -130,6 +129,7 @@ XP là tiến trình tổng hợp, không bị trừ khi mở khóa. Các điề
 | 1.650 | Kho cấp 6 | Kho cấp 5 + 1850 xu + 2 tấm cách nhiệt |
 | 1.850 | Ruộng cấp 6 | Ruộng cấp 5 + 2100 xu + 2 tấm cách nhiệt |
 | 1.950 | Chuồng cấp 6 | Chuồng cấp 5 + 2400 xu + 2 tấm cách nhiệt |
+| 2.200 | Nấm truffle | Xưởng máy cấp 3 |
 | 2.200 | Xưởng máy cấp 6 | Xưởng máy cấp 5 + 2800 xu |
 | 2.800 | Kho cấp 7 | Kho cấp 6 + 3250 xu + 4 tấm cách nhiệt + 3 keo tinh bột |
 | 3.000 | Xưởng máy cấp 7 | Xưởng máy cấp 6 + 4600 xu + 2 keo tinh bột + 1 vải len dệt |

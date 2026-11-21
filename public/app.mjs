@@ -251,6 +251,7 @@ const recoveryText=gain=>Object.entries(gain).map(([key,value])=>'+'+value+' '+(
 const ingredientsText=ingredients=>Object.entries(ingredients).map(([key,count])=>count+' '+goods[key].name.toLowerCase()).join(' + ');
 const supplyUses={
   spray:'Trị sâu trên ô đang trồng để hạn chế mất sản lượng.',
+  weed:'Nhổ cỏ dại bằng cuốc, không tốn vật tư. Cỏ ngừng mọc lại trong 20 phút. Chăm sớm để tránh chậm lớn và mất sản lượng.',
   fertilizer:'Tăng tốc độ lớn và tăng sản lượng cơ sở thêm 1 món.',
   feed:'Cho vật nuôi trong chuồng ăn để lớn và tạo sản phẩm.',
   aquaFeed:'Cho cá, tôm ăn để lứa nuôi tiếp tục lớn.',
@@ -367,15 +368,16 @@ function renderCropTools(farm,now) {
   const weatherGrowthChange=Math.round((currentEffect.growth-1)*100);
   const weatherYieldChange=Math.round((currentEffect.yield-1)*100);
   const signedChange=value=>(value>0?'+':'')+value+'%';
-  const forecast=(ripe?'Có thể thu '+remaining:'Dự kiến '+remaining)+' / '+normal+' món'+(normal>yieldTotal?' · Sâu đã làm mất '+(normal-yieldTotal)+' món':'')+'.';
+  const hazardName=plot.hazard==='weeds'?'Cỏ dại':'Sâu';
+  const forecast=(ripe?'Có thể thu '+remaining:'Dự kiến '+remaining)+' / '+normal+' món'+(normal>yieldTotal?' · '+hazardName+' đã làm mất '+(normal-yieldTotal)+' món':'')+'.';
   return '<div class="row"><h2>'+goods[plot.kind].name+'</h2><span class="badge">'+(ripe?'Đã chín':progress(plot.progress,goal)+'% lớn')+'</span></div>'+
-    (!ripe?'<p>Còn ~'+duration(goal-plot.progress)+' theo tốc độ cơ sở · '+(wet?'Đất ẩm':'Đất khô · '+Math.round(dryGrowthFactor*100)+'% tốc độ cơ sở')+' · Sâu '+Math.floor(plot.pests)+'%'+(plot.fertilized?' · Đã bón phân':'')+'</p>':'')+
+    (!ripe?'<p>Còn ~'+duration(goal-plot.progress)+' theo tốc độ cơ sở · '+(wet?'Đất ẩm':'Đất khô · '+Math.round(dryGrowthFactor*100)+'% tốc độ cơ sở')+' · '+hazardName+' '+Math.floor(plot.hazard==='weeds'?(plot.weeds??0):plot.pests)+'%'+(plot.fertilized?' · Đã bón phân':'')+'</p><p class="small">'+(plot.hazard==='weeds'?'Cỏ mọc nhanh khi mưa, sương hoặc sau mưa; chậm khi nắng nóng.':'Sâu tăng theo thời tiết, nhất là mưa và sau mưa.')+' Mức 40% làm chậm lớn 32%; mức 20/40/70% giảm sản lượng. Xử lý sớm để tránh tổn thất tích lũy.</p>':'')+
     '<p>'+forecast+'</p><p class="crop-weather-hint">'+escape(weatherHint.note)+' Thời tiết hiện tại ('+state.weather.name+') tác động riêng: '+signedChange(weatherGrowthChange)+' tốc độ, '+signedChange(weatherYieldChange)+' sản lượng. Sản lượng cộng dồn theo thời tiết cây gặp trong lúc phát triển; độ ẩm và hệ số thời tiết chung vẫn áp dụng.</p>'+valueBar(plot.progress,goal)+
     '<div class="actions">'+btn('4 giai đoạn','data-crop-growth="'+selected+'"','subtle')+(ripe?act('Thu hoạch','harvest','',selected,'primary')+
       '<button type="button" class="btn subtle" data-action="harvest" data-index="'+selected+'" data-source="seed"'+(!remaining||(farm.inventory[crops[plot.kind].seed]??0)>=100?' disabled':'')+'>Thu và giữ 1 giống</button>':
       act('💧 Tưới nước','water','',selected,'primary',wet)+
       act('🧺 Bón phân · '+(farm.inventory.fertilizer||0),'fertilize','',selected,'',plot.fertilized||!farm.inventory.fertilizer)+
-      act('🧴 Xịt thuốc · '+(farm.inventory.spray||0),'spray','',selected,'',plot.protectedUntil>now||!farm.inventory.spray))+'</div>';
+      (plot.hazard==='weeds'?act('Nhổ cỏ','weed','',selected,'',(plot.weeds??0)<=0):act('🧴 Xịt thuốc · '+(farm.inventory.spray||0),'spray','',selected,'',plot.protectedUntil>now||!farm.inventory.spray)))+'</div>';
 }
 function upgrade(farm,key) {
   const {icon:emoji,name}=buildings[key];
