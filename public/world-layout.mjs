@@ -4,6 +4,8 @@ import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
 import {coopSize,coopGate,coopBarn,coopFeed,coopPosition,coopAnimalRoam,coopAnimalScale} from './coop-layout.mjs';
+import {neighborBounds,neighborEntry,neighborCoopEntry,neighborReturn,neighborHall,neighborLot,neighborPosition,neighborPage,neighborHouseTier} from './neighbors-layout.mjs';
+export {neighborHouseTier} from './neighbors-layout.mjs';
 
 export const size = { width: 480, height: 288 };
 export const interactionRange=31;
@@ -33,7 +35,7 @@ export const maps = {
     trees:[[34,45],[38,268],[29,560],[60,780],[786,44],[790,151],[790,305],[786,495],[778,700],[540,880],[684,880]],
     water:[mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
-    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',coopGate,'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
+    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',coopGate,'right'),exit(188,273,'Sang xóm bên','neighbors',neighborEntry,'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
   home: {
     name:'Nhà vườn', spawn:homeSpawn, water:[], objects:[], trees:[],
@@ -55,7 +57,7 @@ export const maps = {
     blocks:[rect(58,0,364,120),rect(0,0,12,288),rect(468,0,12,288),
       rect(35,120,180,20),rect(265,120,180,20),rect(13,225,201,30),rect(266,225,201,30)],
     objects:[{...coopBarn,type:'coop',label:'Cửa chuồng'},{...coopFeed,type:'silo',label:'Thức ăn bên chuồng'}],
-    exits:[exit(240,278,'Về vườn nhà','field',[433,198],'down'),exit(252,278,'Sang xóm bên','neighbors',[442,217],'down')],
+    exits:[exit(240,278,'Về vườn nhà','field',[433,198],'down'),exit(252,278,'Sang xóm bên','neighbors',neighborCoopEntry,'down')],
   },
   market: {
     // The plate already contains the stalls and well. Block their painted bodies,
@@ -69,12 +71,11 @@ export const maps = {
     exits:[exit(238,273,'Về vườn nhà','field',[188,34],'down')],
   },
   neighbors: {
-    name:'Đường làng', subtitle:'XÓM MÙA VUI', spawn:[238,30],
-    paths:[[[238,0],[238,40],[221,84],[238,125],[242,181],[230,220],[239,252]],[[59,123],[96,128],[145,121],[200,116],[238,125],[300,134],[358,116],[422,123]],[[59,217],[102,205],[165,221],[230,220],[288,215],[376,231],[429,216],[480,217]]],
-    trees:[[27,44],[64,31],[422,47],[453,73],[29,168],[441,165],[25,258],[93,268],[402,261],[450,260]],
-    water:[rect(7,79,32,55),rect(438,78,28,64)],
+    name:'Đường làng', subtitle:'XÓM MÙA VUI', spawn:neighborEntry,bounds:neighborBounds,
+    paths:[[[360,0],[360,65],[302,95],[302,176],[360,207],[360,432]],[[360,65],[418,95],[418,176],[360,207]],...Array.from({length:3},(_,row)=>[[180,164+row*110],[360,160+row*110],[540,164+row*110]]),[[360,395],[640,395],[690,345],[720,345]]],
+    trees:[],water:[],
     objects:[],
-    exits:[exit(238,14,'Về vườn nhà','field',[188,251],'up'),exit(463,217,'Sang chuồng trại','coop',coopGate,'right')],
+    exits:[exit(360,14,'Về vườn nhà','field',[188,251],'up'),exit(704,345,'Sang chuồng trại','coop',coopGate,'right')],
   },
   lake: {
     // Trace the painted shoreline, allowing only the two wooden decks over water.
@@ -91,7 +92,7 @@ export const maps = {
   },
   visit: {
     name:'Vườn hàng xóm', subtitle:'ĐANG GHÉ THĂM', spawn:[234,249], bounds:homesteadSize,
-    exits:[exit(238,273,'Về đường làng','neighbors',[238,246],'down')],
+    exits:[exit(238,273,'Về đường làng','neighbors',neighborReturn,'down')],
   },
 };
 Object.assign(maps.visit,{
@@ -130,8 +131,6 @@ export function playerLocationBlock({action,index},area,pose,hasPublicWell=false
   return '';
 }
 
-const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
-export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
 const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
 export function features(id, snapshot, neighbor, page=0) {
   const map=maps[id];
@@ -248,19 +247,17 @@ export function features(id, snapshot, neighbor, page=0) {
   }
   if(id==='neighbors') {
     if(built('hall')){
-      const hall={x:237,y:174,type:'village-hall',label:'Nhà sinh hoạt',w:81};
+      const hall={...neighborHall,type:'village-hall',label:'Nhà sinh hoạt'};
       actors.push(hall);
       hotspots.push({...hall,y:hall.y+14});
-      blocks.push(rect(201,166,72,10));
+      blocks.push(rect(hall.x-34,hall.y-72,68,73));
     }
-    const ownWealth=snapshot.wealth?.find(entry=>entry.id===farm.id)?.total??farm.coins;
-    const homes=[{id:farm.id,name:farm.name,wealth:ownWealth,mine:true},...snapshot.neighbors];
-    for(const [i,data] of homes.slice(page*6,page*6+6).entries()) {
-      const pos=visitorPosition(i);
+    for(const [i,data] of neighborPage(snapshot,page).homes.entries()) {
+      const pos=neighborPosition(i);
       const tier=neighborHouseTier(data.wealth??0);
-      actors.push({...pos,type:'neighbor',id:data.id,name:data.name,tier,w:53+tier*3,h:31+tier*2});
-      blocks.push(rect(pos.x-22-tier,pos.y-15-tier,44+tier*2,15+tier));
-      hotspots.push({...pos,y:pos.y+13,type:data.mine?'own-house':'neighbor',id:data.id,label:data.name+(data.mine?' · Nhà của bạn':'')});
+      actors.push({...pos,...neighborLot,type:'neighbor',id:data.id,name:data.name,mine:data.mine,tier});
+      blocks.push(rect(pos.x-70,pos.y-90,140,66),rect(pos.x-72,pos.y-15,53,16),rect(pos.x+19,pos.y-15,53,16));
+      hotspots.push({...pos,...neighborLot,y:pos.y+16,drawY:pos.y-neighborLot.h/2,type:data.mine?'own-house':'neighbor',id:data.id,label:data.name+(data.mine?' · Nhà của bạn':'')});
     }
   }
   if(id==='field'||id==='visit')for(const area of ground.filter(a=>a.type==='fence'))actors.push({type:'fence-front',x:area.x+area.w/2,y:area.y+area.h,area});

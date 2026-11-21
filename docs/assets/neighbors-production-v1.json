@@ -1,0 +1,103 @@
+{
+  "status": "implemented-pending-user-review",
+  "reference": "neighbors-concept-v1.png",
+  "world": [
+    720,
+    432
+  ],
+  "runtimeViewport": [
+    640,
+    384
+  ],
+  "pageSize": 6,
+  "maxResidents": 12,
+  "homePositions": [
+    {
+      "x": 180,
+      "y": 148
+    },
+    {
+      "x": 540,
+      "y": 148
+    },
+    {
+      "x": 180,
+      "y": 258
+    },
+    {
+      "x": 540,
+      "y": 258
+    },
+    {
+      "x": 180,
+      "y": 368
+    },
+    {
+      "x": 540,
+      "y": 368
+    }
+  ],
+  "sprites": {
+    "homes": {
+      "source": "neighbor-homes-v1-source.png",
+      "runtime": "public/pixel/neighbor-homes-v1.png",
+      "frames": [
+        5,
+        1
+      ],
+      "cell": [
+        420,
+        216
+      ],
+      "display": [
+        210,
+        108
+      ]
+    },
+    "pavilion": {
+      "source": "neighbor-hall-v1-source.png",
+      "runtime": "public/pixel/neighbor-hall-v1.png",
+      "unlock": "hall"
+    },
+    "background": {
+      "source": "neighbors-background-v2-source.png",
+      "runtime": "public/pixel/scene-background-neighbors-v1.png"
+    }
+  },
+  "ownerLabels": {
+    "location": "front gate",
+    "width": 94,
+    "font": "700 8px system-ui",
+    "overflow": "grapheme-safe ellipsis; full name in adjacent cards",
+    "ownBadge": "Bạn"
+  },
+  "wealthThresholds": [
+    500,
+    1000,
+    5000,
+    20000
+  ],
+  "condition": "strictly greater; total coins + inventory + property, not farm level",
+  "level": "existing farmProgress rank displayed separately in cards",
+  "generation": {
+    "tool": "built-in imagegen",
+    "prompts": [
+      {
+        "key": "plate",
+        "transparent": false,
+        "prompt": "Produce ONLY the top scene's production BACKGROUND PLATE from approved reference, no presentation board, no text. Match its detailed warm Vietnamese pixel-art exactly, sunlight upper left, no fog. Exact 5:3 landscape composition for world720x432. Rebuild the approved arrangement: TWO COLUMNS of THREE equal EMPTY residential garden clearings, centered at x180 and x540, with clearing lower baselines y120,240,360 on a 720x432 map. Each clearing roughly210 wide x104 tall; empty grass only inside so runtime house sprites can be placed. IMPORTANT remove ALL six houses, all residential fences, pots, private vegetation, all people, all cats, all signs AND central pavilion: those are separate dynamic sprites. Do NOT leave foundations or shadow ghosts. Keep rich authored perimeter mango/banana trees, flowers, grass and warm stone paths from concept. Main stone road x360 from top center gateway to bottom edge, widening and forking around an EMPTY central clearing x360y140 for later unlockable pavilion. Short curved side paths reach the FRONT CENTER of each empty residential lot at (180,128),(540,128),(180,248),(540,248),(180,368),(540,368). Residential clearings remain EMPTY and large enough. At right edge an unobstructed stone branch exits at y345, connected to main road below third row. North gate visible at top center. No water, no extra buildings, no UI. Overall lush cozy village like approved board, not flat geometric placeholder."
+      },
+      {
+        "key": "homes",
+        "transparent": true,
+        "prompt": "Extract/recreate the FIVE approved house-and-courtyard variants shown along BOTTOM of reference as ONE production TRANSPARENT sprite atlas. Exact grid FIVE columns ONE row, equal cells, equal lot sizes and identical front-gate baseline. Each cell contains ONE whole Vietnamese residential lot: house, small courtyard, low bamboo perimeter fence, side banana clump/flowering pots, short path to wide OPEN front gate. NO painted grass rectangular mat, no background, no ground shadow outside lot, true transparent alpha. Match warm detailed pixel-art design exactly. Columns left to right: 0 modest thatch timber cottage; 1 red terracotta timber cottage; 2 three-bay red tile wooden house; 3 teal-tile refined home with flower pots; 4 finest teal-tile country garden house with carved veranda and flower trellis (not palace). EVERY variant occupies SAME footprint, SAME scale, same elevated front camera, no larger tier extending outside its cell. On front bamboo gate, TWO short posts and a small plain WOOD NAME PLAQUE across upper portion of entrance, completely BLANK for runtime owner text. Keep opening wide to see path and avoid opaque gate closing it. Gate and fence are near bottom of cell. Houses face down. Full roof, trees, fence and feet contained in each cell with transparent gutters, no touching neighboring cells. NO text NO labels NO numbers NO comparison parchment NO people. Equal-size five-cell horizontal sprite sheet with full silhouettes."
+      },
+      {
+        "key": "hall",
+        "transparent": true,
+        "prompt": "Recreate ONLY the small central open Vietnamese communal pavilion from the approved top village scene, isolated as a SINGLE production sprite on true transparent alpha. Same warm cozy detailed pixel-art, elevated front camera, red terracotta curved roof, four timber posts, two small red lanterns and simple seating inside, modest stone steps. No residential houses, no trees, no grass patch, no background, no text, no presentation panel, no shadow outside footprint. Full pavilion silhouette centered with transparent padding. This is the exact communal pavilion to be dynamically placed into the approved village background, keep recognizable reference design."
+      }
+    ],
+    "backgroundRevision": "Precise production layout correction to this exact background. Preserve art style, colors, north gate, upper central ring and main vertical road, outer foliage, RIGHT edge lane. Do not add buildings or characters or labels. Keep first left/right horizontal residential path pair around 34% image height. Move the SECOND pair down to exactly 61% image height. Move the THIRD/BOTTOM pair down to exactly 89% image height. Each horizontal branch goes from central road to the blank lot's front gate at x25% or75% image width. Blend old path positions back into clean grassy EMPTY land. Clear all bushes/rocks inside the six house areas x12%-38% and62%-88%, y5%-29%,33%-57%,61%-85% (runtime houses will cover these). Residential lot clearings all identical rectangular areas but natural grass boundaries. Lower third row branches should pass BELOW the third house clearings, not through their interiors. Rich perimeter greenery may remain at far edges but must not obstruct these paths. Preserve large continuous composition and natural curved honey-stone paths. Output full 5:3 landscape background ONLY."
+  }
+}

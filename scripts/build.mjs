@@ -10,6 +10,7 @@ await cp('public/aqua.mjs','dist/server/aqua.mjs');
 await cp('public/land.mjs','dist/server/land.mjs');
 await cp('public/world-layout.mjs','dist/server/world-layout.mjs');
 await cp('public/coop-layout.mjs','dist/server/coop-layout.mjs');
+await cp('public/neighbors-layout.mjs','dist/server/neighbors-layout.mjs');
 await cp('public/yard-pets.mjs','dist/server/yard-pets.mjs');
 await mkdir('dist/server/pixel',{recursive:true});
 await cp('public/pixel/homestead-buildings.mjs','dist/server/pixel/homestead-buildings.mjs');

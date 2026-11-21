@@ -1,0 +1,50 @@
+{
+  "status": "concept-for-approval-not-runtime",
+  "scene": "neighbors",
+  "reference": "public/pixel/scene-backgrounds-concept-v1.png",
+  "residentialLots": 6,
+  "layout": "two columns of three; equal lot footprints; north gate, east connection, central shared pavilion",
+  "wealthTiers": [
+    {
+      "tier": 0,
+      "condition": "total <= 500",
+      "design": "timber and thatch"
+    },
+    {
+      "tier": 1,
+      "condition": "500 < total <= 1000",
+      "design": "timber and terracotta"
+    },
+    {
+      "tier": 2,
+      "condition": "1000 < total <= 5000",
+      "design": "three-bay terracotta home"
+    },
+    {
+      "tier": 3,
+      "condition": "5000 < total <= 20000",
+      "design": "refined teal tile and flowering veranda"
+    },
+    {
+      "tier": 4,
+      "condition": "total > 20000",
+      "design": "carved country garden home in same lot"
+    }
+  ],
+  "wealthSource": "public/game.mjs: wealthRanking; coins + inventory (including escrow) + property",
+  "tierSource": "public/world-layout.mjs: neighborHouseTier",
+  "farmLevels": {
+    "source": "public/progression-levels.mjs",
+    "range": [
+      1,
+      13
+    ],
+    "usage": "separate selected-house information, no new architectural gates"
+  },
+  "notes": [
+    "No gameplay code changes in this concept stage.",
+    "Keep house portraits and map houses based on same future authored assets.",
+    "Reserve equal footprints for every tier, clear front gates and player paths.",
+    "Production requires separate background and dynamic house/pavilion assets plus collision and hotspot verification."
+  ]
+}

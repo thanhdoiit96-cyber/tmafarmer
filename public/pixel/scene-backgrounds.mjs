@@ -20,12 +20,13 @@ export const sceneBackgroundAtlases={
   homestead:{source:'/pixel/scene-background-homestead-v2.png'},
   expansion:{source:'/pixel/expansion-terrain-v7.png'},
   coop:{source:'/pixel/scene-background-coop-v8.png'},
+  neighbors:{source:'/pixel/scene-background-neighbors-v1.png'},
 };
 
 export const sceneBackgrounds={
   home:{atlas:'concept',frame:'home'},
   workshop:{atlas:'concept',frame:'workshop'},
-  neighbors:{atlas:'concept',frame:'village'},
+  neighbors:{atlas:'neighbors'},
   field:{atlas:'homestead'},
   visit:{atlas:'homestead'},
   market:{atlas:'environments',frame:'market'},
@@ -39,7 +40,7 @@ const backgroundedActors={
   market:new Set(['market','well','tree']),
   coop:new Set(['coop','foundation','silo','tree']),
   lake:new Set(['dock','tree']),
-  neighbors:new Set(['tree','village-hall']),
+  neighbors:new Set(['tree']),
 };
 
 export const hasSceneBackground=scene=>Object.hasOwn(sceneBackgrounds,scene);

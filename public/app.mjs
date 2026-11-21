@@ -1,5 +1,6 @@
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {optionalIndex} from './action-input.mjs';
+import {neighborHomes,neighborPage,neighborPageSize,neighborHouseTier} from './neighbors-layout.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
@@ -500,17 +501,16 @@ function renderNeighbors(farm,now) {
   const villageLeft=state.village.theftsLeft;
   const left=Math.max(0,Math.min(villageLeft,visitLimit(farm)-farm.daily.taken));
   let html=boardBar(neighborId?'Ghé thăm':'Hàng xóm','🎒 '+left+'/'+visitLimit(farm)+' lượt');
-  const mine={...farm,wealth:state.wealth.find(row=>row.id===farm.id)?.total??farm.coins,mine:true};
-  const homes=[mine,...state.neighbors];
+  const homes=neighborHomes(state);
   const current=state.neighbors.find(n=>n.id===neighborId);
   if(!current) {
-    const count=Math.ceil(homes.length/6);
+    const page=neighborPage(state,villagePage),count=page.count;
     const pages=count>1?'<div class="row map-pages">'+btn('‹ Trang trước','data-village-page="'+(villagePage-1)+'"','subtle',villagePage===0)+'<span>'+String(villagePage+1)+' / '+count+'</span>'+btn('Trang sau ›','data-village-page="'+(villagePage+1)+'"','subtle',villagePage+1>=count)+'</div>':'';
-    const cards=homes.slice(villagePage*6,villagePage*6+6).map(n=>
-      '<article class="neighbor-card"><div><h3>🏡 '+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>'+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
+    const cards=page.homes.map(n=>
+      '<article class="neighbor-card"><span class="neighbor-home-art" aria-hidden="true" style="--house-tier:'+neighborHouseTier(n.wealth)+'"></span><div><h3>'+escape(n.name)+(n.mine?' · Bạn':'')+'</h3><p>Cấp '+(n.mine?farmProgress(farm).rank.level:n.level??1)+' · '+formatCoins(n.wealth)+' xu tài sản · Ruộng cấp '+n.field+(n.mine?'':n.shieldUntil>now?' · Đang đóng cổng':' · '+n.garden.length+' ô chín có thể lấy')+'</p></div>'+
       btn(n.mine?'Về nhà':'Ghé thăm',n.mine?'data-tab="field"':`data-visit="${n.id}"`,'primary')+'</article>').join('');
     const waiting=state.neighbors.length?'':'<article class="wide-card"><h3>Làng đang chờ hàng xóm</h3><p>Chia sẻ mã làng để bạn bè vào trồng và trao đổi cùng bạn.</p><div class="actions">'+btn('Chia sẻ mã','data-room','primary')+'</div></article>';
-    return html+pages+'<div class="farm-list card-grid">'+cards+waiting+'</div>';
+    return html+'<p class="muted">'+homes.length+'/12 nhà · Khu '+(page.index+1)+'/'+count+' · Mỗi khu tối đa '+neighborPageSize+' nhà</p>'+pages+'<div class="farm-list card-grid">'+cards+waiting+'</div>';
   }
   const unavailable=left<1||current.available<1||farm.daily.targets.includes(current.id)||current.shieldUntil>now;
   const message=villageLeft<1?'Cả làng đã hết lượt trộm hôm nay.':current.shieldUntil>now?'Cổng đang đóng.':farm.daily.targets.includes(current.id)?'Bạn đã lấy một món tại đây hôm nay.':current.available<1?'Vườn đã đạt giới hạn bị lấy hôm nay.':left<1?'Túi ghé vườn đã hết lượt hôm nay.':'Mỗi lần lấy một món.';
@@ -1075,7 +1075,7 @@ function render(arrival) {
   $('#world-day').title='Ngày mới sau '+duration(state.dayEnds-now);
   $('#subtitle').textContent=description;
   $('#date').textContent='Ngày '+(state.day+1);
-  villagePage=Math.min(villagePage,Math.max(0,Math.ceil((state.neighbors.length+1)/6)-1));
+  villagePage=neighborPage(state,villagePage).index;
   world.sync(selectedNeighbor?'visit':tab,state,{neighbor:selectedNeighbor,selection:selected,page:villagePage,arrival,tasks});
   $('#world-weather').innerHTML=tab==='home'||tab==='workshop'?'':'<button class="world-weather" type="button" data-weather aria-label="Xem dự báo: '+state.weather.name+'">'+icon('weather')+'<span class="weather-name">'+state.weather.name+'</span><span class="landscape-only weather-symbol" aria-hidden="true">'+state.weather.icon+'</span></button>';
   $('#board').innerHTML={

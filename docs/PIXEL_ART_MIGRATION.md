@@ -248,3 +248,10 @@ Replaced the unlocked public well's procedural drawing with authored transparent
 
 ### Village market V1
 Added authored shoppers with independent foreground strolls and a tiled wooden order board. Aligned shop interaction points and solid footprints with the background, removed an obsolete pond collider, and retained order and trade rules. See MARKET_LAYOUT_V1.md for sources, prompts, export workflow, Canvas preview and verification.
+
+### Neighbors village V1
+Implemented the approved `assets/neighbors-concept-v1.png` with a dedicated background, five transparent home-and-garden variants and an unlockable pavilion. Six equal slots per area support twelve residents over two pages, shared between Canvas and cards. Owner names are always displayed on front gates with measured, grapheme-safe ellipsis; full names remain in cards. Own home has a `Bạn` badge. Home art follows existing strict total-wealth thresholds (>500, >1000, >5000, >20000), while farm rank is shown separately. Cards use the same authored house atlas as Canvas.
+
+Layout metadata and pagination live in `public/neighbors-layout.mjs`, packaged for both browser and worker. The world is 720 × 432; native viewport remains 640 × 384 with existing camera movement. Shared entry points align arrivals from the farm, coop and visited gardens. Solid footprints keep gate interaction positions clear. Old baked houses/pavilion and legacy puddle colliders are replaced for this scene.
+
+Sources, exact generation prompts and export dimensions: `assets/neighbors-production-v1.json`. Re-export with `py scripts/normalize-neighbors-v1.py`. Actual Canvas captures: `assets/neighbors-runtime-v1.png`, `assets/neighbors-runtime-page2-v1.png`, `assets/neighbors-viewport-v1.png`. Browser verification covered twelve residents, both pages, shared card portraits, mobile width 390 without horizontal overflow, and successful `world.approach()` callbacks at own home, neighbor gate and unlocked pavilion. `test/neighbors-layout.test.mjs` covers identity/pagination, all gates with/without pavilion, exact wealth boundaries and Vietnamese/emoji names.

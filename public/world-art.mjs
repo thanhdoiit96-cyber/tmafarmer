@@ -8,6 +8,7 @@ import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
 import {yardPets,yardPetPose} from './yard-pets.mjs';
+import {fitGateName} from './neighbors-layout.mjs';
 import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
@@ -26,6 +27,8 @@ const pondDockArt=load('/pixel/pond-dock-v5.png');
 const villageWellArt=load('/pixel/village-well-v1.png');
 const marketShopperArt=load('/pixel/market-shoppers-v1.png');
 const marketBoardArt=load('/pixel/market-order-board-v1.png');
+const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
+const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
@@ -63,7 +66,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -1092,6 +1095,26 @@ function pixelSceneBuilding(c,a){
   c.restore();
 }
 function neighborHouse(c,a,t){
+  if(dim(neighborHomesArt)){
+    const {x,y,w,h,tier=0,name='',selected=false,mine=false}=a;
+    c.drawImage(neighborHomesArt,tier*420,0,420,216,snapPixel(x-w/2),snapPixel(y-h),w,h);
+    // Owner labels belong to the gate, never float over neighboring roofs.
+    const signWidth=94,signY=y-28;
+    box(c,'#67452e',x-signWidth/2-1,signY-1,signWidth+2,14,2);
+    box(c,selected?'#ffe4a1':'#efd29b',x-signWidth/2,signY,signWidth,12,2);
+    c.save();c.font='700 8px system-ui';c.textAlign='center';c.fillStyle='#493323';
+    const label=fitGateName(name,value=>c.measureText(value).width,signWidth-10);
+    c.fillText(label,x,signY+8.5);c.restore();
+    if(mine){
+      box(c,'#375f43',x-signWidth/2-20,signY,18,12,3);
+      c.save();c.fillStyle='#fff0c2';c.font='700 6px system-ui';c.textAlign='center';c.fillText('Bạn',x-signWidth/2-11,signY+8);c.restore();
+    }
+    if(selected){
+      c.save();c.strokeStyle='#fff0b0';c.lineWidth=1.5;
+      c.beginPath();c.roundRect(x-17,y+3,34,10,4);c.stroke();c.restore();
+    }
+    return;
+  }
   const {x,y,name='',tier=0,selected=false}=a;
   const width=52+tier*3.2,height=width*1.02;
   shade(c,x+3,y,width*.58,5.5+tier*.35);
@@ -1253,6 +1276,10 @@ export function actor(c,a,t,state){
     return;
   }
   if(type==='village-hall'){
+    if(dim(neighborHallArt)){
+      c.drawImage(neighborHallArt,snapPixel(x-w/2),snapPixel(y-a.h),w,a.h);
+      return;
+    }
     shade(c,x+3,y,w*.55,6);
     pixelSceneBuilding(c,{...a,type:'pavilion'});
     box(c,'#765032',x-17,y-13,34,7,2);

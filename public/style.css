@@ -97,6 +97,8 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .animal-card .animal-icon{float:left;margin:0 4px 1px 0}
 .animal-card .progress{clear:both}
 .neighbor-card .btn{margin-top:6px}
+.neighbor-home-art{display:block;width:140px;height:72px;background-image:url('/pixel/neighbor-homes-v1.png');background-size:700px 72px;background-position:calc(var(--house-tier)*-140px) 0;background-repeat:no-repeat;image-rendering:pixelated;margin:0 auto 6px}
+.neighbor-card h3{overflow-wrap:anywhere}
 .village-member-name{min-width:0;overflow-wrap:anywhere}
 .animal-icon{font-size:26px;display:inline-block}
 .pixel-animal{flex:none;width:42px;height:36px;background-repeat:no-repeat;image-rendering:pixelated}

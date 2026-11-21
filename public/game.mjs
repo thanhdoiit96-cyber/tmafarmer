@@ -888,7 +888,7 @@ export function snapshot(room, farm, time) {
         visiblePens:f.pens.map(p=>{
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
-        }),id:f.id,name:f.name,field:f.field,coop:f.coop,workshop:f.workshop??0,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
+        }),id:f.id,name:f.name,level:farmProgress(f).rank.level,field:f.field,coop:f.coop,workshop:f.workshop??0,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
         available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
 }
