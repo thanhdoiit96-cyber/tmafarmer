@@ -233,11 +233,11 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 @media(max-width:500px){.world-hud{top:6px;right:6px;left:6px}.world-stat{min-height:26px;padding:3px 6px;font-size:10px}.world-weather svg{width:13px;height:13px}}
 .panel-tabs{grid-template-columns:repeat(6,minmax(0,1fr))}
 .pond-tabs{grid-template-columns:repeat(2,1fr);margin-top:10px}
-.map-radar{position:absolute;right:12px;bottom:12px;padding:4px;border-radius:8px;background:#2c4534d9;border:1px solid #f0e4b577;pointer-events:none}
-.map-radar canvas{width:104px;height:auto;border-radius:4px;aspect-ratio:auto;cursor:inherit}
+.map-radar{position:absolute;right:10px;bottom:10px;padding:2px;border-radius:6px;background:#2c45344d;border:1px solid #f0e4b54d;pointer-events:none;opacity:.72}
+.map-radar canvas{width:78px;height:auto;border-radius:3px;aspect-ratio:auto;cursor:inherit}
 #world[data-wide="false"] .map-radar{display:none}
 @media(max-width:860px){.panel-tabs button{flex-direction:column;gap:3px}}
-@media(max-width:500px){#nav{gap:0}#nav button{padding-inline:3px}#nav button svg{display:none}.map-radar{right:6px;bottom:6px}.map-radar canvas{width:70px;height:auto}}
+@media(max-width:500px){#nav{gap:0}#nav button{padding-inline:3px}#nav button svg{display:none}.map-radar{right:6px;bottom:6px}.map-radar canvas{width:52px;height:auto}}
 .land-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:9px 0 12px}
 .land-grid button{text-align:left;padding-inline:8px}
 .compact-label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}
@@ -550,7 +550,7 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
     inset:auto auto calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
   }
   .map-radar{right:calc(8px + env(safe-area-inset-right));bottom:calc(86px + env(safe-area-inset-bottom));padding:2px}
-  .map-radar canvas{width:64px;height:auto}
+  .map-radar canvas{width:48px;height:auto}
   .world-footer,
   .world[data-scene] .world-footer{
     position:absolute;

@@ -486,6 +486,9 @@ function sceneBackground(c,kind,width,height){
   if(!dim(art))return false;
   c.save();
   c.imageSmoothingEnabled=true;
+  // Tone down only the painted garden plate; crops and actors retain their
+  // original palette. This is baked into the cached terrain, not each frame.
+  if(use.atlas==='homestead')c.filter='saturate(86%) brightness(98%)';
   if(use.frame){
     const [sx,sy,sw,sh]=sceneBackgroundAtlases[use.atlas].frames[use.frame];
     c.drawImage(art,sx,sy,sw,sh,0,0,width,height);
@@ -1524,9 +1527,8 @@ export function drawTask(c,x,y,style){
   const frame={harvest:0,pests:1,weeds:2,water:3}[style.icon];
   if(frame!==undefined&&dim(careIconArt)){
     c.save();c.imageSmoothingEnabled=false;
-    shade(c,x,y+3,8,2);
-    box(c,'#513e2b',snapPixel(x-9),snapPixel(y-9),18,18,4);
-    box(c,'#fff1cb',snapPixel(x-8),snapPixel(y-8),16,16,3);
+    // The authored dark outline separates the symbol from foliage without
+    // covering the garden with a solid badge or a white backing plate.
     c.drawImage(careIconArt,frame*32,0,32,32,snapPixel(x-8),snapPixel(y-8),16,16);
     c.restore();return;
   }
