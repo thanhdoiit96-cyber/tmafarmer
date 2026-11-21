@@ -30,6 +30,7 @@ const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
 const gardenFenceArt=load('/pixel/garden-fences-v1.png');
+const plotGrassArt=load('/pixel/plot-edge-grass-v2.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
@@ -67,7 +68,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -799,6 +800,25 @@ export function landscapeLife(c,id,t){
     line(c,dragon?'#34524f':'#5e4b34',.50,[[px,py-1.3],[px+.35,py+(dragon?2.2:1.0)]]);
   }
 }
+function plotEdgeGrass(c,{x,y,index=0}){
+  if(dim(plotGrassArt)){
+    const corners=[[-19,-8,14],[19,11,15],[-12,16,14],[12,16,13]];
+    for(const [i,[dx,dy,width]] of corners.entries()){
+      const frame=(Math.floor(seed(index,181)*4)+i)%4;
+      const px=snapPixel(x+dx+(seed(index,i+193)-.5)*1.5),py=snapPixel(y+dy);
+      const height=width*2/3;
+      c.save();c.translate(px,py);
+      if(seed(index,i+211)>.5)c.scale(-1,1);
+      c.drawImage(plotGrassArt,frame*48,0,48,32,-width/2,-height,width,height);
+      c.restore();
+    }
+    return;
+  }
+  // Sparse, stable accents reuse the scene's grass palette. Keep the soil center
+  // clear and draw before crops so leaves and produce always remain readable.
+  if(seed(index,53)>.25)grassClump(c,x-21,y+5+seed(index,97)*5,seed(index,31));
+  if(seed(index,71)>.62)grassClump(c,x-13+seed(index,89)*25,y+14,seed(index,47));
+}
 function plot(c,a,t,state,paintCrops=true){
   const {x,y,data,index,visit}=a;
   const wet=data&&!visit&&(data.wetUntil>state.now||state.weather.wet);
@@ -816,6 +836,7 @@ function plot(c,a,t,state,paintCrops=true){
       line(c,'#6e543b',1,[[x-15,y-5],[x-6,y],[x+2,y-4],[x+12,y+3]]);
     }
     c.restore();
+    plotEdgeGrass(c,a);
     if(!paintCrops||!data)return;
   }
   shade(c,x,y+9,27,5);
@@ -824,6 +845,7 @@ function plot(c,a,t,state,paintCrops=true){
   dirt.addColorStop(0,compact?'#b1926e':wet?'#846349':'#c0965d');
   dirt.addColorStop(1,compact?'#927858':wet?'#73533e':'#9e7046');
   box(c,dirt,x-22,y-13,44,23,4);
+  plotEdgeGrass(c,a);
   if(compact){
     line(c,'#6e543b',1,[[x-21,y-2],[x-11,y-6],[x-5,y-1],[x+1,y-4],[x+9,y+1],[x+20,y-6]]);
     line(c,'#7a5f44',.8,[[x-11,y-6],[x-12,y-11]]);

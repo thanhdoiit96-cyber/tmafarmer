@@ -259,3 +259,6 @@ Sources, exact generation prompts and export dimensions: `assets/neighbors-produ
 
 ### Garden fences V1
 Replaced thin procedural rails with authored honey-wood, warm ivory and bamboo modules matching the neighboring homes. Horizontal rails repeat between post centers to avoid doubled end posts; side modules retain narrow silhouettes. Low 10.5-unit fences preserve crop visibility, central gate widths and front-edge depth sorting. Field and visited gardens share the renderer; existing saved styles, prices, garden sizes, interactions and capacity are unchanged. Source, exact prompt, atlas layout and actual 640 × 384 screenshots are recorded in `assets/garden-fences-v1.json`. Re-export with `py scripts/normalize-garden-fences-v1.py`.
+
+### Crop-bed grass V2
+Replaced sparse pixel marks with four authored layered grass variants. Four 13–15-unit clusters decorate each bed's corners with stable variation and mirroring, drawn before crops to keep produce readable. Empty plots and mature crops were inspected on the native Canvas. Source, exact prompt, export script and runtime screenshots are recorded in `assets/plot-edge-grass-v2.json`. All 122 tests and the production build pass.

@@ -1,0 +1,23 @@
+{
+  "source": "plot-edge-grass-v2-source.png",
+  "runtime": "public/pixel/plot-edge-grass-v2.png",
+  "atlas": [
+    192,
+    32
+  ],
+  "frames": 4,
+  "cell": [
+    48,
+    32
+  ],
+  "display": "Four 13–15 world-unit grass clusters at outer crop-bed corners, variable shape and reflection keyed by stable plot ID. Drawn after soil and before crops. No gameplay, path, collision or crop state changes.",
+  "export": "py scripts/normalize-plot-grass-v2.py",
+  "alpha": "hard RGBA 0/255",
+  "tool": "built-in imagegen",
+  "reference": "docs/assets/plot-edge-grass-v1.png",
+  "prompt": "Production sprite atlas: FOUR distinct small lush grass clumps for the cozy Vietnamese pixel-art farm in reference. Exact grid FOUR columns ONE row, each isolated with generous clear transparent gutters. TRUE transparent background, no glow, no colored matte, no soil, no ground shadow, no frame, no text, no flowers. Match reference warm sunlit meadow palette: deep olive-teal undersides, medium natural green, yellow-green lit tips, warm upper-left light. Rounded layered clusters of curved narrow blades, carefully authored readable pixel clusters, no vector polygons, no photorealistic texture. Each clump is low and wide about 2:1, a rich tuft with 7-12 visible blades of varied heights, natural uneven silhouette. Variant1 low fanning meadow grass; variant2 slightly fuller tuft with broad leaves; variant3 low curved grass spread; variant4 mixed fine leaves and tiny clover-like rounded leaves. All bases at same baseline, small accents readable at 12x7 game pixels. Intended to decorate outer corners of cultivated soil rectangles, more substantial than 3 isolated pixel blades but never a bush. Only 4 separate clumps.",
+  "previews": [
+    "plot-edge-grass-v2.png",
+    "plot-edge-grass-main-v2.png"
+  ]
+}
