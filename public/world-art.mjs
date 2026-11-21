@@ -29,6 +29,7 @@ const marketShopperArt=load('/pixel/market-shoppers-v1.png');
 const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
+const gardenFenceArt=load('/pixel/garden-fences-v1.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
@@ -66,7 +67,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -273,7 +274,26 @@ function decorativeSprite(c,item,t=0,dusk=0){
   c.restore();
 }
 const railPaint={wood:['#785236','#bd8d55','#dfb27b'],white:['#827c61','#dfdacc','#f7eccf'],bamboo:['#515b36','#819356','#bcba76']};
+function authoredFenceEdge(c,style,ax,ay,bx,by){
+  const row=Math.max(0,['wood','white','bamboo'].indexOf(style));
+  const horizontal=ay===by,length=Math.hypot(bx-ax,by-ay);
+  if(length<=0)return;
+  const count=Math.max(1,Math.round(length/(horizontal?50:28))),span=length/count;
+  for(let i=0;i<count;i++){
+    // Repeat between post centers, overlapping end caps instead of doubling posts.
+    const railWidth=span/.88;
+    if(horizontal)c.drawImage(gardenFenceArt,0,row*96+60,96,36,snapPixel(ax+i*span-railWidth*.06),snapPixel(ay-10.5),railWidth,10.5);
+    else c.drawImage(gardenFenceArt,126,row*96,36,96,snapPixel(ax-5.25),snapPixel(ay+i*span-5),10.5,span+5);
+  }
+}
 function fence(c,{x,y,w,h,style},front=true){
+  if(dim(gardenFenceArt)){
+    authoredFenceEdge(c,style,x,y,x+w,y);
+    authoredFenceEdge(c,style,x,y,x,y+h);
+    authoredFenceEdge(c,style,x+w,y,x+w,y+h);
+    if(front)fenceFront(c,{x,y,w,h,style});
+    return;
+  }
   const [dark,middle,light]=railPaint[style];
   const gap=11,middleX=x+w/2;
   const edges=[[[x,y],[x+w,y]],[[x,y],[x,y+h]],[[x+w,y],[x+w,y+h]],...(front?[[[x,y+h],[middleX-gap,y+h]],[[middleX+gap,y+h],[x+w,y+h]]]:[])];
@@ -291,6 +311,12 @@ function fence(c,{x,y,w,h,style},front=true){
   }
 }
 function fenceFront(c,{x,y,w,h,style='wood',gate=11}){
+  if(dim(gardenFenceArt)){
+    const middle=x+w/2,bottom=y+h;
+    authoredFenceEdge(c,style,x,bottom,middle-gate,bottom);
+    authoredFenceEdge(c,style,middle+gate,bottom,x+w,bottom);
+    return;
+  }
   const [dark,middle,light]=railPaint[style]??railPaint.wood;
   const bottom=y+h,mid=x+w/2,gap=gate;
   for(const [left,right] of [[x,mid-gap],[mid+gap,x+w]]){

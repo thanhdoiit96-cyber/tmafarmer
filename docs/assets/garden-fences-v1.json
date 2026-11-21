@@ -1,0 +1,49 @@
+{
+  "reference": "public/pixel/neighbor-homes-v1.png",
+  "source": "garden-fences-v1-source.png",
+  "runtime": "public/pixel/garden-fences-v1.png",
+  "runtimeSize": [
+    192,
+    288
+  ],
+  "styles": [
+    "wood",
+    "white",
+    "bamboo"
+  ],
+  "horizontalFrame": [
+    0,
+    60,
+    96,
+    36
+  ],
+  "verticalFrame": [
+    126,
+    0,
+    36,
+    96
+  ],
+  "rowStride": 96,
+  "render": {
+    "height": 10.5,
+    "horizontalRepeat": 50,
+    "verticalRepeat": 28,
+    "endCapOverlap": 0.06,
+    "frontGateHalfWidth": 11
+  },
+  "scope": "Decorative world fences around main beds, expansion gardens and existing fenced parcel yards; shared renderer used by field and visit. No gameplay changes to saved styles, prices, footprints, gate width, capacity or collisions.",
+  "verification": {
+    "views": [
+      "garden-fences-main-v1.png",
+      "garden-fences-parcels-v1.png",
+      "garden-fences-visit-v1.png"
+    ],
+    "viewport": [
+      640,
+      384
+    ],
+    "alpha": "Runtime binary 0/255. Separate side and horizontal source bounds prevent clipped end posts."
+  },
+  "tool": "built-in imagegen",
+  "prompt": "Create a production modular FENCE SPRITE ATLAS matching the low garden fences in the supplied Vietnamese cozy pixel-art village homes. Transparent real alpha background, no ground, no grass, no plants, no text. Exact grid TWO columns THREE rows, six isolated sprites, generous transparent gutters, same scale. Row1 warm honey timber rounded posts, two horizontal warm wooden rails with subtle grain and dark brown undersides. Row2 SAME construction in warm ivory painted wood, weathered honey endgrain, avoid brilliant pure white. Row3 muted yellow-green bamboo posts with visible nodes and natural rope bindings, two rails. Column1: straight HORIZONTAL fence segment between two low rounded end posts, exactly side-to-side, front elevated game camera, wide about3:1 silhouette. Column2: matching SIDE fence segment running VERTICALLY top-to-bottom in screen coordinates along a garden side, slender about1:3 silhouette, two posts at endpoints, two narrow rails between them in top-down foreshortened elevated camera. The side fence MUST run straight vertically on image, not diagonal, no perspective vanishing point. All low fences should be waist-low compared to game farmer; rounded crafted materials, warm upper-left sunlight, dark warm brown/teal shadows, authored pixel clusters consistent with reference, not vector shapes. Six full silhouettes inside six cells, end posts intact and no shadows outside footprint, no decorations or gates. Designed to repeat seamlessly between end posts, clear readable at horizontal28x10 and vertical10x28 game units."
+}
