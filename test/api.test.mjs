@@ -233,6 +233,28 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const joinedAgain=await api('join',{name:'Vườn Bắp',code:a.code});
   assert.equal(joinedAgain.status,201);
   assert.notEqual(joinedAgain.state.me.id,target);
+  // Expanded gardens persist through the real API, including retry protection,
+  // southern presence coordinates and planting in the separate ID namespace.
+  const expansion=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  const farmer=expansion.farms[a.state.me.id];
+  farmer.coins=1000;farmer.land[7]={kind:'garden',fence:'bamboo'};
+  farmer.wellness={water:100,food:100,stamina:100,at:unixNow(),until:{},restUntil:0};
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(expansion),a.code);
+  const extend={action:'upgradeGarden',index:7,requestId:crypto.randomUUID()};
+  const upgrades=await Promise.all([api('action',extend,a),api('action',extend,a)]);
+  assert.ok(upgrades.every(result=>result.status===200&&result.state.me.coins===880));
+  assert.ok(upgrades.every(result=>result.state.me.land[7].expanded&&result.state.me.land[7].fence==='bamboo'));
+  assert.equal((await send(a,'upgradeGarden',{index:7})).status,400);
+  const highId=10023;
+  assert.equal((await enter(a,'field',undefined,plotPosition(highId))).status,200);
+  const planted=await send(a,'plant',{index:highId,item:'wheat'});
+  assert.equal(planted.status,200);
+  assert.equal(planted.state.me.extraPlots[highId].kind,'wheat');
+  const reloaded=await api('state',null,a);
+  assert.equal(reloaded.state.me.extraPlots[highId].kind,'wheat');
+  assert.equal(reloaded.state.me.coins,880);
+  const observer=await api('state',null,joinedAgain);
+  assert.equal(observer.state.neighbors.find(farm=>farm.id===a.state.me.id).extraPlots[highId].kind,'wheat');
   db.close();
 });
 

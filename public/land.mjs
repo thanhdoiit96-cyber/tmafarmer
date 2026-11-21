@@ -1,7 +1,8 @@
 export const starterLots=2;
-export const homesteadSize={width:820,height:640};
+export const homesteadSize={width:820,height:900};
 export const lotCount=8;
-export const lotSize={w:190,h:48};
+export const lotSize={w:190,h:100};
+export const gardenUpgradeCost=120;
 export const mainPond={x:500,y:160,w:280,h:145,shape:'rect'};
 export const lotPondInset={x:9,y:8,w:18,h:16};
 export const landTypes={
@@ -18,21 +19,31 @@ export function getLand(farm){
 }
 // Saved parcel indexes stay stable; only their world placement changes.
 // Keep all eight parcels east of the stone lane and inside the leafy border.
-export const lotRect=i=>({x:260+(i%2)*246,y:375+Math.floor(i/2)*56,...lotSize});
-// Livestock yards grow outward, preserving the central 56-unit access lane.
-export const coopRect=i=>{const area=lotRect(i);return {...area,x:area.x-(i%2===0?30:0),w:area.w+30};};
+export const lotRect=i=>({x:260+(i%2)*246,y:395+Math.floor(i/2)*116,...lotSize});
+export const coopRect=i=>lotRect(i);
 export const plotOffset=12;
 const upperFieldOffset=plotOffset+lotCount*3;
+// Separate namespace: never reinterpret existing main-field or parcel IDs.
+const upgradedPlotOffset=10000;
+export const gardenPlotId=(lot,slot)=>slot<3?plotOffset+lot*3+slot:upgradedPlotOffset+lot*3+slot-3;
+export function gardenForPlot(index){
+  if(!Number.isInteger(index))return -1;
+  if(index>=plotOffset&&index<upperFieldOffset)return Math.floor((index-plotOffset)/3);
+  if(index>=upgradedPlotOffset&&index<upgradedPlotOffset+lotCount*3)return Math.floor((index-upgradedPlotOffset)/3);
+  return -1;
+}
+export const gardenPlotSlot=index=>gardenForPlot(index)<0?-1:index>=upgradedPlotOffset?(index-upgradedPlotOffset)%3+3:(index-plotOffset)%3;
+export const gardenPlotCount=lot=>lot?.kind==='garden'?(lot.expanded===true?6:3):0;
 export const pondOffset=2;
 export const mainPlotId=slot=>slot<plotOffset?slot:upperFieldOffset+slot-plotOffset;
-export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset?index-upperFieldOffset+plotOffset:-1;
+export const mainPlotSlot=index=>index<plotOffset?index:index>=upperFieldOffset&&index<upgradedPlotOffset?index-upperFieldOffset+plotOffset:-1;
 export function plotPosition(index){
   const slot=mainPlotSlot(index);
   if(slot>=0)return slot<plotOffset
     ?{x:255+(slot%3)*42,y:96+Math.floor(slot/3)*34}
     :{x:255+((slot-plotOffset)%6)*42,y:302+Math.floor((slot-plotOffset)/6)*26};
-  const lot=lotRect(Math.floor((index-plotOffset)/3));
-  return {x:lot.x+49+((index-plotOffset)%3)*46,y:lot.y+27};
+  const lot=lotRect(gardenForPlot(index)),cell=gardenPlotSlot(index);
+  return {x:lot.x+49+(cell%3)*46,y:lot.y+36+Math.floor(cell/3)*38};
 }
 export const plotAt=(farm,index)=>{
   const slot=mainPlotSlot(index);
@@ -41,7 +52,7 @@ export const plotAt=(farm,index)=>{
 export function cropIndexes(farm){
   const result=farm.plots.map((_,slot)=>mainPlotId(slot));
   getLand(farm).forEach((lot,i)=>{
-    if(lot?.kind==='garden')for(let j=0;j<3;j++)result.push(plotOffset+i*3+j);
+    for(let j=0;j<gardenPlotCount(lot);j++)result.push(gardenPlotId(i,j));
   });
   return result;
 }
@@ -81,15 +92,15 @@ export const gardenDecorItems={
 };
 export const gardenDecorSpots={
   house:{name:'Bậc hiên bên trái nhà',x:95,y:184},
-  gate:{name:'Đèn bên cổng vườn',x:154,y:570},
-  pond:{name:'Bảng tên cạnh cổng',x:155,y:603},
+  gate:{name:'Đèn bên cổng vườn',x:154,y:830},
+  pond:{name:'Bảng tên cạnh cổng',x:155,y:863},
   marketPath:{name:'Ghế nghỉ bên ao',x:600,y:334},
   wellside:{name:'Sân dụng cụ cạnh kho',x:474,y:210},
   westMeadow:{name:'Góc lu nước bên hiên',x:66,y:184},
   barnSide:{name:'Bờ cỏ cạnh ruộng',x:532,y:350},
   workshopPath:{name:'Chậu sen cạnh ghế nghỉ',x:640,y:341},
   pondBank:{name:'Chuông gió bên hiên',x:181,y:184},
-  southPath:{name:'Cổng hoa trên lối vào',x:205,y:610},
+  southPath:{name:'Cổng hoa trên lối vào',x:205,y:870},
   westLots:{name:'Giỏ mây bên xưởng',x:166,y:400},
   midLots:{name:'Góc rơm cạnh kho',x:386,y:210},
   eastLots:{name:'Máng chim dưới giếng',x:83,y:300},
@@ -99,7 +110,7 @@ export const gardenDecorRecommendedSpots={
   wheelbarrow:'wellside',waterJar:'westMeadow',scarecrow:'barnSide',lotusPot:'workshopPath',
   windChime:'pondBank',flowerArch:'southPath',wickerBasket:'westLots',hayBale:'midLots',birdFeeder:'eastLots',
 };
-export const gardenParcelRect=i=>{const area=lotRect(i);return {...area,x:area.x+24,y:area.y+8,w:142,h:36};};
+export const gardenParcelRect=i=>lotRect(i);
 export function gardenDecorAt(farm,spot){
   return Object.keys(gardenDecorItems).find(item=>farm.gardenDecor?.[item]===spot);
 }

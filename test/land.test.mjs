@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, crops, newFarm, newRoom, snapshot} from '../public/game.mjs';
 import {optionalIndex} from '../public/action-input.mjs';
-import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond,gardenDecorItems,gardenDecorRecommendedSpots} from '../public/land.mjs';
+import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond,gardenDecorItems,gardenDecorRecommendedSpots,homesteadSize} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from '../public/pixel/homestead-buildings.mjs';
 import {animalMotion} from '../public/world-motion.mjs';
@@ -52,12 +52,13 @@ test('larger parcel shelters leave room for two moving buffalo and the workshop 
     const scene=features(id,state,neighbor);
     for(const animal of scene.actors.filter(a=>a.type==='animal')){
       const area=coopRect(animal.data.lot);
-      const shelterRight=area.x+parcelShelter.x+parcelShelter.w/2;
+      const shelterBottom=area.y+parcelShelter.y;
       for(let t=0;t<25;t+=.25){
         const motion=animalMotion(t,animal.index,animal.roam,'graze');
-        assert.ok(animal.x+motion.offset-47/2>shelterRight);
+        assert.ok(animal.x+motion.offset-47/2>area.x);
         assert.ok(animal.x+motion.offset+47/2<area.x+area.w);
         assert.ok(animal.y-33>area.y&&animal.y<area.y+area.h);
+        assert.ok(animal.y-33>shelterBottom,'animals roam in the open front yard');
       }
       assert.ok(route(scene,maps[id].spawn,[animal.x,animal.y]));
     }
@@ -84,7 +85,10 @@ test('homestead parcels clear the stone lane and every maximum-level bed stays o
   assert.equal(new Set(areas.map(a=>a.y)).size,4);
   for(const area of areas){
     assert.ok(area.x>=250&&area.x+area.w<=710);
-    assert.ok(area.y>=375&&area.y+area.h<=596);
+    assert.ok(area.y>=395&&area.y+area.h<=homesteadSize.height-50);
+    assert.equal(area.w,190);
+    assert.equal(area.h,100);
+    assert.deepEqual(coopRect(areas.indexOf(area)),area,'same boundary for livestock and garden');
     for(let slot=0;slot<30;slot++){
       const p=plotPosition(mainPlotId(slot));
       assert.ok(p.y+13<area.y||p.y-13>area.y+area.h||p.x+20<area.x||p.x-20>area.x+area.w);

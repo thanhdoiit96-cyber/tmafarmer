@@ -4,9 +4,9 @@ export const homesteadWorkshop={
   source:'/pixel/homestead-workshop-v3.png',
 };
 export const parcelShelter={
-  x:44,y:45,w:80,h:44,
+  x:48,y:47,w:80,h:44,
   source:'/pixel/parcel-shelter-v3.png',
 };
-export const parcelAnimalSeats=[126,190];
-export const parcelAnimalBaseline=39;
-export const parcelAnimalRoam=[16,6];
+export const parcelAnimalSeats=[53,139];
+export const parcelAnimalBaseline=87;
+export const parcelAnimalRoam=[18,20];

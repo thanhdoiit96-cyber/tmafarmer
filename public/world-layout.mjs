@@ -1,4 +1,4 @@
-import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
+import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
@@ -28,8 +28,8 @@ const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival
 export const maps = {
   field: {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[188,221], bounds:homesteadSize,
-    paths:[[[133,177],[140,191],[181,215],[205,238],[205,620]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,610]],[[242,355],[716,355]],[[242,413],[716,413]],[[242,471],[716,471]],[[242,529],[716,529]],[[242,587],[716,587]],[[94,285],[151,285],[205,285]],[[homesteadWorkshop.x,homesteadWorkshop.y+18],[205,homesteadWorkshop.y+18]]],
-    trees:[[34,45],[38,268],[29,560],[100,622],[786,44],[790,151],[790,305],[786,495],[755,613],[540,630],[684,630]],
+    paths:[[[133,177],[140,191],[181,215],[205,238],[205,880]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,860]],...Array.from({length:5},(_,row)=>[[230,387+row*116],[716,387+row*116]]),[[94,285],[151,285],[205,285]],[[homesteadWorkshop.x,homesteadWorkshop.y+18],[205,homesteadWorkshop.y+18]]],
+    trees:[[34,45],[38,268],[29,560],[60,780],[786,44],[790,151],[790,305],[786,495],[778,700],[540,880],[684,880]],
     water:[mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
     exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
@@ -175,7 +175,7 @@ export function features(id, snapshot, neighbor, page=0) {
       const pos=plotPosition(i);
       actors.push({...pos,type:'plot',index:i,data,compactAt:id==='field'?owner.soilCompactsAt?.[i]:undefined,visit:id==='visit'});
       const slot=mainPlotSlot(i);
-      hotspots.push({...pos,y:pos.y+plotHotspotOffset,drawY:pos.y,type:'plot',index:i,data,label:slot>=0?'Ô đất '+(slot+1):'Vườn ô '+(Math.floor((i-plotOffset)/3)+1)+' · luống '+((i-plotOffset)%3+1)});
+      hotspots.push({...pos,y:pos.y+plotHotspotOffset,drawY:pos.y,type:'plot',index:i,data,label:slot>=0?'Ô đất '+(slot+1):'Vườn ô '+(gardenForPlot(i)+1)+' · luống '+(gardenPlotSlot(i)+1)});
     }
     const decor=(index,rect)=>{const style=fenceAt(owner,index);if(style)ground.push({...rect,type:'fence',style});};
     for(const garden of baseGarden(Math.ceil(owner.plots.length/3))){
@@ -188,6 +188,11 @@ export function features(id, snapshot, neighbor, page=0) {
       ground.push({...area,type:'lot',lot,index:i});
       if(id==='field')hotspots.push({x,y,type:'land',index:i,label:(lot?.kind&&lot.kind!=='empty'?landTypes[lot.kind].name:lot?'Đất trống':'Mua đất')+' · Ô '+(i+1)});
       if(lot?.fence&&lot.kind==='garden')ground.push({...gardenParcelRect(i),type:'fence',style:lot.fence});
+      if(lot?.kind==='garden'&&!lot.expanded)for(let slot=3;slot<6;slot++){
+        const pos=plotPosition(gardenPlotId(i,slot));
+        actors.push({...pos,type:'garden-reserve'});
+        if(id==='field')hotspots.push({...pos,drawY:pos.y,y:pos.y+plotHotspotOffset,type:'land',index:i,label:'Mở thêm luống · Vườn ô '+(i+1)});
+      }
       if(lot?.kind==='pond'){
         const section={x:area.x+lotPondInset.x,y:area.y+lotPondInset.y,w:area.w-lotPondInset.w,h:area.h-lotPondInset.h,shape:'rect'};
         water.push(section);
@@ -201,7 +206,7 @@ export function features(id, snapshot, neighbor, page=0) {
         const pen=coopRect(i);
         ground.push({...pen,type:'fence',style:lot.fence??'wood'});
         actors.push({x:pen.x+parcelShelter.x,y:pen.y+parcelShelter.y,type:'coop',w:parcelShelter.w,h:parcelShelter.h,parcel:true});
-        blocks.push(rect(pen.x+10,pen.y+22,68,23));
+        blocks.push(rect(pen.x+parcelShelter.x-parcelShelter.w/2+6,pen.y+29,parcelShelter.w-12,18));
         const pens=id==='field'?farm.pens:owner.visiblePens??[];
         pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
           const point={x:pen.x+parcelAnimalSeats[seat],y:pen.y+parcelAnimalBaseline,index,data,roam:parcelAnimalRoam[seat]};

@@ -18,6 +18,7 @@ export const sceneBackgroundAtlases={
     },
   },
   homestead:{source:'/pixel/scene-background-homestead-v2.png'},
+  expansion:{source:'/pixel/expansion-terrain-v7.png'},
 };
 
 export const sceneBackgrounds={

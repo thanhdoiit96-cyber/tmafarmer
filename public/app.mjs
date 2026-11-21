@@ -3,7 +3,7 @@ import {optionalIndex} from './action-input.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles} from './tasks.mjs';
-import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
+import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotCount,gardenUpgradeCost,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
@@ -82,8 +82,8 @@ const world=createWorld(worldFrame,interactWithWorld,landscape);
 const sceneChat=createSceneChat({api,world,showToast,context:()=>state&&{session,player:state.me.id,area:tab==='neighbors'&&neighborId?'visit':tab,host:neighborId}});
 let tasks=[];
 const lotLabel=lot=>lot?.kind==='empty'?'Đất trống':landTypes[lot?.kind]?.name??'Chưa mua';
-const gardenFor=index=>mainPlotSlot(index)>=0?-1:Math.floor((index-plotOffset)/3);
-const plotNumber=index=>gardenFor(index)<0?mainPlotSlot(index)+1:(index-plotOffset)%3+1;
+const gardenFor=gardenForPlot;
+const plotNumber=index=>gardenFor(index)<0?mainPlotSlot(index)+1:gardenPlotSlot(index)+1;
 const btn=(label,attrs='',kind='',disabled=false)=>'<button type="button" class="btn '+kind+'" '+attrs+(disabled?' disabled':'')+'>'+label+'</button>';
 const act=(label,action,item='',index='',kind='',disabled=false,qty=1)=>btn(label,`data-action="${action}" data-item="${item}" data-index="${index}" data-qty="${qty}"`,kind,disabled);
 const nice=(key)=>goods[key].icon+' '+goods[key].name;
@@ -219,7 +219,9 @@ function renderField(farm) {
   const group=gardens.length?'<label class="compact-label">Vườn <select data-crop-group><option value="-1"'+(plotGroup<0?' selected':'')+'>Ruộng chính</option>'+gardens.map(i=>'<option value="'+i+'"'+(plotGroup===i?' selected':'')+'>Ô đất '+(i+1)+'</option>').join('')+'</select></label>':'';
   const damp=state.afterRainUntil>currentTime()?'<p class="farm-warning">Sau mưa: sâu dễ xuất hiện trong <strong data-until="'+state.afterRainUntil+'">'+duration(state.afterRainUntil-currentTime())+'</strong> tới.</p>':'';
   return '<div class="row area-heading"><h2>Ô canh tác</h2><span class="badge">'+indices.filter(i=>plotAt(farm,i)).length+'/'+indices.length+' ô đã gieo</span></div>'+
-    (farm.gardenHelperJob?gardenHelperStatus(farm,currentTime()):'')+damp+group+'<div class="plot-select">'+indices.map(i=>{
+    (farm.gardenHelperJob?gardenHelperStatus(farm,currentTime()):'')+damp+group+
+    (plotGroup>=0&&!farm.land[plotGroup]?.expanded?'<div class="actions">'+act('Mở thêm 3 ô · '+gardenUpgradeCost+' xu','upgradeGarden','',plotGroup,'subtle',farm.coins<gardenUpgradeCost)+'</div>':'')+
+    '<div class="plot-select">'+indices.map(i=>{
       const crop=plotAt(farm,i), amount=crop?progress(crop.progress,cropGoal(crop)):0;
       const label=plotNumber(i);
       const task=tasks.find(task=>task.kind==='plot'&&task.index===i);
@@ -641,6 +643,8 @@ function renderLand(farm,now){
   const launch=lot.kind==='garden'?btn('Chăm vườn','data-open-garden="'+selectedLot+'"','primary'):
     lot.kind==='pond'?btn('Chăm ao','data-open-pond="'+(selectedLot+pondOffset)+'"','primary'):'';
   return header+'<h3>'+lotLabel(lot)+' · Ô '+(selectedLot+1)+'</h3><div class="actions">'+launch+go+'</div>'+
+    (lot.kind==='garden'?'<p>'+gardenPlotCount(lot)+' ô trồng · Bố trí tối đa 3 cột × 2 hàng.</p>'+(lot.expanded?'':
+      '<div class="actions">'+act('Mở thêm 3 ô · '+gardenUpgradeCost+' xu','upgradeGarden','',selectedLot,'primary',farm.coins<gardenUpgradeCost)+'</div>'):'')+
     (lot.kind==='pond'?'':'<h3 class="section-title">Hàng rào trang trí</h3>'+decorOptions(farm,selectedLot))+(lot.kind==='coop'?'<div class="lot-coop">'+renderCoop(farm,now,selectedLot)+'</div>':'');
 }
 function renderJournal(farm){
@@ -1375,7 +1379,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','upgradeGarden','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');

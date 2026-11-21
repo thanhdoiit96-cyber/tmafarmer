@@ -28,7 +28,7 @@ test('hiring covers primary and expansion plots and charges only coins, even whi
   const view=snapshot(room,farm,start), targets=gardenHelperTargets(view.me,'water',view.weather,start);
   assert.deepEqual(targets.map(target=>target.index),[0,plotOffset]);
   const preview=gardenHelperPreview(view.me,'water',targets);
-  assert.deepEqual(preview,{cost:4,space:0,seeds:0,free:0,duration:19,blocked:''});
+  assert.deepEqual(preview,{cost:4,space:0,seeds:0,free:0,duration:20,blocked:''});
   assert.match(hire(room,'water',[0,plotOffset],0),/Cô Lan làm 2 ô · 4 xu/);
   assert.equal(farm.coins,96);
   assert.equal(farm.plots[0].wetUntil,0);

@@ -1,6 +1,6 @@
 import {addVillageIncome,advanceVillage,contributeVillage,hasVillageProject,recordVillageTheft,startVillageSecurity,villageLevels,villageSnapshot,villageTheftsLeft} from './village.mjs';
 import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
-import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
+import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
@@ -812,7 +812,7 @@ function wealthRanking(room){
       return sum+info.costs.slice(0,Math.max(0,improvements)).reduce((a,b)=>a+b,0);
     },0);
     const lots=getLand(farm).filter(Boolean);
-    const extra=lots.reduce((sum,lot)=>sum+(landTypes[lot.kind]?.cost??0)+(fences[lot.fence]?.cost??0),0);
+    const extra=lots.reduce((sum,lot)=>sum+(landTypes[lot.kind]?.cost??0)+(fences[lot.fence]?.cost??0)+(lot.kind==='garden'&&lot.expanded===true?gardenUpgradeCost:0),0);
     const land=lots.slice(2).reduce((sum,_,i)=>sum+lotPrice(i+2),0);
     const decorations=Object.values(farm.decor??{}).reduce((sum,style)=>sum+(fences[style]?.cost??0),0);
     const livestock=farm.pens.reduce((sum,pen)=>sum+animals[pen.kind].cost,0);
@@ -1032,7 +1032,7 @@ function applyAction(room,id,input,now,catchRoll){
     farm.gardenDecor=owned;
     return 'Đã đặt '+name+' ở '+gardenDecorSpots[target].name.toLowerCase()+'.';
   }
-  if(action==='buyLand'||action==='buildLand'||action==='decorate'){
+  if(action==='buyLand'||action==='buildLand'||action==='decorate'||action==='upgradeGarden'){
     const land=getLand(farm);
     const inGrid=Number.isInteger(index)&&index>=0&&index<lotCount;
     if(action==='decorate'){
@@ -1049,6 +1049,15 @@ function applyAction(room,id,input,now,catchRoll){
       return item==='none'?'Đã gỡ hàng rào trang trí.':'Đã đặt hàng rào '+fences[item].name.toLowerCase()+'.';
     }
     check(inGrid,'Ô đất không tồn tại.');
+    if(action==='upgradeGarden'){
+      check(land[index]?.kind==='garden','Hãy chọn mảnh đất đã làm vườn.');
+      check(land[index].expanded!==true,'Vườn đã có đủ 6 ô trồng.');
+      spend(farm,gardenUpgradeCost);
+      land[index]={...land[index],expanded:true};farm.land=land;
+      for(let slot=3;slot<6;slot++)setSoilTime(farm,gardenPlotId(index,slot),now);
+      record(farm,now,'Mở thêm 3 ô trồng ở vườn ô '+(index+1)+'.');
+      return 'Vườn ô '+(index+1)+' đã có 6 ô trồng.';
+    }
     if(action==='buyLand'){
       check(!land[index],'Bạn đã sở hữu ô này.');
       spend(farm,lotPrice(land.filter(Boolean).length));

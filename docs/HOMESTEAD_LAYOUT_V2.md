@@ -1,5 +1,72 @@
 # Vườn nhà: bố cục đã duyệt và triển khai V2
 
+## Khu mở rộng cân đối V7
+
+Triển khai từ [phác thảo đã duyệt](EXPANSION_PARCELS_DRAFT_V1.md).
+[Ảnh Canvas toàn cảnh](assets/expansion-runtime-v7.png) dùng bộ render thật của
+game với dữ liệu mẫu; loại đất minh họa không ép thay đổi công năng đất đã mua.
+
+- World 820 × 900; khu nhà/ao chính giữ nguyên tọa độ và tỷ lệ, không kéo giãn.
+- Tám mảnh 190 × 100, hai cột tại x=260/506, bốn hàng y=395/511/627/743.
+  Khoảng giữa cột 56, giữa hàng 16. Hàng đầu lùi thêm 20 so với đề xuất để
+  giữ đủ vùng chuyển tiếp cho tất cả 30 luống chính và hàng rào của chúng.
+- Chuồng, vườn và ao dùng chung ranh giới. Mái che sau-trái, hai vật nuôi ở
+  sân trước, biên đi lại giữ cả trâu trưởng thành trong sân và tránh mái che.
+  Sức chứa chuồng vẫn 2/mảnh, ao vẫn 2/mảnh, ao chính vẫn 6.
+- Vườn bắt đầu với ba luống hàng sau. Nút **Mở thêm 3 ô · 120 xu** có ở phần
+  Đất và phần chăm vườn; mở một lần để thành 3 cột × 2 hàng. Hàng chưa mở chỉ
+  có dấu đất mờ, không thể gieo. Không tự cộng thêm ô cho dữ liệu cũ.
+- Giữ nguyên ID ô cũ 12–35 và ID ruộng chính. ID hàng mới là 10000–10023,
+  lưu trong `extraPlots`, trạng thái nâng cấp lưu `land[i].expanded=true`.
+  `gardenPlotId`, `gardenForPlot`, `gardenPlotSlot`, `gardenPlotCount` là nguồn
+  chung cho số ô, nhóm vườn, tọa độ, nhãn tác vụ và hiển thị khách thăm.
+- Kiểm tra nâng cấp ở engine, từ chối mua lại/thiếu xu/sai loại đất. Chi phí
+  nâng cấp được cộng vào giá trị tài sản, không làm mất tổng tài sản vì chi xu.
+- Nền phía trên lấy plate V2 tại world y=0–372; phần mới nối từ y=360 đến900
+  với vùng chuyển tiếp cỏ 12 đơn vị. Các lối đá được căn vào y=387+116×hàng,
+  tâm đường chính x=205, lối giữa x=478. Cổng và đồ trang trí cạnh cổng dời
+  xuống cuối map. Radar dùng đúng tỷ lệ bản đồ mới, camera giữ thuật toán cũ.
+
+### Mỹ thuật và xuất tài nguyên
+
+Dùng built-in imagegen, tham chiếu `background-homestead-empty-v2.png` và
+`expansion-parcels-draft-v1.png`. Source và runtime giữ riêng, không thay các
+atlas cũ. Chạy `py scripts/normalize-expansion-v7.py` để xuất lại.
+
+- `expansion-terrain-v7-source.png` → `public/pixel/expansion-terrain-v7.png`
+  (1640 × 1080). Prompt: chỉ phần nền phía nam, cùng chất liệu cỏ/đá/hoa,
+  lối chính dọc bên trái, lối bước đá giữa và năm lối ngang; đất trong tám
+  mảnh để trống, không vẽ sẵn rào, luống, chuồng, ao hoặc vật nuôi.
+  Export đăng ký các tâm lối đá theo lưới world bằng từng ô ảnh.
+- `parcel-pond-v7-source.png` → `public/pixel/parcel-pond-v7.png`
+  (364 × 188 RGBA, alpha cứng). Prompt: ao bờ đá bo tự nhiên tỷ lệ khoảng2:1,
+  nước teal, lá sen/hoa hồng và cá nhỏ, góc nhìn/màu theo concept; không vẽ
+  cầu, rào hay nền cỏ. Cầu V5 vẫn là actor riêng, gắn ở mép trước ao.
+- `parcel-grove-v7-source.png` → `public/pixel/parcel-grove-v7.png`
+  (120 × 60 RGBA, alpha cứng). Prompt: cụm đá tròn, dương xỉ thấp và hai hoa
+  cúc nhỏ theo phong cách concept, không nền/cast shadow; hai cụm đặt hoàn toàn
+  trong đất chưa mở. Thay hình bụi cây thủ tục cũ vốn đặt quá mép dưới mảnh.
+
+### Kiểm tra
+
+Đã kiểm tra Canvas thật ở 640 × 384 và toàn cảnh: các lối đi giữa mảnh,
+ô trồng cũ, sân cừu/trâu, ao và hàng rào; nhân vật đi xuống hàng cuối bằng
+`world.approach()`, camera theo được. UI thật ở chế độ demo: nâng cấp955→835xu,
+giữ cây ở ID12, hiện đủ ô1–6 gồm10000–10002, nút mua biến mất và trạng thái
+còn sau reload. API/D1-style kiểm tra gửi lặp cùng request không trừ hai lần,
+lưu/tải và khách thăm nhìn thấy cây tại10023, presence chấp nhận vị trí phía nam.
+
+Regression còn bao phủ: không trùng ID khi đủ30 ô chính và48 ô mở rộng,
+từ chối gieo vào ô chưa mở, bảo toàn cây/túi/rào/tài sản, người chăm vườn dùng
+ô mới, đúng nhãn tác vụ, mọi hotspot có đường đến cho chủ vườn và khách.
+Build bổ sung hai module phụ thuộc của `world-layout.mjs` vào server bundle
+(`yard-pets.mjs`, `pixel/homestead-buildings.mjs`) để worker đóng gói import được.
+
+Kết quả cuối: **108/108 test đạt**, `npm run build` thành công, import worker đã
+build thành công; HTML/app và cả ba PNG mới trả200 từ worker đóng gói. Fixture
+QA đã xóa trước build và trả404. Giao diện390px không tràn ngang, radar70×77px
+giữ đúng tỷ lệ. Chưa commit/push/deploy trong bước triển khai này.
+
 ## Sân nhà và bố cục có công năng V6
 
 ### Gà, chó, mèo

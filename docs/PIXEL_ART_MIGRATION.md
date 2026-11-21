@@ -1,5 +1,13 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### Khu mở rộng V7
+
+Đã triển khai [bố cục tám mảnh cân đối](HOMESTEAD_LAYOUT_V2.md): nền nam riêng
+được vẽ theo concept đã duyệt, giữ nguyên nền/landmark phía trên, ao có alpha
+và tỷ lệ mới. Vườn hỗ trợ nâng cấp3→6 luống mà giữ ID cũ; chuồng có sân sâu hơn.
+Source nằm trong `docs/assets`, runtime trong `public/pixel`, xuất bằng
+`scripts/normalize-expansion-v7.py`. [Ảnh runtime toàn cảnh](assets/expansion-runtime-v7.png).
+
 Tài liệu này là nguồn theo dõi chính cho việc chuyển phần thế giới Canvas của **Vườn Mùa Vui** sang pixel art. UI HTML, luật game, tọa độ gameplay và dữ liệu lưu được giữ độc lập với quá trình đổi hình ảnh.
 
 ## Quyết định đã chốt

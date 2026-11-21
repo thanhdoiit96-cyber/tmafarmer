@@ -134,6 +134,7 @@ export function createWorld(root, onInteract, landscape) {
       scenery=hasSceneBackground(id)?[]:landscapeFor(id).decor.map(item=>({...item,type:'scenery'}));
       root.dataset.scene=id;
       bounds=maps[id].bounds??size;
+      radar.height=Math.round(radar.width*bounds.height/bounds.width);
       root.dataset.wide=String(bounds.width>size.width);
       setPosition(arrival??maps[id].spawn);
       sizeCanvas();

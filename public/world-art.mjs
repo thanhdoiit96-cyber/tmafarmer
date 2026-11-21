@@ -20,7 +20,8 @@ const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homesteadSoilArt=load('/pixel/scene-background-homestead-v1.png');
 const parcelShelterArt=load(parcelShelter.source);
 const workshopBuildingArt=load(homesteadWorkshop.source);
-const parcelPondArt=load('/pixel/parcel-pond-v2.png');
+const parcelPondArt=load('/pixel/parcel-pond-v7.png');
+const parcelGroveArt=load('/pixel/parcel-grove-v7.png');
 const pondDockArt=load('/pixel/pond-dock-v5.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
@@ -59,7 +60,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -313,8 +314,11 @@ function drawLot(c,a){
     for(const [dx,dy] of [[7,7],[w-11,7],[7,h-11],[w-11,h-11]]){
       box(c,'#6d7650',x+dx,y+dy,4,4,1);box(c,'#c5b381',x+dx+1,y+dy,2,1,0);
     }
-    const grove=index%2===0;
-    decorativeSprite(c,{kind:grove?'sapling':'flowers',x:x+w-25,y:y+h-6,w:grove?24:28,h:grove?23:17});
+    if(dim(parcelGroveArt)){
+      c.drawImage(parcelGroveArt,x+25,y+24,60,30);
+      c.save();c.translate(x+w-25,y+h-13);c.scale(-1,1);
+      c.drawImage(parcelGroveArt,0,-21,42,21);c.restore();
+    }
   }else if(lot.kind==='empty'){
     for(const [dx,dy] of [[22,22],[w-29,h-18],[w*.51,h*.66]])grassClump(c,x+dx,y+dy,seed(index,dx));
   }
@@ -450,6 +454,21 @@ function sceneBackground(c,kind,width,height){
   if(use.frame){
     const [sx,sy,sw,sh]=sceneBackgroundAtlases[use.atlas].frames[use.frame];
     c.drawImage(art,sx,sy,sw,sh,0,0,width,height);
+  }else if(use.atlas==='homestead'){
+    // Keep every upper-world landmark at its existing coordinates. Extending
+    // the world must not stretch the house, pond or their interaction points.
+    c.drawImage(art,0,0,art.naturalWidth,art.naturalHeight*380/640,0,0,820,380);
+    const extension=sceneBackgroundArt.expansion;
+    if(dim(extension)){
+      c.drawImage(extension,0,0,extension.naturalWidth,extension.naturalHeight,0,360,820,540);
+      // A short grass-only crossfade joins the authored plates, not the grid.
+      c.save();c.beginPath();c.rect(0,360,820,12);c.clip();
+      for(let row=0;row<12;row++){
+        c.globalAlpha=1-row/12;
+        c.drawImage(art,0,(360+row)*art.naturalHeight/640,art.naturalWidth,art.naturalHeight/640,0,360+row,820,1);
+      }
+      c.restore();
+    }
   }else c.drawImage(art,0,0,art.naturalWidth,art.naturalHeight,0,0,width,height);
   c.restore();
   return true;
@@ -1128,6 +1147,14 @@ function neighborHouse(c,a,t){
   }
 }
 export function actor(c,a,t,state){
+  if(a.type==='garden-reserve'){
+    // Unpurchased row: quiet corner markers, never a clickable planted bed.
+    c.save();c.globalAlpha=.25;plot(c,{...a,data:null},t,state,false);c.globalAlpha=.8;
+    for(const dx of [-18,18])for(const dy of [-10,10]){
+      line(c,'#c6b685',1,[[a.x+dx-Math.sign(dx)*5,a.y+dy],[a.x+dx,a.y+dy],[a.x+dx,a.y+dy-Math.sign(dy)*4]]);
+    }
+    c.restore();return;
+  }
   if(a.type==='yard-pet'){
     const pose=a.motion?a:yardPetPose(a.species,t,t===0);
     if(a.species==='chicken')return critter(c,{...a,...pose,data:{kind:'chicken'}},t);
