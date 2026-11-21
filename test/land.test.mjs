@@ -225,7 +225,7 @@ test('upgraded main coop seats sixteen reachable animals inside the pen without 
   const seats=scene.hotspots.filter(spot=>spot.type==='animal');
   assert.equal(new Set(seats.map(spot=>spot.x+','+spot.y)).size,16);
   for(const spot of seats){
-    assert.ok(spot.x>=82&&spot.x<=340&&spot.y>=106&&spot.y<=190,`animal seat must stay inside pen: ${spot.x},${spot.y}`);
+    assert.ok((spot.x>=35&&spot.x<=215||spot.x>=265&&spot.x<=445)&&spot.y>=141&&spot.y<=223,`animal seat must stay inside the painted yards: ${spot.x},${spot.y}`);
     assert.ok(route(scene,maps.coop.spawn,[spot.x,spot.y]));
   }
   act(room,'a','buildLand',0,'coop');

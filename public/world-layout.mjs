@@ -3,6 +3,7 @@ import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
+import {coopSize,coopGate,coopBarn,coopFeed,coopPosition,coopAnimalRoam,coopAnimalScale} from './coop-layout.mjs';
 
 export const size = { width: 480, height: 288 };
 export const interactionRange=31;
@@ -17,7 +18,6 @@ export {lotRect,plotPosition} from './land.mjs';
 // keeps the village approach and expansion routes clear.
 const gardenBeds=(rows,y,step=34)=>[{x:232,y,w:130,h:step*(rows-1)+40}];
 const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),76),...(rows>4?[{x:232,y:288,w:256,h:Math.max(0,Math.ceil((rows-4)/2)-1)*26+30}]:[])];
-const basePen={x:82,y:106,w:258,h:95};
 const docks = {
   field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:650,y:315,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
   visit:[{x:480,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
@@ -32,7 +32,7 @@ export const maps = {
     trees:[[34,45],[38,268],[29,560],[60,780],[786,44],[790,151],[790,305],[786,495],[778,700],[540,880],[684,880]],
     water:[mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
-    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',[29,220],'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
+    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',coopGate,'right'),exit(188,273,'Sang xóm bên','neighbors',[188,30],'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
   },
   home: {
     name:'Nhà vườn', spawn:homeSpawn, water:[], objects:[], trees:[],
@@ -48,12 +48,13 @@ export const maps = {
     exits:[exit(238,274,'Ra vườn','field',[homesteadWorkshop.x,homesteadWorkshop.y+18],'down')],
   },
   coop: {
-    name:'Chuồng trại', subtitle:'KHU CHĂN NUÔI', spawn:[29,220],
-    paths:[[[0,220],[147,220],[238,220],[238,288]],[[238,220],[397,220],[397,118]]],
-    trees:[[29,52],[66,81],[108,60],[23,144],[419,36],[456,73],[443,149],[426,267],[454,246],[55,265],[101,256]],
-    water:[rect(421,102,50,36)],
-    objects:[{x:239,y:69,type:'coop',label:'Cửa chuồng',w:102,h:47},{x:382,y:161,type:'silo',label:'Máng thức ăn',w:36,h:28}],
-    exits:[exit(16,220,'Về vườn nhà','field',[433,198],'left'),exit(238,273,'Sang xóm bên','neighbors',[442,217],'down')],
+    name:'Chuồng trại', subtitle:'KHU CHĂN NUÔI', spawn:coopGate,facing:'up',bounds:coopSize,
+    paths:[[[240,288],[240,126]],[[45,196],[435,196]]],
+    trees:[],water:[],
+    blocks:[rect(58,0,364,120),rect(0,0,12,288),rect(468,0,12,288),
+      rect(35,120,180,20),rect(265,120,180,20),rect(13,225,201,30),rect(266,225,201,30)],
+    objects:[{...coopBarn,type:'coop',label:'Cửa chuồng'},{...coopFeed,type:'silo',label:'Thức ăn bên chuồng'}],
+    exits:[exit(240,278,'Về vườn nhà','field',[433,198],'down'),exit(252,278,'Sang xóm bên','neighbors',[442,217],'down')],
   },
   market: {
     name:'Chợ làng', subtitle:'PHIÊN CHỢ MÙA VUI', spawn:[238,260],
@@ -69,7 +70,7 @@ export const maps = {
     trees:[[27,44],[64,31],[422,47],[453,73],[29,168],[441,165],[25,258],[93,268],[402,261],[450,260]],
     water:[rect(7,79,32,55),rect(438,78,28,64)],
     objects:[],
-    exits:[exit(238,14,'Về vườn nhà','field',[188,251],'up'),exit(463,217,'Sang chuồng trại','coop',[238,248],'right')],
+    exits:[exit(238,14,'Về vườn nhà','field',[188,251],'up'),exit(463,217,'Sang chuồng trại','coop',coopGate,'right')],
   },
   lake: {
     name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:[36,309],bounds:wide,
@@ -122,15 +123,6 @@ export function playerLocationBlock({action,index},area,pose,hasPublicWell=false
 
 const visitorPosition = i => ({x:[92,166,309,383][i%4],y:79+Math.floor(i/4)*72});
 export const neighborHouseTier=wealth=>wealth>20000?4:wealth>5000?3:wealth>1000?2:wealth>500?1:0;
-const coopPosition=(i,level)=>{
-  const capacity=Math.max(2,level*2);
-  if(capacity<=6){
-    const rows=Math.ceil(capacity/3),ys=rows===1?[150]:[127,174];
-    return {x:115+i%3*72,y:ys[Math.floor(i/3)]};
-  }
-  const rows=Math.ceil(capacity/4),ys=rows===2?[131,174]:rows===3?[127,158,189]:[127,148,169,190];
-  return {x:113+i%4*61,y:ys[Math.floor(i/4)]};
-};
 const intrudes = (x,y,items,margin=0) => items.some(r=>x>=r.x-margin&&x<=r.x+r.w+margin&&y>=r.y-margin&&y<=r.y+r.h+margin);
 export function features(id, snapshot, neighbor, page=0) {
   const map=maps[id];
@@ -217,11 +209,10 @@ export function features(id, snapshot, neighbor, page=0) {
     }
   }
   if(id==='coop') {
-    if(fenceAt(farm,-4))ground.push({...basePen,type:'fence',style:fenceAt(farm,-4)});
     let seat=0;
     for(const [i,data] of farm.pens.entries()) {
       if(data.lot!==undefined)continue;
-      const pos=coopPosition(seat++,farm.coop);
+      const pos={...coopPosition(seat++),roam:coopAnimalRoam(data.kind),visualScale:coopAnimalScale(data.kind)};
       actors.push({...pos,type:'animal',index:i,data});
       hotspots.push({...pos,type:'animal',index:i,data,label:'Chăm vật nuôi'});
     }

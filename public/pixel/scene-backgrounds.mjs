@@ -19,6 +19,7 @@ export const sceneBackgroundAtlases={
   },
   homestead:{source:'/pixel/scene-background-homestead-v2.png'},
   expansion:{source:'/pixel/expansion-terrain-v7.png'},
+  coop:{source:'/pixel/scene-background-coop-v8.png'},
 };
 
 export const sceneBackgrounds={
@@ -28,7 +29,7 @@ export const sceneBackgrounds={
   field:{atlas:'homestead'},
   visit:{atlas:'homestead'},
   market:{atlas:'environments',frame:'market'},
-  coop:{atlas:'environments',frame:'coop'},
+  coop:{atlas:'coop'},
   lake:{atlas:'environments',frame:'lake'},
 };
 
@@ -36,7 +37,7 @@ const backgroundedActors={
   field:new Set(['house','barn','well','tree']),
   visit:new Set(['house','barn','well','tree']),
   market:new Set(['market','well','tree']),
-  coop:new Set(['coop','silo','tree']),
+  coop:new Set(['coop','foundation','silo','tree']),
   lake:new Set(['dock','tree']),
   neighbors:new Set(['tree','village-hall']),
 };

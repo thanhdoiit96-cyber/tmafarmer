@@ -136,7 +136,7 @@ export function createWorld(root, onInteract, landscape) {
       bounds=maps[id].bounds??size;
       radar.height=Math.round(radar.width*bounds.height/bounds.width);
       root.dataset.wide=String(bounds.width>size.width);
-      setPosition(arrival??maps[id].spawn);
+      setPosition(arrival??maps[id].spawn,maps[id].facing??'down');
       sizeCanvas();
       shiftCamera(true);
       peers.clear();

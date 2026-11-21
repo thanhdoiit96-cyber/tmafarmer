@@ -1,4 +1,4 @@
-import {avatarOf,homesteadSize,speechRange} from './engine.mjs';
+import {avatarOf,homesteadSize,coopSize,speechRange} from './engine.mjs';
 const directions=['up','right','down','left'];
 const shared=['lake','market','neighbors'];
 const privateScenes=['field','coop','home','workshop'];
@@ -12,7 +12,7 @@ export function sceneKey(farms, player, area, host) {
   return null;
 }
 function validPose(area,pose){
-  const [w,h]=area==='field'||area==='visit'?[homesteadSize.width,homesteadSize.height]:area==='lake'?[720,432]:[480,288];
+  const [w,h]=area==='field'||area==='visit'?[homesteadSize.width,homesteadSize.height]:area==='coop'?[coopSize.width,coopSize.height]:area==='lake'?[720,432]:[480,288];
   return pose&&Number.isFinite(pose.x)&&Number.isFinite(pose.y)&&pose.x>=8&&pose.x<=w-8&&pose.y>=10&&pose.y<=h-9&&directions.includes(pose.facing)&&typeof pose.walking==='boolean';
 }
 export async function social(db,chat,room,farms,player,area,input,now){

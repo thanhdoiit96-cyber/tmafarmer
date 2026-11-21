@@ -284,9 +284,9 @@ function fence(c,{x,y,w,h,style},front=true){
     }
   }
 }
-function fenceFront(c,{x,y,w,h,style='wood'}){
+function fenceFront(c,{x,y,w,h,style='wood',gate=11}){
   const [dark,middle,light]=railPaint[style]??railPaint.wood;
-  const bottom=y+h,mid=x+w/2,gap=11;
+  const bottom=y+h,mid=x+w/2,gap=gate;
   for(const [left,right] of [[x,mid-gap],[mid+gap,x+w]]){
     for(const dy of [-4,-1]){
       line(c,dark,2.25,[[left,bottom+dy],[right,bottom+dy]]);
@@ -301,8 +301,7 @@ function fenceFront(c,{x,y,w,h,style='wood'}){
   }
 }
 export function coopForeground(c,scene){
-  const builtFence=scene.ground.find(item=>item.type==='fence'&&item.x<100&&item.y<120);
-  fenceFront(c,builtFence??{x:77,y:104,w:261,h:97,style:'wood'});
+  fenceFront(c,{x:13,y:141,w:454,h:114,gate:26,style:'wood'});
 }
 function drawLot(c,a){
   const {x,y,w,h,index,lot}=a;
@@ -651,16 +650,6 @@ export function grass(c,scene,kind,features){
       if(i%3===0)flower(c,x+3,y-1,1);
     }
   }
-  if(kind==='coop'&&!features.ground.some(a=>a.type==='fence')){
-    for(let x=77;x<338;x+=15){
-      box(c,'#987247',x,104,17,2.3,1);box(c,'#caa777',x,104,17,.8,.4);
-      box(c,'#755337',x,101,3,10,1);box(c,'#b28d62',x+.3,101,1.5,9,.6);
-    }
-    for(const x of [77,337])for(let y=111;y<201;y+=9){
-      box(c,'#a78452',x,y,2.2,11,1);
-      if(y%2)box(c,'#725738',x-1,y,3.5,6,1);
-    }
-  }
   for(const area of features.ground)if(area.type==='fence')fence(c,area);
   const sun=c.createRadialGradient(width*.25,height*.12,4,width*.31,height*.18,width*.73);
   sun.addColorStop(0,'#ffe2a529');sun.addColorStop(.75,'#ffe2a500');
@@ -887,7 +876,7 @@ function critter(c,a,t){
   const step=Math.sin(phase);
   const foraging=motion.state==='graze'||motion.state==='peck';
   const bend=foraging ? .5-.5*Math.cos(motion.elapsed*(large?4.7:9.3)) : 0;
-  const size=animalScale(data),[width,height]=animalSizes[data.kind];
+  const size=animalScale(data)*(a.visualScale??1),[width,height]=animalSizes[data.kind];
   const w=width*size,h=height*size;
   const x=snapPixel(a.x+(motion.offset??0)),y=snapPixel(a.y);
   const [sx,sy,sw,sh]=additionalFrame??livestockFrame??frames[visual];

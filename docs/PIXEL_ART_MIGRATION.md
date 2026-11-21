@@ -1,5 +1,14 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### Chuồng trại V8
+
+Đã căn lại scene theo [bố cục V8](COOP_LAYOUT_V8.md): plate riêng cùng phong cách,
+hai sân trống hai bên lối đi, 16 vị trí vật nuôi, cổng xuất phát phía trước và
+collision theo background. Giữ world480×288/viewport640×384, atlas/animation,
+sức chứa và dữ liệu vật nuôi. Tỷ lệ hiển thị riêng chỉ áp dụng tại Chuồng trại.
+Nguồn `docs/assets/coop-scene-v8-source.png`, xuất bằng
+`scripts/normalize-coop-v8.py`. [Ảnh Canvas](assets/coop-viewport-v8.png).
+
 ### Khu mở rộng V7
 
 Đã triển khai [bố cục tám mảnh cân đối](HOMESTEAD_LAYOUT_V2.md): nền nam riêng

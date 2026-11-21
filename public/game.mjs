@@ -5,6 +5,7 @@ import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fi
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
 export {homesteadSize} from './land.mjs';
+export {coopSize} from './coop-layout.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
 
 export {advanceVillage,hasVillageProject,startVillageSecurity};
