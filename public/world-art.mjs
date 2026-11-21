@@ -24,6 +24,8 @@ const parcelPondArt=load('/pixel/parcel-pond-v7.png');
 const parcelGroveArt=load('/pixel/parcel-grove-v7.png');
 const pondDockArt=load('/pixel/pond-dock-v5.png');
 const villageWellArt=load('/pixel/village-well-v1.png');
+const marketShopperArt=load('/pixel/market-shoppers-v1.png');
+const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
@@ -61,7 +63,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -1137,6 +1139,14 @@ function neighborHouse(c,a,t){
   }
 }
 export function actor(c,a,t,state){
+  if(a.type==='market-shopper'){
+    if(!dim(marketShopperArt))return;
+    shade(c,a.x,a.y,6,2);
+    c.save();c.translate(snapPixel(a.x),snapPixel(a.y));
+    if(a.facing<0)c.scale(-1,1);
+    c.drawImage(marketShopperArt,a.frame*48,a.row*64,48,64,-15,-40,30,40);
+    c.restore();return;
+  }
   if(a.type==='well'&&a.style==='village'&&dim(villageWellArt)){
     shade(c,a.x,a.y,a.w*.36,3);
     c.drawImage(villageWellArt,snapPixel(a.x-a.w/2),snapPixel(a.y-a.h),a.w,a.h);
@@ -1212,6 +1222,20 @@ export function actor(c,a,t,state){
     return drawTownsperson(c,x,y,t,'trader');
   }
   if(type==='order-board'){
+    if(dim(marketBoardArt)){
+      shade(c,x,y,a.w*.4,3);
+      c.drawImage(marketBoardArt,snapPixel(x-a.w/2),snapPixel(y-a.h),a.w,a.h);
+      if(a.upgraded){
+        ellipse(c,'#d9b354',x+a.w*.31,y-a.h*.52,3,3);
+        ellipse(c,'#fff0b7',x+a.w*.31-1,y-a.h*.52-1,1,1);
+      }
+      if(a.orders!==undefined){
+        box(c,'#304e3cec',x-9,y-a.h-13,18,10,3);
+        c.fillStyle='#fff1c9';c.font='bold 7px system-ui';c.textAlign='center';
+        c.fillText(String(a.orders),x,y-a.h-5.5);
+      }
+      return;
+    }
     const width=a.upgraded?30:24;
     shade(c,x,y,width*.6,4);
     box(c,'#634632',x-width*.38,y-22,3,24,1);

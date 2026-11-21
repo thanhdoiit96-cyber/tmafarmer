@@ -245,3 +245,6 @@ Added authored animated dog/cat companions and the existing chicken poses on con
 
 ### Village lake well V1
 Replaced the unlocked public well's procedural drawing with authored transparent stone-and-tile art. Moved its foot onto the grassy shore and aligned the drinking hotspot and collision with the south path. Other wells retain their existing appearance. Source, export script, Canvas previews and validation are recorded in VILLAGE_WELL_V1.md.
+
+### Village market V1
+Added authored shoppers with independent foreground strolls and a tiled wooden order board. Aligned shop interaction points and solid footprints with the background, removed an obsolete pond collider, and retained order and trade rules. See MARKET_LAYOUT_V1.md for sources, prompts, export workflow, Canvas preview and verification.

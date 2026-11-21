@@ -58,11 +58,14 @@ export const maps = {
     exits:[exit(240,278,'Về vườn nhà','field',[433,198],'down'),exit(252,278,'Sang xóm bên','neighbors',[442,217],'down')],
   },
   market: {
+    // The plate already contains the stalls and well. Block their painted bodies,
+    // not just the old small procedural actor footprints.
+    blocks:[rect(18,10,132,140),rect(160,8,158,132),rect(327,12,145,147),rect(206,145,67,87)],
     name:'Chợ làng', subtitle:'PHIÊN CHỢ MÙA VUI', spawn:[238,260],
     paths:[[[238,288],[238,206],[238,130]],[[96,138],[238,138],[392,138]],[[105,206],[395,206]]],
     trees:[[27,47],[58,80],[27,144],[440,69],[452,119],[416,46],[30,254],[69,269],[427,258],[458,241]],
-    water:[rect(410,153,46,59)],
-    objects:[{x:105,y:98,type:'market',style:'red',label:'Quầy vật tư',w:65,h:37}, {x:237,y:89,type:'market',style:'green',label:'Sạp nông sản',w:72,h:37}, {x:380,y:98,type:'market',style:'gold',label:'Quầy bán nhanh',w:65,h:37}, {x:237,y:195,type:'well',label:'Giếng làng',w:27,h:18}],
+    water:[],
+    objects:[{x:88,y:150,type:'market',style:'red',label:'Quầy vật tư',w:65,h:37,interaction:{x:88,y:170}}, {x:240,y:136,type:'market',style:'green',label:'Sạp nông sản',w:72,h:37,interaction:{x:296,y:160}}, {x:392,y:159,type:'market',style:'gold',label:'Quầy bán nhanh',w:65,h:37,interaction:{x:392,y:179}}, {x:239,y:230,type:'well',label:'Giếng làng',w:27,h:18}],
     exits:[exit(238,273,'Về vườn nhà','field',[188,34],'down')],
   },
   neighbors: {
@@ -150,7 +153,7 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(obj.x-obj.w*.43,obj.y-depth,obj.w*.86,depth+2));
     if(id!=='visit'||!['house','well'].includes(obj.type)){
       const drawY=obj.type==='house'?obj.y-obj.h/2:undefined;
-      hotspots.push({...obj,y:obj.y+objectHotspotOffset,drawY});
+      hotspots.push({...obj,y:obj.y+objectHotspotOffset,...obj.interaction,drawY});
     }
   }
   for(const [x,y] of map.trees) {
@@ -237,13 +240,11 @@ export function features(id, snapshot, neighbor, page=0) {
 
   if(id==='market') {
     const orders=snapshot.orders?.length;
-    const board={x:179,y:170,type:'order-board',label:orders===undefined?'Bảng đơn hàng của làng':'Bảng đơn · '+orders+' đơn còn lại',
+    const board={x:170,y:252,w:48,h:58,type:'order-board',label:orders===undefined?'Bảng đơn hàng của làng':'Bảng đơn · '+orders+' đơn còn lại',
       upgraded:built('notice'),orders};
-    if(snapshot.orders?.some(order=>order.title))actors.push({x:262,y:175,type:'basket-trader'});
     actors.push(board);
-    hotspots.push({...board,y:board.y+9});
-    blocks.push(rect(board.x-12,board.y-5,24,6));
-    actors.push({x:258,y:111,type:'npc',style:'vendor'}, {x:364,y:115,type:'npc',style:'trader'});
+    hotspots.push({...board,y:board.y+13,drawY:board.y-board.h/2});
+    blocks.push(rect(board.x-20,board.y-8,40,9));
   }
   if(id==='neighbors') {
     if(built('hall')){

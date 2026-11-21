@@ -7,6 +7,7 @@ import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {yardPetPose} from './yard-pets.mjs';
 import {createCoopHerd} from './coop-motion.mjs';
+import {marketShoppers,marketShopperPose} from './market-life.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
 import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
@@ -396,7 +397,8 @@ export function createWorld(root, onInteract, landscape) {
     const observed=snapshot.now+(now-observedAt)/1000;
     helperTime=Math.max(helperTime,observed);
     const helper=gardenHelperPose(helperJob,helperPaths,helperTime);
-    const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)).map(item=>item.type==='yard-pet'?{...item,...yardPetPose(item.species,ambient,reduce.matches)}:item),...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
+    const shoppers=sceneId==='market'?marketShoppers.map(shopper=>({...marketShopperPose(shopper,ambient,reduce.matches),type:'market-shopper'})):[];
+    const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)).map(item=>item.type==='yard-pet'?{...item,...yardPetPose(item.species,ambient,reduce.matches)}:item),...shoppers,...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
     const cast=snapshot.me.fishing?.cast;
