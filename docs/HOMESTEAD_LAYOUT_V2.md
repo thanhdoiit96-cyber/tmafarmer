@@ -1,5 +1,37 @@
 # Vườn nhà: bố cục đã duyệt và triển khai V2
 
+## Cập nhật tỷ lệ chuồng và Xưởng V3
+
+Theo yêu cầu tăng kích thước công trình trong Vườn nhà, Xưởng hiện có artwork
+riêng (bàn dụng cụ, cửa lớn, bánh răng và mái ngói), không dùng ảnh chuồng.
+Kích thước hiển thị tăng từ 54 × 45 lên 110 × 88 world units, gần tỷ lệ Kho
+trong background. Chân nhà tại (115, 392); vùng chặn và cửa trở về từ scene
+Xưởng theo cùng anchor. Nhà nằm bên trái đường đá, phía dưới giếng.
+
+Chuồng mở rộng thay ảnh nhà nhỏ đặt giữa sân bằng mái che hai gian 80 × 44,
+đặt về bên trái ô đất. Hai vật nuôi ở sân bên phải, với biên đi lại 3 world
+units để cả trâu trưởng thành vẫn nằm trong hàng rào và không chạm nhà che.
+Giữ kích thước ô đất, số ô, sức chứa, giá và dữ liệu đã lưu.
+
+Thông số dùng chung ở `public/pixel/homestead-buildings.mjs`; renderer, điểm
+tương tác và va chạm dùng cùng nguồn. Test kiểm tra cả vườn chủ và vườn ghé thăm,
+hai trâu trên mỗi ô ở mọi pha chuyển động, cửa Xưởng và điểm trở về.
+
+Nguồn alpha: `assets/homestead-workshop-v3-source.png` và
+`assets/parcel-shelter-v3-source.png`. Xuất bằng
+`py scripts/normalize-homestead-buildings-v3.py` thành ảnh runtime 220 × 176
+và 160 × 88. Giữ các bản V2 để đối chiếu.
+
+Hai artwork được tạo bằng built-in imagegen, tham chiếu nền V2: Xưởng gỗ cùng
+tỷ lệ/góc nhìn với Kho, mái ngói cam, cửa có bàn dụng cụ, bánh răng, alpha thật;
+chuồng mái rộng thấp hai gian mở, cùng vật liệu/ánh sáng, alpha thật, không
+vẽ vật nuôi hoặc sân vào ảnh. Crop theo alpha, resize và làm cứng alpha khi xuất.
+
+Ảnh `assets/homestead-buildings-runtime-v3.png` chụp bằng Edge từ renderer
+game với dữ liệu fixture: toàn cảnh và hai viewport 640 × 384, bao gồm gà,
+chim cút, cừu, trâu và nhân vật để so sánh tỷ lệ. Đây là kiểm tra renderer và
+đường đi tự động, không phải kiểm thử toàn bộ phiên chơi production.
+
 Người dùng đã duyệt `assets/homestead-layout-approved-v2.png` trước khi triển khai.
 Ảnh concept là mục tiêu bố cục; ảnh `assets/homestead-runtime-v2.png` là kết quả
 dựng bằng renderer thật, với dữ liệu kiểm tra ban đầu và mở rộng tối đa.

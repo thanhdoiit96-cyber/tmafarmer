@@ -206,3 +206,6 @@ Nguồn [garden-helper-v1-source.png](assets/garden-helper-v1-source.png) đư�
 
 ### Homestead layout V2
 Approved layout, separate dynamic soil, two-column expansion parcels, authored alpha shelter and pond sprites: see [HOMESTEAD_LAYOUT_V2.md](HOMESTEAD_LAYOUT_V2.md). Runtime comparison images and export steps are recorded there. Saved parcel IDs and aquatic capacity are preserved.
+
+### Homestead buildings V3
+Dedicated workshop art at 110 × 88 world units and a wide two-stall parcel shelter at 80 × 44 replace the undersized shared building. Shared layout metadata aligns doors, collisions and animal movement bounds. Source masters, export script and native viewport previews are recorded in HOMESTEAD_LAYOUT_V2.md.

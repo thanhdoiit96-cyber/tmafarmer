@@ -4,6 +4,8 @@ import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/gam
 import {optionalIndex} from '../public/action-input.mjs';
 import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
+import {homesteadWorkshop,parcelShelter} from '../public/pixel/homestead-buildings.mjs';
+import {animalMotion} from '../public/world-motion.mjs';
 
 const now=1000;
 const setup=()=>{
@@ -12,6 +14,39 @@ const setup=()=>{
   return room;
 };
 const act=(world,id,action,index,item,elapsed=0)=>apply(world,id,{action,index,item},now+elapsed);
+test('larger parcel shelters leave room for two moving buffalo and the workshop door stays reachable',()=>{
+  const room=setup(),farm=room.farms.a;
+  farm.workshop=3;
+  farm.land=Array.from({length:8},()=>({kind:'coop'}));
+  farm.pens=farm.land.flatMap((_,lot)=>Array.from({length:2},()=>({kind:'buffalo',lot,age:10000})));
+  const own=snapshot(room,farm,now),guest=snapshot(room,room.farms.b,now);
+  for(const [id,state,neighbor] of [['field',own,undefined],['visit',guest,guest.neighbors[0]]]){
+    const scene=features(id,state,neighbor);
+    for(const animal of scene.actors.filter(a=>a.type==='animal')){
+      const area=lotRect(animal.data.lot);
+      const shelterRight=area.x+parcelShelter.x+parcelShelter.w/2;
+      for(let t=0;t<25;t+=.25){
+        const motion=animalMotion(t,animal.index,animal.roam,'graze');
+        assert.ok(animal.x+motion.offset-47/2>shelterRight);
+        assert.ok(animal.x+motion.offset+47/2<area.x+area.w);
+        assert.ok(animal.y-33>area.y&&animal.y<area.y+area.h);
+      }
+      assert.ok(route(scene,maps[id].spawn,[animal.x,animal.y]));
+    }
+    const workshop=scene.actors.find(a=>a.type==='workshop');
+    assert.equal(workshop.w,110);
+    assert.ok(workshop.x-workshop.w/2>40&&workshop.x+workshop.w/2<190);
+    assert.equal(walkable(scene,workshop.x,workshop.y-20),false);
+    const arrival=maps.workshop.exits[0].arrival;
+    assert.deepEqual(arrival,[homesteadWorkshop.x,homesteadWorkshop.y+18]);
+    assert.ok(walkable(scene,...arrival));
+  }
+  const scene=features('field',own);
+  const door=scene.hotspots.find(a=>a.type==='workshop');
+  const path=route(scene,maps.field.spawn,[door.x,door.y]);
+  assert.ok(path?.length);
+  assert.ok(Math.hypot(path.at(-1)[0]-door.x,path.at(-1)[1]-door.y)<31);
+});
 test('homestead parcels clear the stone lane and every maximum-level bed stays outside parcels',()=>{
   const room=setup(), farm=room.farms.a;
   farm.plots=Array(30).fill(null);

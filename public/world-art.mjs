@@ -6,6 +6,7 @@ import {size} from './world-layout.mjs';
 import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds} from './pixel/scene-backgrounds.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
+import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
 import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
@@ -16,7 +17,8 @@ const load = source => {
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homesteadSoilArt=load('/pixel/scene-background-homestead-v1.png');
-const parcelShelterArt=load('/pixel/parcel-shelter-v2.png');
+const parcelShelterArt=load(parcelShelter.source);
+const workshopBuildingArt=load(homesteadWorkshop.source);
 const parcelPondArt=load('/pixel/parcel-pond-v2.png');
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
 const pixelCharacters=load(pixelCharacter.source);
@@ -54,7 +56,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),parcelPondArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -857,7 +859,7 @@ function critter(c,a,t){
   if(!dim(art))return;
   const large=!['chicken','duck','quail'].includes(visual);
   const rabbit=visual==='rabbit';
-  const motion=animalMotion(t,index,large?11:15,rabbit?'idle':large?'graze':'peck');
+  const motion=animalMotion(t,index,a.roam??(large?11:15),rabbit?'idle':large?'graze':'peck');
   const walking=motion.state==='walk';
   const phase=motion.distance/(large?9:7.5)*Math.PI*2;
   const step=Math.sin(phase);
@@ -1126,7 +1128,7 @@ export function actor(c,a,t,state){
   if(drawAtlasActor(c,a,t,state))return;
   const {x,y,type,w,style}=a;
   if(type==='coop'&&a.parcel&&dim(parcelShelterArt)){
-    c.drawImage(parcelShelterArt,x-w/2,y-w*.8,w,w*.8);
+    c.drawImage(parcelShelterArt,snapPixel(x-w/2),snapPixel(y-a.h),w,a.h);
     return;
   }
   if(type==='dock'){
@@ -1191,15 +1193,11 @@ export function actor(c,a,t,state){
   }
   if(type==='workshop'){
     const level=a.level??1;
-    shade(c,x+2,y,22+level*2,5);
-    if(dim(parcelShelterArt))c.drawImage(parcelShelterArt,x-27,y-45,54,45);
-    else pixelSceneBuilding(c,{...a,type:'barn',w:45+level*3});
-    box(c,'#52685a',x-16,y-19,32,6,2);
-    c.fillStyle='#f2dfaa';c.font='700 4.5px system-ui';c.textAlign='center';c.fillText('XƯỞNG MÁY '+level,x,y-14.5);
-    const spin=t*(.5+level*.16);
-    c.save();c.translate(x+15,y-25);c.rotate(spin);
-    for(let i=0;i<8;i++){c.rotate(Math.PI/4);box(c,'#d4b56c',-1,-6,2,3,.5);}
-    ellipse(c,'#e3c77f',0,0,4.4,4.4);ellipse(c,'#6d6048',0,0,1.6,1.6);c.restore();
+    shade(c,x+2,y,w*.45,5);
+    if(dim(workshopBuildingArt))c.drawImage(workshopBuildingArt,snapPixel(x-w/2),snapPixel(y-a.h),w,a.h);
+    else pixelSceneBuilding(c,{...a,type:'barn'});
+    box(c,'#344c3fe8',x-24,y+3,48,9,2);
+    c.fillStyle='#f2dfaa';c.font='700 5px system-ui';c.textAlign='center';c.fillText('XƯỞNG MÁY '+level,x,y+9);
     return;
   }
   if(type==='plot')return plot(c,a,t,state);

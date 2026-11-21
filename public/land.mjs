@@ -87,7 +87,7 @@ export const gardenDecorSpots={
   barnSide:{name:'Trước kho',x:431,y:185},
   workshopPath:{name:'Lối cạnh xưởng',x:523,y:202},
   pondBank:{name:'Bờ ao phía đông',x:727,y:322},
-  southPath:{name:'Lối xuống quỹ đất',x:126,y:386},
+  southPath:{name:'Lối xuống quỹ đất',x:160,y:445},
   westLots:{name:'Bờ đất phía tây',x:28,y:476},
   midLots:{name:'Lối giữa các ô đất',x:414,y:495},
   eastLots:{name:'Bờ đất phía đông',x:794,y:563},

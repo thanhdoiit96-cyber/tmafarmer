@@ -1,6 +1,7 @@
 import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
+import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
 
 export const size = { width: 480, height: 288 };
 export const interactionRange=31;
@@ -26,7 +27,7 @@ const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival
 export const maps = {
   field: {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[188,221], bounds:homesteadSize,
-    paths:[[[133,177],[140,191],[181,215],[205,238],[205,620]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,610]],[[242,355],[716,355]],[[242,413],[716,413]],[[242,471],[716,471]],[[242,529],[716,529]],[[242,587],[716,587]],[[94,285],[151,285],[205,285]],[[115,367],[164,367],[205,367]]],
+    paths:[[[133,177],[140,191],[181,215],[205,238],[205,620]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,610]],[[242,355],[716,355]],[[242,413],[716,413]],[[242,471],[716,471]],[[242,529],[716,529]],[[242,587],[716,587]],[[94,285],[151,285],[205,285]],[[homesteadWorkshop.x,homesteadWorkshop.y+18],[205,homesteadWorkshop.y+18]]],
     trees:[[34,45],[38,268],[29,560],[100,622],[786,44],[790,151],[790,305],[786,495],[755,613],[540,630],[684,630]],
     water:[mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
@@ -43,7 +44,7 @@ export const maps = {
     name:'Xưởng máy',subtitle:'KHU CHẾ TẠO',spawn:[238,244],water:[],trees:[],objects:[],
     blocks:[rect(0,0,480,62),rect(0,62,25,226),rect(455,62,25,226),rect(45,75,108,50),rect(327,75,108,50),rect(56,159,88,43),rect(336,159,88,43)],
     hotspots:[{x:238,y:107,type:'craft-bench',label:'Bàn chế biến'}],
-    exits:[exit(238,274,'Ra vườn','field',[115,367],'down')],
+    exits:[exit(238,274,'Ra vườn','field',[homesteadWorkshop.x,homesteadWorkshop.y+18],'down')],
   },
   coop: {
     name:'Chuồng trại', subtitle:'KHU CHĂN NUÔI', spawn:[29,220],
@@ -163,8 +164,8 @@ export function features(id, snapshot, neighbor, page=0) {
       if(kind)actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name});
     }
     if((owner.workshop??0)>0){
-      const workshop={x:115,y:350,type:'workshop',level:owner.workshop,w:48,h:34,label:'Xưởng máy cấp '+owner.workshop};
-      actors.push(workshop);blocks.push(rect(workshop.x-20,workshop.y-12,40,13));
+      const workshop={...homesteadWorkshop,type:'workshop',level:owner.workshop,label:'Xưởng máy cấp '+owner.workshop};
+      actors.push(workshop);blocks.push(rect(workshop.x-42,workshop.y-48,84,50));
       if(id==='field')hotspots.push({...workshop,y:workshop.y+12});
     }
     for(const i of owner.plotIndexes??owner.plots.map((_,slot)=>mainPlotId(slot))) {
@@ -197,11 +198,11 @@ export function features(id, snapshot, neighbor, page=0) {
       }
       if(lot?.kind==='coop'){
         if(!lot.fence)ground.push({...area,type:'fence',style:'wood'});
-        actors.push({x:area.x+area.w*.5,y:area.y+38,type:'coop',w:54,parcel:true});
-        blocks.push(rect(area.x+area.w*.5-16,area.y+15,32,12));
+        actors.push({x:area.x+parcelShelter.x,y:area.y+parcelShelter.y,type:'coop',w:parcelShelter.w,h:parcelShelter.h,parcel:true});
+        blocks.push(rect(area.x+10,area.y+22,68,23));
         const pens=id==='field'?farm.pens:owner.visiblePens??[];
         pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
-          const point={x:area.x+43+seat*102,y:area.y+36,index,data};
+          const point={x:area.x+parcelAnimalSeats[seat],y:area.y+parcelAnimalBaseline,index,data,roam:parcelAnimalRoam};
           actors.push({...point,type:'animal'});
           if(id==='field')hotspots.push({...point,type:'animal',label:'Chăm vật nuôi'});
         });
