@@ -16,6 +16,12 @@ test('the farmer steps through four walk poses per distance cycle and loops at t
   assert.equal(facingFromDelta(-2,0),'left');
 });
 
+test('world rendering keeps the walk-frame dependency and draws each animal from its selected atlas',()=>{
+  const source=readFileSync(new URL('../public/world-art.mjs',import.meta.url),'utf8');
+  assert.match(source,/spriteFlip,walkFrame\} from '\.\/world-motion\.mjs'/);
+  assert.match(source,/c\.drawImage\(art,px,py,pw,ph/);
+});
+
 test('the chicken faces its direction of travel in both walking legs and while pecking',()=>{
   const {states}=pixelSlice.chicken;
   for(const [mid,pause] of [[2,4.6],[8.1,10.7]]){

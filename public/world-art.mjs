@@ -6,7 +6,7 @@ import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
-import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip} from './world-motion.mjs';
+import {actionPoseSeconds,animalMotion,animalPose,fishingBobber,playerStride,spriteFlip,walkFrame} from './world-motion.mjs';
 
 const load = source => {
   const image = new Image();
@@ -774,7 +774,7 @@ function critter(c,a,t){
     c.save();
     c.translate(x,y);
     if(spriteFlip(motion.facing,1))c.scale(-1,1);
-    c.drawImage(progressionLivestockArt,px,py,pw,ph,-w/2,snapPixel(-h-bob),w,h);
+    c.drawImage(art,px,py,pw,ph,-w/2,snapPixel(-h-bob),w,h);
     c.restore();
     return;
   }
