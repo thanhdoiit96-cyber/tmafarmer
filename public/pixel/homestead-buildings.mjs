@@ -7,6 +7,6 @@ export const parcelShelter={
   x:44,y:45,w:80,h:44,
   source:'/pixel/parcel-shelter-v3.png',
 };
-export const parcelAnimalSeats=[112,160];
+export const parcelAnimalSeats=[126,190];
 export const parcelAnimalBaseline=39;
-export const parcelAnimalRoam=3;
+export const parcelAnimalRoam=[16,6];

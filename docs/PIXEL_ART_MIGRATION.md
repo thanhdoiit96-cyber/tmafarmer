@@ -209,3 +209,6 @@ Approved layout, separate dynamic soil, two-column expansion parcels, authored a
 
 ### Homestead buildings V3
 Dedicated workshop art at 110 × 88 world units and a wide two-stall parcel shelter at 80 × 44 replace the undersized shared building. Shared layout metadata aligns doors, collisions and animal movement bounds. Source masters, export script and native viewport previews are recorded in HOMESTEAD_LAYOUT_V2.md.
+
+### Homestead usability V4
+Expanded parcel livestock yards preserve the central lane; animals have larger bounded movement. Repositioned all thirteen decoration spots, removed pond fences and ambient chicken, and removed map exit markers/hit targets while retaining click navigation. See HOMESTEAD_LAYOUT_V2.md and homestead-usability-runtime-v4.png for verification.

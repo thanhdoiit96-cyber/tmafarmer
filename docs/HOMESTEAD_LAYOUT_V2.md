@@ -1,5 +1,32 @@
 # Vườn nhà: bố cục đã duyệt và triển khai V2
 
+## Cập nhật trải nghiệm V4
+
+- Sân chuồng mở rộng từ 190 lên 220 world units theo chiều ngang, nới ra phía
+  ngoài: cột trái bắt đầu x=230, cột phải kết thúc x=726. Giữ lối đi giữa hai
+  cột rộng 56 và khoảng cách hàng hiện có, không đổi ô đất/ID/sức chứa.
+- Hai vị trí nuôi trong sân mới có biên đi lại 16 và 6 thay vì đều là 3.
+  Kiểm tra cả hai trâu trưởng thành trong 25 giây chuyển động để bảo đảm không
+  vượt rào hoặc đụng mái che. `coopRect()` là hình học sân, `lotRect()` vẫn là
+  hình học ô đất chung cho vườn và ao.
+- Dời 13 điểm trang trí thành các góc cỏ cạnh giếng, sau ruộng, dưới ao và
+  cụm sân phía tây. Giữ key vị trí và vật phẩm đã mua; không yêu cầu mua lại.
+  Test dùng footprint trang trí lớn nhất để kiểm tra không chồng lên 30 luống,
+  mọi sân chuồng mở rộng, ao, Xưởng, đường chính hoặc món trang trí khác.
+- Bỏ hình vẽ và bắt click/phím tương tác cho các điểm exit trên map. Giữ
+  metadata exit phục vụ nút trở về và `world.approach()`. Thanh chọn cảnh
+  desktop và menu khu vực mobile tiếp tục là cách chuyển cảnh bằng click.
+- Ao chính và ao mở rộng không còn vẽ rào, kể cả bản lưu từng mua rào. Giao
+  diện không chào mua rào ao nữa; metadata cũ không bị xóa hoặc đổi sức chứa.
+- Bỏ chú gà ambient ở trước nhà. Không thay đổi đàn vật nuôi người chơi sở hữu.
+
+Ảnh `assets/homestead-usability-runtime-v4.png` gồm toàn cảnh với 13 món
+trang trí, Canvas của `createWorld()` đang chạy và góc sân phía tây ở 640 × 384.
+Kiểm tra trình duyệt xác nhận click điểm exit cũ không đổi cảnh; các nút
+market/neighbors/coop/lake/workshop/field vẫn chuyển đúng cảnh, và giao diện
+ao/nhà chính không còn nút mua rào ao. Dùng dữ liệu fixture và chơi thử trong
+profile Edge riêng, không sửa database người chơi.
+
 ## Cập nhật tỷ lệ chuồng và Xưởng V3
 
 Theo yêu cầu tăng kích thước công trình trong Vườn nhà, Xưởng hiện có artwork

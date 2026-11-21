@@ -6,7 +6,7 @@ import {speechRange} from './game.mjs';
 import {cropTaskPosition} from './pixel/crop-layout.mjs';
 import {taskStyles} from './tasks.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, gate, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -112,7 +112,7 @@ export function createWorld(root, onInteract, landscape) {
   }
   function stop() {waypoints=[];pending=null;onArrival=null;walking=false;}
   function closest() {
-    return scene?.hotspots.reduce((best,p)=>distance(p,x,y)<=range&&(!best||distance(p,x,y)<distance(best,x,y))?p:best,null);
+    return scene?.hotspots.reduce((best,p)=>p.type!=='exit'&&distance(p,x,y)<=range&&(!best||distance(p,x,y)<distance(best,x,y))?p:best,null);
   }
   function refreshHint(){
     active=closest();
@@ -189,6 +189,7 @@ export function createWorld(root, onInteract, landscape) {
   }
   function targetAt(px,py){
     return scene.hotspots.reduce((best,p)=>{
+      if(p.type==='exit')return best;
       const dx=px-p.x,dy=py-(p.drawY??(p.type==='exit'?p.y:p.y-10));
       const distance=Math.hypot(dx,dy);
       const radius=p.type==='plot'?23:p.type==='exit'?16:p.w?Math.min(p.w*.5,32):20;
@@ -402,7 +403,6 @@ export function createWorld(root, onInteract, landscape) {
       }
       context.restore();
     } else if(!reduce.matches)landscapeLife(context,sceneId,ambient);
-    for(const item of scene.hotspots)if(item.type==='exit')gate(context,item,ambient);
     for(const {point,style} of marks){
       const pos=point.type==='plot'?cropTaskPosition({...point,y:point.drawY}):{x:point.x,y:point.y-(point.type==='animal'?32:22)};
       if(pos.x>=cameraX&&pos.x<=cameraX+view.width&&pos.y>=cameraY&&pos.y<=cameraY+view.height){

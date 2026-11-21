@@ -1,4 +1,4 @@
-import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
+import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
@@ -180,13 +180,12 @@ export function features(id, snapshot, neighbor, page=0) {
       ground.push({...garden,type:'garden-bed'});
       decor(-1,garden);
     }
-    decor(-2,mainPond);
     const land=getLand(owner);
     for(let i=0;i<lotCount;i++){
       const lot=land[i], area=lotRect(i), x=area.x+area.w*.5, y=area.y+area.h+7;
       ground.push({...area,type:'lot',lot,index:i});
       if(id==='field')hotspots.push({x,y,type:'land',index:i,label:(lot?.kind&&lot.kind!=='empty'?landTypes[lot.kind].name:lot?'Đất trống':'Mua đất')+' · Ô '+(i+1)});
-      if(lot?.fence)ground.push({...area,type:'fence',style:lot.fence});
+      if(lot?.fence&&lot.kind!=='pond'&&lot.kind!=='coop')ground.push({...area,type:'fence',style:lot.fence});
       if(lot?.kind==='pond'){
         const section={x:area.x+lotPondInset.x,y:area.y+lotPondInset.y,w:area.w-lotPondInset.w,h:area.h-lotPondInset.h,shape:'rect'};
         water.push(section);
@@ -197,12 +196,13 @@ export function features(id, snapshot, neighbor, page=0) {
         else hotspots.push({...dock,type:'neighbor-fishing'});
       }
       if(lot?.kind==='coop'){
-        if(!lot.fence)ground.push({...area,type:'fence',style:'wood'});
-        actors.push({x:area.x+parcelShelter.x,y:area.y+parcelShelter.y,type:'coop',w:parcelShelter.w,h:parcelShelter.h,parcel:true});
-        blocks.push(rect(area.x+10,area.y+22,68,23));
+        const pen=coopRect(i);
+        ground.push({...pen,type:'fence',style:lot.fence??'wood'});
+        actors.push({x:pen.x+parcelShelter.x,y:pen.y+parcelShelter.y,type:'coop',w:parcelShelter.w,h:parcelShelter.h,parcel:true});
+        blocks.push(rect(pen.x+10,pen.y+22,68,23));
         const pens=id==='field'?farm.pens:owner.visiblePens??[];
         pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
-          const point={x:area.x+parcelAnimalSeats[seat],y:area.y+parcelAnimalBaseline,index,data,roam:parcelAnimalRoam};
+          const point={x:pen.x+parcelAnimalSeats[seat],y:pen.y+parcelAnimalBaseline,index,data,roam:parcelAnimalRoam[seat]};
           actors.push({...point,type:'animal'});
           if(id==='field')hotspots.push({...point,type:'animal',label:'Chăm vật nuôi'});
         });
@@ -230,7 +230,7 @@ export function features(id, snapshot, neighbor, page=0) {
     actors.push({...dock,type:'dock',batches,upgraded:id==='lake'&&(snapshot.fishingLimit??fishing.limit)>fishing.limit});
     hotspots.push(dock);
   }
-  if(id==='field') actors.push({x:124,y:133,type:'wildlife',index:0,data:{kind:'chicken'}});
+
   if(id==='market') {
     const orders=snapshot.orders?.length;
     const board={x:179,y:170,type:'order-board',label:orders===undefined?'Bảng đơn hàng của làng':'Bảng đơn · '+orders+' đơn còn lại',

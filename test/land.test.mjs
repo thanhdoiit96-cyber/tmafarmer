@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {apply, aquatic, fishing, newFarm, newRoom, snapshot} from '../public/game.mjs';
 import {optionalIndex} from '../public/action-input.mjs';
-import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity} from '../public/land.mjs';
+import {getLand,lotPrice,mainPlotId,plotPosition,pondCapacity,coopRect,gardenDecorSpots,mainPond} from '../public/land.mjs';
 import {features, lotRect, maps, route, walkable} from '../public/world-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from '../public/pixel/homestead-buildings.mjs';
 import {animalMotion} from '../public/world-motion.mjs';
@@ -14,6 +14,18 @@ const setup=()=>{
   return room;
 };
 const act=(world,id,action,index,item,elapsed=0)=>apply(world,id,{action,index,item},now+elapsed);
+test('even the widest decoration clears every upgraded crop bed, livestock yard and workshop',()=>{
+  const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  const reserved=[mainPond,{x:60,y:304,w:110,h:88},
+    ...Array.from({length:8},(_,i)=>coopRect(i)),
+    ...Array.from({length:30},(_,slot)=>{const p=plotPosition(mainPlotId(slot));return {x:p.x-20,y:p.y-13,w:40,h:26};})];
+  const decorations=Object.entries(gardenDecorSpots).map(([key,p])=>({key,x:p.x-25,y:p.y-43,w:50,h:43}));
+  for(const decor of decorations){
+    assert.ok(reserved.every(r=>!overlaps(decor,r)),decor.key+' clears production areas');
+    assert.ok(decorations.every(other=>decor===other||!overlaps(decor,other)),decor.key+' clears other decorations');
+    if(decor.y>=238)assert.ok(decor.x+decor.w<190||decor.x>221,decor.key+' clears stone lane');
+  }
+});
 test('larger parcel shelters leave room for two moving buffalo and the workshop door stays reachable',()=>{
   const room=setup(),farm=room.farms.a;
   farm.workshop=3;
@@ -23,7 +35,7 @@ test('larger parcel shelters leave room for two moving buffalo and the workshop 
   for(const [id,state,neighbor] of [['field',own,undefined],['visit',guest,guest.neighbors[0]]]){
     const scene=features(id,state,neighbor);
     for(const animal of scene.actors.filter(a=>a.type==='animal')){
-      const area=lotRect(animal.data.lot);
+      const area=coopRect(animal.data.lot);
       const shelterRight=area.x+parcelShelter.x+parcelShelter.w/2;
       for(let t=0;t<25;t+=.25){
         const motion=animalMotion(t,animal.index,animal.roam,'graze');
@@ -68,6 +80,24 @@ test('homestead parcels clear the stone lane and every maximum-level bed stays o
   for(const spot of scene.hotspots.filter(p=>['land','pond','plot'].includes(p.type))){
     assert.ok(route(scene,maps.field.spawn,[spot.x,spot.y]),spot.label);
   }
+});
+test('ponds never render decorative fences and expanded yards preserve the central lane',()=>{
+  const room=setup(),farm=room.farms.a;
+  farm.decor={[-2]:'white'};
+  farm.land=[{kind:'pond',fence:'bamboo'},{kind:'pond',fence:'white'},...Array.from({length:6},()=>({kind:'coop',fence:'wood'}))];
+  const state=snapshot(room,farm,now),scene=features('field',state);
+  const fences=scene.ground.filter(a=>a.type==='fence');
+  assert.equal(fences.length,6);
+  for(const fence of fences)assert.ok(fence.y>=coopRect(2).y);
+  assert.ok(!scene.actors.some(a=>a.type==='wildlife'));
+  for(let row=0;row<4;row++){
+    const left=coopRect(row*2),right=coopRect(row*2+1);
+    assert.equal(right.x-(left.x+left.w),56);
+    assert.ok(left.x>=230&&right.x+right.w<=726);
+  }
+  // Old paid decoration metadata is retained rather than rewriting saved farms.
+  assert.equal(farm.decor[-2],'white');
+  assert.equal(farm.land[0].fence,'bamboo');
 });
 test('equal starter land, ownership checks and existing farm fallback',()=>{
   const room=setup(),a=room.farms.a,b=room.farms.b;

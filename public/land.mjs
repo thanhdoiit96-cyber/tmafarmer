@@ -19,6 +19,8 @@ export function getLand(farm){
 // Saved parcel indexes stay stable; only their world placement changes.
 // Keep all eight parcels east of the stone lane and inside the leafy border.
 export const lotRect=i=>({x:260+(i%2)*246,y:365+Math.floor(i/2)*58,...lotSize});
+// Livestock yards grow outward, preserving the central 56-unit access lane.
+export const coopRect=i=>{const area=lotRect(i);return {...area,x:area.x-(i%2===0?30:0),w:area.w+30};};
 export const plotOffset=12;
 const upperFieldOffset=plotOffset+lotCount*3;
 export const pondOffset=2;
@@ -78,19 +80,19 @@ export const gardenDecorItems={
   birdFeeder:{name:'Máng chim',cost:85,width:40},
 };
 export const gardenDecorSpots={
-  house:{name:'Sân nhà',x:132,y:151},
-  gate:{name:'Lối vào vườn',x:266,y:251},
-  pond:{name:'Lối ra ao',x:553,y:370},
-  marketPath:{name:'Lối sang chợ',x:264,y:44},
-  wellside:{name:'Bên giếng',x:120,y:200},
-  westMeadow:{name:'Bãi cỏ phía tây',x:115,y:277},
-  barnSide:{name:'Trước kho',x:431,y:185},
-  workshopPath:{name:'Lối cạnh xưởng',x:523,y:202},
-  pondBank:{name:'Bờ ao phía đông',x:727,y:322},
-  southPath:{name:'Lối xuống quỹ đất',x:160,y:445},
-  westLots:{name:'Bờ đất phía tây',x:28,y:476},
-  midLots:{name:'Lối giữa các ô đất',x:414,y:495},
-  eastLots:{name:'Bờ đất phía đông',x:794,y:563},
+  house:{name:'Tiểu cảnh sân phía tây',x:82,y:444},
+  gate:{name:'Bên cổng vườn',x:154,y:599},
+  pond:{name:'Bãi cỏ dưới ao',x:600,y:350},
+  marketPath:{name:'Góc vườn phía bắc',x:402,y:65},
+  wellside:{name:'Bãi cỏ cạnh giếng',x:157,y:298},
+  westMeadow:{name:'Bãi cỏ phía tây',x:88,y:494},
+  barnSide:{name:'Viền cỏ sau ruộng',x:326,y:65},
+  workshopPath:{name:'Sân dưới xưởng',x:154,y:447},
+  pondBank:{name:'Góc cỏ cạnh bờ ao',x:682,y:350},
+  southPath:{name:'Bên đường xuống vườn',x:155,y:503},
+  westLots:{name:'Vườn hoa phía tây',x:93,y:549},
+  midLots:{name:'Góc nghỉ phía tây nam',x:152,y:552},
+  eastLots:{name:'Góc cỏ cuối vườn',x:94,y:605},
 };
 export function gardenDecorAt(farm,spot){
   return Object.keys(gardenDecorItems).find(item=>farm.gardenDecor?.[item]===spot);

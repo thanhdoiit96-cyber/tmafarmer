@@ -639,7 +639,7 @@ function renderLand(farm,now){
   const launch=lot.kind==='garden'?btn('Chăm vườn','data-open-garden="'+selectedLot+'"','primary'):
     lot.kind==='pond'?btn('Chăm ao','data-open-pond="'+(selectedLot+pondOffset)+'"','primary'):'';
   return header+'<h3>'+lotLabel(lot)+' · Ô '+(selectedLot+1)+'</h3><div class="actions">'+launch+go+'</div>'+
-    '<h3 class="section-title">Hàng rào trang trí</h3>'+decorOptions(farm,selectedLot)+(lot.kind==='coop'?'<div class="lot-coop">'+renderCoop(farm,now,selectedLot)+'</div>':'');
+    (lot.kind==='pond'?'':'<h3 class="section-title">Hàng rào trang trí</h3>'+decorOptions(farm,selectedLot))+(lot.kind==='coop'?'<div class="lot-coop">'+renderCoop(farm,now,selectedLot)+'</div>':'');
 }
 function renderJournal(farm){
   const {done,claimed}=farm.journal;
@@ -1020,7 +1020,7 @@ function renderPanel(farm,now) {
   if(panel==='stock')return renderStock(farm);
   if(panel==='buildings') return '<div class="row"><h2>Công trình</h2>'+btn(farm.xp+' XP','data-panel="progress" aria-label="Xem tiến độ XP"','subtle')+'</div>'+'<div class="upgrade-list card-grid">'+Object.keys(buildings).map(key=>upgrade(farm,key)).join('')+'</div>'+
     ((farm.workshop??0)>0?'<div class="actions">'+btn('Vào Xưởng máy','data-workshop-go','primary')+'</div>':'')+
-    '<details class="base-decor"'+(baseDecorOpen?' open':'')+'><summary>Hàng rào công trình chính</summary>'+[-1,-2,...(farm.coop?[-4]:[])].map((id,i)=>'<h3>'+['Ruộng chính','Ao nuôi chính','Chuồng chính'][i]+'</h3>'+decorOptions(farm,id)).join('')+'</details>'+
+    '<details class="base-decor"'+(baseDecorOpen?' open':'')+'><summary>Hàng rào công trình chính</summary>'+[[-1,'Ruộng chính'],...(farm.coop?[[-4,'Chuồng chính']]:[])].map(([id,label])=>'<h3>'+label+'</h3>'+decorOptions(farm,id)).join('')+'</details>'+
     '<div class="actions">'+act(farm.shieldUntil>now?'Đóng cổng · '+duration(farm.shieldUntil-now):'Đóng cổng '+gateMinutes(farm)+' phút · 12 xu','shield','','','subtle',farm.coins<12||farm.shieldUntil>now)+'</div>';
   return '<h2>Nhật ký</h2>'+farm.log.slice(0,5).map(entry=>'<div class="row itemrow"><p>'+escape(entry.message)+'</p></div>').join('');
 }

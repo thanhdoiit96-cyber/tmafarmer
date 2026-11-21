@@ -1238,16 +1238,6 @@ function drawTownsperson(c,x,y,t,style){
     style,walking:motion.state==='walk',walkDistance:motion.distance,stride:10,
   });
 }
-export function gate(c,a,t){
-  const {x,y,side}=a;
-  const angle={up:0,right:Math.PI/2,down:Math.PI,left:-Math.PI/2}[side];
-  c.save();c.translate(x,y);c.rotate(angle);
-  const d=Math.sin(t*4)*.6;
-  ellipse(c,'#fdf2caee',0,0,7,6.8);
-  line(c,'#4e6544',1.3,[[0,3+d],[0,-3+d]]);
-  line(c,'#4e6544',1.3,[[-2.8,-.3+d],[0,-3+d],[2.8,-.3+d]]);
-  c.restore();
-}
 function pixelRain(c,x,y,slant,length,color){
   const cell=pixelStep;
   c.fillStyle=color;
