@@ -11,6 +11,19 @@ const neighbors=Array.from({length:11},(_,i)=>({id:String(i),name:'Vườn '+i,p
 const me=newFarm('me','Vườn nhà',0);
 me.plots=Array(12).fill(null);
 const data={me,neighbors};
+
+test('lake well unlock keeps a reachable drinking point in front of its solid stone foot',()=>{
+  const locked=features('lake',data);
+  assert.ok(!locked.actors.some(a=>a.type==='well'));
+  const scene=features('lake',{...data,village:{built:[{id:'well'}]}});
+  const well=scene.actors.find(a=>a.type==='well');
+  const drink=scene.hotspots.find(a=>a.type==='village-well');
+  assert.ok(well&&drink);
+  assert.ok(drink.y>well.y);
+  assert.equal(walkable(scene,well.x,well.y-5),false);
+  assert.equal(walkable(scene,drink.x,drink.y),true);
+  assert.ok(route(scene,[36,309],[drink.x,drink.y]).length>0);
+});
 test('every playable map resolves a production background and its foreground sprites stay dynamic',()=>{
   const dimensions=new Map();
   for(const [key,atlas] of Object.entries(sceneBackgroundAtlases)){
@@ -102,7 +115,23 @@ test('expanded maps expose reachable pond docks and keep shoreline water impassa
   }
   const lake=features('lake',data);
   assert.equal(walkable(lake,400,150),false);
-  assert.equal(walkable(lake,179,67),true);
+  assert.equal(walkable(lake,179,67),false);
+});
+
+test('village lake routes stay on the shore and painted wooden decks',()=>{
+  const scene=features('lake',data);
+  for(const [x,y] of [[350,100],[100,160],[300,285],[450,290],[660,170],[250,240]]){
+    assert.equal(walkable(scene,x,y),false,`water ${x},${y}`);
+  }
+  for(const [x,y] of [[180,245],[590,245],[217,339],[350,350],[120,285]]){
+    assert.equal(walkable(scene,x,y),true,`shore/deck ${x},${y}`);
+  }
+  const path=route(scene,[178,245],[590,245]);
+  assert.ok(path?.length);
+  for(let i=1;i<path.length;i++){
+    const [ax,ay]=path[i-1],[bx,by]=path[i];
+    for(let n=0;n<=20;n++)assert.ok(walkable(scene,ax+(bx-ax)*n/20,ay+(by-ay)*n/20));
+  }
 });
 
 test('farm care markers include pond tasks at the dock, while coop markers stay local',()=>{

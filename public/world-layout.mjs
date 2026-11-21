@@ -9,7 +9,8 @@ export const size = { width: 480, height: 288 };
 export const interactionRange=31;
 const plotHotspotOffset=8;
 const objectHotspotOffset=15;
-const publicWell={x:217,y:299,type:'well',w:31};
+// Stone foot sits on the grassy shore; the drinking point faces the south path.
+const publicWell={x:217,y:327,type:'well',style:'village',w:52,h:62};
 const publicWellHotspot={...publicWell,y:publicWell.y+12,type:'village-well',label:'Uống nước ở giếng công cộng'};
 const wide={width:720,height:432};
 
@@ -21,7 +22,7 @@ const baseGarden=rows=>[...gardenBeds(Math.min(rows,4),76),...(rows>4?[{x:232,y:
 const docks = {
   field:[{x:480,y:234,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'right'}, {x:650,y:315,type:'pond',index:0,label:'Ao nuôi thủy sản',side:'up'}],
   visit:[{x:480,y:234,type:'neighbor-fishing',index:0,label:'Câu trộm ở ao nuôi',side:'right'}],
-  lake:[{x:290,y:250,type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:580,y:213,type:'public-fishing',label:'Câu miễn phí',side:'left'}],
+  lake:[{x:178,y:245,waterTarget:{x:235,y:220},type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:590,y:245,waterTarget:{x:510,y:240},type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };
 const rect = (x, y, w, h) => ({ x, y, w, h });
 const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival, side, type:'exit' });
@@ -73,8 +74,13 @@ export const maps = {
     exits:[exit(238,14,'Về vườn nhà','field',[188,251],'up'),exit(463,217,'Sang chuồng trại','coop',coopGate,'right')],
   },
   lake: {
+    // Trace the painted shoreline, allowing only the two wooden decks over water.
+    navigation:{
+      water:[[132,63],[220,48],[340,48],[460,63],[565,82],[642,109],[690,143],[692,214],[648,260],[580,286],[474,307],[365,313],[273,305],[204,286],[139,261],[102,221],[91,166],[104,108]],
+      decks:[[[117,205],[190,211],[213,232],[201,254],[140,276],[120,293],[86,273],[102,253]],[[548,196],[584,197],[590,225],[650,243],[647,264],[587,279],[542,253]]],
+    },
     name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:[36,309],bounds:wide,
-    paths:[[[0,308],[66,311],[104,319],[150,308],[208,320],[255,297],[289,290],[289,247]],[[150,308],[169,344],[205,365],[269,369],[326,350],[411,352],[484,324],[541,292],[559,257],[580,213]],[[150,308],[136,267],[124,231],[114,195],[117,160],[102,128]],[[484,324],[564,351],[623,370],[665,371],[719,377]]],
+    paths:[[[0,308],[66,311],[104,319],[150,308],[150,295],[130,275],[178,245]],[[150,308],[169,344],[205,365],[269,369],[326,350],[411,352],[484,324],[541,292],[559,257],[580,213]],[[150,308],[136,267],[124,231],[114,195],[117,160],[102,128]],[[484,324],[564,351],[623,370],[665,371],[719,377]]],
     trees:[[20,56],[55,93],[21,173],[73,227],[121,267],[197,377],[333,407],[432,413],[561,405],[690,336],[688,264],[685,157],[645,86],[605,51],[525,45],[441,35],[302,37],[194,52]],
     water:[rect(178,66,448,172)],
     objects:[{x:101,y:122,type:'pavilion',label:'Chòi nghỉ ven hồ',w:85,h:45}],
@@ -221,7 +227,7 @@ export function features(id, snapshot, neighbor, page=0) {
   if(id==='lake'&&built('well')){
     actors.push(publicWell);
     hotspots.push(publicWellHotspot);
-    blocks.push(rect(publicWell.x-11,publicWell.y-7,22,8));
+    blocks.push(rect(publicWell.x-16,publicWell.y-13,32,14));
   }
   for(const dock of docks[id]??[]){
     const batches=visiblePondBatches(owner,dock.index);
@@ -257,11 +263,23 @@ export function features(id, snapshot, neighbor, page=0) {
     }
   }
   if(id==='field'||id==='visit')for(const area of ground.filter(a=>a.type==='fence'))actors.push({type:'fence-front',x:area.x+area.w/2,y:area.y+area.h,area});
-  return {actors,hotspots,blocks,water,ground,bounds:map.bounds??size};
+  return {actors,hotspots,blocks,water,ground,bounds:map.bounds??size,navigation:map.navigation};
+}
+function insidePolygon(x,y,points){
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const [ax,ay]=points[i],[bx,by]=points[j];
+    if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+  }
+  return inside;
 }
 export function walkable(scene,x,y){
   const bounds=scene.bounds??size;
   if(x<8||x>bounds.width-8||y<10||y>bounds.height-9||intrudes(x,y,scene.blocks,3))return false;
+  if(scene.navigation){
+    const {water,decks}=scene.navigation;
+    return !insidePolygon(x,y,water)||decks.some(deck=>insidePolygon(x,y,deck));
+  }
   return !(scene.water??[]).some(r=>{
     const rx=r.w/2, ry=r.h/2;
     if(r.shape==='rect')return x>r.x-3&&x<r.x+r.w+3&&y>r.y-3&&y<r.y+r.h+3;
@@ -294,6 +312,8 @@ export function route(scene,from,to) {
     for(const [dc,dr] of [[1,0],[0,1],[-1,0],[0,-1]]) {
       const nc=c+dc,nr=r+dr,next=nr*cols+nc;
       if(nc<0||nc>=cols||nr<0||nr>=rows||visited[next]!==-1||!walkable(scene,...node(nc,nr))) continue;
+      // A narrow water gap can fall between adjacent grid nodes at a deck edge.
+      if(scene.navigation&&!clearSegment(scene,node(c,r),node(nc,nr)))continue;
       visited[next]=current;
       queue.push(next);
     }
@@ -318,6 +338,24 @@ export function route(scene,from,to) {
   return points;
 }
 function clearSegment(scene,[ax,ay],[bx,by]){
+  if(scene.navigation){
+    const cuts=[0,1],dx=bx-ax,dy=by-ay;
+    for(const polygon of [scene.navigation.water,...scene.navigation.decks]){
+      for(let i=0;i<polygon.length;i++){
+        const [px,py]=polygon[i],[qx,qy]=polygon[(i+1)%polygon.length];
+        const ex=qx-px,ey=qy-py,den=dx*ey-dy*ex;
+        if(Math.abs(den)<1e-9)continue;
+        const t=((px-ax)*ey-(py-ay)*ex)/den;
+        const u=((px-ax)*dy-(py-ay)*dx)/den;
+        if(t>0&&t<1&&u>=0&&u<=1)cuts.push(t);
+      }
+    }
+    cuts.sort((a,b)=>a-b);
+    for(let i=1;i<cuts.length;i++){
+      const t=(cuts[i-1]+cuts[i])/2;
+      if(!walkable(scene,ax+dx*t,ay+dy*t))return false;
+    }
+  }
   const distance=Math.hypot(bx-ax,by-ay);
   const pieces=Math.max(1,Math.ceil(distance/2));
   for(let i=0;i<=pieces;i++){

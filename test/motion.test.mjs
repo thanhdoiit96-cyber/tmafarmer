@@ -98,7 +98,7 @@ test('the whole hoe sequence can play and fishing lines end in the connected wat
     for(const dock of docks){
       const bobber=fishingBobber(dock);
       assert.equal(walkable({...scene,blocks:[]},bobber.x,bobber.y),false);
-      assert.equal(walkable({...scene,blocks:[],water:[]},bobber.x,bobber.y),true);
+      assert.equal(walkable({...scene,blocks:[],water:[],navigation:undefined},bobber.x,bobber.y),true);
     }
   }
 });

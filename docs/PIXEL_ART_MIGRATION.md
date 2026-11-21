@@ -242,3 +242,6 @@ Moved beds 13–30 and their fence south of the painted road, adjusted expansion
 
 ### Homestead life and composition V6
 Added authored animated dog/cat companions and the existing chicken poses on continuous yard routes. Decorations now have semantic clusters, recommended slots and a free arrange action. Tightened crop spacing and split front fences into depth-sorted sprites. Source masters, export workflow, Canvas screenshot and animation GIF are documented in HOMESTEAD_LAYOUT_V2.md.
+
+### Village lake well V1
+Replaced the unlocked public well's procedural drawing with authored transparent stone-and-tile art. Moved its foot onto the grassy shore and aligned the drinking hotspot and collision with the south path. Other wells retain their existing appearance. Source, export script, Canvas previews and validation are recorded in VILLAGE_WELL_V1.md.
