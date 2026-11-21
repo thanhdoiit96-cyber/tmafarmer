@@ -1,0 +1,35 @@
+﻿<!doctype html><meta charset="utf-8"><title>Phác thảo icon chăm cây</title>
+<style>body{margin:0;background:#ebe2cc}canvas{display:block;margin:0 auto;max-width:100%;height:auto}</style><canvas id="sheet" width="1260" height="830"></canvas>
+<script>
+(async()=>{
+const load=src=>new Promise((ok,no)=>{const i=new Image;i.onload=()=>ok(i);i.onerror=no;i.src=src});
+const [farm,atlas]=await Promise.all([load('garden-quiet-ui-v2.png'),load('../../public/pixel/crop-care-icons-v1.png')]);
+const c=document.querySelector('canvas').getContext('2d');c.imageSmoothingEnabled=false;
+const text=(s,x,y,size=16,color='#493e2f')=>{c.fillStyle=color;c.font=`${size}px sans-serif`;c.fillText(s,x,y)};
+c.fillStyle='#ebe2cc';c.fillRect(0,0,1260,830);text('PHÁC THẢO • ICON CHĂM CÂY',30,42,25);text('Cùng kích thước, cùng nền Vườn nhà • Chưa áp dụng vào game',30,72,16);
+const names=['Thu hoạch','Sâu bệnh','Cỏ dại','Tưới nước'];
+function symbol(ctx,kind,type,x,y){
+ const shape=document.createElement('canvas');shape.width=shape.height=18;const s=shape.getContext('2d');s.imageSmoothingEnabled=false;s.drawImage(atlas,kind*32,0,32,32,2,2,14,14);
+ ctx.save();ctx.translate(Math.round(x)-9,Math.round(y)-9);
+ if(type===0){
+   const mask=document.createElement('canvas');mask.width=mask.height=18;const m=mask.getContext('2d');m.drawImage(shape,0,0);m.globalCompositeOperation='source-in';m.fillStyle='#f4dfab';m.fillRect(0,0,18,18);
+   ctx.save();ctx.globalAlpha=.55;ctx.drawImage(mask,0,1);ctx.restore();
+   for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]])ctx.drawImage(mask,dx,dy);
+ }else if(type===1){ctx.fillStyle='#3a2c21b3';ctx.beginPath();ctx.roundRect(0,0,18,18,4);ctx.fill();ctx.strokeStyle='#d9bb7366';ctx.lineWidth=.6;ctx.stroke();
+ }else{ctx.fillStyle='#3c38254d';ctx.beginPath();ctx.arc(9,9,9,0,7);ctx.fill();ctx.strokeStyle='#f4dfabcc';ctx.lineWidth=.75;ctx.stroke()}
+ ctx.drawImage(shape,0,0);ctx.restore();
+}
+['A · VIỀN THEO HÌNH','B · NỀN NÂU TRONG','C · VÒNG TRÒN MẢNH'].forEach((title,type)=>{
+ const left=20+type*415;c.fillStyle='#f9f2e2';c.beginPath();c.roundRect(left,100,395,700,14);c.fill();text(title,left+20,134,19);text(type===0?'Đề xuất ưu tiên':'Phương án đối chiếu',left+20,160,14,type===0?'#567142':'#84735b');
+ text('Trong bối cảnh · 1×',left+20,192,14);
+ // Crop the same actual Canvas region for all three options.
+ c.drawImage(farm,285,135,300,180,left+46,208,300,180);
+ [[92,40],[150,40],[92,100],[150,100]].forEach(([x,y],i)=>symbol(c,i,type,left+46+x,208+y));
+ text('Chi tiết · phóng 3×, nearest-neighbor',left+20,425,14);
+ const sample=document.createElement('canvas');sample.width=110;sample.height=44;const s=sample.getContext('2d');s.imageSmoothingEnabled=false;s.drawImage(farm,310,180,110,44,0,0,110,44);for(let i=0;i<4;i++)symbol(s,i,type,14+i*27,22);c.drawImage(sample,left+32,448,330,132);
+ names.forEach((n,i)=>text(n,left+24+i*92,610,12));
+ const lines=type===0?['Viền ngà mảnh bám đúng silhouette.','Không có nền trắng hoặc mảng đặc.','Ít che cây; giữ tâm icon giữa luống.']:type===1?['Nền nâu khoảng 70% độ đậm.','Tương phản ổn định trên lá và cỏ.','Che cảnh nhiều hơn phương án A.']:['Nền tối rất nhẹ, vòng ngà mảnh.','Dễ nhận ra đây là dấu tương tác.','Nhiều ô có thể tạo cảm giác dày nhãn.'];lines.forEach((l,i)=>text(l,left+20,660+i*26,15));
+});window.ready=true;
+})();
+</script>
+

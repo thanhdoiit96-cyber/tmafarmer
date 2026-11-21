@@ -278,3 +278,7 @@ Removed the opaque white/cream plate and shadow from the four crop-care map symb
 ### Crop marker alignment V3
 
 Removed the legacy +17 horizontal offset: task symbols now sit on the plot centerline, retaining canopy clearance. Reduced their footprint from 16 to 14 world units, removed pale circles from fallback marks, and removed task-card backing colors around authored icons. Versioned the atlas URL to refresh cached images. Actual farm capture: `assets/crop-care-centered-v3.png`. The crop-layout test now checks centered task anchors for every species and growth stage; all 128 tests and build pass.
+
+### Crop marker contrast V4 — approved option C
+
+User approved B or C after reviewing `assets/crop-care-marker-options-v4.png`; implemented C to preserve more of the scenery. The four crop-care map icons share a 9-world-unit circular backing (`#3c38254d`, approximately 30% opacity), a thin 0.75-unit warm ivory rim (`#f4dfabcc`), and the existing 14-unit authored icon. The icon and ring share a snapped center, retaining V3 plot alignment and canopy clearance. No opaque white plate; task priority, farm rules and mini map settings remain unchanged. Actual Canvas capture: `assets/crop-care-option-c-runtime-v4.png`. Clean browser reload reported no exceptions; syntax check, all 128 tests and production build pass. The HTML comparison remains documentation only.

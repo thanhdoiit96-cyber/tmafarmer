@@ -1527,9 +1527,13 @@ export function drawTask(c,x,y,style){
   const frame={harvest:0,pests:1,weeds:2,water:3}[style.icon];
   if(frame!==undefined&&dim(careIconArt)){
     c.save();c.imageSmoothingEnabled=false;
-    // The authored dark outline separates the symbol from foliage without
-    // covering the garden with a solid badge or a white backing plate.
-    c.drawImage(careIconArt,frame*32,0,32,32,snapPixel(x-7),snapPixel(y-7),14,14);
+    // Approved option C: a restrained, translucent circular badge. The thin
+    // warm rim separates it from foliage without an opaque white plate.
+    const cx=snapPixel(x),cy=snapPixel(y);
+    c.beginPath();c.arc(cx,cy,9,0,Math.PI*2);
+    c.fillStyle='#3c38254d';c.fill();
+    c.strokeStyle='#f4dfabcc';c.lineWidth=.75;c.stroke();
+    c.drawImage(careIconArt,frame*32,0,32,32,cx-7,cy-7,14,14);
     c.restore();return;
   }
   // No backing plate, including the loading/soil/animal fallback marks.
