@@ -302,6 +302,10 @@ Source/prompt: `assets/till-task-icon-v1.json`, `assets/till-task-icon-v1-source
 
 ## 25/11/2026 — Mục tiêu tiếp theo V1
 
+UX-GAME-02: thay danh sách hạt bằng ô vật phẩm 3 cột ảnh lớn; áp dụng cùng cách trình bày cho vật nuôi và thẻ quản lý. Mục tiêu ghim thu gọn và chỉ hiện trong Việc cần làm. Dùng lại atlas đã duyệt, không tạo ảnh thay thế. Vùng va chạm/click nhà–kho–xưởng căn theo nền hiện tại; không sửa nền/ID ô. Ảnh và phạm vi kiểm thử [GAME_UI_V2.md](GAME_UI_V2.md).
+
+UX-SEED-01: thiết kế lại bộ chọn giống bằng thẻ một dòng với atlas cây trưởng thành hiện có; tách nhóm mở/khóa, trạng thái hết hạt và nút Gieo. Giữ màu giấy kem/xanh, trạng thái khóa nâu có chữ, không thay nguồn ảnh hay Canvas. Ảnh desktop/hover/mobile ngang/dọc và kiểm chứng trong [SEED_PICKER_V1.md](SEED_PICKER_V1.md).
+
 P1.1 bổ sung thẻ tóm tắt quay lại gồm ba dòng có thể chạm, dùng palette và font hiện tại trong bảng công cụ. Không thêm ảnh/sprite hoặc overlay Canvas. Ảnh desktop/mobile và phạm vi ở [RETURN_SUMMARY_V1.md](RETURN_SUMMARY_V1.md).
 
 Tiếp nối P0.3: hộp chỉ dẫn mở khóa dùng hộp chi tiết, palette và ảnh minh họa hiện có. Không đổi atlas hoặc Canvas. Ảnh desktop/mobile và kiểm chứng trong [UNLOCK_GUIDANCE_V1.md](UNLOCK_GUIDANCE_V1.md).

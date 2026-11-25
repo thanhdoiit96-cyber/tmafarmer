@@ -230,7 +230,8 @@ export function createWorld(root, onInteract, landscape) {
       const dx=px-p.x,dy=py-(p.drawY??(p.type==='exit'?p.y:p.y-10));
       const distance=Math.hypot(dx,dy);
       const radius=p.type==='plot'?23:p.type==='exit'?16:p.w?Math.min(p.w*.5,32):20;
-      const hit=['house','neighbor','own-house'].includes(p.type)?Math.abs(dx)<=p.w/2&&Math.abs(dy)<=p.h/2+8:distance<=radius;
+      const hit=p.hitBox?px>=p.hitBox.x&&px<=p.hitBox.x+p.hitBox.w&&py>=p.hitBox.y&&py<=p.hitBox.y+p.hitBox.h:
+        ['house','neighbor','own-house'].includes(p.type)?Math.abs(dx)<=p.w/2&&Math.abs(dy)<=p.h/2+8:distance<=radius;
       return hit&&(!best||distance<best.distance)?{p,distance}:best;
     },null)?.p;
   }

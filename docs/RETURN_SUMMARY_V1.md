@@ -1,5 +1,7 @@
 # P1.1 — Tóm tắt khi quay lại V1
 
+Cập nhật [giao diện V2](GAME_UI_V2.md): thẻ quay lại chỉ hiện hai dòng Việc sẵn sàng và Kho. Mục tiêu ghim được dành riêng cho Việc cần làm; mô tả ba dòng bên dưới ghi lại phạm vi V1.
+
 Hoàn thiện trong source ngày 25/11/2026, tiếp nối [Mục tiêu tiếp theo](NEXT_GOAL_V1.md) và [Chỉ dẫn mở khóa](UNLOCK_GUIDANCE_V1.md). Chưa commit, push hoặc deploy.
 
 ## Trải nghiệm

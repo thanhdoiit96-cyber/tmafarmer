@@ -27,10 +27,15 @@ const docks = {
   lake:[{x:178,y:245,waterTarget:{x:235,y:220},type:'public-fishing',label:'Câu miễn phí',side:'up'},{x:590,y:245,waterTarget:{x:510,y:240},type:'public-fishing',label:'Câu miễn phí',side:'left'}],
 };
 const rect = (x, y, w, h) => ({ x, y, w, h });
+// Painted upper-world buildings use the plate's world scale (820 x 640).
+// The roof is baked into terrain: allowing feet onto it draws players on top.
+export const homesteadBuildingBlocks=[rect(80,44,100,14),rect(48,58,164,109),rect(384,88,120,99)];
+const homesteadBuildingHits={house:rect(45,44,170,140),barn:rect(380,86,126,115)};
 const exit = (x, y, label, next, arrival, side) => ({ x, y, label, next, arrival, side, type:'exit' });
 export const maps = {
   field: {
     name:'Vườn nhà', subtitle:'LÀNG MÙA VUI', spawn:[188,221], bounds:homesteadSize,
+    blocks:homesteadBuildingBlocks,
     paths:[[[133,177],[140,191],[181,215],[205,238],[205,880]],[[205,258],[280,258],[350,258],[407,249],[430,205],[442,198]],[[205,292],[242,292],[242,347]],[[478,360],[478,860]],...Array.from({length:5},(_,row)=>[[230,387+row*116],[716,387+row*116]]),[[94,285],[151,285],[205,285]],[[homesteadWorkshop.x,homesteadWorkshop.y+18],[205,homesteadWorkshop.y+18]]],
     trees:[[34,45],[38,268],[29,560],[60,780],[786,44],[790,151],[790,305],[786,495],[778,700],[540,880],[684,880]],
     water:[mainPond],
@@ -96,6 +101,7 @@ export const maps = {
   },
 };
 Object.assign(maps.visit,{
+  blocks:homesteadBuildingBlocks,
   paths:maps.field.paths,trees:maps.field.trees,water:maps.field.water,
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
@@ -152,7 +158,8 @@ export function features(id, snapshot, neighbor, page=0) {
     blocks.push(rect(obj.x-obj.w*.43,obj.y-depth,obj.w*.86,depth+2));
     if(id!=='visit'||!['house','well'].includes(obj.type)){
       const drawY=obj.type==='house'?obj.y-obj.h/2:undefined;
-      hotspots.push({...obj,y:obj.y+objectHotspotOffset,...obj.interaction,drawY});
+      const hitBox=['field','visit'].includes(id)?homesteadBuildingHits[obj.type]:undefined;
+      hotspots.push({...obj,y:obj.y+objectHotspotOffset,...obj.interaction,drawY,...(hitBox?{hitBox}:{})});
     }
   }
   for(const [x,y] of map.trees) {
@@ -167,8 +174,8 @@ export function features(id, snapshot, neighbor, page=0) {
     }
     if((owner.workshop??0)>0){
       const workshop={...homesteadWorkshop,type:'workshop',level:owner.workshop,label:'Xưởng máy cấp '+owner.workshop};
-      actors.push(workshop);blocks.push(rect(workshop.x-42,workshop.y-48,84,50));
-      if(id==='field')hotspots.push({...workshop,y:workshop.y+12});
+      actors.push(workshop);blocks.push(rect(workshop.x-workshop.w/2+4,workshop.y-workshop.h+5,workshop.w-8,workshop.h-3));
+      if(id==='field')hotspots.push({...workshop,y:workshop.y+12,hitBox:rect(workshop.x-workshop.w/2,workshop.y-workshop.h,workshop.w,workshop.h+18)});
     }
     for(const i of owner.plotIndexes??owner.plots.map((_,slot)=>mainPlotId(slot))) {
       const data=plotAt(owner,i);

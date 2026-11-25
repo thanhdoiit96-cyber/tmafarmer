@@ -1,5 +1,7 @@
 # Mục tiêu tiếp theo — bản runtime V1
 
+Cập nhật giao diện V2: mục tiêu ghim nay **chỉ hiển thị trong Việc cần làm**, bằng thẻ nhỏ với tên, tiến độ và nút đi tới. Xem [GAME_UI_V2.md](GAME_UI_V2.md). Cơ chế lưu và hoàn thành V1 bên dưới vẫn giữ nguyên; ảnh/bố cục V1 là lịch sử.
+
 Ngày hoàn thiện: 25/11/2026. Phạm vi: lát cắt P0.1 và phần nhãn liên quan của P0.4 trong [roadmap](GAME_DEVELOPMENT_ROADMAP.md), theo [phác thảo đã duyệt](NEXT_GOAL_DRAFT_V1.md). Chưa commit hoặc deploy.
 
 ## Hành vi đã triển khai

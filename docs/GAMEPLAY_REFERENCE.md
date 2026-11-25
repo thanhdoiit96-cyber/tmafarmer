@@ -8,7 +8,9 @@ Các bảng số được sinh từ engine ở [GAMEPLAY_CATALOG.md](GAMEPLAY_CA
 
 ## 1. Mục tiêu và vòng chơi
 
-P1.1 bổ sung [tóm tắt khi quay lại](RETURN_SUMMARY_V1.md) sau ít nhất 10 phút thực. Ba ý lấy từ trạng thái vườn hiện tại: việc sẵn sàng, chỗ kho, mục tiêu ghim. Số tăng/giảm là chênh lệch tổng mục sẵn sàng so với mốc trước trên thiết bị; không phải lịch sử thu hoặc sản lượng tích lũy. Không đổi cơ chế phát triển khi offline.
+Bộ chọn hạt giống và vật nuôi dùng ô ảnh **Đã mở / Còn khóa**, phân trang và nút Gieo/Đón riêng; hover hoặc click/chạm để xem chi tiết. Mục tiêu ghim chỉ hiện dưới dạng thẻ nhỏ trong **Việc cần làm**. Nhà, kho và xưởng có vùng chặn theo hình vẽ, vẫn đi được tới cửa. Xem [giao diện V2](GAME_UI_V2.md).
+
+P1.1 bổ sung [tóm tắt khi quay lại](RETURN_SUMMARY_V1.md) sau ít nhất 10 phút thực. Bản V2 hiện việc sẵn sàng và chỗ kho; mục tiêu nằm riêng trong Việc cần làm. Số tăng/giảm là chênh lệch tổng mục sẵn sàng so với mốc trước trên thiết bị; không phải lịch sử thu hoặc sản lượng tích lũy. Không đổi cơ chế phát triển khi offline.
 
 Chỉ dẫn mở khóa V1 cho cây, vật nuôi, thủy sản và nâng công trình hiển thị đồng thời các điều kiện theo engine, có nút tới tiến độ/công trình/vật liệu và ghim nâng cấp. Chỉ dẫn không thay thế điều kiện mua, trồng, thả hoặc chế biến. Xem [phạm vi và kiểm chứng](UNLOCK_GUIDANCE_V1.md).
 

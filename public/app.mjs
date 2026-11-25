@@ -2,6 +2,7 @@ import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-h
 import {optionalIndex} from './action-input.mjs';
 import {unlockGuide,itemUnlockTarget} from './unlock-guide.mjs';
 import {previousVisit,returnSummary,visitMark,visitStorageKey} from './return-summary.mjs';
+import {seedCatalog,seedPickerPage} from './seed-picker.mjs';
 import {neighborHomes,neighborPage,neighborPageSize,neighborHouseTier} from './neighbors-layout.mjs';
 import {avatarDetails,avatarKey,ageCharacterAtlases} from './avatar-models.mjs';
 import {villageLevels} from './village.mjs';
@@ -324,12 +325,15 @@ function stockLock(farm,item){
 function unlockButton(type,key,label='Xem điều kiện',lot){
   return btn(label,'data-unlock="'+type+'" data-key="'+key+'"'+(lot===undefined?'':' data-lot="'+lot+'"'),'subtle');
 }
+function unlockChecklist(view){
+  const rows=view.rows.map(row=>'<li><div><strong>'+escape(row.label)+'</strong><p>'+row.have+' / '+row.need+(row.ready?' · Đã đạt':' · Còn thiếu '+(row.need-row.have))+'</p></div>'+
+    (!row.ready?(row.route.kind==='building'?unlockButton('building',row.route.key,'Xem công trình'):row.route.kind==='item'?btn('Xem vật liệu','data-item-info="'+row.route.key+'"','subtle'):btn(row.route.kind==='progress'?'Xem tiến độ':'Tới chợ','data-unlock-route="'+row.route.kind+'"','subtle')):'<span class="badge">Đã đạt</span>')+'</li>').join('');
+  return '<ul class="unlock-checklist">'+rows+'</ul>';
+}
 function showUnlock(type,key,lot){
   const view=unlockGuide(state.me,type,key,lot);
   if(!view)return;
-  const rows=view.rows.map(row=>'<li><div><strong>'+escape(row.label)+'</strong><p>'+row.have+' / '+row.need+(row.ready?' · Đã đạt':' · Còn thiếu '+(row.need-row.have))+'</p></div>'+
-    (!row.ready?(row.route.kind==='building'?unlockButton('building',row.route.key,'Xem công trình'):row.route.kind==='item'?btn('Xem vật liệu','data-item-info="'+row.route.key+'"','subtle'):btn(row.route.kind==='progress'?'Xem tiến độ':'Tới chợ','data-unlock-route="'+row.route.kind+'"','subtle')):'<span class="badge">Đã đạt</span>')+'</li>').join('');
-  modal('Điều kiện · '+escape(view.name),'<p>'+(view.max?'Công trình đã đạt cấp tối đa.':view.unlocked?'Đã đạt điều kiện mở khóa. Khi mua, trồng hoặc chế biến vẫn cần đủ giống, xu, nguyên liệu và chỗ chứa.':'Hoàn thành các điều kiện còn thiếu bên dưới. XP là tổng kinh nghiệm, không phải cấp công trình.')+'</p><ul class="unlock-checklist">'+rows+'</ul>'+
+  modal('Điều kiện · '+escape(view.name),'<p>'+(view.max?'Công trình đã đạt cấp tối đa.':view.unlocked?'Đã đạt điều kiện mở khóa. Khi mua, trồng hoặc chế biến vẫn cần đủ giống, xu, nguyên liệu và chỗ chứa.':'Hoàn thành các điều kiện còn thiếu bên dưới. XP là tổng kinh nghiệm, không phải cấp công trình.')+'</p>'+unlockChecklist(view)+
     (type==='building'&&!view.max?'<div class="actions">'+btn('Ghim cấp kế tiếp','data-goal="building" data-item="'+key+'"','primary')+btn('Xem bảng công trình','data-unlock-route="buildings" data-key="'+key+'"','subtle')+'</div>':'')+'<p>Chỉ dẫn không tự mua, xây hoặc tiêu vật liệu.</p>');
 }
 function showItem(item,fromStock=false){
@@ -361,6 +365,9 @@ function showStockTooltip(card){
   const item=card.dataset.itemInfo, locked=stockLock(state.me,item);
   stockTooltip.innerHTML='<strong>'+escape(nice(item))+'</strong>'+itemDescription(item)+
     (locked?'<p class="stock-tooltip-lock">'+escape(locked)+'</p>':'');
+  placeItemTooltip(card);
+}
+function placeItemTooltip(card){
   stockTooltipCard=card;
   card.setAttribute('aria-describedby','stock-tooltip');
   stockTooltip.hidden=false;
@@ -373,6 +380,34 @@ function showStockTooltip(card){
   stockTooltip.style.left=Math.max(edge,Math.min(left,innerWidth-width-edge))+'px';
   stockTooltip.style.top=Math.max(edge,Math.min(top,innerHeight-height-edge))+'px';
 }
+function seedFacts(seed){
+  return '<dl class="seed-facts"><div><dt>Trong túi</dt><dd>'+seed.count+' hạt</dd></div><div><dt>Thời gian cơ sở</dt><dd>'+duration(seed.time)+'</dd></div><div><dt>Sản lượng cơ sở</dt><dd>'+seed.yield+' món</dd></div><div><dt>Đặc tính</dt><dd>'+escape(seed.weather.label)+(seed.quality?' · Chất lượng cao':'')+'</dd></div></dl><p>'+escape(seed.weather.note)+'</p><p class="small">Thời gian và sản lượng thực tế thay đổi theo thời tiết, độ ẩm và chăm sóc.</p>';
+}
+function showSeedInfo(key){
+  const seed=seedCatalog(state.me).find(s=>s.key===key);
+  if(!seed)return;
+  modal(cropIllustration(key)+escape(seed.name),'<p class="seed-detail-status" data-locked="'+!seed.unlock.unlocked+'">'+(seed.unlock.unlocked?'Đã mở khóa'+(seed.count?' · Có thể gieo':' · Hết giống'):'Chưa mở khóa')+'</p>'+seedFacts(seed)+'<h3>Điều kiện mở khóa</h3>'+(seed.unlock.rows.length?unlockChecklist(seed.unlock):'<p>Giống cơ bản, không cần điều kiện mở khóa.</p>')+itemDescription(seed.seed)+cropGrowthStrip(key)+
+    (seed.unlock.unlocked&&!seed.count?'<div class="actions">'+btn('Tìm giống ở chợ','data-seed-buy="'+key+'"','primary')+'</div>':'')+'<p>'+(seed.unlock.unlocked?'Đóng chi tiết và chọn nút Gieo ở danh sách khi đã có giống.':'Hoàn thành các điều kiện trên để mở giống này.')+'</p>');
+}
+function showSeedTooltip(card){
+  if(dialog.open||stockTooltipCard===card)return;
+  const seed=seedCatalog(state.me).find(s=>s.key===card.dataset.seedInfo);
+  if(!seed)return;
+  hideStockTooltip();
+  stockTooltip.innerHTML='<strong>'+escape(seed.name.replace(' ch?t l??ng cao','').replace('Qu? c? ph?','C? ph?').replace('G??ng sen','Sen'))+'</strong><p class="stock-tooltip-lock">'+(seed.unlock.unlocked?'Đã mở khóa':'Chưa mở khóa')+'</p>'+seedFacts(seed)+(seed.unlock.rows.length?'<p>'+seed.unlock.rows.map(r=>escape(r.label)+': '+r.have+'/'+r.need+(r.ready?' (đã đạt)':' (còn thiếu)')).join('<br>')+'</p>':'')+'<p>Click để xem mô tả và điều kiện chi tiết.</p>';
+  placeItemTooltip(card);
+}
+let seedGroup='open',seedPage=0;
+landscape.addEventListener('change',()=>{if(state){seedPage=0;render();}});
+matchMedia('(max-width:760px)').addEventListener('change',()=>{if(state){seedPage=0;render();}});
+function renderSeedPicker(farm){
+  const view=seedPickerPage(farm,seedGroup,seedPage,landscape.matches||matchMedia('(max-width:760px)').matches?3:6);seedPage=view.page;
+  const tabs='<div class="seed-tabs" role="group" aria-label="Trạng thái mở khóa hạt giống">'+[['open','Đã mở',view.open],['locked','Còn khóa',view.locked]].map(([key,label,count])=>btn(label+' <span>'+count+'</span>','data-seed-group="'+key+'" aria-pressed="'+(seedGroup===key)+'"',seedGroup===key?'primary':'subtle')).join('')+'</div>';
+  const cards=view.entries.map(seed=>'<article class="seed-card" data-locked="'+!seed.unlock.unlocked+'" data-empty="'+!seed.count+'">'+btn('<span class="seed-art">'+cropIllustration(seed.key)+'</span><span class="seed-card-text"><strong>'+escape(seed.name)+'</strong><span class="seed-card-meta"><b>'+seed.count+' hạt</b><span>'+escape(seed.weather.label)+'</span></span><small>'+(seed.unlock.unlocked?(seed.count?'Đã mở · Xem chi tiết':'Đã mở · Hết giống'): 'Khóa · '+seed.unlock.rows.map(r=>escape(r.label.replace(' · cấp',''))+' '+r.need).join(' · '))+'</small></span>','data-seed-info="'+seed.key+'" aria-label="Xem '+escape(seed.name)+', '+(seed.unlock.unlocked?'đã mở':'còn khóa')+', '+seed.count+' hạt"','seed-info')+
+    (seed.unlock.unlocked?(seed.count?act('Gieo','plant',seed.key,selected,'primary'):btn('Tìm giống','data-seed-buy="'+seed.key+'"','subtle')):'<span class="seed-lock-label" aria-hidden="true">Khóa</span>')+'</article>').join('');
+  const pager='<nav class="seed-pagination" aria-label="Trang hạt giống">'+btn('‹','data-seed-page="'+(view.page-1)+'" aria-label="Trang hạt giống trước"','subtle',view.page===0)+'<span>Trang '+(view.page+1)+' / '+view.pages+'</span>'+btn('›','data-seed-page="'+(view.page+1)+'" aria-label="Trang hạt giống sau"','subtle',view.page===view.pages-1)+'</nav>';
+  return '<section class="seed-picker" aria-label="Chọn hạt giống"><div class="row"><h2>Chọn hạt giống</h2><span class="badge">Ô '+plotNumber(selected)+'</span></div><p class="seed-picker-hint">Chạm ảnh hoặc tên để xem chi tiết. Dùng nút Gieo để trồng.</p>'+tabs+'<div class="seed-cards">'+(cards||'<p>Chưa có giống trong nhóm này.</p>')+'</div>'+pager+'</section>';
+}
 function showCropGrowth(index){
   const plot=plotAt(state.me,index);
   if(plot)modal('Giai đoạn · '+goods[plot.kind].name,cropGrowthStrip(plot.kind,cropStage(plot)));
@@ -380,11 +415,7 @@ function showCropGrowth(index){
 function renderCropTools(farm,now) {
   const plot=plotAt(farm,selected);
   if(!plot&&farm.soilCompactsAt[selected]<=now)return '<h2>Đất đã chai</h2><p>Ô này bỏ trống ít nhất 8 giờ. Cuốc đất để làm tơi rồi gieo hạt.</p><div class="actions">'+act('Cuốc đất','till','',selected,'primary')+'</div>';
-  if(!plot) return '<h2>Gieo hạt</h2><p>Chọn giống cho ô '+plotNumber(selected)+'. Một số giống cần Xưởng máy.</p><div class="actions crop-actions">'+Object.entries(crops).map(([key,crop])=>{
-    const locked=cropRequirement(farm,key);
-    const weatherLabel=cropWeatherProfiles[crop.weather].label;
-    return locked?unlockButton('crop',key,nice(key)+' · Xem mở khóa'):act(nice(key)+' · '+weatherLabel+' · '+(farm.inventory[crop.seed]||0),'plant',key,selected,crop.quality?'gold':'',!farm.inventory[crop.seed]);
-  }).join('')+'</div>';
+  if(!plot)return renderSeedPicker(farm);
   const goal=cropGoal(plot), ripe=plot.progress>=goal;
   const wet=plot.wetUntil>now||state.weather.wet;
   const yieldTotal=cropYield(plot);
@@ -430,14 +461,35 @@ function animalIllustration(kind){
   return '<span class="animal-icon pixel-animal" aria-hidden="true" style="background-image:url('+atlas.source+
     ');background-size:'+atlas.columns*42+'px '+(atlas.rows??1)*36+'px;background-position:-'+x*.75+'px -'+y*.75+'px"></span>';
 }
+let animalGroup='open',animalPage=0;
+function animalFacts(key,lot){
+  const d=animals[key],owned=state.me.pens.filter(p=>p.kind===key&&p.lot===lot).length;
+  return '<dl class="seed-facts"><div><dt>Giá đón</dt><dd>'+d.cost+' xu</dd></div><div><dt>Trong chuồng này</dt><dd>'+owned+' con</dd></div><div><dt>Lớn lên · cơ sở</dt><dd>'+duration(d.grow)+'</dd></div><div><dt>'+(d.oneTime?'Vỗ béo':'Mỗi lứa')+' · cơ sở</dt><dd>'+duration(d.time)+'</dd></div></dl><p>'+d.food+' phần thức ăn/lượt · '+d.yield+' '+escape(goods[d.product].name.toLowerCase())+(d.oneTime?' khi xuất chuồng.':' mỗi lứa cơ sở.')+'</p>';
+}
+function showAnimalInfo(key,lot){
+  if(!Object.hasOwn(animals,key))return;
+  const view=unlockGuide(state.me,'animal',key,lot);
+  modal(animalIllustration(key)+escape(animals[key].name),'<p class="seed-detail-status" data-locked="'+!view.unlocked+'">'+(view.unlocked?'Đã mở khóa':'Chưa mở khóa')+'</p>'+animalFacts(key,lot)+'<h3>Điều kiện mở khóa</h3>'+unlockChecklist(view)+'<p>Đón vật nuôi bằng nút Đón ở chuồng. Sản lượng còn phụ thuộc tuổi và chăm sóc; xem chi tiết không mua con vật.</p>');
+}
+function showAnimalTooltip(card){
+  if(dialog.open||stockTooltipCard===card)return;
+  const key=card.dataset.animalInfo,lot=optionalIndex(card.dataset.lot);
+  if(!Object.hasOwn(animals,key))return;
+  const view=unlockGuide(state.me,'animal',key,lot);hideStockTooltip();
+  stockTooltip.innerHTML='<strong>'+escape(animals[key].name)+'</strong>'+animalFacts(key,lot)+'<p>'+view.rows.map(r=>escape(r.label)+': '+r.have+'/'+r.need+(r.ready?' · Đã đạt':' · Còn thiếu')).join('<br>')+'</p><p>Chọn ảnh để xem chi tiết.</p>';placeItemTooltip(card);
+}
+function renderAnimalPicker(farm,lot,pens,limit){
+  const all=Object.entries(animals).map(([key,def])=>({key,def,locked:!!animalRequirement(farm,key,lot)})),open=all.filter(v=>!v.locked),locked=all.filter(v=>v.locked);
+  const entries=animalGroup==='locked'?locked:open,size=landscape.matches||matchMedia('(max-width:760px)').matches?3:6,pages=Math.max(1,Math.ceil(entries.length/size));
+  animalPage=Math.max(0,Math.min(pages-1,animalPage));
+  const tabs='<div class="seed-tabs">'+[['open','Đã mở',open.length],['locked','Còn khóa',locked.length]].map(([id,label,n])=>btn(label+' '+n,'data-animal-group="'+id+'" aria-pressed="'+(animalGroup===id)+'"',animalGroup===id?'primary':'subtle')).join('')+'</div>';
+  const cards=entries.slice(animalPage*size,(animalPage+1)*size).map(({key,def,locked})=>'<article class="seed-card animal-slot" data-locked="'+locked+'"><button type="button" class="btn seed-info" data-animal-info="'+key+'"'+(lot===undefined?'':' data-lot="'+lot+'"')+' aria-label="Xem '+escape(def.name)+' · '+(locked?'còn khóa':'đã mở')+'"><span class="seed-art">'+animalIllustration(key)+'</span><span class="seed-card-text"><strong>'+escape(def.name)+'</strong><span class="seed-card-meta"><b>'+def.cost+' xu</b></span></span></button>'+(locked?'<span class="seed-lock-label">Khóa</span>':act(pens.length>=limit?'Đầy':farm.coins<def.cost?'Thiếu xu':'Đón','animal',key,lot??'','gold',farm.coins<def.cost||pens.length>=limit))+'</article>').join('');
+  return '<div class="animal-picker">'+tabs+'<div class="seed-cards">'+(cards||'<p>Đã mở toàn bộ vật nuôi.</p>')+'</div><nav class="seed-pagination" aria-label="Trang vật nuôi">'+btn('‹','data-animal-page="'+(animalPage-1)+'"','subtle',!animalPage)+'<span>'+(animalPage+1)+' / '+pages+'</span>'+btn('›','data-animal-page="'+(animalPage+1)+'"','subtle',animalPage===pages-1)+'</nav></div>';
+}
 function renderCoop(farm,now,lot){
   const pens=farm.pens.map((pen,i)=>({pen,i})).filter(entry=>entry.pen.lot===lot);
   const limit=coopCapacity(farm,lot);
-  const shop=limit?'<details class="panel-fold wide-card" data-panel-fold="animal-shop"'+(!pens.length?' open':'')+'><summary>Đón vật nuôi</summary><div class="actions action-grid">'+Object.entries(animals).map(([key,info])=>{
-    const locked=animalRequirement(farm,key,lot);
-    const label=info.name+(locked?' · 🔒 '+locked:' · '+info.cost+' xu');
-    return locked?unlockButton('animal',key,animalIllustration(key)+'<span>'+info.name+' · Xem mở khóa</span>',lot):act(animalIllustration(key)+'<span>'+label+'</span>','animal',key,lot??'','gold',farm.coins<info.cost||pens.length>=limit);
-  }).join('')+'</div></details>':'';
+  const shop=limit?'<details class="panel-fold wide-card game-animal-shop" data-panel-fold="animal-shop"'+(!pens.length?' open':'')+'><summary>Đón vật nuôi · '+pens.length+'/'+limit+' chỗ</summary>'+renderAnimalPicker(farm,lot,pens,limit)+'</details>':'';
   return boardBar(lot===undefined?'Chuồng chính':'Chuồng ở ô '+(lot+1),limit?'🐾 '+pens.length+'/'+limit:'Chưa xây chuồng')+
     '<div class="farm-list card-grid">'+shop+(!limit?'<article class="wide-card"><h3>Dựng chuồng đầu tiên</h3><p>Mở chỗ cho hai gà mái. Nâng cấp để nuôi bò, lợn và che nắng.</p><div class="actions">'+act('Xây chuồng · 45 xu','upgrade','coop','','primary',farm.coins<45)+'</div></article>':'')+
     pens.map(({pen,i})=>{
@@ -1074,7 +1126,7 @@ function renderReturnSummary(){
   node.hidden=!view;
   if(!view){node.innerHTML='';return;}
   const elapsed=view.minutes<60?view.minutes+' phút':view.minutes<1440?Math.floor(view.minutes/60)+' giờ':Math.floor(view.minutes/1440)+' ngày thực';
-  const html='<article class="return-card"><div class="row"><h2>Vườn khi bạn quay lại</h2>'+btn('Đóng','data-return-summary="dismiss" aria-label="Đóng tóm tắt khi quay lại"','subtle')+'</div><p class="return-elapsed">Lần ghé trước cách đây khoảng '+elapsed+'.</p><ul>'+view.rows.map(row=>'<li>'+btn('<strong>'+escape(row.title)+'</strong><span class="return-row-copy">'+escape(row.copy)+'</span><span class="return-row-cta">'+row.cta+' →</span>','data-return-summary="'+row.kind+'"','subtle')+'</li>').join('')+'</ul></article>';
+  const html='<article class="return-card"><div class="row"><h2>Vườn khi bạn quay lại</h2>'+btn('Đóng','data-return-summary="dismiss" aria-label="Đóng tóm tắt khi quay lại"','subtle')+'</div><p class="return-elapsed">Lần ghé trước cách đây khoảng '+elapsed+'.</p><ul>'+view.rows.filter(row=>row.kind!=='goal').map(row=>'<li>'+btn('<strong>'+escape(row.title)+'</strong><span class="return-row-copy">'+escape(row.copy)+'</span><span class="return-row-cta">'+row.cta+' →</span>','data-return-summary="'+row.kind+'"','subtle')+'</li>').join('')+'</ul></article>';
   if(node.innerHTML!==html)node.innerHTML=html;
 }
 function renderNextGoal(now){
@@ -1084,10 +1136,11 @@ function renderNextGoal(now){
   if(JSON.stringify(raw)!==JSON.stringify(pinnedGoal))store.write(key,pinnedGoal);
   pinnedGoalView=goalView(pinnedGoal,snapshot);
   const view=pinnedGoalView,zone=$('#next-goal');
+  zone.hidden=panel!=='tasks'||!!neighborId;
+  if(zone.hidden){zone.innerHTML='';return;}
   const labels=['Gieo','Tưới','Thu','Bán'];
-  const stages=view?.stage===undefined?'':'<div class="next-goal-stages" aria-label="'+(view.stage===4?'Đã hoàn thành vòng mùa vụ':'Bước hiện tại: '+labels[view.stage])+'">'+labels.map((label,index)=>'<span class="'+(index<view.stage?'done':index===view.stage?'current':'')+'">'+(index<view.stage?'✓ ':'')+label+'</span>').join('')+'</div>';
-  const html=view?'<article class="next-goal-card"'+(view.blocked?' data-blocked="true"':'')+'><div class="next-goal-heading"><span>Mục tiêu đang ghim</span>'+btn('Đổi / Bỏ','data-goal="choose" aria-label="Đổi hoặc bỏ ghim mục tiêu"','subtle')+'</div><h2>'+escape(view.title)+'</h2><p class="next-goal-copy">'+escape(view.copy)+'</p>'+stages+'<p class="next-goal-meta">'+escape(view.meta)+'</p><div class="next-goal-actions">'+btn(escape(view.cta),'data-goal="go"','primary')+btn('Chi tiết','data-goal="detail"','subtle')+'</div></article>':
-    '<div class="next-goal-empty"><p>Chưa ghim mục tiêu. Bạn vẫn có thể làm các việc trong vườn.</p>'+btn('Chọn mục tiêu','data-goal="choose"','subtle')+'</div>';
+  const ticks=view?.stage===undefined?'':'<span class="goal-pin-ticks" aria-label="'+(view.stage===4?'Hoàn thành':labels[view.stage])+'">'+labels.map((s,i)=>'<i data-done="'+(i<=view.stage)+'" title="'+s+'"></i>').join('')+'</span>';
+  const html=view?'<article class="goal-pin"><span class="goal-pin-art" aria-hidden="true">'+(pinnedGoal.kind==='intro'?cropIllustration('wheat'):icon('build'))+'</span>'+btn('<small>Đang ghim</small><strong>'+escape(view.title)+'</strong><span>'+escape(view.meta)+'</span>'+ticks,'data-goal="detail"','goal-pin-info')+btn('›','data-goal="go" aria-label="'+escape(view.cta)+'"','primary')+btn('⋯','data-goal="choose" aria-label="Đổi hoặc bỏ ghim"','subtle')+'</article>':btn('＋ Ghim mục tiêu','data-goal="choose"','goal-pin-empty');
   if(zone.innerHTML!==html)zone.innerHTML=html;
 }
 function showGoalChoices(){
@@ -1127,7 +1180,7 @@ function goToPinnedGoal(){
     if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
   }
 }
-const focusSelector='[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+const focusSelector='[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -1140,6 +1193,9 @@ function areaButtons(farm) {
 }
 function render(arrival) {
   if(!state||composingMarketSearch) return;
+  const canHoverSeeds=matchMedia('(hover:hover) and (pointer:fine)').matches;
+  const hoveredAnimal=canHoverSeeds&&stockTooltipCard?.dataset.animalInfo&&(stockTooltip.matches(':hover')||stockTooltipCard.matches(':hover'))?stockTooltipCard.dataset.animalInfo:null;
+  const hoveredSeed=canHoverSeeds&&stockTooltipCard?.dataset.seedInfo&&(stockTooltip.matches(':hover')||stockTooltipCard.matches(':hover'))?stockTooltipCard.dataset.seedInfo:null;
   const focused=document.activeElement;
   const focus=focusKey(focused);
   const searchSelection=focused.matches('[data-market-search]')?[focused.selectionStart,focused.selectionEnd,focused.selectionDirection]:null;
@@ -1215,6 +1271,10 @@ function render(arrival) {
     control?.focus({preventScroll:true});
     if(control&&searchSelection)control.setSelectionRange(...searchSelection);
   }
+  const seedHover=canHoverSeeds?(hoveredSeed?$('#tools [data-seed-info="'+hoveredSeed+'"]'):$('#tools [data-seed-info]:hover')):null;
+  if(seedHover&&!dialog.open)showSeedTooltip(seedHover);
+  const animalHover=canHoverSeeds?(hoveredAnimal?panelBody.querySelector('[data-animal-info="'+hoveredAnimal+'"]'):panelBody.querySelector('[data-animal-info]:hover')):null;
+  if(animalHover&&!dialog.open)showAnimalTooltip(animalHover);
 }
 function goTo(area,arrival,targetPanel='area') {
   if(landscape.matches)setPanelOpen(false);
@@ -1538,6 +1598,10 @@ document.addEventListener('keydown',event=>{
   }
 });
 panelBody.addEventListener('pointerover',event=>{
+  const animal=event.target.closest('[data-animal-info]');
+  if(event.pointerType==='mouse'&&animal){showAnimalTooltip(animal);return;}
+  const seed=event.target.closest('[data-seed-info]');
+  if(event.pointerType==='mouse'&&seed){showSeedTooltip(seed);return;}
   const card=event.target.closest('[data-stock-item]');
   if(event.pointerType==='mouse'&&card)showStockTooltip(card);
 });
@@ -1549,6 +1613,8 @@ stockTooltip.addEventListener('pointerleave',event=>{
   if(!stockTooltipCard?.contains(event.relatedTarget))hideStockTooltip();
 });
 panelBody.addEventListener('focusin',event=>{
+  if(event.target.matches('[data-animal-info]:focus-visible'))showAnimalTooltip(event.target);
+  if(event.target.matches('[data-seed-info]:focus-visible'))showSeedTooltip(event.target);
   if(event.target.matches('[data-stock-item]:focus-visible'))showStockTooltip(event.target);
 });
 panelBody.addEventListener('focusout',event=>{
@@ -1573,7 +1639,25 @@ document.addEventListener('click',async e=>{
   const el=e.target.closest('button');
   if(!el) return;
   const d=el.dataset;
-  if('returnSummary' in d){
+  if('animalGroup' in d){
+    if(!state||busy||!['open','locked'].includes(d.animalGroup))return;
+    animalGroup=d.animalGroup;animalPage=0;render();reveal('.animal-picker');
+  }else if('animalPage' in d){
+    if(!state||busy)return;
+    animalPage=Number(d.animalPage)||0;render();reveal('.animal-picker');
+  }else if('animalInfo' in d){if(state)showAnimalInfo(d.animalInfo,optionalIndex(d.lot));}
+  else if('seedGroup' in d){
+    if(!state||busy||!['open','locked'].includes(d.seedGroup))return;
+    seedGroup=d.seedGroup;seedPage=0;hideStockTooltip();render();reveal('#tools');
+  }else if('seedPage' in d){
+    if(!state||busy)return;
+    seedPage=Number(d.seedPage);hideStockTooltip();render();reveal('#tools');
+  }else if('seedInfo' in d){if(state)showSeedInfo(d.seedInfo);}
+  else if('seedBuy' in d){
+    if(!state||busy||!Object.hasOwn(crops,d.seedBuy)||cropRequirement(state.me,d.seedBuy))return;
+    dialog.close();marketPane='supplies';supplyGroup='seeds';marketQueries.supplies=goods[crops[d.seedBuy].seed].name;
+    goTo('market');if(!world.approach('market',undefined,()=>reveal('#board'),{style:'red'}))reveal('#board');
+  }else if('returnSummary' in d){
     if(!state||busy)return;
     if(d.returnSummary==='dismiss'){
       returnBaseline=null;renderReturnSummary();
@@ -1596,7 +1680,7 @@ document.addEventListener('click',async e=>{
     else if(d.goal==='intro'){savePinnedGoal(pinIntro(state));dialog.close();render();}
     else if(d.goal==='building'&&Object.hasOwn(buildings,d.item)){savePinnedGoal(pinBuilding(state.me,d.item));dialog.close();render();}
     else if(d.goal==='go')goToPinnedGoal();
-    else if(d.goal==='detail')modal('Mục tiêu của bạn','<p>'+escape(pinnedGoalView?.copy??'Chọn một mục tiêu để theo dõi.')+'</p><p>Tiến độ dựa trên thao tác thành công và tình trạng vườn. Mục tiêu được lưu riêng theo vườn trên thiết bị này. Bạn có thể đổi hoặc bỏ ghim mà không mất tiến trình nông trại.</p><p>Không có phần thưởng mới; xu và XP vẫn theo các thao tác và Sổ việc hiện có.</p>');
+    else if(d.goal==='detail')modal('Mục tiêu của bạn','<h3>'+escape(pinnedGoalView?.title??'Chọn mục tiêu')+'</h3><p>'+escape(pinnedGoalView?.copy??'Chọn một mục tiêu để theo dõi.')+'</p><p>'+escape(pinnedGoalView?.meta??'')+'</p><p>Tiến độ dựa trên thao tác thành công và tình trạng vườn. Mục tiêu được lưu riêng theo vườn trên thiết bị này. Bạn có thể đổi hoặc bỏ ghim mà không mất tiến trình nông trại.</p><p>Không có phần thưởng mới; xu và XP vẫn theo các thao tác và Sổ việc hiện có.</p>');
   }else if('guideArea' in d&&Object.hasOwn(tabs,d.guideArea)){
     const targetPanel=d.guidePanel==='ponds'?'ponds':'area';
     goTo(d.guideArea,undefined,targetPanel);

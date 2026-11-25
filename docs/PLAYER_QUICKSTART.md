@@ -12,12 +12,14 @@ Chọn nam hoặc nữ, rồi chọn thanh niên, trung niên hoặc cao tuổi.
 
 ## 2. Làm vụ đầu
 
-Sau ít nhất 10 phút thực vắng mặt, bảng công cụ hiện **Vườn khi bạn quay lại**: việc sẵn sàng, chỗ kho và mục tiêu đang ghim. Chạm từng dòng để tiếp tục hoặc chọn Đóng; đổi cảnh không bật thêm popup. Mốc lần ghé lưu trên thiết bị. Xem [chi tiết](RETURN_SUMMARY_V1.md).
+Mục tiêu đang ghim chỉ xuất hiện trong **Tổng quan → Việc cần làm**. Chạm tên để xem chi tiết, nút › để đi tới, ⋯ để đổi hoặc bỏ ghim. Bộ chọn giống/vật nuôi dùng ô ảnh; chạm ảnh xem thông tin, nút Gieo/Đón thực hiện riêng. Xem [giao diện mới](GAME_UI_V2.md).
+
+Sau ít nhất 10 phút thực vắng mặt, bảng công cụ hiện **Vườn khi bạn quay lại**: việc sẵn sàng và chỗ kho. Chạm từng dòng để tiếp tục hoặc chọn Đóng; đổi cảnh không bật thêm popup. Mốc lần ghé lưu trên thiết bị. Xem [chi tiết](RETURN_SUMMARY_V1.md).
 
 Với giống hoặc con nuôi bị khóa, chọn **Xem mở khóa** để biết cùng lúc XP và cấp công trình còn thiếu. Trong bảng công trình, **Xem điều kiện** liệt kê thêm xu, từng vật liệu và cho phép ghim cấp kế tiếp. Xem [chỉ dẫn mở khóa](UNLOCK_GUIDANCE_V1.md).
 
 1. Click/chạm một ô đất trống ở **Vườn nhà**. Có thể đi bằng WASD/phím mũi tên và nhấn E khi đến gần; điện thoại có nút hướng.
-2. Gieo một giống lúa mì đang có sẵn. Nếu đất trống lâu đã chai, chọn **Cuốc đất** trước.
+2. Trong bảng hạt giống, nhóm **Đã mở** ưu tiên giống còn trong túi; nhóm **Còn khóa** cho xem điều kiện. Rê chuột lên ảnh/tên để xem nhanh trên desktop hoặc chạm để mở chi tiết trên điện thoại. Dùng nút **Gieo** riêng để trồng lúa mì; xem thông tin không tiêu hạt. Nếu đất trống lâu đã chai, chọn **Cuốc đất** trước. Xem [bảng chọn hạt giống](SEED_PICKER_V1.md).
 3. **Tưới nước** khi đất khô; trời mưa đã làm ẩm thì không cần tưới thêm. Thời gian cơ sở lúa mì là 8 phút, thời điểm chín thực tế thay đổi theo chăm sóc và thời tiết.
 4. Trong lúc chờ, xem dự báo, Kho và **Việc cần làm**. Bạn không cần đứng cạnh ô suốt thời gian lớn.
 5. Khi hiện giỏ nông sản, đến ô và **Thu hoạch**. Có thể chọn **Thu và giữ 1 giống** để đổi một phần nông sản lấy giống gieo tiếp.
