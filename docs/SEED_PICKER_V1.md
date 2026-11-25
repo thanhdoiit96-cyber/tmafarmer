@@ -1,6 +1,6 @@
 # Bảng chọn hạt giống V1
 
-**Bản lịch sử.** Bố cục danh sách dưới đây đã được thay bằng [ô vật phẩm V2](GAME_UI_V2.md), gồm 6 ô/trang desktop và 3 ô/trang mobile. Giữ tài liệu/ảnh V1 để đối chiếu thiết kế; hành vi xem thông tin và luật gieo vẫn được kế thừa.
+**Bản lịch sử.** Bố cục danh sách dưới đây đã được thay bằng [ô vật phẩm V2](GAME_UI_V2.md), bản thu gọn hiện có 4 cột và tối đa 8 ô/trang. Giữ tài liệu/ảnh V1 để đối chiếu thiết kế; hành vi xem thông tin và luật gieo vẫn được kế thừa.
 
 Ngày: 25/11/2026. Phạm vi: danh sách giống khi chọn ô trống trong Vườn nhà, theo yêu cầu tách rõ đã mở/còn khóa và hỗ trợ chuột, bàn phím, chạm. Giữ style `game-pixel-art`, ảnh cây từ atlas đã có và nền giấy kem/xanh. Chưa commit, push hoặc deploy.
 

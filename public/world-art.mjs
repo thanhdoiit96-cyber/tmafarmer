@@ -3,7 +3,7 @@ import {cropGoal, growthGoal} from './game.mjs';
 import frames from './sprite-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {size} from './world-layout.mjs';
-import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds} from './pixel/scene-backgrounds.mjs';
+import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds,sceneBackgroundTone} from './pixel/scene-backgrounds.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
 import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
@@ -511,6 +511,10 @@ function sceneBackground(c,kind,width,height){
       c.restore();
     }
   }else c.drawImage(art,0,0,art.naturalWidth,art.naturalHeight,0,0,width,height);
+  c.filter='none';
+  c.globalAlpha=sceneBackgroundTone.opacity;
+  c.fillStyle=sceneBackgroundTone.color;
+  c.fillRect(0,0,width,height);
   c.restore();
   return true;
 }

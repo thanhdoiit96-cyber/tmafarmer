@@ -302,6 +302,8 @@ Source/prompt: `assets/till-task-icon-v1.json`, `assets/till-task-icon-v1-source
 
 ## 25/11/2026 — Mục tiêu tiếp theo V1
 
+Scene background tone V1: phủ trung tính `#8d917b` ở mức 7,5% lên riêng nền vẽ sẵn của tám scene (kể cả vườn ghé thăm), giảm nhẹ tương phản và độ rực. Giữ xử lý màu Vườn nhà đang có. Pass nằm trong cache terrain, trước cây/nhân vật/vật nuôi/UI, không sửa PNG gốc hoặc tọa độ. Dùng alpha compositing, không thêm phụ thuộc Canvas filter cho bước làm dịu mới. Cấu hình ở `public/pixel/scene-backgrounds.mjs`. [Bảng kiểm tra tám nền bằng renderer thật](assets/scene-background-tone-v1.png). 145 kiểm thử và build đạt; render tám nền không có lỗi JavaScript.
+
 UX-GAME-02: thay danh sách hạt bằng ô vật phẩm 3 cột ảnh lớn; áp dụng cùng cách trình bày cho vật nuôi và thẻ quản lý. Mục tiêu ghim thu gọn và chỉ hiện trong Việc cần làm. Dùng lại atlas đã duyệt, không tạo ảnh thay thế. Vùng va chạm/click nhà–kho–xưởng căn theo nền hiện tại; không sửa nền/ID ô. Ảnh và phạm vi kiểm thử [GAME_UI_V2.md](GAME_UI_V2.md).
 
 UX-SEED-01: thiết kế lại bộ chọn giống bằng thẻ một dòng với atlas cây trưởng thành hiện có; tách nhóm mở/khóa, trạng thái hết hạt và nút Gieo. Giữ màu giấy kem/xanh, trạng thái khóa nâu có chữ, không thay nguồn ảnh hay Canvas. Ảnh desktop/hover/mobile ngang/dọc và kiểm chứng trong [SEED_PICKER_V1.md](SEED_PICKER_V1.md).

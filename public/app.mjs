@@ -354,10 +354,20 @@ function showItem(item,fromStock=false){
       (reason?'<p>'+escape(reason)+'</p>':''):'')+saveSeed+'<p id="dialog-error" role="status"></p>');
 }
 function hideStockTooltip(){
+  clearTimeout(catalogHoverTimer);catalogHoverCard=null;
   if(!stockTooltipCard)return;
   stockTooltipCard.removeAttribute('aria-describedby');
   stockTooltipCard=null;
   stockTooltip.hidden=true;
+}
+let catalogHoverTimer,catalogHoverCard=null;
+function queueCatalogTooltip(card,show){
+  if(stockTooltipCard===card||catalogHoverCard===card)return;
+  hideStockTooltip();catalogHoverCard=card;
+  catalogHoverTimer=setTimeout(()=>{
+    catalogHoverCard=null;
+    if(card.isConnected&&card.matches(':hover')&&!document.hidden&&!dialog.open)show(card);
+  },550);
 }
 function showStockTooltip(card){
   if(dialog.open||stockTooltipCard===card)return;
@@ -401,7 +411,7 @@ let seedGroup='open',seedPage=0;
 landscape.addEventListener('change',()=>{if(state){seedPage=0;render();}});
 matchMedia('(max-width:760px)').addEventListener('change',()=>{if(state){seedPage=0;render();}});
 function renderSeedPicker(farm){
-  const view=seedPickerPage(farm,seedGroup,seedPage,landscape.matches||matchMedia('(max-width:760px)').matches?3:6);seedPage=view.page;
+  const view=seedPickerPage(farm,seedGroup,seedPage,8);seedPage=view.page;
   const tabs='<div class="seed-tabs" role="group" aria-label="Trạng thái mở khóa hạt giống">'+[['open','Đã mở',view.open],['locked','Còn khóa',view.locked]].map(([key,label,count])=>btn(label+' <span>'+count+'</span>','data-seed-group="'+key+'" aria-pressed="'+(seedGroup===key)+'"',seedGroup===key?'primary':'subtle')).join('')+'</div>';
   const cards=view.entries.map(seed=>'<article class="seed-card" data-locked="'+!seed.unlock.unlocked+'" data-empty="'+!seed.count+'">'+btn('<span class="seed-art">'+cropIllustration(seed.key)+'</span><span class="seed-card-text"><strong>'+escape(seed.name)+'</strong><span class="seed-card-meta"><b>'+seed.count+' hạt</b><span>'+escape(seed.weather.label)+'</span></span><small>'+(seed.unlock.unlocked?(seed.count?'Đã mở · Xem chi tiết':'Đã mở · Hết giống'): 'Khóa · '+seed.unlock.rows.map(r=>escape(r.label.replace(' · cấp',''))+' '+r.need).join(' · '))+'</small></span>','data-seed-info="'+seed.key+'" aria-label="Xem '+escape(seed.name)+', '+(seed.unlock.unlocked?'đã mở':'còn khóa')+', '+seed.count+' hạt"','seed-info')+
     (seed.unlock.unlocked?(seed.count?act('Gieo','plant',seed.key,selected,'primary'):btn('Tìm giống','data-seed-buy="'+seed.key+'"','subtle')):'<span class="seed-lock-label" aria-hidden="true">Khóa</span>')+'</article>').join('');
@@ -480,7 +490,7 @@ function showAnimalTooltip(card){
 }
 function renderAnimalPicker(farm,lot,pens,limit){
   const all=Object.entries(animals).map(([key,def])=>({key,def,locked:!!animalRequirement(farm,key,lot)})),open=all.filter(v=>!v.locked),locked=all.filter(v=>v.locked);
-  const entries=animalGroup==='locked'?locked:open,size=landscape.matches||matchMedia('(max-width:760px)').matches?3:6,pages=Math.max(1,Math.ceil(entries.length/size));
+  const entries=animalGroup==='locked'?locked:open,size=8,pages=Math.max(1,Math.ceil(entries.length/size));
   animalPage=Math.max(0,Math.min(pages-1,animalPage));
   const tabs='<div class="seed-tabs">'+[['open','Đã mở',open.length],['locked','Còn khóa',locked.length]].map(([id,label,n])=>btn(label+' '+n,'data-animal-group="'+id+'" aria-pressed="'+(animalGroup===id)+'"',animalGroup===id?'primary':'subtle')).join('')+'</div>';
   const cards=entries.slice(animalPage*size,(animalPage+1)*size).map(({key,def,locked})=>'<article class="seed-card animal-slot" data-locked="'+locked+'"><button type="button" class="btn seed-info" data-animal-info="'+key+'"'+(lot===undefined?'':' data-lot="'+lot+'"')+' aria-label="Xem '+escape(def.name)+' · '+(locked?'còn khóa':'đã mở')+'"><span class="seed-art">'+animalIllustration(key)+'</span><span class="seed-card-text"><strong>'+escape(def.name)+'</strong><span class="seed-card-meta"><b>'+def.cost+' xu</b></span></span></button>'+(locked?'<span class="seed-lock-label">Khóa</span>':act(pens.length>=limit?'Đầy':farm.coins<def.cost?'Thiếu xu':'Đón','animal',key,lot??'','gold',farm.coins<def.cost||pens.length>=limit))+'</article>').join('');
@@ -1272,9 +1282,9 @@ function render(arrival) {
     if(control&&searchSelection)control.setSelectionRange(...searchSelection);
   }
   const seedHover=canHoverSeeds?(hoveredSeed?$('#tools [data-seed-info="'+hoveredSeed+'"]'):$('#tools [data-seed-info]:hover')):null;
-  if(seedHover&&!dialog.open)showSeedTooltip(seedHover);
+  if(seedHover&&!dialog.open){if(hoveredSeed)showSeedTooltip(seedHover);else queueCatalogTooltip(seedHover,showSeedTooltip);}
   const animalHover=canHoverSeeds?(hoveredAnimal?panelBody.querySelector('[data-animal-info="'+hoveredAnimal+'"]'):panelBody.querySelector('[data-animal-info]:hover')):null;
-  if(animalHover&&!dialog.open)showAnimalTooltip(animalHover);
+  if(animalHover&&!dialog.open){if(hoveredAnimal)showAnimalTooltip(animalHover);else queueCatalogTooltip(animalHover,showAnimalTooltip);}
 }
 function goTo(area,arrival,targetPanel='area') {
   if(landscape.matches)setPanelOpen(false);
@@ -1599,13 +1609,14 @@ document.addEventListener('keydown',event=>{
 });
 panelBody.addEventListener('pointerover',event=>{
   const animal=event.target.closest('[data-animal-info]');
-  if(event.pointerType==='mouse'&&animal){showAnimalTooltip(animal);return;}
+  if(event.pointerType==='mouse'&&animal){queueCatalogTooltip(animal,showAnimalTooltip);return;}
   const seed=event.target.closest('[data-seed-info]');
-  if(event.pointerType==='mouse'&&seed){showSeedTooltip(seed);return;}
+  if(event.pointerType==='mouse'&&seed){queueCatalogTooltip(seed,showSeedTooltip);return;}
   const card=event.target.closest('[data-stock-item]');
   if(event.pointerType==='mouse'&&card)showStockTooltip(card);
 });
 panelBody.addEventListener('pointerout',event=>{
+  if(event.pointerType==='mouse'&&catalogHoverCard?.contains(event.target)&&!catalogHoverCard.contains(event.relatedTarget))hideStockTooltip();
   if(event.pointerType==='mouse'&&stockTooltipCard?.contains(event.target)&&
     !stockTooltipCard.contains(event.relatedTarget)&&!stockTooltip.contains(event.relatedTarget))hideStockTooltip();
 });

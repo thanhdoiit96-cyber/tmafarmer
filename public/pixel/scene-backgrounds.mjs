@@ -1,3 +1,6 @@
+// A subtle neutral tint reduces painted contrast without affecting actors.
+// Source-over works on Safari too; this pass does not require Canvas filters.
+export const sceneBackgroundTone={color:'#8d917b',opacity:.075};
 export const sceneBackgroundAtlases={
   concept:{
     source:'/pixel/scene-backgrounds-concept-v1.png',

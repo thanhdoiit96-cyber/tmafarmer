@@ -672,6 +672,14 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .goal-pin{display:flex;align-items:center;gap:5px;padding:6px;border:2px solid #b19a63;border-radius:8px;background:linear-gradient(#f6edca,#e6dbb6);box-shadow:inset 0 1px #fff9de}.goal-pin-art{display:grid;place-items:center;flex:none;width:30px;height:34px}.goal-pin-art svg{width:24px;height:24px}.goal-pin>.btn{min-width:36px;min-height:44px;padding:3px}.goal-pin .goal-pin-info{min-width:0;flex:1;text-align:left;background:none;border:0;box-shadow:none;line-height:1.25}.goal-pin-info small{display:block;text-transform:uppercase;font-size:8px;color:#6c6142}.goal-pin-info strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:11px}.goal-pin-info>span:not(.goal-pin-ticks){display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:400}.goal-pin-ticks{display:flex;gap:3px;margin-top:4px}.goal-pin-ticks i{width:18px;height:4px;background:#c9bf9b;border-radius:2px}.goal-pin-ticks i[data-done="true"]{background:#4c7548}.goal-pin-empty{width:100%;min-height:44px;background:#e9dfbf;border:1px dashed #aa9567}
 .panel-body,dialog{-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .animal-picker article.seed-card{border:2px solid #af8e58;background:linear-gradient(#fff2cc,#e9d4a7);padding:3px}.animal-picker article.seed-card[data-locked="true"]{border-color:#978268;background:linear-gradient(#e5ddc7,#cfc3a6)}
+/* Compact catalog: four slots per row, eight per page. */
+.seed-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.seed-card,.animal-picker article.seed-card{padding:2px;border-width:1px}
+.seed-card .seed-info{min-height:44px;padding:0;gap:0}
+.seed-art{width:30px;height:24px}.seed-art .crop-item-icon{transform:scale(1)}.seed-art .animal-icon{transform:scale(.65)}
+.seed-card-text strong{font-size:9.5px;line-height:1.05;min-height:20px}
+.seed-card-meta b{font-size:8px;padding:1px 2px;top:0;right:0}
+.seed-card>.btn:not(.seed-info){font-size:9.5px;padding:2px 1px;min-height:26px;border-radius:3px}.seed-lock-label{min-height:26px;padding:2px;font-size:9.5px}
 .goal-pin>.btn{min-width:44px}.goal-pin .goal-pin-info{min-width:0}
 @media (orientation:landscape) and (min-width:500px) and (max-height:600px) and (max-width:1100px){
   body{height:100vh;height:100dvh}
@@ -683,7 +691,8 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
   .panel-close.landscape-only{width:44px;min-height:44px}.panel-shortcuts{padding-inline-end:49px}
   .panel-body{padding:7px;overscroll-behavior-y:contain;scroll-padding-block:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
   .panel-navigation{background:#e6d6b1}.panel-tabs,.panel-shortcuts,.panel-subtabs{background:#e6d6b1}
-  .seed-card .seed-info{min-height:88px}.seed-art{height:47px}.seed-tabs .btn{min-height:40px}.seed-pagination .btn{min-height:44px}
+  .seed-card .seed-info{min-height:44px}.seed-art{height:24px}.seed-tabs .btn{min-height:40px}.seed-pagination .btn{min-height:44px}
+  .seed-picker>.row{display:none}.seed-tabs{margin-top:2px;margin-bottom:5px}.seed-pagination{margin-top:5px}
   .goal-pin-art{display:none}.goal-pin>.btn{min-width:36px}
   dialog{max-height:calc(100vh - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 16px)}
   #world[data-wide="false"] .world-stage>canvas{width:min(100%,calc(100vh * 5 / 3));width:min(100%,calc(100dvh * 5 / 3));width:min(100%,calc(100cqh * 5 / 3))}
