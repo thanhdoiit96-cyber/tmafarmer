@@ -71,3 +71,5 @@ Nếu cần bớt thao tác, có thể thuê **Cô Lan** tưới hoặc thu bằ
 Gieo vụ phù hợp khoảng nghỉ, xem thức ăn, cất/giao phần hàng cần thiết và giữ giống cho lần sau. Cây/con vẫn chịu quy tắc thời gian hiện tại khi bạn không online; không có chế độ bảo hộ nghỉ dài được cam kết. Vườn thử chỉ ở trình duyệt, còn tiến trình online phải vào đúng tài khoản và làng.
 
 Nếu thao tác bị từ chối, đọc thông báo về khoảng cách, sức khỏe, tiến độ, kho, điều kiện mở khóa hoặc quota. Xem [các câu hỏi thường gặp](GAMEPLAY_REFERENCE.md#15-câu-hỏi-thường-gặp-cần-giữ-đúng) để biết nguyên nhân cụ thể.
+
+Tuổi kinh tế chỉ tăng khi thu sản phẩm thành công: từ 30 chu kỳ là Lớn tuổi, từ 70 là Già. Nghỉ chơi không làm tăng thêm tuổi sau chuyển đổi. Vật nuôi cũ giữ mức tuổi khi phòng chuyển luật, không tự trẻ lại. Không có thao tác gửi nghỉ dưỡng.

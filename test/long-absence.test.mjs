@@ -42,7 +42,7 @@ for(const hours of [8,24,72,168]){
     assert.equal(tasks.filter(task=>task.kind==='pond'&&task.type==='urgent').length,1);
     assert.ok(view.me.pens.every(pen=>pen.fedUntil<now));
     const chicken=animalCondition(view.me.pens[0],now),pig=animalCondition(view.me.pens[2],now);
-    assert.equal(chicken.label,hours>=168?'Già':hours>=72?'Lớn tuổi':'Sung sức');
+    assert.equal(chicken.label,'Sung sức');assert.equal(chicken.cycles,0);
     assert.equal(pig.yield,animals.pig.yield);
     const prior=previousVisit(mark,view),summary=returnSummary(prior,view,null);
     assert.equal(summary.minutes,hours*60);assert.deepEqual(visitMark(view).ready,{plot:2,animal:2,pond:1});

@@ -338,3 +338,11 @@ Bảng tác động ±% thay đoạn công thức dài, bỏ mô tả thời ti�
 ### 25/11/2026 — Bố trí chuồng phụ bốn chỗ
 
 Giữ sprite và shelter hiện có; hai vị trí sân trước và hai vị trí sau bên phải mái, đồng bộ own/neighbor, không tăng footprint. Kiểm tra bốn trâu trưởng thành và đường tiếp cận; 154 kiểm thử, API bổ sung, build và runtime Chromium đạt. Một ảnh đối chiếu trong [PARCEL_COOP_UPGRADE_V1.md](PARCEL_COOP_UPGRADE_V1.md).
+
+### 25/11/2026 — Phác thảo nghỉ dưỡng vật nuôi
+
+Prototype HTML/CSS độc lập dùng cừu và nền chuồng đã có, không tạo atlas mới hoặc thay gameplay. Kiểm tra tương tác, desktop/mobile ngang/dọc Chromium; giữ một ảnh và dọn profile. Chưa duyệt luật, chưa kiểm tra Safari thật. [Bản mẫu và đặc tả](LIVESTOCK_REST_DRAFT_V1.md).
+
+### 25/11/2026 — Bỏ nghỉ dưỡng, hiển thị tuổi theo chu kỳ
+
+Theo yêu cầu, bản nghỉ dưỡng chỉ giữ lịch sử, không triển khai. Chi tiết vật nuôi dùng chu kỳ kinh tế và lời giải thích ngắn, giữ artwork. Kiểm tra Chromium desktop/mobile ngang với thao tác tiếp cận-thu, không ảnh mới. [Quy tắc và kiểm chứng](LIVESTOCK_CYCLE_AGE_V1.md).

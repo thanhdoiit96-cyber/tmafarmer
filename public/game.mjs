@@ -137,11 +137,19 @@ const livestockAges=[
   {since:3*livestockDay,label:'Lớn tuổi',yield:.75,sale:.4},
   {since:7*livestockDay,label:'Già',yield:.5,sale:.25},
 ];
+export const livestockCycleAges=[
+  {since:0,label:'Sung sức',yield:1,sale:.5},
+  {since:30,label:'Lớn tuổi',yield:.75,sale:.4},
+  {since:70,label:'Già',yield:.5,sale:.25},
+];
 export function animalCondition(pen,now){
   const def=animals[pen.kind];
   const age=Math.max(0,now-(pen.acquiredAt??now));
-  const tier=def.oneTime?livestockAges[0]:livestockAges.findLast(entry=>age>=entry.since);
-  return {label:tier.label,days:Math.floor(age/livestockDay),
+  const completed=Number.isSafeInteger(pen.harvestCycles)&&pen.harvestCycles>=0?pen.harvestCycles:0;
+  const offset=Number.isSafeInteger(pen.ageCycleOffset)&&pen.ageCycleOffset>=0?pen.ageCycleOffset:0;
+  const cycles=completed+offset;
+  const tier=def.oneTime?livestockCycleAges[0]:livestockCycleAges.findLast(entry=>cycles>=entry.since);
+  return {label:tier.label,days:Math.floor(age/livestockDay),cycles,completed,legacyOffset:offset,
     yield:Math.max(1,Math.floor(def.yield*tier.yield)),sale:Math.floor(def.cost*tier.sale)};
 }
 export const recipes={
@@ -312,9 +320,10 @@ export function startSoilClock(room,time){
   return true;
 }
 export function startLivestockClock(room,time){
-  if(room.livestockSince!==undefined)return false;
-  room.livestockSince=time;
-  return true;
+  let changed=false;
+  if(room.livestockSince===undefined){room.livestockSince=time;changed=true;}
+  if(room.livestockCycleSince===undefined){room.livestockCycleSince=time;changed=true;}
+  return changed;
 }
 function compactAt(room,farm,index,time){
   return (farm.soilAt?.[index]??farm.soilSince??room.soilSince??time)+soilIdleTime;
@@ -334,7 +343,7 @@ export function newFarm(id, name, time, avatar) {
   };
 }
 export function newRoom(time) {
-  const room={created:time, soilSince:time, livestockSince:time, securityStartDay:0, longDays:true, weatherOffset:0, farms:{}, listings:{}, nextListing:1};
+  const room={created:time, soilSince:time, livestockSince:time, livestockCycleSince:time, securityStartDay:0, longDays:true, weatherOffset:0, farms:{}, listings:{}, nextListing:1};
   advanceVillageDrive(room,time);
   return room;
 }
@@ -789,7 +798,12 @@ function savePlot(farm,index,plot){
 }
 function penLevel(farm,pen){return pen.lot===undefined?farm.coop:Math.max(1,farm.coop);}
 function projectedPen(room,farm,pen,time){
-  return {...projectAnimal(room,{coop:penLevel(farm,pen)},pen,time),acquiredAt:pen.acquiredAt??room.livestockSince??time};
+  const acquiredAt=pen.acquiredAt??room.livestockSince??time;
+  const elapsed=Math.max(0,(room.livestockCycleSince??time)-acquiredAt);
+  const legacyTier=livestockAges.findLastIndex(tier=>elapsed>=tier.since);
+  const ageCycleOffset=pen.ageCycleOffset??(pen.harvestCycles===undefined&&!animals[pen.kind].oneTime?livestockCycleAges[legacyTier].since:0);
+  return {...projectAnimal(room,{coop:penLevel(farm,pen)},pen,time),acquiredAt,
+    harvestCycles:pen.harvestCycles??0,ageCycleOffset};
 }
 const penId=(pen,index)=>pen.id??index;
 function removePen(farm,slot){
@@ -867,6 +881,7 @@ function markDayGoal(farm,action,day){
 }
 
 export function snapshot(room, farm, time) {
+  startLivestockClock(room,time);
   const day=dayAt(room,time);
   const plan=schedule(room,time);
   const next=nextSlot(room,time);
@@ -1298,7 +1313,7 @@ function applyAction(room,id,input,now,catchRoll){
     check(farm.pens.filter(p=>p.lot===lot).length<limit,'Chuồng đã hết chỗ.');
     spend(farm,info.cost);
     const penId=Math.max(farm.nextPenId??0,farm.pens.length);
-    farm.pens.push({id:penId,kind:item,at:now,acquiredAt:now,age:0,progress:0,growGoal:info.grow,productGoal:info.time,fedUntil:0,...(lot===undefined?{}:{lot})});
+    farm.pens.push({id:penId,kind:item,at:now,acquiredAt:now,harvestCycles:0,ageCycleOffset:0,age:0,progress:0,growGoal:info.grow,productGoal:info.time,fedUntil:0,...(lot===undefined?{}:{lot})});
     farm.nextPenId=penId+1;
     return 'Đã đón '+info.name.toLowerCase()+' về chuồng.';
   }
@@ -1343,6 +1358,7 @@ function applyAction(room,id,input,now,catchRoll){
         return 'Đã xuất chuồng, thu '+info.yield+' '+goods[info.product].name.toLowerCase()+'.';
       }
       pen.progress=0;
+      pen.harvestCycles+=1;
       pen.growGoal=info.grow;pen.age=info.grow;pen.productGoal=info.time;
     }
     farm.pens[slot]=pen;

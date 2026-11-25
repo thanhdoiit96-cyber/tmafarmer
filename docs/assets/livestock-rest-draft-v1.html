@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phác thảo nghỉ dưỡng vật nuôi</title>
+<link rel="stylesheet" href="../../public/style.css">
+<style>
+body{background:#f4efe0;color:#354c36;font-family:system-ui,sans-serif;padding:12px;min-width:300px}
+.review{max-width:1050px;margin:auto;font-size:11px}.review>strong{display:block;margin-bottom:6px}.review-controls{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}.review-controls .btn{min-height:32px;font-size:11px;padding:5px 9px}
+.mock{max-width:1050px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:10px}.scene{position:relative;align-self:start;border:4px solid #937347;border-radius:10px;overflow:hidden;background:#758148}.scene img{display:block;width:100%;image-rendering:pixelated}.scene .sheep{position:absolute;left:27%;top:66%;transform:scale(1.3)}.scene-label{position:absolute;left:8px;top:8px;background:#f5e8c9;padding:5px 8px;border-radius:6px;font-size:11px}
+.sheet{padding:10px;background:#f4e9cd;border:1px solid #c6ae80;border-radius:9px;min-width:0}.nav{font-size:11px;padding-bottom:9px;border-bottom:1px solid #d6c29c}.nav b{color:#315e42}.sheet h2{font-size:20px;margin:10px 0 7px}.sheep{display:inline-block;width:56px;height:48px;background:url('../../public/pixel/livestock-v2.png') -56px 0 no-repeat;image-rendering:pixelated;flex:none}
+.rest-card{padding:9px;border:1px solid #b99a67;border-radius:7px;background:#f0e0bc}.rest-card header{display:flex;align-items:center;gap:8px}.rest-card h3{font-size:13px;margin:0 0 4px}.rest-card p{font-size:11px;line-height:1.5;margin:6px 0}.rest-card .actions{display:flex;gap:5px;flex-wrap:wrap}.rest-card .btn{font-size:11px;min-height:32px;padding:5px 8px}.rest-state{font-size:10px;background:#dae1c4;padding:3px 6px;border-radius:4px}.rest-facts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:9px 0;font-size:10px}.rest-facts span{display:flex;flex-direction:column;gap:3px}.rest-facts small{color:#756141}.rest-note{font-size:11px;line-height:1.5;color:#6b583b}.rest-panel{margin-top:10px;padding-top:8px;border-top:1px solid #ccb68c}.rest-panel summary{font-size:11px;cursor:pointer;padding:6px 0}.rest-panel ul{font-size:11px;padding-left:18px;line-height:1.6}
+dialog{width:min(430px,calc(100vw - 20px));padding:15px;background:#fff7e4;color:#354c36;border:2px solid #b19362;border-radius:12px}dialog::backdrop{background:#26332288}dialog h2{font-size:20px;margin:0 0 9px}dialog p{font-size:12px;line-height:1.55}dialog .actions{display:flex;gap:6px;flex-wrap:wrap}dialog .btn{min-height:38px;font-size:12px}#notice{min-height:18px;font-size:11px;color:#476344;margin:8px 0 0}
+@media(max-width:760px){.mock{grid-template-columns:minmax(0,1fr) minmax(270px,42%)}.scene{position:sticky;top:8px}.sheet{padding:8px}.scene .sheep{transform:scale(.8)}body{padding:7px}}
+@media(max-width:580px) and (orientation:portrait){.mock{grid-template-columns:1fr}.scene{position:relative;max-height:180px}.scene img{margin-top:-35px}.scene .sheep{top:70%}}
+</style>
+</head>
+<body>
+<div class="review"><strong>ĐÃ BỎ QUA · Bản mẫu lịch sử, không triển khai vào game</strong><div class="review-controls" aria-label="Tình huống duyệt"><button class="btn subtle" data-example="young">Đang nuôi</button><button class="btn subtle" data-example="old">Con đã già</button><button class="btn subtle" data-example="ready">Đang có sản phẩm</button><button class="btn subtle" data-example="resting">Đã nghỉ 7 ngày</button><button class="btn subtle" id="advance">Mô phỏng thêm 7 ngày</button></div></div>
+<main class="mock"><section class="scene" aria-label="Ảnh nền chuồng hiện có dùng đối chiếu phong cách"><img src="../../public/pixel/scene-background-coop-v8.png" alt="Bối cảnh chuồng trại hiện có"><span class="scene-label">Chuồng chính · 1/4 chỗ</span><span class="sheep" role="img" aria-label="Cừu"></span></section><section class="sheet"><nav class="nav">Nông trại › Chuồng › <b>Chi tiết vật nuôi</b></nav><h2>Cừu 1</h2><div id="card"></div><details class="rest-panel"><summary>Nghỉ dưỡng hoạt động thế nào?</summary><ul><li>Giữ chỗ ở chuồng; không nhận thêm con vượt sức chứa.</li><li>Tạm dừng tuổi nuôi, tiến độ và thức ăn còn lại.</li><li>Không tạo thêm len, không hồi trẻ.</li><li>Đón về miễn phí để tiếp tục chăm; không tự đón về.</li></ul></details><p id="notice" role="status" aria-live="polite"></p></section></main>
+<dialog id="confirm" aria-labelledby="confirm-title"><h2 id="confirm-title">Cho cừu nghỉ dưỡng?</h2><p id="confirm-copy"></p><div class="actions"><button class="btn subtle" id="cancel">Để sau</button><button class="btn primary" id="accept">Xác nhận nghỉ</button></div></dialog>
+<script>
+const card=document.querySelector('#card'),dialog=document.querySelector('#confirm'),notice=document.querySelector('#notice');
+let model,mode;
+function example(key){
+ model={days:key==='old'?8:2,resting:key==='resting',restDays:key==='resting'?7:0,ready:key==='ready',progress:key==='ready'?100:45,feedMinutes:18};
+ notice.textContent='';render();
+ document.querySelectorAll('[data-example]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.example===key)));
+}
+function render(){
+ const old=model.days>=7,yieldCount=old?1:2;
+ card.innerHTML='<article class="rest-card"><header><span class="sheep" aria-hidden="true"></span><div><h3>Cừu 1 · '+(old?'Già':'Sung sức')+'</h3><span class="rest-state">'+(model.resting?'Đang nghỉ dưỡng':model.ready?'Có thể thu len':model.feedMinutes?'Đang tạo len':'Cần cho ăn')+'</span></div></header><div class="rest-facts"><span><small>Tuổi nuôi thực</small><b>'+model.days+' ngày'+(model.resting?' · đang dừng':'')+'</b></span><span><small>Sản lượng mỗi lứa</small><b>'+yieldCount+' len</b></span><span><small>Tiến độ giữ lại</small><b>'+model.progress+'%</b></span><span><small>Thức ăn còn lại</small><b>'+model.feedMinutes+' phút'+(model.resting?' · giữ nguyên':'')+'</b></span></div><p>'+(model.resting?'Đã nghỉ '+model.restDays+' ngày thực. Không tăng tuổi hoặc tạo thêm len.':'Có thể cho nghỉ khi cần tạm ngưng chăm sóc. Vẫn giữ một chỗ trong chuồng.')+'</p><div class="actions">'+(model.resting?'<button class="btn primary" id="resume">Đón về nuôi</button>':(model.ready?'<button class="btn primary" id="collect">Thu '+yieldCount+' len</button>':'')+'<button class="btn subtle" id="rest">Cho nghỉ dưỡng</button>')+'</div></article>';
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.example){example(b.dataset.example);return;}
+ if(b.id==='advance'){
+   if(model.resting)model.restDays+=7;else{model.days+=7;model.progress=Math.min(100,model.progress+model.feedMinutes/50*100);model.ready=model.progress>=100;model.feedMinutes=0;}
+   notice.textContent='Đã mô phỏng 7 ngày; đây không phải thời gian chờ bắt buộc.';render();
+ }else if(b.id==='rest'||b.id==='resume'){
+   mode=b.id;document.querySelector('#confirm-title').textContent=mode==='rest'?'Cho cừu nghỉ dưỡng?':'Đón cừu về nuôi?';
+   document.querySelector('#confirm-copy').textContent=mode==='rest'?'Miễn phí. Tuổi, tiến độ và '+model.feedMinutes+' phút thức ăn còn lại được giữ; không tạo thêm sản phẩm. Cừu vẫn chiếm 1 chỗ trong chuồng.'+(model.ready?' Len đã có được giữ lại, đón về mới thu được.':''):'Miễn phí. Tiếp tục từ tuổi và tiến độ đang giữ. Nghỉ dưỡng không hồi trẻ hoặc bù thêm sản phẩm.';
+   document.querySelector('#accept').textContent=mode==='rest'?'Xác nhận nghỉ':'Đón về nuôi';dialog.showModal();
+ }else if(b.id==='cancel')dialog.close();
+ else if(b.id==='accept'){
+   model.resting=mode==='rest';if(model.resting)model.restDays=0;
+   dialog.close();notice.textContent=model.resting?'Cừu đã nghỉ; vẫn giữ 1/4 chỗ.':'Đã đón về. Không tăng thêm sản lượng.';render();
+ }else if(b.id==='collect'){
+   model.ready=false;model.progress=0;notice.textContent='Mô phỏng thu len; không cộng vào kho thật.';render();
+ }
+});
+example('young');
+</script>
+</body>
+</html>

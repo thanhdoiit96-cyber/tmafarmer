@@ -1,5 +1,7 @@
 # P1.3 — Kiểm tra nghỉ dài
 
+**Cập nhật sau kiểm tra:** người dùng bỏ nghỉ dưỡng, đã chuyển tuổi kinh tế sang [chu kỳ thu thành công](LIVESTOCK_CYCLE_AGE_V1.md). Các mức tuổi theo ngày và đề xuất nghỉ dưỡng bên dưới là kết quả lịch sử trước thay đổi; không dùng làm luật hiện hành.
+
 Ngày 25/11/2026. Kiểm tra engine, save/snapshot, Việc cần làm và tóm tắt quay lại; chưa deploy. Không thêm UI, atlas, ảnh chụp hoặc dữ liệu lưu mới.
 
 ## Ma trận đã kiểm tra

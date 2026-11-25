@@ -175,4 +175,6 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | P1.2 — cây trồng | Hoàn thiện ETA theo tốc độ hiện tại và giải thích sản lượng; chưa deploy | [Phạm vi và kiểm chứng](CROP_OUTLOOK_V1.md) |
 | 25/11/2026 | UX-HUSBANDRY-01 | Hoàn thiện UI Đất/Chuồng, Ao và mẫu hàng rào; chưa deploy | [Bố cục, ảnh và kiểm chứng](HUSBANDRY_UI_V1.md) |
 | 25/11/2026 | P1.3 — kiểm tra | Hoàn thành ma trận nghỉ dài và sửa tính bù thời tiết; chính sách bảo hộ chưa đổi | [Kết quả, giới hạn và đề xuất](LONG_ABSENCE_AUDIT_V1.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | P1.3 kiểm tra đã hoàn thành; tiếp theo phác thảo nghỉ dưỡng/P1.4 để duyệt trước khi đổi luật; ETA vật nuôi/thủy sản còn backlog; chưa mở thanh toán |
+| 25/11/2026 | P1.3 — phác thảo nghỉ dưỡng | Đã bỏ qua theo yêu cầu, giữ bản mẫu lịch sử | [Bản mẫu, quy tắc và kiểm chứng](LIVESTOCK_REST_DRAFT_V1.md) |
+| 25/11/2026 | P1.3 — tuổi theo chu kỳ | Triển khai thay nghỉ dưỡng theo yêu cầu; chưa deploy | [Quy tắc, migration và kiểm chứng](LIVESTOCK_CYCLE_AGE_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tuổi vật nuôi đã chuyển sang chu kỳ; tiếp theo phác thảo P1.4 làng thân thiện; ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |

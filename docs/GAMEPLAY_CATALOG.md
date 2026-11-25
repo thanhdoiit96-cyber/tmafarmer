@@ -5,6 +5,16 @@ Xuất lại: `npm run gameplay:docs`. Kiểm tra đồng bộ: `npm run check:g
 
 Một ngày game: 8 giờ thực. Một ô thời tiết: 2 giờ thực.
 
+## Tuổi kinh tế vật nuôi
+
+| Mốc chu kỳ thành công | Trạng thái | Hệ số sản lượng | Tỷ lệ giá bán lại |
+| --- | --- | --- | --- |
+| 0 | Sung sức | 1 | 0.5 |
+| 30 | Lớn tuổi | 0.75 | 0.4 |
+| 70 | Già | 0.5 | 0.25 |
+
+Không tăng tuổi kinh tế khi chờ/offline. Lứa thu thành công dùng năng suất trước khi tăng bộ đếm; lợn/thỏ xuất một lần không giảm theo chu kỳ. Save cũ giữ mức tuổi tại mốc chuyển đổi bằng chu kỳ quy đổi, không phải lịch sử số lần thu.
+
 ## Chuồng phụ
 
 | Cấp | Sức chứa | Giá nâng từ cấp trước | Chuồng chính cần |

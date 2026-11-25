@@ -34,9 +34,10 @@ test('relocating livestock keeps a stable ID, feed and production and respects h
   assert.equal(farm.pens[0].acquiredAt,start);
 });
 
-test('legacy animals start aging at rollout and old animals actually produce and sell for less',()=>{
+test('legacy animals without an acquisition date retain their rollout anchor and no longer age while offline',()=>{
   const {room,farm}=setup();
   delete room.livestockSince;
+  delete room.livestockCycleSince;
   const chicken=animals.chicken;
   farm.pens.push({kind:'chicken',age:chicken.grow,progress:chicken.time,at:start,fedUntil:0});
   const rollout=start+10*realDay;
@@ -45,15 +46,16 @@ test('legacy animals start aging at rollout and old animals actually produce and
   const view=snapshot(room,farm,rollout).me.pens[0];
   assert.equal(view.acquiredAt,rollout);
   assert.equal(animalCondition(view,rollout+3*realDay-1).yield,3);
-  assert.equal(animalCondition(view,rollout+3*realDay).yield,2);
+  assert.equal(animalCondition(view,rollout+3*realDay).yield,3);
   const oldTime=rollout+7*realDay;
-  assert.equal(animalCondition(view,oldTime).yield,1);
+  assert.equal(animalCondition(view,oldTime).yield,3);
   apply(room,'a',{action:'collect',target:'0'},oldTime);
-  assert.equal(farm.inventory.egg,1);
+  assert.equal(farm.inventory.egg,3);
+  assert.equal(farm.pens[0].harvestCycles,1);
   farm.pens.push({kind:'pig',age:3600,progress:2400,at:start,fedUntil:0});
   const coins=farm.coins;
   apply(room,'a',{action:'sellAnimal',target:'0'},oldTime);
-  assert.equal(farm.coins,coins+Math.floor(chicken.cost*.25));
+  assert.equal(farm.coins,coins+Math.floor(chicken.cost*.5));
   assert.equal(farm.pens[0].id,1);
   assert.throws(()=>apply(room,'a',{action:'sellAnimal',target:'0'},oldTime),/không tồn tại/);
   apply(room,'a',{action:'collect',target:'1'},oldTime);

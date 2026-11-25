@@ -64,7 +64,7 @@ Kho được tính theo tổng lượng các goods có `sell`; không theo số 
 
 ## 5. Lịch và thời tiết
 
-Một ngày game = **8 giờ thực**, một ô thời tiết = **2 giờ thực**. Reset theo lịch của làng, không đồng nghĩa 0 giờ Việt Nam. Đơn góp hàng = **48 giờ thực**. Lão hóa vật nuôi tính bằng **ngày thực 24 giờ**. Hướng dẫn phải luôn ghi đơn vị này.
+Một ngày game = **8 giờ thực**, một ô thời tiết = **2 giờ thực**. Reset theo lịch của làng, không đồng nghĩa 0 giờ Việt Nam. Đơn góp hàng = **48 giờ thực**. Tuổi kinh tế vật nuôi hiện tính theo **chu kỳ thu thành công**, không theo ngày thực.
 
 Bảy thời tiết: nắng nhẹ, mưa rào, nhiều mây, nắng nóng, gió mạnh, sương sớm, dông. Dự báo lấy theo lịch của room. Mưa/dông có cờ đất ướt; trời nóng làm thao tác tốn thêm một nước. Dông không cho bắt đầu thả câu.
 
@@ -108,7 +108,7 @@ Sức chứa chuồng chính = `2 × cấp chuồng`, tối đa 16 ở cấp 8. 
 - **Lợn và thỏ xuất chuồng một lần**, nhận thịt rồi rời chuồng. Lợn hiện không tìm nấm truffle; truffle là cây trồng riêng.
 - Lần cho ăn tiêu số thức ăn của loài; thức ăn kéo dài `ceil((goal lớn + goal sản phẩm) × 1,25)` giây. Tốc độ chịu thời tiết; chuồng từ cấp 2 có che chắn theo engine.
 - Thu một kỳ được 5 XP; con lặp kỳ đặt tiến độ sản phẩm về 0. Có thể bán con để lấy lại một phần giá, không phải hoàn toàn bộ giá đón.
-- Con lặp kỳ: dưới 3 ngày thực dùng 100% yield và bán lại 50% giá gốc; từ 3 ngày dùng 75% yield/bán 40%; từ 7 ngày dùng 50% yield/bán 25%. Yield làm tròn xuống, tối thiểu 1. Con one-time không dùng giảm này. Đây là cơ chế hiện tại, chưa có nghỉ dưỡng hay vật phẩm chống già.
+- Con lặp kỳ: 0–29 chu kỳ tuổi kinh tế dùng 100% yield/bán 50% giá đón; 30–69 dùng 75%/40%; từ 70 dùng 50%/25%. Chỉ thu thành công tăng chu kỳ, lứa đó dùng mức trước khi tăng. Yield làm tròn xuống, tối thiểu 1; loài xuất một lần không giảm. Save cũ giữ mức hiện tại bằng chu kỳ quy đổi tại lần chuyển đầu tiên của phòng. Xem [chuyển đổi và kiểm chứng](LIVESTOCK_CYCLE_AGE_V1.md).
 
 ## 8. Ao nuôi và câu cá
 

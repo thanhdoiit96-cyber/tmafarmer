@@ -5,7 +5,7 @@ import {DatabaseSync} from 'node:sqlite';
 import worker from '../server/worker.mjs';
 import {homeSpawn} from '../public/home-rules.mjs';
 import {drinkingWell,plotPosition} from '../public/world-layout.mjs';
-import {dayAt,orderList,unixNow} from '../public/game.mjs';
+import {animals,dayAt,orderList,unixNow} from '../public/game.mjs';
 import {localSpeechNamespace} from '../server/scene-speech.mjs';
 
 test('two guest sessions share durable D1-style state with atomic sales, presence and area chat',async()=>{
@@ -266,6 +266,28 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal(savedCoop.state.me.land[6].coopLevel,2);
   assert.equal(savedCoop.state.me.land[6].fence,'white');
   assert.equal((await send(a,'upgradeParcelCoop',{index:6})).status,400);
+  const cycleRoom=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  const cycleFarm=cycleRoom.farms[a.state.me.id],cycleNow=unixNow();
+  cycleFarm.pens=[{id:0,kind:'cow',age:animals.cow.grow,progress:animals.cow.time,
+    at:cycleNow,acquiredAt:cycleNow,fedUntil:0,harvestCycles:29,ageCycleOffset:0}];
+  cycleFarm.wellness={water:100,food:100,stamina:100,at:cycleNow,until:{},restUntil:0};
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(cycleRoom),a.code);
+  assert.equal((await enter(a,'coop')).status,200);
+  const collectCycle={action:'collect',target:'0',requestId:crypto.randomUUID()};
+  const cycleResults=await Promise.all([api('action',collectCycle,a),api('action',collectCycle,a)]);
+  assert.ok(cycleResults.every(result=>result.status===200&&result.state.me.pens[0].harvestCycles===30));
+  assert.ok(cycleResults.every(result=>result.state.me.inventory.milk===3));
+  assert.equal((await api('state',null,a)).state.me.pens[0].harvestCycles,30);
+  const oldCycleRoom=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
+  delete oldCycleRoom.livestockCycleSince;
+  const oldPen=oldCycleRoom.farms[a.state.me.id].pens[0];
+  delete oldPen.harvestCycles;delete oldPen.ageCycleOffset;oldPen.acquiredAt=unixNow()-10*86400;
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(oldCycleRoom),a.code);
+  assert.equal((await api('state',null,a)).state.me.pens[0].ageCycleOffset,70);
+  const migratedClock=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state).livestockCycleSince;
+  assert.ok(Number.isFinite(migratedClock));
+  assert.equal((await api('state',null,a)).state.me.pens[0].ageCycleOffset,70);
+  assert.equal(JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state).livestockCycleSince,migratedClock);
   db.close();
 });
 
