@@ -5,7 +5,7 @@ Ngày lập: 21/11/2026. Cơ sở: [phân tích sản phẩm](GAME_PRODUCT_STRAT
 ## 1. Trạng thái và nguyên tắc
 
 - `DOC-01` **Đã hoàn thành:** rà source, khảo sát đối chiếu, định hướng, gameplay, catalog và hướng dẫn. Chỉ tài liệu/công cụ xuất dữ liệu được bổ sung trong đợt này.
-- Đã hoàn thiện lát cắt P0.1 và nhãn liên quan P0.4: [Mục tiêu tiếp theo V1](NEXT_GOAL_V1.md). Phần còn lại vẫn thuộc backlog; chưa deploy production.
+- Đã hoàn thiện lát cắt P0.1 và nhãn liên quan P0.4: [Mục tiêu tiếp theo V1](NEXT_GOAL_V1.md), [chỉ dẫn mở khóa P0.3](UNLOCK_GUIDANCE_V1.md) và [tóm tắt quay lại P1.1](RETURN_SUMMARY_V1.md). Phần còn lại vẫn thuộc backlog; chưa deploy production.
 - Giữ ưu tiên hình ảnh, bố cục, dễ hiểu và cảm giác chơi. Chỉ đo sản phẩm vừa đủ và kiểm tra vận hành cần thiết; không quay lại làm chiến dịch tối ưu sức tải toàn diện.
 - Mỗi sprint có một kết quả người chơi nhìn thấy được; hoàn thành các phần còn thiếu trước mở thêm nhánh.
 - Không thay hệ lịch 8 giờ, ID ô đất, avatar hoặc cấu trúc tiến trình cũ khi chưa có kế hoạch migration. Không xóa nông trại/đơn/vật nuôi của người chơi để làm sạch dữ liệu.
@@ -168,4 +168,6 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | P0.1 + P0.4 | Đã chọn ưu tiên; chưa triển khai | Quyết định và phạm vi ở mục 7; bước đầu là dựng phác thảo |
 | 25/11/2026 | P0-DRAFT-01 | Phác thảo đã duyệt | [Prototype, desktop/mobile và các trạng thái](NEXT_GOAL_DRAFT_V1.md) |
 | 25/11/2026 | P0-GOAL-V1 | Hoàn thiện runtime, chưa deploy | [Phạm vi, ảnh và kiểm chứng](NEXT_GOAL_V1.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | P0.3 là bước tiếp theo; chưa mở thanh toán |
+| 25/11/2026 | P0.3 | Hoàn thiện chỉ dẫn mở khóa V1 trong source, chưa deploy | [Phạm vi, ảnh và kiểm chứng](UNLOCK_GUIDANCE_V1.md) |
+| 25/11/2026 | P1.1 | Hoàn thiện tóm tắt quay lại V1 trong source, chưa deploy | [Phạm vi, ảnh và kiểm chứng](RETURN_SUMMARY_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Bước tiếp theo P1.2 ETA/sản lượng; chưa mở thanh toán |

@@ -12,6 +12,10 @@ Chọn nam hoặc nữ, rồi chọn thanh niên, trung niên hoặc cao tuổi.
 
 ## 2. Làm vụ đầu
 
+Sau ít nhất 10 phút thực vắng mặt, bảng công cụ hiện **Vườn khi bạn quay lại**: việc sẵn sàng, chỗ kho và mục tiêu đang ghim. Chạm từng dòng để tiếp tục hoặc chọn Đóng; đổi cảnh không bật thêm popup. Mốc lần ghé lưu trên thiết bị. Xem [chi tiết](RETURN_SUMMARY_V1.md).
+
+Với giống hoặc con nuôi bị khóa, chọn **Xem mở khóa** để biết cùng lúc XP và cấp công trình còn thiếu. Trong bảng công trình, **Xem điều kiện** liệt kê thêm xu, từng vật liệu và cho phép ghim cấp kế tiếp. Xem [chỉ dẫn mở khóa](UNLOCK_GUIDANCE_V1.md).
+
 1. Click/chạm một ô đất trống ở **Vườn nhà**. Có thể đi bằng WASD/phím mũi tên và nhấn E khi đến gần; điện thoại có nút hướng.
 2. Gieo một giống lúa mì đang có sẵn. Nếu đất trống lâu đã chai, chọn **Cuốc đất** trước.
 3. **Tưới nước** khi đất khô; trời mưa đã làm ẩm thì không cần tưới thêm. Thời gian cơ sở lúa mì là 8 phút, thời điểm chín thực tế thay đổi theo chăm sóc và thời tiết.

@@ -302,4 +302,8 @@ Source/prompt: `assets/till-task-icon-v1.json`, `assets/till-task-icon-v1-source
 
 ## 25/11/2026 — Mục tiêu tiếp theo V1
 
+P1.1 bổ sung thẻ tóm tắt quay lại gồm ba dòng có thể chạm, dùng palette và font hiện tại trong bảng công cụ. Không thêm ảnh/sprite hoặc overlay Canvas. Ảnh desktop/mobile và phạm vi ở [RETURN_SUMMARY_V1.md](RETURN_SUMMARY_V1.md).
+
+Tiếp nối P0.3: hộp chỉ dẫn mở khóa dùng hộp chi tiết, palette và ảnh minh họa hiện có. Không đổi atlas hoặc Canvas. Ảnh desktop/mobile và kiểm chứng trong [UNLOCK_GUIDANCE_V1.md](UNLOCK_GUIDANCE_V1.md).
+
 Triển khai thẻ HTML/CSS theo phác thảo đã duyệt, dùng bảng tác vụ và palette hiện có. Ảnh runtime desktop/dọc/ngang trong [biên bản V1](NEXT_GOAL_V1.md). 134 bài kiểm thử, build và kiểm tra asset đạt.

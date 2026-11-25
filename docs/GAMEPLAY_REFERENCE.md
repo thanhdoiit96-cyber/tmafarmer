@@ -8,6 +8,10 @@ Các bảng số được sinh từ engine ở [GAMEPLAY_CATALOG.md](GAMEPLAY_CA
 
 ## 1. Mục tiêu và vòng chơi
 
+P1.1 bổ sung [tóm tắt khi quay lại](RETURN_SUMMARY_V1.md) sau ít nhất 10 phút thực. Ba ý lấy từ trạng thái vườn hiện tại: việc sẵn sàng, chỗ kho, mục tiêu ghim. Số tăng/giảm là chênh lệch tổng mục sẵn sàng so với mốc trước trên thiết bị; không phải lịch sử thu hoặc sản lượng tích lũy. Không đổi cơ chế phát triển khi offline.
+
+Chỉ dẫn mở khóa V1 cho cây, vật nuôi, thủy sản và nâng công trình hiển thị đồng thời các điều kiện theo engine, có nút tới tiến độ/công trình/vật liệu và ghim nâng cấp. Chỉ dẫn không thay thế điều kiện mua, trồng, thả hoặc chế biến. Xem [phạm vi và kiểm chứng](UNLOCK_GUIDANCE_V1.md).
+
 Người chơi quản lý một vườn riêng: trồng/chăm → thu → bán hoặc chế biến/giao đơn → nhận xu và XP → nâng công trình, mở giống/con mới → trang trí và góp phần phát triển làng.
 
 Không có điều kiện thắng cuối cùng bắt buộc. Hiện có các đích hữu hạn: cấp nông trại 13, trần công trình, bốn dự án làng, đất/trang trí; sau đó người chơi tiếp tục sản xuất, giao dịch và góp đơn. Chưa có hệ prestige/reset tự nguyện, nghề chuyên biệt, album làng nhiều chương hoặc thanh toán tiền thật trong luồng hiện tại.
