@@ -282,3 +282,13 @@ Removed the legacy +17 horizontal offset: task symbols now sit on the plot cente
 ### Crop marker contrast V4 — approved option C
 
 User approved B or C after reviewing `assets/crop-care-marker-options-v4.png`; implemented C to preserve more of the scenery. The four crop-care map icons share a 9-world-unit circular backing (`#3c38254d`, approximately 30% opacity), a thin 0.75-unit warm ivory rim (`#f4dfabcc`), and the existing 14-unit authored icon. The icon and ring share a snapped center, retaining V3 plot alignment and canopy clearance. No opaque white plate; task priority, farm rules and mini map settings remain unchanged. Actual Canvas capture: `assets/crop-care-option-c-runtime-v4.png`. Clean browser reload reported no exceptions; syntax check, all 128 tests and production build pass. The HTML comparison remains documentation only.
+
+### Dry soil and animal task art V1 — 25/11/2026
+
+Replaced the pale procedural overlay on compacted empty beds (the existing needs-tilling state) with an authored 64 × 42 RGBA tile: warm ochre soil, three furrows, granular clods and branching cracks, registered to the same 40 × 26 world footprint. Ordinary planted/dry/wet soil and the eight-hour compaction rule remain unchanged. Edge grass stays on its existing layer.
+
+Added a two-cell 32 × 32 animal-task atlas: bamboo basket with egg/milk/wool for ready products, terracotta grain bowl for hunger. All animal species use these icons on the map and task list; feed/collect buttons share the same art. Map badges retain approved option C, with 14-unit art and a thin warm rim over a translucent dark circle. Movement, feeding, yields, task priority and the one-time livestock rules remain unchanged.
+
+Masters and exact prompts: `assets/soil-animal-ui-v1.json`, `assets/soil-dry-v1-source.png`, `assets/animal-task-icons-v1-source.png`. Export: `py scripts/normalize-soil-animal-ui-v1.py`. Runtime: `public/pixel/soil-dry-v1.png`, `public/pixel/animal-task-icons-v1.png`. Integer zoom: `assets/soil-animal-ui-v1-preview.png`. Actual renderer comparison: `assets/soil-animal-ui-v1-canvas.png`; game captures: `assets/soil-dry-v1-runtime.png`, `assets/animal-task-icons-v1-runtime.png`.
+
+Verified real Canvas field/coop views at 640 × 384; both PNGs have hard alpha, padding and correct cells; ready/hungry tasks resolve from a real farm snapshot. All 128 tests, syntax checks, asset audit and production build pass; both new assets return HTTP 200 from the packaged worker.

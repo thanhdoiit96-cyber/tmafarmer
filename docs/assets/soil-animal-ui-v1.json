@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-25",
+  "tool": "built-in imagegen",
+  "soil": {
+    "source": "docs/assets/soil-dry-v1-source.png",
+    "prompt": "Production game sprite: a single dried compacted farm soil bed, matching cozy Vietnamese pixel farming game. Transparent RGBA outside the bed, no white ground, no scenery no grass no crops no text. Slight top-down view, HORIZONTAL rounded rectangular tilled plot with aspect ratio 40:26. Warm medium ochre brown earth with retained three horizontal plough furrows, subtle granular clods, now dry dusty highlights and 4-6 irregular thin branching dark umber cracks across the surface. Not pale grey concrete, not desert rocks or paving. Soft organic edge with warm dark lower rim, upper-left light, muted brown shadows, hand-pixelated detail and stepped edges. Fill most canvas with only this single isolated tile, generous transparent padding. Must match existing farm soil footprint. Cracks readable at runtime 64x40px, textured but not noisy. No cast shadow outside sprite.",
+    "runtime": "public/pixel/soil-dry-v1.png",
+    "size": [
+      64,
+      42
+    ],
+    "world": [
+      40,
+      26
+    ]
+  },
+  "icons": {
+    "source": "docs/assets/animal-task-icons-v1-source.png",
+    "prompt": "A TWO icon sprite atlas, one horizontal row exactly 2 equally sized square cells, transparent alpha background. Cozy Vietnamese farming pixel art matching golden bamboo harvest basket icon, dark warm brown outlines kept thin, upper-left golden light, rich simple clusters, no panel, no badge, no white outline, no text, no shadow. LEFT ICON: rounded small golden bamboo basket containing a large cream chicken egg, a small pale ceramic milk bottle with blue cloth cap, and folded creamy sheep wool tuft, represents ready animal products, all objects bold identifiable at 24px, no vegetables. RIGHT ICON: a shallow terracotta animal feed bowl heaped with golden grain, exactly one corn kernel cluster and a tiny fresh green leaf; unmistakably animal hunger/feed indicator, bowl wide silhouette, no cutlery no human dinner plate, no exclamation mark. Isolated symbols centered per cell with 15 percent transparent margins, equal visual scale, thin dark umber edging, warm amber palette with teal shadow accent, restrained clean hand-pixelated sprite art. Canvas landscape 2:1. No background of any kind.",
+    "runtime": "public/pixel/animal-task-icons-v1.png",
+    "size": [
+      64,
+      32
+    ],
+    "order": [
+      "animalHarvest",
+      "feed"
+    ]
+  }
+}

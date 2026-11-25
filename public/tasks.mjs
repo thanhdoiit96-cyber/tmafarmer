@@ -9,6 +9,7 @@ export const taskStyles={
 };
 // Keep task priority independent from its visual meaning.
 export function taskIcon(task){
+  if(task.kind==='animal')return task.type==='ready'?'animalHarvest':task.type==='urgent'?'feed':null;
   if(task.kind!=='plot')return null;
   return {'Thu hoạch':'harvest','Nhổ cỏ':'weeds','Trị sâu':'pests','Tưới nước':'water'}[task.title]??null;
 }

@@ -32,6 +32,8 @@ const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');
 const gardenFenceArt=load('/pixel/garden-fences-v1.png');
 const careIconArt=load('/pixel/crop-care-icons-v1.png?v=3');
+const animalTaskArt=load('/pixel/animal-task-icons-v1.png');
+const drySoilArt=load('/pixel/soil-dry-v1.png');
 const plotGrassArt=load('/pixel/plot-edge-grass-v2.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
@@ -71,7 +73,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([drySoilArt.decode(),animalTaskArt.decode(),careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -844,9 +846,10 @@ function plot(c,a,t,state,paintCrops=true){
     c.save();
     c.beginPath();c.roundRect(x-20,y-13,40,26,4);c.clip();
     c.imageSmoothingEnabled=false;
-    c.drawImage(homesteadSoilArt,416,139,66,48,x-20,y-13,40,26);
+    if(compact&&dim(drySoilArt))c.drawImage(drySoilArt,0,0,64,42,x-20,y-13,40,26);
+    else c.drawImage(homesteadSoilArt,416,139,66,48,x-20,y-13,40,26);
     if(wet){c.fillStyle='#30281d55';c.fillRect(x-20,y-13,40,26);}
-    if(compact){
+    if(compact&&!dim(drySoilArt)){
       c.fillStyle='#c9b58a66';c.fillRect(x-20,y-13,40,26);
       line(c,'#6e543b',1,[[x-15,y-5],[x-6,y],[x+2,y-4],[x+12,y+3]]);
     }
@@ -1524,8 +1527,10 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
 }
 
 export function drawTask(c,x,y,style){
-  const frame={harvest:0,pests:1,weeds:2,water:3}[style.icon];
-  if(frame!==undefined&&dim(careIconArt)){
+  const animalFrame={animalHarvest:0,feed:1}[style.icon];
+  const art=animalFrame!==undefined?animalTaskArt:careIconArt;
+  const frame=animalFrame??{harvest:0,pests:1,weeds:2,water:3}[style.icon];
+  if(frame!==undefined&&dim(art)){
     c.save();c.imageSmoothingEnabled=false;
     // Approved option C: a restrained, translucent circular badge. The thin
     // warm rim separates it from foliage without an opaque white plate.
@@ -1533,7 +1538,7 @@ export function drawTask(c,x,y,style){
     c.beginPath();c.arc(cx,cy,9,0,Math.PI*2);
     c.fillStyle='#3c38254d';c.fill();
     c.strokeStyle='#f4dfabcc';c.lineWidth=.75;c.stroke();
-    c.drawImage(careIconArt,frame*32,0,32,32,cx-7,cy-7,14,14);
+    c.drawImage(art,frame*32,0,32,32,cx-7,cy-7,14,14);
     c.restore();return;
   }
   // No backing plate, including the loading/soil/animal fallback marks.

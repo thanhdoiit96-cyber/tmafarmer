@@ -2,6 +2,13 @@
 
 Game nông trại 2D trên trình duyệt, giao diện tiếng Việt. Chơi ngay ở vườn thử, hoặc tạo làng và gửi mã cho bạn bè. Mỗi làng có tối đa 12 vườn. Vườn thử có sẵn hai hàng xóm mẫu. Làng online lưu riêng.
 
+## Tài liệu gameplay và phát triển
+
+- [Gameplay hiện tại](docs/GAMEPLAY_REFERENCE.md) và [hướng dẫn người mới](docs/PLAYER_QUICKSTART.md).
+- [Catalog số liệu từ source](docs/GAMEPLAY_CATALOG.md): cây, vật nuôi, ao, công thức, nâng cấp, thời tiết và tiêu hao. Cập nhật bằng `npm run gameplay:docs`, kiểm tra bằng `npm run check:gameplay-docs`.
+- [Phân tích sản phẩm, thị trường, giữ chân và doanh thu](docs/GAME_PRODUCT_STRATEGY.md).
+- [Lộ trình thực hiện và tiêu chí nghiệm thu](docs/GAME_DEVELOPMENT_ROADMAP.md). Các mục P0–P7 là đề xuất, chưa phải tính năng đã triển khai.
+
 ## Điều khiển
 
 Dùng **WASD** hoặc **phím mũi tên** để đi. Tới gần lối ra, ô đất, quầy chợ hoặc cửa kho rồi nhấn **E**. Bạn cũng có thể bấm hoặc chạm trên bản đồ để nhân vật tự tìm đường đến điểm đó. Trên màn hình cảm ứng có thêm cụm nút hướng.
@@ -20,27 +27,27 @@ Bản đồ gồm vườn nhà, chuồng trại, chợ, đường làng và vư�
 ## Lịch và thủy sản
 
 - Một ngày game kéo dài 8 giờ thực. Thời tiết thay đổi mỗi 2 giờ gồm nắng nhẹ, mưa rào, nhiều mây, nắng nóng, gió mạnh, sương và dông. Dữ liệu làng cũ ghi nhận thời điểm chuyển lịch khi vào lại. Vườn có sẵn cá giống, tôm giống và thức ăn khởi đầu.
-- Vườn nhà và vườn hàng xóm có kích thước 820 × 640 đơn vị, hồ làng có kích thước 720 × 432 đơn vị, với camera theo nhân vật và bản đồ nhỏ. Dùng nút khu vực để đi nhanh tới hồ làng hoặc men theo lối ra phía đông nam vườn nhà.
+- Vườn nhà và vườn đang ghé có kích thước 820 × 900 đơn vị, hồ làng có kích thước 720 × 432 đơn vị, với camera theo nhân vật và bản đồ nhỏ. Dùng nút khu vực hoặc lối ra để chuyển khu.
 - Chọn Ao nuôi hoặc đến cầu gỗ cạnh ao. Cá và tôm ở chung ao, với sức chứa 6 con ở ao chính và 2 con ở ao xây thêm. Cá rô phi, tôm càng và cá chép cần lần lượt 20, 35 và 55 phút tăng trưởng cơ sở khi có thức ăn. Thời tiết làm thay đổi tốc độ lớn.
 - Hồ làng miễn phí 12 lượt thành công/ngày. Thả câu và chờ 6 giây trước khi kéo cần, sau đó nghỉ 45 giây. Tỷ lệ cá chép vàng là 2% lúc sương, 4% lúc mưa rào và 3% trong các thời tiết còn lại có thể thả câu.
 - Câu ở ao hàng xóm chỉ lấy được 1 cá trưởng thành nếu chủ ao còn tối thiểu 3 con trước khi câu. Lượt câu dùng chung giới hạn lấy đồ từ ruộng và kho. Cổng đóng bảo vệ 30 phút.
 
 ## Đất và chơi cùng khu vực
 
-- Mỗi người có 2 ô đất trống cùng kích thước và các công trình cơ bản như nhau. Trong tab **Đất**, mua thêm tối đa 6 ô, chọn xây vườn có 3 luống, ao nuôi hoặc chuồng tối đa 2 con. Giá ô mua đầu tiên là 65 xu. Có thể chọn công trình từ bản đồ hoặc dùng **Tới ô**.
+- Mỗi người có 2 mảnh đất trống cùng kích thước. Trong tab **Đất**, mua thêm tối đa 6 mảnh, chọn xây vườn có 3 luống (nâng riêng lên 6 luống với 120 xu), ao nuôi hoặc chuồng tối đa 2 con. Giá mảnh mua đầu tiên là 65 xu. Có thể chọn công trình từ bản đồ hoặc dùng **Tới ô**.
 - Hàng rào có kiểu gỗ mật ong, gỗ trắng và tre xanh. Trang trí từng công trình từ tab **Đất** hoặc mở **Hàng rào công trình chính** trong **Xây dựng**. Hàng rào trang trí khác với nâng cấp an ninh.
 - Trong làng online, chợ, hồ và đường làng là khu chung. Ở vườn nhà, chủ và khách cùng xem một bố cục. Vị trí cập nhật khoảng 1,2 giây, trình duyệt nội suy giữa các cập nhật. Nút **Chat** nằm dưới bản đồ, chỉ hiện khi đã vào làng. Tin nhắn nổi trên đầu nhân vật 5 giây và chỉ hiện cho người ở gần trong cùng khu vực. Tin nhắn mới chỉ giữ trong RAM.
-- Nút **Nhân vật** cho phép đổi Nam hoặc Nữ. Lựa chọn được lưu theo vườn và các người chơi khác sẽ thấy mẫu mới.
+- Nút **Nhân vật** cho phép đổi Nam/Nữ và độ tuổi Thanh niên/Trung niên/Cao tuổi. Sáu mẫu có chỉ số như nhau. Lựa chọn được lưu theo vườn và các người chơi khác sẽ thấy mẫu mới.
 
 ## Nhịp chăm sóc, sức khỏe và tài sản
 
-- Vụ mới có thời gian cơ sở 8 phút (lúa mì), 15 phút (cà rốt), 25 phút (bắp). Gà lớn sau 20 phút có thức ăn và cần thêm 15 phút mỗi kỳ trứng, bò 45 phút và 30 phút mỗi kỳ sữa, lợn 60 phút và 40 phút mỗi kỳ tìm nấm truffle. Chuồng cấp 7 mở chim cút, cấp 8 mở trâu nước; kho tối đa cấp 10, ruộng cấp 9, chuồng cấp 8 và xưởng máy cấp 9. Thời tiết và chăm sóc tác động vào tốc độ. Vụ đã gieo giữ mốc cũ, vật nuôi đang nuôi hoàn thành kỳ hiện tại rồi chuyển sang thời gian mới.
+- Vụ mới có thời gian cơ sở 8 phút (lúa mì), 15 phút (cà rốt), 25 phút (bắp). Gà lớn sau 20 phút có thức ăn và cần thêm 15 phút mỗi kỳ trứng, bò 45 phút và 30 phút mỗi kỳ sữa. Lợn lớn 60 phút rồi cần 40 phút cho kỳ xuất chuồng một lần, nhận thịt lợn; nấm truffle là cây riêng. Chuồng cấp 7 mở chim cút, cấp 8 mở trâu nước, vẫn cần XP tương ứng. Kho tối đa cấp 10, ruộng cấp 9, chuồng cấp 8 và xưởng máy cấp 9. Thời tiết và chăm sóc tác động vào tốc độ. Vụ đã gieo giữ mốc cũ, vật nuôi đang nuôi hoàn thành kỳ hiện tại rồi chuyển sang thời gian mới.
 - Ô đất trống trong 8 giờ thực sẽ chai và cần **Cuốc đất** trước khi gieo. Ô mới mở và ô vừa thu hoạch có 8 giờ để gieo ngay. Bản đồ vẽ vết nứt trên đất chai, bảng Việc cần làm chỉ đến ô đó. Làng cũ bắt đầu tính thời gian đất trống từ lần đầu mở bản cập nhật.
 - Trong mưa và 20 phút sau mưa, nguy cơ sâu tăng nhanh. Bảng Việc cần làm nhắc trị sâu sớm hơn trong thời gian này. Thuốc còn hiệu lực vẫn ngăn sâu tích lũy.
 - **Chợ làng → Vật tư / Bán nhanh / Sạp làng** đều có tìm theo tên, hỗ trợ gõ tiếng Việt có dấu hoặc không dấu. Ở **Bán nhanh**, chọn **Bán hết** để bán toàn bộ hàng hiện có của riêng mặt hàng đã chọn.
 - Giữ giống: khi thu hoạch, chọn **Thu và giữ 1 giống**, hoặc vào **Nông trại → Kho** để đổi nông sản còn giữ thành giống. Mỗi nông sản đổi được một giống cùng loại. Ô trồng được sử dụng lại ngay sau thu hoạch.
-- **Chợ làng → Đơn làng** có 3 đơn dùng chung mỗi ngày game (8 giờ). Vườn nào giao đủ trước sẽ nhận thưởng. Đơn đã giao rời bảng của mọi vườn. Một đơn có thể là giỏ nhiều mặt hàng. Xem trước đơn ngày mai ở cuối bảng. Làng cũ giữ hạng và các dự án, các đơn đã giao trong ngày được ẩn khỏi bảng.
-- **Làng → Đơn hàng → Đơn góp hàng** có một đợt kéo dài 48 giờ thực. Giỏ nông sản, Bếp làng và Quầy đặc sản luân phiên theo các giống đã mở khóa trong làng. Mỗi vườn được góp từng phần. Khi làng đủ hàng, vườn góp ít nhất 3 món tự nhận 12 XP và 125% giá bán nhanh của hàng đã góp, làm tròn lên. Hàng đã góp được trừ khỏi kho và không hoàn lại khi hết hạn. Bảng hiển thị tiến độ, người góp và kết quả đợt trước.
+- **Chợ làng → Đơn làng** có 3 đơn nền dùng chung mỗi ngày game (8 giờ), có thể thêm nhóm đơn theo nội dung đã mở. Vườn nào giao đủ trước sẽ nhận thưởng. Đơn đã giao rời bảng của mọi vườn. Một đơn có thể là giỏ nhiều mặt hàng. Xem trước đơn ngày mai ở cuối bảng. Làng cũ giữ hạng và các dự án, các đơn đã giao trong ngày được ẩn khỏi bảng.
+- **Làng → Đơn hàng → Đơn góp hàng** có một đợt kéo dài 48 giờ thực. Giỏ nông sản, Bếp làng và Quầy đặc sản luân phiên theo các giống đã mở khóa trong làng. Mỗi vườn được góp từng phần. Khi làng đủ hàng, vườn góp ít nhất 3 món tự nhận 12 XP, 125% giá bán nhanh của hàng đã góp (làm tròn lên) và 1 phiếu trang trí. Hàng đã góp được trừ khỏi kho và không hoàn lại khi hết hạn. Bảng hiển thị tiến độ, người góp và kết quả đợt trước.
 - **Làng → Cấp làng** có các mốc Làng, Xã, Phường, Quận và Thành phố. Thu nhập là tổng tiền bán nhanh và thưởng giao đơn, tính từ bản có cấp làng. Số đơn cộng dồn. Trộm thành công ở vườn, kho và ao dùng chung giới hạn theo ngày game của làng, giảm theo cấp từ 12 xuống 8, 5, 3 và 1. Lên cấp cần góp đủ xu xây một công trình và có chuỗi ngày liên tiếp đã kết thúc với số vụ nằm trong giới hạn xét duyệt. Làng cũ bắt đầu tính chuỗi kể từ ngày mở bản này, giữ tiến độ đã tích lũy. Khi hoàn thành đủ điều kiện, cấp tăng tự động.
 - Sổ việc hôm nay nằm trong Nhà vườn và bảng Việc cần làm. Chăm cây, thu sản phẩm và bán nông sản hoặc giao đơn để nhận 25 xu và 8 XP mỗi ngày game.
 - HUD hiển thị nước, độ no và thể lực. Trồng, chăm, thu hoạch, câu, xây dựng dùng các chỉ số theo thao tác. Trời nóng tốn thêm nước. Bấm thanh Nước để uống, No bụng để ăn, hoặc Thể lực → Về Nhà vườn. Trong Nhà vườn, chọn Nghỉ ngay ở bất kỳ vị trí nào. Sau 60 giây, thể lực hồi tối đa 75 điểm. Trong lúc nghỉ vẫn có thể xem kho, trò chuyện và giao dịch. Thể lực cũng hồi chậm theo thời gian.

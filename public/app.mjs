@@ -422,8 +422,8 @@ function renderCoop(farm,now,lot){
       const condition=animalCondition(pen,now);
       const label=(info.oneTime?'Xuất chuồng':'Thu')+' · '+condition.yield+' '+goods[info.product].name.toLowerCase();
       const ref=' data-target="'+(pen.id??i)+'" data-index="'+i+'"';
-      const feed=btn('Cho ăn · '+info.food,'data-action="feed"'+ref,'',pen.fedUntil>now||farm.inventory.feed<info.food);
-      const collect=btn(label,'data-action="collect"'+ref,'primary');
+      const feed=btn(careIcon('feed')+'Cho ăn · '+info.food,'data-action="feed"'+ref,'',pen.fedUntil>now||farm.inventory.feed<info.food);
+      const collect=btn(careIcon('animalHarvest')+label,'data-action="collect"'+ref,'primary');
       const manage=btn('Quản lý','data-manage-animal="'+(pen.id??i)+'"','subtle');
       const aging=condition.yield<info.yield?' · '+condition.label+' ('+condition.yield+'/'+info.yield+' mỗi lứa)':'';
       return '<article class="animal-card" data-pen="'+i+'"><div>'+animalIllustration(pen.kind)+'<h3>'+info.name+' '+(i+1)+'</h3><p>'+status+

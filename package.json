@@ -9,6 +9,8 @@
     "build": "npm run progression:docs && node scripts/build.mjs",
     "check:progression": "node scripts/progression.mjs",
     "check:assets": "node scripts/audit-assets.mjs",
+    "gameplay:docs": "node scripts/gameplay-docs.mjs",
+    "check:gameplay-docs": "node scripts/gameplay-docs.mjs --check",
     "progression:docs": "node scripts/progression.mjs --write-docs",
     "pixel:progression-art": "py scripts/normalize-progression-crops-v4.py",
     "pixel:livestock-art": "py scripts/normalize-progression-livestock-v2.py",
