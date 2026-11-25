@@ -69,6 +69,8 @@ npm test
 npm run build
 ```
 
+Kiểm tra dung lượng bằng `npm run check:size`. Trên Windows, xem trước việc dọn bản build bằng `powershell -NoProfile -File scripts/clean-build.ps1`, thêm `-Apply` để dọn `dist`. Chạy lại `npm run build` khi cần bản xuất để deploy. Công cụ không dọn tài liệu, database hoặc backup. Xem [báo cáo dọn dung lượng](docs/PROJECT_CLEANUP_2026-11-25.md).
+
 ## Deploy lên Vercel
 
 Chọn **Vercel** cho giao diện. Nếu muốn tạo làng, mời bạn bè, chat và lưu tiến trình online, dùng thêm **Cloudflare Worker + D1**. Bản chơi thử lưu riêng trong trình duyệt và chỉ cần Vercel.
