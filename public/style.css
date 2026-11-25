@@ -643,6 +643,38 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .return-card li .btn{display:block;width:100%;text-align:left;background:none;border:0;padding:2px 0;white-space:normal}.return-card strong,.return-row-copy,.return-row-cta{display:block}.return-row-copy{font-size:11px;font-weight:400;line-height:1.45;margin:4px 0;color:var(--muted)}.return-row-cta{font-size:10px;color:#416543;text-decoration:underline}
 @media(max-width:760px) and (orientation:portrait){.control-panel{max-height:max(400px,var(--game-height,450px))}}
 
+.care-overview{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:11px;color:#59482e;padding:7px 0}
+.husbandry-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:5px 0 7px;align-items:start}
+.husbandry-card{min-width:0;padding:6px;border:1px solid #b99a67;border-radius:7px;background:#f1e3c2;box-shadow:0 1px #b49a70}
+.husbandry-card header{display:flex;align-items:center;gap:7px}.husbandry-card header>div{flex:1;min-width:0}
+.husbandry-card h3{font-size:13px;margin:0 0 3px}.husbandry-card header>.btn{font-size:10px;min-height:32px;padding:4px 7px}
+.care-state{display:inline-block;font-size:10px;color:#4f6141}.husbandry-card[data-care-state="ready"] .care-state{background:#d5dfb2;color:#354b28;padding:2px 6px;border-radius:4px}
+.husbandry-card[data-care-state="hungry"] .care-state{color:#8b4e26;font-weight:700}
+.care-facts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.care-facts span{display:flex;flex-direction:column;gap:3px}
+.care-facts small{font-size:10px;color:#776344}.care-facts b{font-size:11px}.care-progress-label{display:flex;justify-content:space-between;font-size:10px;color:#695638}
+.care-note,.care-empty{font-size:11px;line-height:1.5;color:#6a573a;margin:6px 0}.husbandry-card .actions{margin-top:7px}.husbandry-card .btn{font-size:11px}
+.pond-stock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:7px 0}.pond-stock-grid .btn{justify-content:flex-start;text-align:left;font-size:11px;min-width:0;padding:5px;gap:5px}
+.pond-stock-grid small{display:block;font-size:9px;margin-top:3px;font-weight:400}
+.fence-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:8px 0}.fence-options .btn{display:flex;flex-direction:column;min-width:0;padding:6px 3px;gap:4px}
+.fence-options strong{font-size:10px}.fence-options small{font-size:9px;font-weight:400}.fence-preview{display:block;width:72px;height:27px;background-image:url('/pixel/garden-fences-v1.png');background-size:144px 216px;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0}
+.lot-fences{margin-top:12px}.lot-fences summary,.pond-stock-fold summary{font-size:12px}
+.land-picker-fold{margin:7px 0}.land-picker-fold summary{font-size:11px}.lot-go{justify-content:flex-end;margin:4px 0}.lot-coop{margin-top:3px;padding-top:3px;border-top:0}
+@media(max-width:900px) and (orientation:landscape){.husbandry-card header>.btn{min-height:40px}.fence-options .btn,.pond-stock-grid .btn{min-height:44px}}
+.husbandry-card header{gap:3px;flex-wrap:wrap;position:relative;padding-right:22px;min-height:30px}
+.husbandry-card header>.animal-icon{transform:scale(.65);margin:-5px -8px -5px -6px}
+.husbandry-card header>.btn{position:absolute;right:-2px;top:0;min-height:26px;width:24px;padding:2px;font-size:13px}
+.husbandry-card h3{font-size:11px;line-height:1.25;margin:0 0 2px}.husbandry-card .care-state{font-size:9px;line-height:1.3}
+.husbandry-card .care-facts{display:flex;flex-direction:column;gap:4px;margin:6px 0}
+.husbandry-card .care-facts span{gap:1px}.husbandry-card .care-facts small{font-size:9px}.husbandry-card .care-facts b{font-size:10px;line-height:1.3}
+.husbandry-card .care-progress-label{font-size:9px}.husbandry-card .progress{height:4px;margin:3px 0}
+.husbandry-card .care-note{font-size:9px;line-height:1.35;margin:4px 0}
+.husbandry-card .actions{display:grid;grid-template-columns:1fr;gap:3px;margin-top:5px}
+.panel-body .husbandry-card .actions .btn{min-height:28px;padding:3px 4px;font-size:10px;gap:3px}
+.husbandry-card .care-icon{transform:scale(.8);margin:-2px;flex-shrink:0}
+.husbandry-card .pond-care-details summary{font-size:9px;padding:5px 0;line-height:1.4}.husbandry-card .pond-care-details{margin-top:4px}
+.care-overview{font-size:10px;padding:4px 0;gap:3px 9px}
+.fence-options{gap:4px;margin:5px 0}.fence-options .btn{padding:4px 2px;gap:2px}.fence-options .fence-preview{transform:scale(.75);margin:-3px -9px}
+.pond-stock-grid{gap:4px;margin:5px 0}.pond-stock-grid .btn{padding:4px;font-size:10px;gap:3px}.pond-stock-grid small{font-size:9px;margin-top:2px}
 .crop-outlook-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
 .crop-outlook-stats>span{display:flex;flex-direction:column;padding:6px 9px;background:#dfcca5;border:1px solid #b39768;border-radius:7px;color:#493923}
 .crop-outlook-stats small{font-size:10px}.crop-outlook-stats strong{font-size:14px}
@@ -650,6 +682,9 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .crop-outlook-details{font-size:11px;color:#59482e;margin:6px 0}
 .crop-outlook-details summary{cursor:pointer;min-height:32px;display:list-item;padding:7px 0;touch-action:manipulation}
 .crop-outlook-details p{font-size:11px;line-height:1.5;margin:5px 0}
+.crop-impact-table{width:100%;border-collapse:collapse;font-size:10px;margin:4px 0}
+.crop-impact-table th,.crop-impact-table td{padding:5px 3px;border-bottom:1px solid #cbb991;text-align:right}
+.crop-impact-table th:first-child{text-align:left}.crop-impact-table tbody th{font-weight:400}
 /* Seed selection: details and planting have separate touch targets. */
 .seed-picker{margin-top:4px}.panel-body .seed-picker-hint{font-size:10px;margin:5px 0 9px}
 .seed-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}.seed-tabs .btn{min-height:44px;padding:5px;font-size:11px}.seed-tabs span{display:inline-block;padding:1px 5px;margin-left:3px;border-radius:5px;background:#ffffff29;font-variant-numeric:tabular-nums}

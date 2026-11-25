@@ -318,3 +318,18 @@ Triển khai thẻ HTML/CSS theo phác thảo đã duyệt, dùng bảng tác v�
 ### 25/11/2026 — Bảng chăm sóc cây: ETA và sản lượng
 
 Gom thời gian/sản lượng thành hai ô nhỏ theo bảng màu gỗ hiện có; giải thích công thức đặt trong mục mở rộng, không thêm hình vẽ hay thay atlas. Kiểm tra Canvas cùng bảng ở desktop và điện thoại ngang Chromium; giữ nguyên sprite, hành động và cơ chế. 148 kiểm thử và build đạt. Phạm vi, ảnh và giới hạn Safari: [CROP_OUTLOOK_V1.md](CROP_OUTLOOK_V1.md).
+
+
+### 25/11/2026 — UI chăm chuồng, ao và hàng rào
+
+Tái sử dụng hình vật nuôi hiện có và atlas garden-fences-v1 làm mẫu xem trước; bảng màu gỗ/kem, trạng thái thu/đói/lớn và chi tiết mở rộng. Không tạo hoặc đổi sprite. 148 kiểm thử và build đạt; kiểm tra runtime desktop/mobile ngang Chromium, chưa kiểm tra Safari thật. [Phạm vi và ảnh](HUSBANDRY_UI_V1.md).
+
+
+### 25/11/2026 — Thu gọn danh sách chăm nuôi V2
+
+Thẻ hai cột, hình/nút/tiến độ nhỏ hơn; giữ ảnh gốc và chi tiết truy cập qua ⓘ. Kiểm tra runtime desktop/mobile ngang Chromium và build đạt. [Ảnh và phạm vi](HUSBANDRY_UI_V1.md#bản-thu-gọn-v2).
+
+
+### 25/11/2026 — Rút gọn giải thích tốc độ/năng suất
+
+Bảng tác động ±% thay đoạn công thức dài, bỏ mô tả thời tiết trùng trong chi tiết giống; không thay artwork hoặc cơ chế. 150 kiểm thử, build và runtime Chromium mobile ngang đạt. [Ảnh và phạm vi](CROP_OUTLOOK_V1.md#rút-gọn-phần-giải-thích-v2).

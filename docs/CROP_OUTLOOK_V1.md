@@ -21,3 +21,14 @@ Không thay kinh tế, thời gian tăng trưởng, lưu database, hành động
 - [Desktop](assets/crop-outlook-v1-desktop.png)
 - [Giải thích chi tiết](assets/crop-outlook-v1-details-desktop.png)
 - [Điện thoại ngang](assets/crop-outlook-v1-compact-landscape.png)
+
+
+## Rút gọn phần giải thích V2
+
+Thay các đoạn công thức dài bằng bảng 4 yếu tố (thời tiết hiện tại, đất, sâu/cỏ, phân bón), hai cột tốc độ/năng suất có dấu ±%. Thời tiết tốc độ gồm hệ số chung và đặc tính giống; năng suất thời tiết là ảnh hưởng hiện tại, còn kết quả cuối vụ cộng dồn theo thời gian. Sâu/cỏ hiển thị phần mất thực tế sau làm tròn/giới hạn tối thiểu; xử lý sâu/cỏ không xóa thiệt hại cũ. Phân bón hiển thị mức cộng theo sản lượng cơ sở của từng giống trước hệ số thời tiết và làm tròn. Các tỷ lệ là tác động riêng, không cộng số học thành tổng.
+
+Chi tiết giống giữ một mô tả đặc tính trong seedFacts; phần cách có chỉ ghi nguồn giống, bỏ đoạn tác dụng trùng và lời hướng dẫn đóng dialog thừa.
+
+150/150 kiểm thử đạt, build đạt. Runtime Chromium mobile ngang kiểm tra bốn hàng ảnh hưởng và mô tả Khoai lang xuất hiện đúng một lần; không tràn ngang hoặc lỗi JavaScript. Chưa kiểm tra Safari thật.
+
+[Ảnh bảng tác động](assets/crop-impact-v2-impacts-landscape.png) · [Ảnh chi tiết giống](assets/crop-impact-v2-seed-detail-landscape.png).
