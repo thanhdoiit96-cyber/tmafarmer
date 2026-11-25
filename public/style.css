@@ -643,6 +643,13 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .return-card li .btn{display:block;width:100%;text-align:left;background:none;border:0;padding:2px 0;white-space:normal}.return-card strong,.return-row-copy,.return-row-cta{display:block}.return-row-copy{font-size:11px;font-weight:400;line-height:1.45;margin:4px 0;color:var(--muted)}.return-row-cta{font-size:10px;color:#416543;text-decoration:underline}
 @media(max-width:760px) and (orientation:portrait){.control-panel{max-height:max(400px,var(--game-height,450px))}}
 
+.crop-outlook-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.crop-outlook-stats>span{display:flex;flex-direction:column;padding:6px 9px;background:#dfcca5;border:1px solid #b39768;border-radius:7px;color:#493923}
+.crop-outlook-stats small{font-size:10px}.crop-outlook-stats strong{font-size:14px}
+.crop-outlook-status{font-size:11px;margin:5px 0}
+.crop-outlook-details{font-size:11px;color:#59482e;margin:6px 0}
+.crop-outlook-details summary{cursor:pointer;min-height:32px;display:list-item;padding:7px 0;touch-action:manipulation}
+.crop-outlook-details p{font-size:11px;line-height:1.5;margin:5px 0}
 /* Seed selection: details and planting have separate touch targets. */
 .seed-picker{margin-top:4px}.panel-body .seed-picker-hint{font-size:10px;margin:5px 0 9px}
 .seed-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}.seed-tabs .btn{min-height:44px;padding:5px;font-size:11px}.seed-tabs span{display:inline-block;padding:1px 5px;margin-left:3px;border-radius:5px;background:#ffffff29;font-variant-numeric:tabular-nums}

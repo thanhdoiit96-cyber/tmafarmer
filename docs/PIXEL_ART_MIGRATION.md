@@ -313,3 +313,8 @@ P1.1 bổ sung thẻ tóm tắt quay lại gồm ba dòng có thể chạm, dùn
 Tiếp nối P0.3: hộp chỉ dẫn mở khóa dùng hộp chi tiết, palette và ảnh minh họa hiện có. Không đổi atlas hoặc Canvas. Ảnh desktop/mobile và kiểm chứng trong [UNLOCK_GUIDANCE_V1.md](UNLOCK_GUIDANCE_V1.md).
 
 Triển khai thẻ HTML/CSS theo phác thảo đã duyệt, dùng bảng tác vụ và palette hiện có. Ảnh runtime desktop/dọc/ngang trong [biên bản V1](NEXT_GOAL_V1.md). 134 bài kiểm thử, build và kiểm tra asset đạt.
+
+
+### 25/11/2026 — Bảng chăm sóc cây: ETA và sản lượng
+
+Gom thời gian/sản lượng thành hai ô nhỏ theo bảng màu gỗ hiện có; giải thích công thức đặt trong mục mở rộng, không thêm hình vẽ hay thay atlas. Kiểm tra Canvas cùng bảng ở desktop và điện thoại ngang Chromium; giữ nguyên sprite, hành động và cơ chế. 148 kiểm thử và build đạt. Phạm vi, ảnh và giới hạn Safari: [CROP_OUTLOOK_V1.md](CROP_OUTLOOK_V1.md).

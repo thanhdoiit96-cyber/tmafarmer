@@ -377,8 +377,7 @@ export function projectPlot(room, plot, now) {
       const baseRisk=weeds?(weedWeatherRate[w.id]??.14):w.pests;
       const pestRate=(damp?Math.max(.44,baseRisk):baseRisk)*120/goal;
       const pressure=weeds?result.weeds:result.pests;
-      const effect=cropWeatherEffect(plot.kind,w.id);
-      const rate=w.crop*effect.growth*(wet?1.38:dryGrowthFactor)*(pressure>=40?.68:1)*(plot.fertilized?1.3:1);
+      const rate=cropGrowthRate(plot,w,wet,pressure);
       const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<protection?protection:to,damp?dampUntil:to);
       const pestThreshold=exposed&&pressure<40?(40-pressure)/pestRate:Infinity;
       const duration=Math.min(end-t,pestThreshold,(goal-result.progress)/rate);
@@ -609,6 +608,19 @@ const roomFor = (farm,qty) => check(stock(farm)+qty<=capacity(farm),'Kho đầy.
 function record(farm,time,message) {
   farm.log.unshift({time,message});
   farm.log=farm.log.slice(0,14);
+}
+export function cropGrowthRate(plot,weather,wet,pressure){
+  return weather.crop*cropWeatherEffect(plot.kind,weather.id).growth*(wet?1.38:dryGrowthFactor)*(pressure>=40?.68:1)*(plot.fertilized?1.3:1);
+}
+// A current-condition estimate, not a simulation of future weather or care.
+export function cropOutlook(plot,weather,now){
+  const goal=cropGoal(plot),ripe=plot.progress>=goal;
+  const wet=weather.wet||plot.wetUntil>now;
+  const pressure=(cropHazard(plot)==='weeds'?plot.weeds:plot.pests)??0;
+  const rate=cropGrowthRate(plot,weather,wet,pressure);
+  const potential=cropPotentialYield(plot),total=cropYield(plot);
+  return {ripe,wet,pressure,rate,seconds:ripe?0:Math.ceil(Math.max(0,goal-plot.progress)/rate),
+    potential,total,remaining:Math.max(0,total-(plot.picked??0)),lost:potential-total};
 }
 export function cropPotentialYield(plot){
   const exposure=plot.weatherExposure??{};

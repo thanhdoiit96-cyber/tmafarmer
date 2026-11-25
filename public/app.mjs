@@ -18,7 +18,7 @@ import {cropItemFrame} from './pixel/item-art.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,gardenDecorAtlas,livestockAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {createWorld} from './world.mjs';
 import {drinkingWell,maps,needsPlayerLocation,playerLocationBlock,plotWorkActions} from './world-layout.mjs';
-import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropRequirement, cropWeatherEffect, cropWeatherProfiles, cropPotentialYield, crops, cropStage, cropYield, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
+import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalCondition, animalRelocation, animalRequirement, animals, apply, aquaOrders, avatarOf, avatars, buildingUpgrade, buildings, capacity, catchOdds, craftRequirement, cropGoal, cropOutlook, cropRequirement, cropWeatherEffect, cropWeatherProfiles, crops, cropStage, dryGrowthFactor, dayAt, dayGoals, dayReward, farmProgress, gateMinutes, growthGoal, mealCooldown, mealRequirement, productGoal, gardenHelperPreview, gardenHelperTargets, recipeCategory, recipes, upgradeCalendar, upgradeRequirement, GameError, goods, newFarm, newRoom, snapshot, startLivestockClock, startSoilClock, startVillageSecurity, stock, supplyLimit, unixNow, varietyOrders, visitLimit, workshopFoodOrders, xpRewards, xpUnlocks} from './game.mjs';
 
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -428,19 +428,20 @@ function renderCropTools(farm,now) {
   if(!plot)return renderSeedPicker(farm);
   const goal=cropGoal(plot), ripe=plot.progress>=goal;
   const wet=plot.wetUntil>now||state.weather.wet;
-  const yieldTotal=cropYield(plot);
-  const remaining=Math.max(0,yieldTotal-(plot.picked??0));
-  const normal=cropPotentialYield(plot);
-  const weatherHint=cropWeatherProfiles[crops[plot.kind].weather];
-  const currentEffect=cropWeatherEffect(plot.kind,state.weather.id);
-  const weatherGrowthChange=Math.round((currentEffect.growth-1)*100);
-  const weatherYieldChange=Math.round((currentEffect.yield-1)*100);
-  const signedChange=value=>(value>0?'+':'')+value+'%';
+  const outlook=cropOutlook(plot,state.weather,state.now);
+  const {remaining}=outlook;
   const hazardName=plot.hazard==='weeds'?'Cỏ dại':'Sâu';
-  const forecast=(ripe?'Có thể thu '+remaining:'Dự kiến '+remaining)+' / '+normal+' món'+(normal>yieldTotal?' · '+hazardName+' đã làm mất '+(normal-yieldTotal)+' món':'')+'.';
+  const effect=cropWeatherEffect(plot.kind,state.weather.id);
+  const percent=value=>Math.round(value*100)+'%';
+  const detailsOpen=document.querySelector('details[data-crop-outlook="'+selected+'"]')?.open;
   return '<div class="row"><h2>'+goods[plot.kind].name+'</h2><span class="badge">'+(ripe?'Đã chín':progress(plot.progress,goal)+'% lớn')+'</span></div>'+
-    (!ripe?'<p>Còn ~'+duration(goal-plot.progress)+' theo tốc độ cơ sở · '+(wet?'Đất ẩm':'Đất khô · '+Math.round(dryGrowthFactor*100)+'% tốc độ cơ sở')+' · '+hazardName+' '+Math.floor(plot.hazard==='weeds'?(plot.weeds??0):plot.pests)+'%'+(plot.fertilized?' · Đã bón phân':'')+'</p><p class="small">'+(plot.hazard==='weeds'?'Cỏ mọc nhanh khi mưa, sương hoặc sau mưa; chậm khi nắng nóng.':'Sâu tăng theo thời tiết, nhất là mưa và sau mưa.')+' Mức 40% làm chậm lớn 32%; mức 20/40/70% giảm sản lượng. Xử lý sớm để tránh tổn thất tích lũy.</p>':'')+
-    '<p>'+forecast+'</p><p class="crop-weather-hint">'+escape(weatherHint.note)+' Thời tiết hiện tại ('+state.weather.name+') tác động riêng: '+signedChange(weatherGrowthChange)+' tốc độ, '+signedChange(weatherYieldChange)+' sản lượng. Sản lượng cộng dồn theo thời tiết cây gặp trong lúc phát triển; độ ẩm và hệ số thời tiết chung vẫn áp dụng.</p>'+valueBar(plot.progress,goal)+
+    '<div class="crop-outlook-stats"><span><small>'+(ripe?'Sẵn sàng':'Ước tính còn')+'</small><strong>'+(ripe?'Thu hoạch':'~'+duration(Math.ceil(outlook.seconds/60)*60))+'</strong></span><span><small>'+(ripe?'Có thể thu':'Tạm tính thu')+'</small><strong>'+remaining+' món</strong></span></div>'+
+    '<p class="crop-outlook-status">'+(outlook.wet?'Đất ẩm':'Đất khô')+' · '+hazardName+' '+Math.floor(outlook.pressure)+'%'+(plot.fertilized?' · Đã bón phân':'')+'</p>'+
+    '<details class="crop-outlook-details" data-crop-outlook="'+selected+'"'+(detailsOpen?' open':'')+'><summary data-crop-explain="'+selected+'">Vì sao? · Thời gian & sản lượng</summary>'+
+    '<p>Ước tính từ tiến độ trong lần cập nhật gần nhất, nếu điều kiện hiện tại giữ nguyên. Thời tiết đổi, đất hết ẩm hoặc cỏ/sâu tăng sẽ làm ETA thay đổi; đây không phải giờ thu chắc chắn.</p>'+
+    '<p>Tốc độ: thời tiết '+escape(state.weather.name)+' ×'+state.weather.crop+'; giống ×'+effect.growth+'; đất ×'+(outlook.wet?'1.38':dryGrowthFactor)+'; '+hazardName.toLowerCase()+' ×'+(outlook.pressure>=40?'.68':'1')+'; phân bón ×'+(plot.fertilized?'1.3':'1')+'. Tổng '+percent(outlook.rate)+' tốc độ cơ sở.</p>'+
+    '<p>Sản lượng trước thiệt hại: '+outlook.potential+'; đã mất '+outlook.lost+'; đã lấy '+(plot.picked??0)+'. Còn '+remaining+' món. '+(ripe?'':'Tạm tính theo thời tiết đã trải qua; phần thời gian cây còn lớn có thể làm con số thay đổi. ')+'Phân bón cộng 1 vào sản lượng cơ sở trước hệ số thời tiết. Kho còn trống quyết định số có thể cất khi thu.</p>'+
+    '<p>Cỏ/sâu từ 40% làm chậm lớn 32%. Mức cao nhất đã gặp từ 20/40/70% gây mất lần lượt 1/35%/60% sản lượng (làm tròn lên, còn ít nhất 1). Nhổ cỏ hoặc xịt thuốc giúp ngăn tổn thất tiếp theo; phần đã mất không hồi lại.</p></details>'+valueBar(plot.progress,goal)+
     '<div class="actions">'+btn('4 giai đoạn','data-crop-growth="'+selected+'"','subtle')+(ripe?act('Thu hoạch','harvest','',selected,'primary')+
       '<button type="button" class="btn subtle" data-action="harvest" data-index="'+selected+'" data-source="seed"'+(!remaining||(farm.inventory[crops[plot.kind].seed]??0)>=100?' disabled':'')+'>Thu và giữ 1 giống</button>':
       act('💧 Tưới nước','water','',selected,'primary',wet)+
@@ -1190,7 +1191,7 @@ function goToPinnedGoal(){
     if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
   }
 }
-const focusSelector='[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+const focusSelector='[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';

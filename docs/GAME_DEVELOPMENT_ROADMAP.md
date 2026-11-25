@@ -172,4 +172,5 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | P1.1 | Hoàn thiện tóm tắt quay lại V1 trong source, chưa deploy | [Phạm vi, ảnh và kiểm chứng](RETURN_SUMMARY_V1.md) |
 | 25/11/2026 | UX-SEED-01 | Sắp lại bộ chọn giống theo yêu cầu: nhóm khóa/mở, phân trang, hover và chạm | [Ảnh và kiểm chứng](SEED_PICKER_V1.md); chưa thay ETA toàn game |
 | 25/11/2026 | UX-GAME-02 | Thay danh sách bằng ô ảnh giống/vật nuôi; ghim gọn chỉ trong Việc cần làm; sửa va chạm công trình | [Bố cục, kiểm chứng và giới hạn Safari](GAME_UI_V2.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Bước tiếp theo P1.2 ETA/sản lượng; chưa mở thanh toán |
+| 25/11/2026 | P1.2 — cây trồng | Hoàn thiện ETA theo tốc độ hiện tại và giải thích sản lượng; chưa deploy | [Phạm vi và kiểm chứng](CROP_OUTLOOK_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tiếp theo P1.3 kiểm tra quay lại sau thời gian dài; ETA vật nuôi/thủy sản chưa nằm trong đợt này; chưa mở thanh toán |
