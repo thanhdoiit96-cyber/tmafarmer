@@ -5,6 +5,15 @@ Xuất lại: `npm run gameplay:docs`. Kiểm tra đồng bộ: `npm run check:g
 
 Một ngày game: 8 giờ thực. Một ô thời tiết: 2 giờ thực.
 
+## Chuồng phụ
+
+| Cấp | Sức chứa | Giá nâng từ cấp trước | Chuồng chính cần |
+| --- | --- | --- | --- |
+| 1 | 2 | — | — |
+| 2 | 4 | 160 | 2 |
+
+Chuồng phụ cũ mặc định cấp 1. Nâng riêng từng ô tại Nông trại → Đất; không tự tăng sức chứa khi nâng chuồng chính. Điều kiện loài vật nuôi vẫn theo cấp chuồng chính và XP.
+
 ## Cây trồng
 
 | Cây | Giống (xu) | Bán/món | Phút cơ sở | Yield nền | XP cần | Xưởng cần | Nhóm trời |

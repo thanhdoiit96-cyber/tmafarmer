@@ -333,3 +333,8 @@ Thẻ hai cột, hình/nút/tiến độ nhỏ hơn; giữ ảnh gốc và chi t
 ### 25/11/2026 — Rút gọn giải thích tốc độ/năng suất
 
 Bảng tác động ±% thay đoạn công thức dài, bỏ mô tả thời tiết trùng trong chi tiết giống; không thay artwork hoặc cơ chế. 150 kiểm thử, build và runtime Chromium mobile ngang đạt. [Ảnh và phạm vi](CROP_OUTLOOK_V1.md#rút-gọn-phần-giải-thích-v2).
+
+
+### 25/11/2026 — Bố trí chuồng phụ bốn chỗ
+
+Giữ sprite và shelter hiện có; hai vị trí sân trước và hai vị trí sau bên phải mái, đồng bộ own/neighbor, không tăng footprint. Kiểm tra bốn trâu trưởng thành và đường tiếp cận; 154 kiểm thử, API bổ sung, build và runtime Chromium đạt. Một ảnh đối chiếu trong [PARCEL_COOP_UPGRADE_V1.md](PARCEL_COOP_UPGRADE_V1.md).

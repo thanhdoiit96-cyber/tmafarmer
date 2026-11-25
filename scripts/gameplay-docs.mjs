@@ -3,6 +3,7 @@ import {animals,buildings,buildingUpgrade,capacity,crops,cropWeatherProfiles,gam
 import {aquatic,fishing} from '../public/aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit} from '../public/garden-helper.mjs';
 import {workCost} from '../public/wellness.mjs';
+import {parcelCoopLevels} from '../public/land.mjs';
 
 const out=new URL('../docs/GAMEPLAY_CATALOG.md',import.meta.url);
 const lines=[
@@ -16,6 +17,8 @@ const table=(title,header,rows)=>{
 };
 const name=key=>goods[key]?.name??key;
 const items=obj=>Object.entries(obj??{}).map(([key,count])=>`${count} ${name(key)}`).join(', ')||'—';
+table('Chuồng phụ',['Cấp','Sức chứa','Giá nâng từ cấp trước','Chuồng chính cần'],parcelCoopLevels.map((level,index)=>[index+1,level.capacity,level.cost??'—',level.coop??'—']));
+lines.push('','Chuồng phụ cũ mặc định cấp 1. Nâng riêng từng ô tại Nông trại → Đất; không tự tăng sức chứa khi nâng chuồng chính. Điều kiện loài vật nuôi vẫn theo cấp chuồng chính và XP.');
 table('Cây trồng',['Cây','Giống (xu)','Bán/món','Phút cơ sở','Yield nền','XP cần','Xưởng cần','Nhóm trời'],Object.entries(crops).map(([key,d])=>[name(key),goods[d.seed].buy,goods[key].sell,d.time/60,d.yield,d.xp??0,d.workshop??0,cropWeatherProfiles[d.weather].label]));
 lines.push('','Yield nền chưa tính phân, thời tiết, sâu/cỏ hoặc phần bị lấy. XP cần là điều kiện mở khóa, không phải XP thưởng thu. Xưởng cần 0 nghĩa là không yêu cầu xưởng.');
 table('Vật nuôi',['Con','Giá đón','Chuồng cần','XP cần','Lớn (phút)','Kỳ (phút)','Sản phẩm','Yield nền','Thức ăn/lần','Loại'],Object.values(animals).map(d=>[d.name,d.cost,d.level,d.xp??0,d.grow/60,d.time/60,name(d.product),d.yield,d.food,d.oneTime?'Xuất một lần':'Lặp kỳ']));

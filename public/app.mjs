@@ -10,7 +10,7 @@ import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles,taskIcon} from './tasks.mjs';
 import {goalAfterAction,goalStorageKey,goalView,loadGoal,noGoal,pinBuilding,pinIntro,reconcileGoal} from './next-goal.mjs';
-import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotCount,gardenUpgradeCost,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
+import {parcelCoopUpgrade,coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotCount,gardenUpgradeCost,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
 import {createFarmMusic} from './farm-music.mjs';
@@ -500,6 +500,8 @@ function renderCoop(farm,now,lot){
   const limit=coopCapacity(farm,lot),food=farm.inventory.feed??0;
   const readyCount=pens.filter(({pen})=>pen.progress>=productGoal(pen)).length;
   const hungry=pens.filter(({pen})=>pen.fedUntil<=now&&pen.progress<productGoal(pen)).length;
+  const extension=lot===undefined?null:parcelCoopUpgrade(farm,lot);
+  const expand=extension?'<div class="parcel-coop-upgrade"><span>Chuồng phụ cấp '+extension.level+' · '+(extension.next?(extension.reason||'Mở thêm '+(extension.next.capacity-extension.capacity)+' chỗ nuôi'):'Đã mở tối đa')+'</span>'+(extension.next?act('Nâng lên '+extension.next.capacity+' chỗ · '+extension.next.cost+' xu','upgradeParcelCoop','',lot,'subtle',!!extension.reason||farm.coins<extension.next.cost):'')+'</div>':'';
   const shop=limit?'<details class="panel-fold wide-card game-animal-shop" data-panel-fold="animal-shop"'+(!pens.length?' open':'')+'><summary>Đón thêm vật nuôi · Còn '+Math.max(0,limit-pens.length)+' chỗ</summary>'+renderAnimalPicker(farm,lot,pens,limit)+'</details>':'';
   const rank=pen=>pen.progress>=productGoal(pen)?0:pen.fedUntil<=now?1:2;
   const cards=pens.sort((a,b)=>rank(a.pen)-rank(b.pen)||a.i-b.i).map(({pen,i})=>{
@@ -518,7 +520,7 @@ function renderCoop(farm,now,lot){
   }).join('');
   return boardBar(lot===undefined?'Chuồng chính':'Chuồng ở ô '+(lot+1),(limit?pens.length+'/'+limit+' chỗ':'Chưa xây chuồng')+(lot===undefined?'':' '+btn('Tới chuồng','data-land-go="'+lot+'"','subtle')))+
     (limit?'<div class="care-overview"><span><b>'+readyCount+'</b> có thể thu</span><span><b>'+hungry+'</b> cần ăn</span><span>Trong túi <b>'+food+'</b> thức ăn</span></div>':'')+
-    '<div class="husbandry-list">'+(!limit?'<article><h3>Dựng chuồng đầu tiên</h3><p>Mở chỗ cho hai gà mái.</p>'+act('Xây chuồng · 45 xu','upgrade','coop','','primary',farm.coins<45)+'</article>':!pens.length?'<p class="care-empty">Chuồng còn trống. Mở mục bên dưới để chọn bạn vật nuôi đầu tiên.</p>':'')+cards+'</div>'+shop;
+    '<div class="husbandry-list">'+(!limit?'<article><h3>Dựng chuồng đầu tiên</h3><p>Mở chỗ cho hai gà mái.</p>'+act('Xây chuồng · 45 xu','upgrade','coop','','primary',farm.coins<45)+'</article>':!pens.length?'<p class="care-empty">Chuồng còn trống. Mở mục bên dưới để chọn bạn vật nuôi đầu tiên.</p>':'')+cards+'</div>'+expand+shop;
 }
 function showAnimalManagement(id,confirmSale=false){
   const farm=state.me;
@@ -1560,7 +1562,7 @@ async function perform(input) {
     showToast(message);
     return true;
   } catch(error) {
-    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','upgradeGarden','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
+    updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','upgradeGarden','upgradeParcelCoop','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
     const inline=$('#dialog-error');

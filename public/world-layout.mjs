@@ -1,7 +1,7 @@
-import {fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
+import {coopCapacity,fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
-import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam} from './pixel/homestead-buildings.mjs';
+import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam,expandedParcelAnimalSeats} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
 import {coopSize,coopGate,coopBarn,coopFeed,coopPosition,coopAnimalRoam,coopAnimalScale} from './coop-layout.mjs';
 import {neighborBounds,neighborEntry,neighborCoopEntry,neighborReturn,neighborHall,neighborLot,neighborPosition,neighborPage,neighborHouseTier} from './neighbors-layout.mjs';
@@ -216,7 +216,9 @@ export function features(id, snapshot, neighbor, page=0) {
         blocks.push(rect(pen.x+parcelShelter.x-parcelShelter.w/2+6,pen.y+29,parcelShelter.w-12,18));
         const pens=id==='field'?farm.pens:owner.visiblePens??[];
         pens.map((data,index)=>({data,index})).filter(p=>p.data.lot===i).forEach(({data,index},seat)=>{
-          const point={x:pen.x+parcelAnimalSeats[seat],y:pen.y+parcelAnimalBaseline,index,data,roam:parcelAnimalRoam[seat]};
+          const expanded=coopCapacity(owner,i)>2;
+          const placement=expanded?expandedParcelAnimalSeats[seat]:{x:parcelAnimalSeats[seat],y:parcelAnimalBaseline,roam:parcelAnimalRoam[seat]};
+          const point={x:pen.x+placement.x,y:pen.y+placement.y,index,data,roam:placement.roam};
           actors.push({...point,type:'animal'});
           if(id==='field')hotspots.push({...point,type:'animal',label:'Chăm vật nuôi'});
         });

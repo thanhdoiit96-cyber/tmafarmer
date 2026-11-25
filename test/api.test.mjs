@@ -241,6 +241,7 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const expansion=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(a.code).state);
   const farmer=expansion.farms[a.state.me.id];
   farmer.coins=1000;farmer.land[7]={kind:'garden',fence:'bamboo'};
+  farmer.coop=2;farmer.land[6]={kind:'coop',fence:'white'};
   farmer.wellness={water:100,food:100,stamina:100,at:unixNow(),until:{},restUntil:0};
   db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(expansion),a.code);
   const extend={action:'upgradeGarden',index:7,requestId:crypto.randomUUID()};
@@ -258,6 +259,13 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   assert.equal(reloaded.state.me.coins,880);
   const observer=await api('state',null,joinedAgain);
   assert.equal(observer.state.neighbors.find(farm=>farm.id===a.state.me.id).extraPlots[highId].kind,'wheat');
+  const coopUpgrade={action:'upgradeParcelCoop',index:6,requestId:crypto.randomUUID()};
+  const coopResults=await Promise.all([api('action',coopUpgrade,a),api('action',coopUpgrade,a)]);
+  assert.ok(coopResults.every(result=>result.status===200&&result.state.me.coins===720));
+  const savedCoop=await api('state',null,a);
+  assert.equal(savedCoop.state.me.land[6].coopLevel,2);
+  assert.equal(savedCoop.state.me.land[6].fence,'white');
+  assert.equal((await send(a,'upgradeParcelCoop',{index:6})).status,400);
   db.close();
 });
 

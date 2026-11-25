@@ -1,5 +1,7 @@
 # Gameplay hiện tại — tài liệu tham chiếu
 
+Chuồng phụ có thể nâng riêng từ 2 lên 4 chỗ tại Nông trại → Đất, giá 160 xu và yêu cầu chuồng chính cấp 2. Save cũ giữ nguyên cấp 1; xem [phạm vi và kiểm chứng](PARCEL_COOP_UPGRADE_V1.md).
+
 Cập nhật 25/11/2026: **Mục tiêu tiếp theo** hướng dẫn vụ đầu hoặc ghim nâng công trình. Có thể đổi/bỏ ghim; nút chỉ dẫn đường, bạn vẫn xác nhận hành động. Lựa chọn lưu theo vườn trên thiết bị, chưa đồng bộ sang thiết bị khác. Xem [chi tiết V1](NEXT_GOAL_V1.md).
 
 Đối chiếu ngày 21/11/2026, source commit nền `d493aea`. Tài liệu này mô tả **cơ chế đang có trong source**, không cam kết mọi môi trường production đã deploy cùng commit. Các ý tưởng tương lai nằm riêng trong [strategy](GAME_PRODUCT_STRATEGY.md) và [roadmap](GAME_DEVELOPMENT_ROADMAP.md).

@@ -44,6 +44,8 @@ Bạn có thể dành xu mở chuồng, thêm luống, nâng kho hoặc tích đ
 
 Xây chuồng rồi mới đón vật nuôi; cho ăn để con lớn và tạo sản phẩm. Lần thu đầu cần cả thời gian lớn lẫn một kỳ sản phẩm. **Lợn/thỏ xuất chuồng một lần**, các con như gà/bò/cừu cho sản phẩm lặp kỳ. Đọc số chỗ của đúng chuồng đang chọn.
 
+Chuồng phụ ban đầu có 2 chỗ. Vào **Nông trại → Đất**, chọn ô chuồng và nâng lên **4 chỗ với 160 xu** khi chuồng chính đạt cấp 2. Mỗi chuồng phụ nâng riêng; nâng chuồng chính không tự mở thêm chỗ tại các ô phụ.
+
 Ao nuôi cần thả giống và cho lứa đó ăn. Ao chính có sáu chỗ giống, ao thêm hai chỗ. Bạn cũng có thể câu ở Hồ làng: chờ cá cắn rồi kéo trong thời gian cho phép; dông không cho bắt đầu lượt câu mới.
 
 Xưởng mở thêm cây/công thức. Chế tạo dùng nguyên liệu đang có, không phải tự sinh nguyên liệu hay mở khóa mọi giống ngay khi xây xưởng.

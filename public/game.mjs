@@ -1,6 +1,6 @@
 import {addVillageIncome,advanceVillage,contributeVillage,hasVillageProject,recordVillageTheft,startVillageSecurity,villageLevels,villageSnapshot,villageTheftsLeft} from './village.mjs';
 import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
-import {coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
+import {parcelCoopUpgrade,coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
@@ -1060,7 +1060,7 @@ function applyAction(room,id,input,now,catchRoll){
     farm.gardenDecor=owned;
     return 'Đã đặt '+name+' ở '+gardenDecorSpots[target].name.toLowerCase()+'.';
   }
-  if(action==='buyLand'||action==='buildLand'||action==='decorate'||action==='upgradeGarden'){
+  if(action==='buyLand'||action==='buildLand'||action==='decorate'||action==='upgradeGarden'||action==='upgradeParcelCoop'){
     const land=getLand(farm);
     const inGrid=Number.isInteger(index)&&index>=0&&index<lotCount;
     if(action==='decorate'){
@@ -1077,6 +1077,16 @@ function applyAction(room,id,input,now,catchRoll){
       return item==='none'?'Đã gỡ hàng rào trang trí.':'Đã đặt hàng rào '+fences[item].name.toLowerCase()+'.';
     }
     check(inGrid,'Ô đất không tồn tại.');
+    if(action==='upgradeParcelCoop'){
+      const upgrade=parcelCoopUpgrade(farm,index);
+      check(upgrade,'Hãy chọn ô đất đã xây chuồng.');
+      check(upgrade.next,'Chuồng phụ đã đạt sức chứa tối đa.');
+      check(!upgrade.reason,upgrade.reason);
+      spend(farm,upgrade.next.cost);
+      land[index]={...land[index],coopLevel:upgrade.level+1};farm.land=land;
+      record(farm,now,'Nâng chuồng ở ô '+(index+1)+' lên '+upgrade.next.capacity+' chỗ.');
+      return 'Chuồng ở ô '+(index+1)+' đã có '+upgrade.next.capacity+' chỗ.';
+    }
     if(action==='upgradeGarden'){
       check(land[index]?.kind==='garden','Hãy chọn mảnh đất đã làm vườn.');
       check(land[index].expanded!==true,'Vườn đã có đủ 6 ô trồng.');

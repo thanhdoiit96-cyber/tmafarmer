@@ -69,7 +69,17 @@ export function pondCapacity(farm,index){
 }
 export function coopCapacity(farm,lot){
   if(lot===undefined)return farm.coop*2;
-  return getLand(farm)[lot]?.kind==='coop'?2:0;
+  const entry=getLand(farm)[lot];
+  return entry?.kind==='coop'?parcelCoopLevels[parcelCoopLevel(entry)-1].capacity:0;
+}
+export const parcelCoopLevels=[{capacity:2},{capacity:4,cost:160,coop:2}];
+export const parcelCoopLevel=entry=>Math.min(parcelCoopLevels.length,Math.max(1,Number.isSafeInteger(entry?.coopLevel)?entry.coopLevel:1));
+export function parcelCoopUpgrade(farm,index){
+  const entry=getLand(farm)[index];
+  if(entry?.kind!=='coop')return null;
+  const level=parcelCoopLevel(entry),next=parcelCoopLevels[level];
+  return {level,capacity:parcelCoopLevels[level-1].capacity,next,
+    reason:next&&(farm.coop??0)<next.coop?'Cần chuồng chính cấp '+next.coop+'.':''};
 }
 export function fenceAt(farm,index){
   if(index===-2)return farm.decor?.[-2]??farm.decor?.[-3];

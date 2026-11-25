@@ -644,6 +644,8 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 @media(max-width:760px) and (orientation:portrait){.control-panel{max-height:max(400px,var(--game-height,450px))}}
 
 .care-overview{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:11px;color:#59482e;padding:7px 0}
+.parcel-coop-upgrade{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:8px 0;padding:6px;border:1px solid #cbb991;border-radius:6px;font-size:10px;color:#695638}
+.parcel-coop-upgrade .btn{font-size:10px;padding:5px 7px}
 .husbandry-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:5px 0 7px;align-items:start}
 .husbandry-card{min-width:0;padding:6px;border:1px solid #b99a67;border-radius:7px;background:#f1e3c2;box-shadow:0 1px #b49a70}
 .husbandry-card header{display:flex;align-items:center;gap:7px}.husbandry-card header>div{flex:1;min-width:0}
