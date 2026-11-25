@@ -340,9 +340,11 @@ export function newRoom(time) {
 }
 export const villageOwner=room=>room.ownerId??Object.keys(room.farms)[0];
 function eachWeather(room, from, to, visit) {
-  for (let t=Math.max(from, to-4*gameDay);t<to;) {
+  // Replay from the saved timestamp, not a moving window near the return time.
+  // Growth callbacks can stop once ripe; fed animals/ponds have finite windows.
+  for (let t=from;t<to;) {
     const next=Math.min(to,nextSlot(room,t));
-    visit(weatherAt(room,t),t,next);
+    if(visit(weatherAt(room,t),t,next)===false)break;
     t=next;
   }
 }
@@ -366,7 +368,7 @@ export function projectPlot(room, plot, now) {
   if (result.progress>=cropGoal(plot)) return result;
   eachWeather(room,plot.at,now,(w,from,to)=>{
     const goal=cropGoal(plot);
-    if(result.progress>=goal) return;
+    if(result.progress>=goal) return false;
     const dampUntil=afterRainUntil(room,from);
     for(let t=from;t<to&&result.progress<goal;) {
       const wet=w.wet||t<plot.wetUntil;

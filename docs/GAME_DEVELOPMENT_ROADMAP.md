@@ -174,4 +174,5 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | UX-GAME-02 | Thay danh sách bằng ô ảnh giống/vật nuôi; ghim gọn chỉ trong Việc cần làm; sửa va chạm công trình | [Bố cục, kiểm chứng và giới hạn Safari](GAME_UI_V2.md) |
 | 25/11/2026 | P1.2 — cây trồng | Hoàn thiện ETA theo tốc độ hiện tại và giải thích sản lượng; chưa deploy | [Phạm vi và kiểm chứng](CROP_OUTLOOK_V1.md) |
 | 25/11/2026 | UX-HUSBANDRY-01 | Hoàn thiện UI Đất/Chuồng, Ao và mẫu hàng rào; chưa deploy | [Bố cục, ảnh và kiểm chứng](HUSBANDRY_UI_V1.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tiếp theo P1.3 kiểm tra quay lại sau thời gian dài; ETA vật nuôi/thủy sản chưa nằm trong đợt này; chưa mở thanh toán |
+| 25/11/2026 | P1.3 — kiểm tra | Hoàn thành ma trận nghỉ dài và sửa tính bù thời tiết; chính sách bảo hộ chưa đổi | [Kết quả, giới hạn và đề xuất](LONG_ABSENCE_AUDIT_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | P1.3 kiểm tra đã hoàn thành; tiếp theo phác thảo nghỉ dưỡng/P1.4 để duyệt trước khi đổi luật; ETA vật nuôi/thủy sản còn backlog; chưa mở thanh toán |

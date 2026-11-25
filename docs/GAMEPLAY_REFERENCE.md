@@ -1,5 +1,7 @@
 # Gameplay hiện tại — tài liệu tham chiếu
 
+Kiểm tra nghỉ dài 8 giờ–7 ngày đã sửa lỗi tính bù thời tiết chỉ xét 32 giờ cuối: cây nay dùng đúng thời tiết từ timestamp đã lưu và dừng khi chín. Không thay tuổi, bảo hộ hay thức ăn; xem [báo cáo P1.3](LONG_ABSENCE_AUDIT_V1.md).
+
 Chuồng phụ có thể nâng riêng từ 2 lên 4 chỗ tại Nông trại → Đất, giá 160 xu và yêu cầu chuồng chính cấp 2. Save cũ giữ nguyên cấp 1; xem [phạm vi và kiểm chứng](PARCEL_COOP_UPGRADE_V1.md).
 
 Cập nhật 25/11/2026: **Mục tiêu tiếp theo** hướng dẫn vụ đầu hoặc ghim nâng công trình. Có thể đổi/bỏ ghim; nút chỉ dẫn đường, bạn vẫn xác nhận hành động. Lựa chọn lưu theo vườn trên thiết bị, chưa đồng bộ sang thiết bị khác. Xem [chi tiết V1](NEXT_GOAL_V1.md).
