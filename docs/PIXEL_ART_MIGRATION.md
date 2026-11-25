@@ -292,3 +292,9 @@ Added a two-cell 32 × 32 animal-task atlas: bamboo basket with egg/milk/wool fo
 Masters and exact prompts: `assets/soil-animal-ui-v1.json`, `assets/soil-dry-v1-source.png`, `assets/animal-task-icons-v1-source.png`. Export: `py scripts/normalize-soil-animal-ui-v1.py`. Runtime: `public/pixel/soil-dry-v1.png`, `public/pixel/animal-task-icons-v1.png`. Integer zoom: `assets/soil-animal-ui-v1-preview.png`. Actual renderer comparison: `assets/soil-animal-ui-v1-canvas.png`; game captures: `assets/soil-dry-v1-runtime.png`, `assets/animal-task-icons-v1-runtime.png`.
 
 Verified real Canvas field/coop views at 640 × 384; both PNGs have hard alpha, padding and correct cells; ready/hungry tasks resolve from a real farm snapshot. All 128 tests, syntax checks, asset audit and production build pass; both new assets return HTTP 200 from the packaged worker.
+
+### Needs-tilling task icon V1
+
+Replaced the generic plus mark for compacted empty plots with an authored Vietnamese hoe: warm wooden handle, perpendicular muted-steel blade and a small earth clod. Shared 32 × 32 hard-alpha PNG serves the map, task list and till action button. Retains centered plot placement, 14-unit art and the approved translucent circular badge C; compaction rules and work animation are unchanged.
+
+Source/prompt: `assets/till-task-icon-v1.json`, `assets/till-task-icon-v1-source.png`. Export: `py scripts/normalize-till-task-v1.py`. Runtime: `public/pixel/till-task-icon-v1.png`. Integer-zoom preview: `assets/till-task-icon-v1-preview.png`; real farm capture: `assets/till-task-icon-v1-runtime.png`. Verified all six compacted plots resolve to the till icon from a real snapshot; native Canvas, asset audit, syntax, 128 tests and production build pass.

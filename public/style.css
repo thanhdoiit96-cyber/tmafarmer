@@ -633,4 +633,5 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .actions button .care-icon{margin-right:5px}
 .care-icon-animalHarvest,.care-icon-feed{background-image:url('/pixel/animal-task-icons-v1.png');background-size:48px 24px}
 .care-icon-animalHarvest{background-position:0 0}.care-icon-feed{background-position:-24px 0}
+.care-icon-till{background-image:url('/pixel/till-task-icon-v1.png');background-size:24px 24px;background-position:0 0}
 .task-card .task-mark:has(.care-icon){background:transparent;border-radius:0}

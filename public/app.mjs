@@ -88,7 +88,7 @@ const gardenFor=gardenForPlot;
 const plotNumber=index=>gardenFor(index)<0?mainPlotSlot(index)+1:gardenPlotSlot(index)+1;
 const btn=(label,attrs='',kind='',disabled=false)=>'<button type="button" class="btn '+kind+'" '+attrs+(disabled?' disabled':'')+'>'+label+'</button>';
 const careIcon=key=>'<span class="care-icon care-icon-'+key+'" aria-hidden="true"></span>';
-const act=(label,action,item='',index='',kind='',disabled=false,qty=1)=>btn(({harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]?careIcon({harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]):'')+label.replace(/^(💧|🧴) /u,''),`data-action="${action}" data-item="${item}" data-index="${index}" data-qty="${qty}"`,kind,disabled);
+const act=(label,action,item='',index='',kind='',disabled=false,qty=1)=>btn(({till:'till',harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]?careIcon({till:'till',harvest:'harvest',water:'water',weed:'weeds',spray:'pests'}[action]):'')+label.replace(/^(💧|🧴) /u,''),`data-action="${action}" data-item="${item}" data-index="${index}" data-qty="${qty}"`,kind,disabled);
 const nice=(key)=>goods[key].icon+' '+goods[key].name;
 function aquaIllustration(item){
   const kind=goods[item].illustration;

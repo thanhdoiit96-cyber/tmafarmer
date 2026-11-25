@@ -34,6 +34,7 @@ const gardenFenceArt=load('/pixel/garden-fences-v1.png');
 const careIconArt=load('/pixel/crop-care-icons-v1.png?v=3');
 const animalTaskArt=load('/pixel/animal-task-icons-v1.png');
 const drySoilArt=load('/pixel/soil-dry-v1.png');
+const tillTaskArt=load('/pixel/till-task-icon-v1.png');
 const plotGrassArt=load('/pixel/plot-edge-grass-v2.png');
 const yardPetArt=Object.fromEntries(yardPets.filter(p=>p.source).map(p=>[p.species,load(p.source)]));
 const sceneBackgroundArt=Object.fromEntries(Object.entries(sceneBackgroundAtlases).map(([key,value])=>[key,load(value.source)]));
@@ -73,7 +74,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([drySoilArt.decode(),animalTaskArt.decode(),careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([tillTaskArt.decode(),drySoilArt.decode(),animalTaskArt.decode(),careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -1528,8 +1529,8 @@ export function atmosphere(c,t,w,reduce,daylight=0,{width,height}=size){
 
 export function drawTask(c,x,y,style){
   const animalFrame={animalHarvest:0,feed:1}[style.icon];
-  const art=animalFrame!==undefined?animalTaskArt:careIconArt;
-  const frame=animalFrame??{harvest:0,pests:1,weeds:2,water:3}[style.icon];
+  const art=style.icon==='till'?tillTaskArt:animalFrame!==undefined?animalTaskArt:careIconArt;
+  const frame=style.icon==='till'?0:animalFrame??{harvest:0,pests:1,weeds:2,water:3}[style.icon];
   if(frame!==undefined&&dim(art)){
     c.save();c.imageSmoothingEnabled=false;
     // Approved option C: a restrained, translucent circular badge. The thin

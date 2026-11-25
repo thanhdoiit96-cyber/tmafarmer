@@ -11,7 +11,7 @@ export const taskStyles={
 export function taskIcon(task){
   if(task.kind==='animal')return task.type==='ready'?'animalHarvest':task.type==='urgent'?'feed':null;
   if(task.kind!=='plot')return null;
-  return {'Thu hoạch':'harvest','Nhổ cỏ':'weeds','Trị sâu':'pests','Tưới nước':'water'}[task.title]??null;
+  return {'Cuốc đất':'till','Thu hoạch':'harvest','Nhổ cỏ':'weeds','Trị sâu':'pests','Tưới nước':'water'}[task.title]??null;
 }
 export function farmTasks(snapshot,now=snapshot.now){
   const {me,weather}=snapshot, tasks=[];

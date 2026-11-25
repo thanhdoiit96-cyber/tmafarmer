@@ -1,0 +1,14 @@
+{
+  "tool": "built-in imagegen",
+  "prompt": "Single production pixel-art farming UI icon on real transparent alpha background, no panel no badge no text no letters no white outline. A recognizable traditional Vietnamese farmer's HOE (cuoc): honey-brown wooden long handle diagonally from bottom-left to upper-right, broad short dark muted steel flat rectangular blade mounted PERPENDICULAR at the top end (like an inverted L, clearly a hoe not a pickaxe or shovel). The blade has a pale blue-grey highlight upper-left and deep teal-brown underside, thin warm dark outlines. Tiny ochre soil clod beside blade communicates tilling but keep the tool large and dominant. Cozy rounded hand-pixelated sprite style, warm wood, simple bold silhouette readable at 24x24, consistent with existing terracotta feed bowl and bamboo basket UI icons. Entire tool visible, centered square canvas, transparent padding 12 percent, no landscape no cast shadow no glow.",
+  "source": "docs/assets/till-task-icon-v1-source.png",
+  "runtime": "public/pixel/till-task-icon-v1.png",
+  "size": [
+    32,
+    32
+  ],
+  "task": "Cuốc đất",
+  "icon": "till",
+  "worldSize": 14,
+  "badge": "approved C"
+}
