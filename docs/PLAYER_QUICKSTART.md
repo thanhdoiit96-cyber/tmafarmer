@@ -1,5 +1,7 @@
 # Bắt đầu chơi Vườn Mùa Vui
 
+Cập nhật 25/11/2026: **Mục tiêu tiếp theo** hướng dẫn vụ đầu hoặc ghim nâng công trình. Có thể đổi/bỏ ghim; nút chỉ dẫn đường, bạn vẫn xác nhận hành động. Lựa chọn lưu theo vườn trên thiết bị, chưa đồng bộ sang thiết bị khác. Xem [chi tiết V1](NEXT_GOAL_V1.md).
+
 Bản hướng dẫn cho gameplay trong source ngày 21/11/2026. Một số bảng chỉ xuất hiện sau khi mở công trình. Xem [gameplay đầy đủ](GAMEPLAY_REFERENCE.md) nếu cần hiểu các công thức và giới hạn.
 
 ## 1. Chọn nơi chơi

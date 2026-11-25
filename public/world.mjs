@@ -234,8 +234,8 @@ export function createWorld(root, onInteract, landscape) {
       return hit&&(!best||distance<best.distance)?{p,distance}:best;
     },null)?.p;
   }
-  function approach(type,index,callback){
-    const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index))??[];
+  function approach(type,index,callback,{style}={}){
+    const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index)&&(style===undefined||p.style===style))??[];
     const dock=points.sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
     if(!dock)return false;
     holdAnimal(dock);

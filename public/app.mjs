@@ -5,6 +5,7 @@ import {avatarDetails,avatarKey,ageCharacterAtlases} from './avatar-models.mjs';
 import {villageLevels} from './village.mjs';
 import {restSeconds,vitals,wellnessAt,workBlock,workCost} from './wellness.mjs';
 import {farmTasks,taskStyles,taskIcon} from './tasks.mjs';
+import {goalAfterAction,goalStorageKey,goalView,loadGoal,noGoal,pinBuilding,pinIntro,reconcileGoal} from './next-goal.mjs';
 import {coopCapacity,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotCount,gardenUpgradeCost,getLand,landTypes,lotPrice,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondOffset} from './land.mjs';
 import {aquatic,aquaRequirement,aquaSupplyRequirement,pondFood,pondReady,pondYield,visiblePondBatches} from './aqua.mjs';
 import {createSceneChat} from './scene-chat.mjs';
@@ -83,6 +84,7 @@ const workshopTabs={food:'Thực phẩm',tools:'Công cụ',materials:'Vật tư
 const world=createWorld(worldFrame,interactWithWorld,landscape);
 const sceneChat=createSceneChat({api,world,showToast,context:()=>state&&{session,player:state.me.id,area:tab==='neighbors'&&neighborId?'visit':tab,host:neighborId}});
 let tasks=[];
+let pinnedGoal, pinnedGoalView;
 const lotLabel=lot=>lot?.kind==='empty'?'Đất trống':landTypes[lot?.kind]?.name??'Chưa mua';
 const gardenFor=gardenForPlot;
 const plotNumber=index=>gardenFor(index)<0?mainPlotSlot(index)+1:gardenPlotSlot(index)+1;
@@ -698,7 +700,7 @@ function renderTasks(farm,now){
     '<div class="actions">'+shortcuts+'</div></section>';
   const list=tasks.length?'<div class="task-list">'+tasks.map((task,index)=>'<button class="task-card" data-task="'+index+'" data-tone="'+task.type+'"><span class="task-mark">'+(taskIcon(task)?careIcon(taskIcon(task)):taskStyles[task.type].mark)+'</span><span><strong>'+task.title+'</strong><small>'+task.label+'</small></span><span class="task-arrow" aria-hidden="true">›</span></button>').join('')+'</div>':
     '<p>Vườn đang ổn. Bạn có thể dạo hồ hoặc sang chợ.</p>';
-  return '<h2>Việc cần làm</h2>'+quick+renderJournal(farm)+list;
+  return '<h2>Việc cần làm</h2>'+quick+'<details class="next-goal-journal" data-panel-fold="journal"><summary>Sổ việc hôm nay · '+farm.journal.done.length+'/'+dayGoals.length+'</summary>'+renderJournal(farm)+'</details>'+list;
 }
 function showQuickGarden(action){
   const farm=state.me, targets=gardenHelperTargets(farm,action,state.weather,currentTime());
@@ -1039,7 +1041,61 @@ function showWeather(){
   modal('Thời tiết','<div class="row"><strong>'+weather.name+'</strong><span class="weather-icon">'+weather.icon+'</span></div><p>'+weather.note+'</p>'+
     '<div class="weather-next row"><p>Dự báo sau <strong data-clock="weather">'+duration(next-currentTime())+'</strong></p><strong>'+forecast.icon+' '+forecast.name+'</strong></div><p>'+forecast.note+'</p>');
 }
-const focusSelector='[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+function savePinnedGoal(goal){
+  pinnedGoal=goal;
+  store.write(goalStorageKey(state,session),goal);
+}
+function renderNextGoal(now){
+  const snapshot={...state,now};
+  const key=goalStorageKey(snapshot,session),raw=store.read(key);
+  pinnedGoal=reconcileGoal(loadGoal(raw,snapshot),snapshot);
+  if(JSON.stringify(raw)!==JSON.stringify(pinnedGoal))store.write(key,pinnedGoal);
+  pinnedGoalView=goalView(pinnedGoal,snapshot);
+  const view=pinnedGoalView,zone=$('#next-goal');
+  const labels=['Gieo','Tưới','Thu','Bán'];
+  const stages=view?.stage===undefined?'':'<div class="next-goal-stages" aria-label="'+(view.stage===4?'Đã hoàn thành vòng mùa vụ':'Bước hiện tại: '+labels[view.stage])+'">'+labels.map((label,index)=>'<span class="'+(index<view.stage?'done':index===view.stage?'current':'')+'">'+(index<view.stage?'✓ ':'')+label+'</span>').join('')+'</div>';
+  const html=view?'<article class="next-goal-card"'+(view.blocked?' data-blocked="true"':'')+'><div class="next-goal-heading"><span>Mục tiêu đang ghim</span>'+btn('Đổi / Bỏ','data-goal="choose" aria-label="Đổi hoặc bỏ ghim mục tiêu"','subtle')+'</div><h2>'+escape(view.title)+'</h2><p class="next-goal-copy">'+escape(view.copy)+'</p>'+stages+'<p class="next-goal-meta">'+escape(view.meta)+'</p><div class="next-goal-actions">'+btn(escape(view.cta),'data-goal="go"','primary')+btn('Chi tiết','data-goal="detail"','subtle')+'</div></article>':
+    '<div class="next-goal-empty"><p>Chưa ghim mục tiêu. Bạn vẫn có thể làm các việc trong vườn.</p>'+btn('Chọn mục tiêu','data-goal="choose"','subtle')+'</div>';
+  if(zone.innerHTML!==html)zone.innerHTML=html;
+}
+function showGoalChoices(){
+  const choices=['workshop','coop','barn','field'].map(key=>{
+    const step=buildingUpgrade(state.me,key);
+    return btn(escape(buildings[key].name)+(step.level>=step.max?' · Đã tối đa':' cấp '+(step.level+1)),
+      'data-goal="building" data-item="'+key+'"','subtle',step.level>=step.max);
+  }).join('');
+  modal('Mục tiêu của bạn','<p>Chỉ ghim một mục tiêu. Đổi hoặc bỏ ghim không xóa tiến trình nông trại.</p><p>Lựa chọn được lưu theo vườn trên thiết bị này, tách riêng vườn thử và làng online.</p><div class="goal-choices">'+btn('Vòng lúa mì · Gieo → Chăm → Thu → Bán','data-goal="intro"','primary')+choices+btn('Bỏ ghim · Chơi tự do','data-goal="unpin"','subtle')+'</div>');
+}
+function goToPinnedGoal(){
+  // Refresh the destination from current state, never execute the farm action.
+  renderNextGoal(currentTime());
+  const route=pinnedGoalView?.route;
+  if(!route)return;
+  if(route.kind==='choose'){showGoalChoices();return;}
+  if(route.kind==='weather'){showWeather();return;}
+  if(route.kind==='stock'){
+    stockTab='produce';stockPage=0;panel='stock';render();reveal('#side');return;
+  }
+  if(route.kind==='building'){
+    panel='buildings';render();
+    const button=panelBody.querySelector('[data-action="upgrade"][data-item="'+route.key+'"]');
+    if(button)reveal('[data-action="upgrade"][data-item="'+route.key+'"]');else reveal('#side');
+    return;
+  }
+  if(route.kind==='plot'){
+    selected=route.index;plotGroup=gardenFor(selected);goTo('field');
+    if(!world.approach('plot',selected,()=>reveal('#tools')))reveal('#tools');
+    return;
+  }
+  if(route.kind==='field'){goTo('field');reveal('#board');return;}
+  if(route.kind==='seed'||route.kind==='sell'){
+    const seed=route.kind==='seed';marketPane=seed?'supplies':'sales';
+    marketQueries[marketPane]='lúa mì';if(seed)supplyGroup='seeds';
+    goTo('market');
+    if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
+  }
+}
+const focusSelector='[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector)) return '';
@@ -1067,6 +1123,7 @@ function render(arrival) {
   if(!farm.plotIndexes.includes(selected)){selected=0;plotGroup=-1;}
   lastPanelTime=now;
   tasks=farmTasks(state,now);
+  renderNextGoal(now);
   renderHud(farm,now);
   const [,title,description]=tabs[tab];
   const selectedNeighbor=tab==='neighbors'?state.neighbors.find(n=>n.id===neighborId):undefined;
@@ -1335,6 +1392,8 @@ async function perform(input) {
   busy=true;
   const credentials=session;
   const previousFarm=state.me, actionTab=tab, actionNeighbor=neighborId;
+  const previousGoalKey=goalStorageKey(state,credentials),previousGoalRaw=store.read(previousGoalKey);
+  const previousGoal=loadGoal(previousGoalRaw,state);
   let updateAfter=false;
   try {
     let message;
@@ -1374,6 +1433,9 @@ async function perform(input) {
       demo=updated;
       store.write(demoKey,demo);
       updateDemo();
+    }
+    if(JSON.stringify(store.read(previousGoalKey))===JSON.stringify(previousGoalRaw)){
+      store.write(previousGoalKey,goalAfterAction(previousGoal,input,previousFarm,state.me));
     }
     render();
     if(!['removeMember','villageGoods','hireGardenHelper'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
@@ -1478,7 +1540,16 @@ document.addEventListener('click',async e=>{
   const el=e.target.closest('button');
   if(!el) return;
   const d=el.dataset;
-  if('guideArea' in d&&Object.hasOwn(tabs,d.guideArea)){
+  if('goal' in d){
+    if(!state)return;
+    if(busy){showToast('Hãy chờ thao tác hiện tại hoàn tất.');return;}
+    if(d.goal==='choose')showGoalChoices();
+    else if(d.goal==='unpin'){savePinnedGoal(noGoal());dialog.close();render();}
+    else if(d.goal==='intro'){savePinnedGoal(pinIntro(state));dialog.close();render();}
+    else if(d.goal==='building'&&Object.hasOwn(buildings,d.item)){savePinnedGoal(pinBuilding(state.me,d.item));dialog.close();render();}
+    else if(d.goal==='go')goToPinnedGoal();
+    else if(d.goal==='detail')modal('Mục tiêu của bạn','<p>'+escape(pinnedGoalView?.copy??'Chọn một mục tiêu để theo dõi.')+'</p><p>Tiến độ dựa trên thao tác thành công và tình trạng vườn. Mục tiêu được lưu riêng theo vườn trên thiết bị này. Bạn có thể đổi hoặc bỏ ghim mà không mất tiến trình nông trại.</p><p>Không có phần thưởng mới; xu và XP vẫn theo các thao tác và Sổ việc hiện có.</p>');
+  }else if('guideArea' in d&&Object.hasOwn(tabs,d.guideArea)){
     const targetPanel=d.guidePanel==='ponds'?'ponds':'area';
     goTo(d.guideArea,undefined,targetPanel);
     reveal('.control-panel');

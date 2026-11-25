@@ -635,3 +635,21 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .care-icon-animalHarvest{background-position:0 0}.care-icon-feed{background-position:-24px 0}
 .care-icon-till{background-image:url('/pixel/till-task-icon-v1.png');background-size:24px 24px;background-position:0 0}
 .task-card .task-mark:has(.care-icon){background:transparent;border-radius:0}
+#next-goal{margin-bottom:10px}
+.next-goal-card{padding:11px;border:1px solid #d3dabb;border-radius:11px;background:linear-gradient(145deg,#f2f5e6,#fffaf0);box-shadow:inset 3px 0 #8aab70}
+.next-goal-card[data-blocked="true"]{border-color:#dfcda7;box-shadow:inset 3px 0 #b88e4b;background:linear-gradient(145deg,#faf0d9,#fffaf0)}
+.next-goal-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.next-goal-heading>span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;color:#55704b}
+.next-goal-heading .btn{border:0;background:none;padding:3px 0;min-height:32px;color:#687357;font-size:10px}
+#next-goal h2{font:800 15px/1.3 var(--body,system-ui,sans-serif);margin:0 0 6px;letter-spacing:0;color:#2c4b34}
+#next-goal .next-goal-copy{font-size:11px;line-height:1.5;margin:0 0 8px}
+.next-goal-stages{display:flex;gap:4px;margin:8px 0}
+.next-goal-stages span{flex:1;text-align:center;padding:5px 1px;border-radius:5px;background:#e7e7d7;color:#747963;font-size:10px}
+.next-goal-stages .done{background:#dbe8cc;color:#43613b}.next-goal-stages .current{background:#365b40;color:#fff8e5}
+#next-goal .next-goal-meta{font-size:10px;line-height:1.5;color:#7a6c4f;margin:6px 0 8px;overflow-wrap:anywhere}
+.next-goal-actions{display:flex;gap:7px;align-items:center}.next-goal-actions .primary{flex:1;min-height:40px}.next-goal-actions .subtle{background:none;border-color:transparent;text-decoration:underline;font-size:10px;min-height:40px}
+.next-goal-empty{border:1px dashed #d1d8ba;padding:10px;border-radius:10px}.next-goal-empty p{margin-bottom:7px}.next-goal-empty .btn{width:100%}
+.goal-choices{display:grid;gap:8px;margin-top:12px}.goal-choices .btn{min-height:44px;text-align:left}
+.next-goal-journal{margin:8px 0 12px}.next-goal-journal>summary{font-size:11px;font-weight:700;color:#5a654c;cursor:pointer}
+@media(max-width:760px){.next-goal-heading .btn,.next-goal-actions .btn,.next-goal-empty .btn{min-height:44px}#next-goal .next-goal-copy{font-size:12px}}
+@media(max-width:760px) and (orientation:portrait){.control-panel{max-height:max(400px,var(--game-height,450px))}}

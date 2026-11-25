@@ -5,7 +5,7 @@ Ngày lập: 21/11/2026. Cơ sở: [phân tích sản phẩm](GAME_PRODUCT_STRAT
 ## 1. Trạng thái và nguyên tắc
 
 - `DOC-01` **Đã hoàn thành:** rà source, khảo sát đối chiếu, định hướng, gameplay, catalog và hướng dẫn. Chỉ tài liệu/công cụ xuất dữ liệu được bổ sung trong đợt này.
-- Tất cả hạng mục `P*` bên dưới **chưa triển khai**, trừ nền đã có được ghi riêng. Không hiểu roadmap là các tính năng đã lên production.
+- Đã hoàn thiện lát cắt P0.1 và nhãn liên quan P0.4: [Mục tiêu tiếp theo V1](NEXT_GOAL_V1.md). Phần còn lại vẫn thuộc backlog; chưa deploy production.
 - Giữ ưu tiên hình ảnh, bố cục, dễ hiểu và cảm giác chơi. Chỉ đo sản phẩm vừa đủ và kiểm tra vận hành cần thiết; không quay lại làm chiến dịch tối ưu sức tải toàn diện.
 - Mỗi sprint có một kết quả người chơi nhìn thấy được; hoàn thành các phần còn thiếu trước mở thêm nhánh.
 - Không thay hệ lịch 8 giờ, ID ô đất, avatar hoặc cấu trúc tiến trình cũ khi chưa có kế hoạch migration. Không xóa nông trại/đơn/vật nuôi của người chơi để làm sạch dữ liệu.
@@ -143,9 +143,29 @@ Không chọn hoàn thành sprint chỉ bằng “đã code xong”. Cần nghi�
 
 **P0.1 + P0.4**: dựng phác thảo một thẻ “Mục tiêu tiếp theo”, liên kết Việc cần làm và điều kiện mở khóa hiện có; thử với save mới và save cũ. Song song xác định event tối thiểu, chưa cần dashboard phức tạp. Sau khi duyệt phác thảo, hoàn thiện trọn flow trước khi chuyển sang P1 hoặc nội dung mới.
 
+### Lựa chọn hướng triển khai — 25/11/2026
+
+Sau khi đọc lại chiến lược và đối chiếu source, chọn **P0.1 + P0.4 làm đợt tiếp theo**, rồi P0.3 và P1.1. Đây là quyết định ưu tiên, chưa đánh dấu đã triển khai.
+
+Lý do: source đã có bảng Việc cần làm, Sổ việc hôm nay, trang Tiến độ và nút đi tới các khu vực; chưa thấy luồng ghim một mục tiêu cá nhân xuyên các bảng. Vì vậy cần nối những phần đang có thành một mục tiêu dễ theo, thay vì tạo thêm một bảng nhiệm vụ hoặc hệ thưởng khác. Đây là cải thiện trải nghiệm trực tiếp và là nền cho việc ghim món góp hàng ở P2.
+
+Phạm vi đợt đầu:
+
+1. Dựng phác thảo thẻ mục tiêu gọn trong vùng bảng tác vụ, không đặt một panel lớn che Canvas. Có bản desktop, điện thoại dọc và ngang để duyệt trước khi sửa UI.
+2. Người mới có gợi ý vòng gieo → tưới → thu → bán; người chơi cũ tự chọn/ghim mục tiêu phù hợp, có thể bỏ ghim. Đang chờ cây thì hiện trạng thái chờ và việc tùy chọn, không ép chuyển cảnh hoặc tự đổi mục tiêu.
+3. Tái sử dụng điều hướng và `world.approach()`; nút thẻ dẫn đến đúng bảng/đối tượng, không bỏ qua điều kiện vị trí hoặc tự thực hiện thao tác tiêu tài nguyên.
+4. Thống nhất nhãn ngày thực/ngày game, thời gian cơ sở/ước tính, cấp nông trại/cấp công trình và kho/túi. Mục tiêu hoàn thành dựa trên trạng thái/action thành công, không phải chỉ click nút.
+
+Nghiệm thu trọng tâm: không lặp thông tin với Sổ việc; không che lối chơi; mục tiêu tách theo vườn/demo/online và giữ đúng sau reload; người chơi cũ không bị bắt làm tutorial; không phát thưởng mới, không đổi kinh tế hoặc làm mất tiến trình. Phác thảo cần thể hiện cả lúc thiếu giống, kho đầy và đang chờ vụ chín.
+
+Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard đầy đủ, thay trộm/lão hóa, thêm cấp/giống, album, bộ trang trí mới và thanh toán. Chỉ ghi nhận bộ sự kiện tối thiểu cần dùng để đánh giá flow. Sau khi hoàn thiện luồng này mới chuyển sang chỉ dẫn mở khóa P0.3 và tóm tắt quay lại P1.1; P2–P3 vẫn là đích nội dung tiếp theo.
+
 ## 8. Nhật ký cập nhật
 
 | Ngày | ID | Trạng thái | Bằng chứng |
 | --- | --- | --- | --- |
 | 21/11/2026 | DOC-01 | Hoàn thành tài liệu | Strategy, roadmap, gameplay, catalog sinh từ source và quickstart |
-| Chưa bắt đầu | P0–P7 | Đề xuất | Chưa thay gameplay hoặc mở thanh toán |
+| 25/11/2026 | P0.1 + P0.4 | Đã chọn ưu tiên; chưa triển khai | Quyết định và phạm vi ở mục 7; bước đầu là dựng phác thảo |
+| 25/11/2026 | P0-DRAFT-01 | Phác thảo đã duyệt | [Prototype, desktop/mobile và các trạng thái](NEXT_GOAL_DRAFT_V1.md) |
+| 25/11/2026 | P0-GOAL-V1 | Hoàn thiện runtime, chưa deploy | [Phạm vi, ảnh và kiểm chứng](NEXT_GOAL_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | P0.3 là bước tiếp theo; chưa mở thanh toán |

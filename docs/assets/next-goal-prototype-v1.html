@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phác thảo P0 — Mục tiêu tiếp theo</title>
+<link rel="stylesheet" href="../../public/style.css">
+<style>
+body{margin:0;background:#f5f2e7;color:#293e2c;font-family:system-ui,sans-serif}
+.review-bar{background:#e5ddc5;border-bottom:1px solid #d0c4a4;padding:12px max(18px,calc((100% - 1090px)/2));font-size:12px;color:#61543c}
+.review-bar strong{display:block;font-size:13px;margin-bottom:8px}.review-controls{display:flex;gap:6px;flex-wrap:wrap}
+.review-controls button{border:1px solid #c9bea2;background:#f8f4e8;border-radius:20px;padding:7px 12px;font:inherit;cursor:pointer;min-height:36px}
+.review-controls button[aria-pressed="true"]{background:#35563f;border-color:#35563f;color:#fff8e7}
+.prototype{max-width:1100px;margin:auto;padding:18px 24px 28px}
+.proto-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:10px}.proto-brand{font-weight:800;font-size:18px;color:#2d5139}.proto-account{font-size:12px;background:#fffaf0;border:1px solid #e2d8bc;padding:8px 10px;border-radius:8px}
+.prototype h1{font-size:34px;line-height:1.1;margin:4px 0 6px}.prototype .eyebrow{font-size:10px}.proto-subtitle{color:#6e735d;font-size:13px;margin:0 0 16px}
+.proto-nav{display:flex;flex-wrap:wrap;gap:5px;padding:4px;background:#eae5d7;border:1px solid #ded7c3;border-radius:11px;margin-bottom:12px;width:fit-content}.proto-nav span{padding:8px 10px;font-size:12px;color:#56604a}.proto-nav .active{background:#35563f;color:#fff8e7;border-radius:7px}
+.proto-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;align-items:start}
+.proto-world{border:1px solid #3a503b;border-radius:14px;overflow:hidden;background:#768750;box-shadow:0 5px 16px #3548311a}
+.proto-world img{display:block;width:100%;height:auto;aspect-ratio:5/3;image-rendering:pixelated}
+.proto-map-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#293f30;color:#fff2cd;font-size:11px;gap:12px}.proto-map-footer small{display:block;margin-top:3px;color:#d0d8bd;font-size:10px}.proto-map-footer strong{font-size:12px}
+.proto-world-note{font-size:12px;color:#6f725f;line-height:1.6;padding:10px 1px}.proto-world-note strong{color:#425d3d}
+.goal-board{border:1px solid #dbd3bb;background:#fffdf4;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px #48412b0a}
+.proto-tabs{display:flex;gap:3px;background:#f0ebdb;border-bottom:1px solid #e3dac2;padding:7px}.proto-tabs span{flex:1;text-align:center;padding:8px 3px;font-size:11px;font-weight:700;color:#72745f}.proto-tabs .active{color:#305139;background:#dfe8d3;border-radius:7px}
+.goal-zone{padding:10px 10px 0}.goal-card{padding:12px;border:1px solid #d3dabb;border-radius:11px;background:linear-gradient(145deg,#f2f5e6,#fffaf0);box-shadow:inset 3px 0 #8aab70}
+.goal-card[data-tone="blocked"]{border-color:#dfcda7;box-shadow:inset 3px 0 #b88e4b;background:linear-gradient(145deg,#faf0d9,#fffaf0)}
+.goal-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.goal-kicker{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#55704b}
+.goal-menu{border:0;background:none;color:#6c725c;min-width:44px;min-height:32px;padding:5px 0;font-size:11px;text-align:right;cursor:pointer}
+.goal-title{margin:0 0 7px;font-size:16px;line-height:1.3;color:#2c4b34;font-weight:800}.goal-copy{font-size:12px;line-height:1.5;color:#666b54;margin:0 0 9px;min-height:36px}
+.goal-stage{display:flex;gap:4px;margin:9px 0}.goal-stage span{flex:1;text-align:center;padding:5px 2px;border-radius:5px;background:#e7e7d7;color:#7e826b;font-size:10px}.goal-stage .done{background:#dbe8cc;color:#43613b}.goal-stage .current{background:#365b40;color:#fff8e5}
+.goal-meta{display:flex;align-items:center;gap:6px;color:#7a6c4f;font-size:11px;line-height:1.45;margin:7px 0 9px}.goal-dot{flex:none;background:#b28e4f;width:6px;height:6px;border-radius:50%}
+.goal-actions{display:flex;align-items:center;gap:10px}.goal-actions .btn{min-height:40px;padding:8px 12px;flex:1;font-size:12px}.goal-actions .goal-link{background:none;border:0;padding:5px 0;color:#657253;font-size:11px;text-decoration:underline;cursor:pointer;min-height:40px}
+.goal-empty{border:1px dashed #d1d8ba;padding:14px;border-radius:10px;color:#6e755e;font-size:12px;line-height:1.5}.goal-empty .btn{display:block;width:100%;margin-top:9px;min-height:40px}
+.proto-body{padding:12px 10px 10px}.proto-body h2{font-size:13px;margin:0 0 8px}.proto-body .empty{font-size:11px;line-height:1.5;margin:0 0 11px;color:#7c806b;padding:10px;background:#f4f2e5;border-radius:7px}
+.proto-task{display:flex;align-items:center;gap:9px;padding:9px 8px;border:1px solid #e5dec7;border-radius:8px;font-size:11px;margin-bottom:8px}.proto-task small{display:block;color:#7e7e66;margin-top:3px;font-size:10px}.proto-task .care-icon{flex:none}.proto-task b{margin-left:auto;color:#8a7953;font-size:16px}
+.prototype .care-icon{background-image:url('../../public/pixel/crop-care-icons-v1.png')}
+.proto-journal{border-top:1px solid #e6dfcc;padding:10px 2px 0;margin-top:7px}.proto-journal summary{font-size:11px;font-weight:700;cursor:pointer;color:#5a654c}.proto-journal p{font-size:11px;line-height:1.6;color:#777a63;margin:9px 0 2px}.proto-journal ol{font-size:11px;line-height:1.9;padding-left:20px;color:#657254}
+.proto-annotation{margin:16px 0 0;font-size:12px;line-height:1.6;color:#777360}.proto-dialog{max-width:380px;width:calc(100% - 32px);border:1px solid #d0c3a1;border-radius:14px;padding:20px;background:#fffaf0;color:#344b34}.proto-dialog::backdrop{background:#26372c66}.proto-dialog h2{font-size:19px;margin-bottom:10px}.proto-dialog p{font-size:13px;line-height:1.6}.proto-dialog .btn{min-height:44px}.proto-dialog .choose-goal{display:block;width:100%;text-align:left;margin:8px 0;padding:11px}.proto-dialog .choose-goal small{display:block;font-weight:400;margin-top:5px}.prototype button:focus-visible,.review-bar button:focus-visible{outline:3px solid #a77a35;outline-offset:2px}
+@media(max-width:760px){.prototype{padding:13px 14px 22px}.proto-layout{grid-template-columns:1fr}.goal-board{width:100%}.proto-head{margin-bottom:13px}.proto-brand{font-size:16px}.prototype h1{font-size:29px}.proto-nav{width:100%;gap:1px}.proto-nav span{padding:8px 7px;font-size:11px}.proto-world-note{display:none}.goal-zone{padding:10px 10px 0}.goal-copy{min-height:0}.goal-actions .btn,.goal-actions .goal-link,.goal-menu{min-height:44px}.proto-account{font-size:11px}.proto-subtitle{font-size:12px;margin-bottom:10px}.proto-head{gap:5px}.goal-menu{min-width:54px}.proto-map-footer{padding:9px 10px}.review-bar{padding:10px 14px}.review-controls{gap:5px}.review-controls button{padding:6px 9px;font-size:11px}.proto-annotation{font-size:11px}}
+@media(orientation:landscape) and (max-width:950px) and (min-width:650px){.prototype{padding:10px 14px}.proto-layout{grid-template-columns:minmax(0,1fr) 290px}.proto-head{margin-bottom:8px}.prototype h1{font-size:24px}.proto-subtitle{margin-bottom:8px}.proto-nav{margin-bottom:8px}.goal-title{font-size:14px}.goal-copy{font-size:11px}.goal-stage{margin:6px 0}.proto-annotation{font-size:11px}}
+</style>
+<div class="review-bar"><strong>PHÁC THẢO P0 · MỤC TIÊU TIẾP THEO — CHƯA ÁP DỤNG VÀO GAME</strong><div class="review-controls" aria-label="Chọn trạng thái minh họa"></div></div>
+<main class="prototype">
+  <header class="proto-head"><span class="proto-brand">Vườn Mùa Vui</span><span class="proto-account">Vườn chơi thử · Lưu trên máy</span></header>
+  <p class="eyebrow">MỘT GÓC VƯỜN, MỘT NIỀM VUI</p><h1>Vườn nhà</h1><p class="proto-subtitle">Gieo hạt, chăm vườn và thu hoạch theo thời tiết.</p>
+  <nav class="proto-nav" aria-label="Khu vực minh họa"><span class="active">Vườn nhà</span><span>Nhà vườn</span><span>Chuồng trại</span><span>Chợ làng</span><span>Hàng xóm</span></nav>
+  <div class="proto-layout">
+    <div><section class="proto-world"><img id="scene" src="next-goal-v1-empty-scene.png" alt="Vườn nhà thực tế, không có thẻ mục tiêu đè trên bản đồ"><div class="proto-map-footer"><div><strong>Vườn nhà</strong><small>Click để di chuyển · WASD / phím mũi tên · E tương tác</small></div><span>Ngày game: 8 giờ thực</span></div></section><p class="proto-world-note"><strong>Giữ trọn bối cảnh.</strong> Mục tiêu nằm trong vùng tác vụ bên cạnh; trên điện thoại dọc, thẻ nằm dưới bản đồ.</p></div>
+    <aside class="goal-board" aria-label="Phác thảo vùng tác vụ">
+      <nav class="proto-tabs"><span class="active">Tổng quan</span><span>Nông trại</span><span>Làng</span></nav>
+      <div class="goal-zone" aria-live="polite"></div>
+      <div class="proto-body"><h2>Việc sẵn sàng</h2><div id="task-sample"></div><details class="proto-journal"><summary>Sổ việc hôm nay · <span id="journal-count">0/3</span></summary><p>Vẫn là Sổ việc đang có trong game; không tạo bộ thưởng mới cho thẻ mục tiêu.</p><ol><li>Chăm cây</li><li>Thu hoạch hay lấy sản phẩm</li><li>Bán nông sản hoặc giao đơn</li></ol><p>25 xu · 8 XP · Đổi ngày sau mỗi 8 giờ thực.</p></details></div>
+    </aside>
+  </div>
+  <p class="proto-annotation">Bản duyệt bố cục và trạng thái. Các số liệu là tình huống minh họa, không phải save đang chơi. Nút ở đây chỉ mô tả nơi sẽ đến; không thực hiện giao dịch, không ghi tiến trình và không rút ngắn mùa vụ.</p>
+</main>
+<dialog class="proto-dialog"><h2 id="dialog-title"></h2><div id="dialog-content"></div><button class="btn" data-close>Đóng</button></dialog>
+<script>
+const states={
+ plant:{label:'1 · Gieo',title:'Gieo lứa lúa mì đầu tiên',copy:'Chọn một ô trống và gieo 1 giống đang có.',stage:0,meta:'Trong túi có 5 giống lúa mì',cta:'Chọn ô trống',route:'Nhân vật sẽ đến ô đất trống gần nhất và mở bảng chọn giống. Chỉ khi bạn xác nhận gieo mới dùng một giống.',scene:'empty',task:null,journal:'0/3'},
+ water:{label:'2 · Tưới',title:'Tưới cho lứa lúa mì',copy:'Đất đang khô. Tưới để cây lớn thuận lợi hơn.',stage:1,meta:'Lúa mì · Ô 1 · Chưa tưới',cta:'Đến ô lúa mì',route:'Nhân vật sẽ đến Ô 1, mở bảng chăm sóc. Nút trên thẻ không tự tưới hoặc trừ thể lực.',scene:'young',task:'water',journal:'1/3'},
+ wait:{label:'3 · Đang chờ',title:'Chờ lúa mì đến kỳ thu',copy:'Đất đủ ẩm. Bạn có thể làm việc khác rồi quay lại.',stage:2,meta:'8 phút là thời gian cơ sở, không phải giờ thu chắc chắn',cta:'Xem dự báo',route:'Mở bảng dự báo thời tiết hiện có. Khi triển khai, thời gian ước tính phải lấy từ trạng thái thực; không chạy countdown giả.',scene:'young',task:null,journal:'1/3'},
+ harvest:{label:'4 · Đến kỳ thu',title:'Thu lứa lúa mì đầu tiên',copy:'Lúa mì đã chín. Còn đủ chỗ kho để nhận nông sản.',stage:2,meta:'Kho còn 30 chỗ · Mục tiêu vẫn đang ghim',cta:'Đến ô lúa mì',route:'Nhân vật sẽ đến Ô 1 và mở bảng thu hoạch. Chọn Thu hết hoặc Thu và giữ 1 giống theo nhu cầu.',scene:'ripe',task:'harvest',journal:'1/3'},
+ sell:{label:'5 · Bán',title:'Bán một phần lúa mì',copy:'Bạn đã thu vụ đầu. Bán một phần, giữ lại hàng nếu cần gieo hoặc chế biến.',stage:3,meta:'Trong kho có 3 lúa mì · Giá bán nhanh: 6 xu/món',cta:'Tới Bán nhanh',route:'Đến Chợ làng và mở Bán nhanh, chọn lúa mì. Không tự bán hết hoặc tiêu hàng từ nút thẻ mục tiêu.',scene:'empty',task:null,journal:'2/3'},
+ seed:{label:'Thiếu giống',title:'Gieo lứa lúa mì đầu tiên',copy:'Bạn chưa có giống lúa mì. Mục tiêu được giữ lại để tiếp tục sau.',stage:0,meta:'Giống lúa mì: 8 xu · Bạn có 100 xu',cta:'Tìm giống ở chợ',route:'Đến Chợ làng → Vật tư và mở mặt hàng giống lúa mì. Nếu có nông sản, có thể chọn cách giữ/đổi giống thay vì mua.',scene:'empty',tone:'blocked',task:null,journal:'0/3'},
+ full:{label:'Kho đầy',title:'Thu lứa lúa mì đầu tiên',copy:'Kho đang đầy. Dọn chỗ rồi quay lại thu lứa này.',stage:2,meta:'Kho 30/30 · Chưa mất vụ đang chờ thu',cta:'Mở kho để dọn chỗ',route:'Mở Kho hiện tại để xem hàng. Người chơi tự chọn món bán, giao đơn hoặc chế biến; không tự bán món thuộc mục tiêu khác.',scene:'ripe',tone:'blocked',task:'harvest',journal:'1/3'},
+ veteran:{label:'Người chơi cũ',title:'Mở Xưởng máy cấp 1',copy:'Theo dõi điều kiện của công trình bạn muốn xây.',stage:null,meta:'XP: 25/40 · Xu: 100/120',cta:'Xem điều kiện xây',route:'Mở bảng Xây dựng và chi tiết Xưởng máy cấp 1. Khi triển khai phải dùng điều kiện engine; thẻ này không tự mua cấp hoặc ghi đè mục tiêu khác.',scene:'empty',task:null,journal:'1/3'},
+ done:{label:'Đã hoàn thành',title:'Vụ đầu đã hoàn thành!',copy:'Bạn đã gieo, chăm, thu và bán nông sản. Hãy chọn điều mình muốn làm tiếp.',stage:4,meta:'Sổ việc hôm nay: 3/3 · Có thể nhận thưởng',cta:'Chọn mục tiêu khác',route:'Xem Sổ việc hôm nay hoặc chọn mục tiêu mới để tiếp tục.',scene:'empty',task:null,journal:'3/3'}
+};
+const labels=['Gieo','Tưới','Thu','Bán'];let state='plant',pinned=true;
+const el=s=>document.querySelector(s);const dialog=el('dialog');
+el('.review-controls').innerHTML=Object.entries(states).map(([id,s])=>'<button data-state="'+id+'">'+s.label+'</button>').join('');
+function render(){
+ const s=states[state];el('#scene').src='next-goal-v1-'+s.scene+'-scene.png';
+ el('.goal-zone').innerHTML=pinned?'<section class="goal-card" data-tone="'+(s.tone||'normal')+'"><div class="goal-heading"><span class="goal-kicker">Mục tiêu đang ghim</span><button class="goal-menu" data-choose>Đổi / Bỏ</button></div><h2 class="goal-title">'+s.title+'</h2><p class="goal-copy">'+s.copy+'</p>'+(s.stage===null?'':'<div class="goal-stage" aria-label="Bước hiện tại: '+(labels[s.stage]??'Hoàn thành')+'">'+labels.map((l,i)=>'<span class="'+(i<s.stage?'done':i===s.stage?'current':'')+'">'+(i<s.stage?'✓ ':'')+l+'</span>').join('')+'</div>')+'<p class="goal-meta"><span class="goal-dot" aria-hidden="true"></span>'+s.meta+'</p><div class="goal-actions"><button class="btn primary" data-go>'+s.cta+'</button><button class="goal-link" data-detail>Chi tiết</button></div></section>':'<div class="goal-empty">Chưa ghim mục tiêu. Bạn vẫn có thể chơi và làm các việc bên dưới.<button class="btn" data-choose>Chọn mục tiêu</button></div>';
+ el('#task-sample').innerHTML=s.task?'<div class="proto-task"><span class="care-icon care-icon-'+s.task+'" aria-hidden="true"></span><div><strong>'+(s.task==='water'?'Tưới nước':'Thu hoạch')+'</strong><small>Ô 1 · Lúa mì</small></div><b>›</b></div>':'<p class="empty">'+(state==='wait'?'Chưa có việc gấp. Cây vẫn lớn khi bạn rời ô.':'Bạn có thể xem các ô đất, vật nuôi và đơn hàng đang có.')+'</p>';
+ el('#journal-count').textContent=s.journal;
+ document.querySelectorAll('[data-state]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.state===state)));
+}
+function show(title,html){el('#dialog-title').textContent=title;el('#dialog-content').innerHTML=html;if(!dialog.open)dialog.showModal()}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.state){state=b.dataset.state;pinned=true;render()}
+ else if(b.hasAttribute('data-choose'))show('Mục tiêu của bạn','<p>Chỉ ghim một mục tiêu. Đổi mục tiêu không xóa tiến trình trong vườn.</p><button class="btn choose-goal" data-pick="plant">Vụ lúa mì đầu tiên<small>Gieo → Tưới → Thu → Bán</small></button><button class="btn choose-goal" data-pick="veteran">Mở Xưởng máy cấp 1<small>Theo dõi XP và xu cần có</small></button><button class="btn choose-goal" data-unpin>Bỏ ghim<small>Tiếp tục chơi tự do, giữ Sổ việc hiện tại</small></button>');
+ else if(b.dataset.pick){state=b.dataset.pick;pinned=true;dialog.close();render()}
+ else if(b.hasAttribute('data-unpin')){pinned=false;dialog.close();render()}
+ else if(b.hasAttribute('data-go')){if(state==='done'){document.querySelector('[data-choose]').click();return}show(states[state].cta,'<p>'+states[state].route+'</p><p><strong>Phác thảo:</strong> chưa thực hiện thao tác trong game.</p>')}
+ else if(b.hasAttribute('data-detail'))show('Theo dõi mục tiêu','<p>'+states[state].route+'</p><p>Thẻ theo trạng thái thực của vườn. Chỉ mở bảng hoặc bấm nút không tự đánh dấu hoàn thành. Đang chờ, thiếu giống hoặc kho đầy đều giữ nguyên mục tiêu.</p>');
+ else if(b.hasAttribute('data-close'))dialog.close();
+});
+const initial=new URLSearchParams(location.search).get('state');if(states[initial])state=initial;render();window.prototypeReady=true;
+</script>
+</html>

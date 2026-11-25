@@ -298,3 +298,8 @@ Verified real Canvas field/coop views at 640 × 384; both PNGs have hard alpha, 
 Replaced the generic plus mark for compacted empty plots with an authored Vietnamese hoe: warm wooden handle, perpendicular muted-steel blade and a small earth clod. Shared 32 × 32 hard-alpha PNG serves the map, task list and till action button. Retains centered plot placement, 14-unit art and the approved translucent circular badge C; compaction rules and work animation are unchanged.
 
 Source/prompt: `assets/till-task-icon-v1.json`, `assets/till-task-icon-v1-source.png`. Export: `py scripts/normalize-till-task-v1.py`. Runtime: `public/pixel/till-task-icon-v1.png`. Integer-zoom preview: `assets/till-task-icon-v1-preview.png`; real farm capture: `assets/till-task-icon-v1-runtime.png`. Verified all six compacted plots resolve to the till icon from a real snapshot; native Canvas, asset audit, syntax, 128 tests and production build pass.
+
+
+## 25/11/2026 — Mục tiêu tiếp theo V1
+
+Triển khai thẻ HTML/CSS theo phác thảo đã duyệt, dùng bảng tác vụ và palette hiện có. Ảnh runtime desktop/dọc/ngang trong [biên bản V1](NEXT_GOAL_V1.md). 134 bài kiểm thử, build và kiểm tra asset đạt.

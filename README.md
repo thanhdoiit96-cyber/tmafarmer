@@ -140,3 +140,6 @@ Rà soát dung lượng và tài nguyên cũ: xem [báo cáo dọn project 21/11
 - [Cloudflare D1 Getting Started](https://developers.cloudflare.com/d1/get-started/)
 - [Cloudflare Worker D1 API](https://developers.cloudflare.com/d1/worker-api/)
 - [Vercel Rewrites](https://vercel.com/docs/routing/rewrites)
+
+
+Mục tiêu tiếp theo V1: hướng dẫn vụ đầu và ghim nâng công trình, theo [tài liệu triển khai](docs/NEXT_GOAL_V1.md).
