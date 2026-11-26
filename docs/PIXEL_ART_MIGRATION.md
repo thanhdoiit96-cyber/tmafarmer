@@ -346,3 +346,11 @@ Prototype HTML/CSS độc lập dùng cừu và nền chuồng đã có, không 
 ### 25/11/2026 — Bỏ nghỉ dưỡng, hiển thị tuổi theo chu kỳ
 
 Theo yêu cầu, bản nghỉ dưỡng chỉ giữ lịch sử, không triển khai. Chi tiết vật nuôi dùng chu kỳ kinh tế và lời giải thích ngắn, giữ artwork. Kiểm tra Chromium desktop/mobile ngang với thao tác tiếp cận-thu, không ảnh mới. [Quy tắc và kiểm chứng](LIVESTOCK_CYCLE_AGE_V1.md).
+
+### 25/11/2026 — Phác thảo luật làng thân thiện
+
+HTML/CSS độc lập dùng nền Hàng xóm sẵn có, không thêm ảnh PNG hoặc atlas. Kiểm tra Chromium desktop/mobile ngang/dọc và luồng tạo, vào, đồng ý, từ chối, chờ hiệu lực; chưa thay gameplay hoặc chứng nhận guard server. [Bản mẫu và đặc tả](FRIENDLY_VILLAGE_DRAFT_V1.md).
+
+### 26/11/2026 — Phác thảo Hàng xóm đa tương tác và Ao làng
+
+Thay đề xuất hai chế độ bằng lấy/giúp/nghịch song song; prototype HTML dùng background Hàng xóm và khung Ao trong atlas môi trường hiện có, không ảnh/atlas mới. Điểm bến câu/bờ ao chỉ minh họa tương tác, chưa sửa map/collision. Đã kiểm tra Chromium desktop/mobile ngang/dọc và luồng UI; chưa áp gameplay. [Bản mẫu và quy tắc](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).

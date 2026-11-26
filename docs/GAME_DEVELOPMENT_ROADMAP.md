@@ -55,7 +55,7 @@ Nghiệm thu: thao tác được bằng click/chạm/phím; thử 390px dọc, �
 
 **P1.3 — Kiểm tra nghỉ dài.** Bộ kịch bản 8 giờ, 24 giờ, 3 ngày, 7 ngày thực: cây chín, sâu/cỏ, thức ăn hết, vật nuôi già, đơn hết hạn. Chọn một chính sách bảo hộ sau khi người dùng duyệt; chưa âm thầm đổi quy tắc lão hóa. Phác thảo “nghỉ dưỡng” trước nếu muốn thay bán vật nuôi già.
 
-**P1.4 — Phương án làng thân thiện.** Dựng flow opt-in/luật rõ trước khi sửa trộm: làng mới chọn chế độ, làng cũ cần quy tắc chuyển và tránh tác động khoản đang tính. Phải xử lý điều kiện ngày an ninh lên cấp làng nếu chế độ không có trộm. Không chỉ ẩn nút client.
+**P1.4 — Hàng xóm đa tương tác.** Theo điều chỉnh của người dùng: giữ lấy trộm hiện tại, phát triển giúp nhau và nghịch vui song song trong cùng làng; không tách chế độ loại trừ. Phác thảo giúp tưới, sâu nghịch tạm thời có đồng ý/hạn mức và Ao làng có việc ven bờ/sổ cá. Không dùng sâu tự nhiên gây thiệt hại vĩnh viễn làm công cụ phá; không đổi quota trộm/ngày an ninh bằng việc tốt. [Bản mẫu và thứ tự triển khai](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).
 
 Nghiệm thu: so sánh cùng save cũ trước/sau; không âm XP/xu hoặc mất sản lượng ngoài thay đổi đã duyệt; người cũ có thể tiếp tục; logic server quyết định quyền thao tác.
 
@@ -177,4 +177,6 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | P1.3 — kiểm tra | Hoàn thành ma trận nghỉ dài và sửa tính bù thời tiết; chính sách bảo hộ chưa đổi | [Kết quả, giới hạn và đề xuất](LONG_ABSENCE_AUDIT_V1.md) |
 | 25/11/2026 | P1.3 — phác thảo nghỉ dưỡng | Đã bỏ qua theo yêu cầu, giữ bản mẫu lịch sử | [Bản mẫu, quy tắc và kiểm chứng](LIVESTOCK_REST_DRAFT_V1.md) |
 | 25/11/2026 | P1.3 — tuổi theo chu kỳ | Triển khai thay nghỉ dưỡng theo yêu cầu; chưa deploy | [Quy tắc, migration và kiểm chứng](LIVESTOCK_CYCLE_AGE_V1.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tuổi vật nuôi đã chuyển sang chu kỳ; tiếp theo phác thảo P1.4 làng thân thiện; ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |
+| 25/11/2026 | P1.4 — phác thảo | Đã thay thế: không tách chế độ làng, giữ bản lịch sử | [Bản tương tác, đánh đổi và kiểm chứng](FRIENDLY_VILLAGE_DRAFT_V1.md) |
+| 26/11/2026 | P1.4 + Ao — hướng song song | Giữ trộm, phác thảo giúp/nghịch có giới hạn và việc ven ao/sổ cá; chưa đổi gameplay | [Bản mới theo yêu cầu](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Duyệt P1.4/Ao song song: ưu tiên giúp tưới, việc ven ao và sổ cá; sau đó sâu nghịch. P2.1 và ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |

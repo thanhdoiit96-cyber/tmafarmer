@@ -172,3 +172,7 @@ Dùng ngày thực UTC cho cohort để tránh nhầm ngày game; giao diện c�
 5. Mở chủ đề tiếp theo, vai trò mềm và album chỉ khi dữ liệu/khả năng sản xuất ủng hộ.
 
 Mục tiêu không phải có nhiều hệ thống nhất, mà là người chơi có thể nói: **“Tôi thích góc vườn này, và đây là làng của chúng tôi.”**
+
+## Điều chỉnh hướng xã hội và Ao làng — 26/11/2026
+
+Theo yêu cầu người dùng, không tách làng thành Thân thiện/Tinh nghịch. Giữ lấy trộm cũ; phát triển hành động giúp và chọc phá nhẹ có đồng ý, quota nhận/thả riêng, không biến sâu tự nhiên gây thiệt hại vĩnh viễn thành công cụ phá. Ao làng bổ sung việc ven bờ, sổ cá và đổi phần thưởng nhỏ có giới hạn để nối vòng ghé làng. Đây là hướng và bản mẫu chưa triển khai, không thay quyền hoặc kinh tế hiện có. Xem [đặc tả, giới hạn và thứ tự triển khai](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).

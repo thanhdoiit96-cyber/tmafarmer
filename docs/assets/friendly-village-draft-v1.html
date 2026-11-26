@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phác thảo luật làng thân thiện</title><link rel="stylesheet" href="../../public/style.css">
+<style>
+body{background:#f4efe1;color:#354c36;font-family:system-ui,sans-serif;padding:10px;min-width:300px}.review,.mock{max-width:1050px;margin:auto}.review{font-size:11px;margin-bottom:8px}.review strong{display:block;margin-bottom:6px}.toolbar,.actions,.choices{display:flex;gap:5px;flex-wrap:wrap}.review .btn{font-size:10px;min-height:30px;padding:4px 8px}.mock{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:10px}.scene{align-self:start;position:relative;border:4px solid #967448;border-radius:9px;overflow:hidden;background:#81915b}.scene img{display:block;width:100%;image-rendering:pixelated;filter:saturate(.9) brightness(.98)}.scene-label{position:absolute;left:8px;top:8px;font-size:11px;background:#f5e8c9;padding:6px 9px;border-radius:6px}.sheet{background:#f4e8cc;border:1px solid #c5ab7e;border-radius:9px;padding:10px;min-width:0}.nav{font-size:11px;border-bottom:1px solid #d6c29b;padding:4px 0 8px}.sheet h2{font-size:20px;margin:10px 0 7px}.sheet h3{font-size:13px;margin:7px 0}.sheet p,.sheet li{font-size:11px;line-height:1.5}.sheet p{margin:6px 0}.sheet ul{padding-left:18px;margin:6px 0}.sheet .btn{font-size:11px;min-height:34px;padding:5px 9px}.choices{display:grid;grid-template-columns:1fr 1fr}.choices .btn{align-items:start;flex-direction:column;gap:4px;text-align:left;min-width:0;padding:8px}.choices strong{font-size:12px}.choices small{font-weight:400;line-height:1.4;font-size:10px}.law-card,.status-card{border:1px solid #b89b68;border-radius:7px;background:#f0e0bc;padding:9px;margin:8px 0}.mode{display:inline-block;border-radius:5px;background:#dbe4c5;padding:3px 7px;font-size:10px;color:#405d36}.muted-copy{color:#776243}.progress-row{font-size:11px;margin:7px 0}.sheet details{border-top:1px solid #cdb58b;margin-top:10px;padding-top:6px}.sheet summary{font-size:11px;cursor:pointer;padding:5px 0}.notice{font-size:11px;line-height:1.5;color:#48633f;min-height:18px;margin-top:8px}.sheet .actions{margin-top:8px}dialog{width:min(430px,calc(100vw - 20px));padding:15px;border:2px solid #b09360;border-radius:10px;background:#fff7e5;color:#354c36}dialog::backdrop{background:#26332288}dialog h2{font-size:20px;margin:0 0 9px}dialog p{font-size:12px;line-height:1.5}dialog .btn{min-height:38px;font-size:12px}.fine{font-size:10px!important;color:#75603e}
+@media(max-width:760px){body{padding:7px}.mock{grid-template-columns:minmax(0,1fr) 285px;gap:6px}.sheet{padding:8px}.scene{position:sticky;top:7px}.sheet h2{font-size:18px}}
+@media(max-width:580px) and (orientation:portrait){.mock{grid-template-columns:1fr}.scene{position:relative;max-height:165px}.scene img{margin-top:-35px}}
+</style></head><body>
+<section class="review"><strong>ĐÃ THAY THẾ · Không triển khai tách chế độ làng; xem social-lake-draft-v1.html</strong><div class="toolbar"><button class="btn subtle" data-example="create">Tạo làng</button><button class="btn subtle" data-example="join">Vào làng bạn</button><button class="btn subtle" data-example="classic">Làng cũ</button><button class="btn subtle" data-example="friendly">Làng thân thiện</button><button class="btn subtle" id="vote">Mô phỏng thêm người đồng ý</button><button class="btn subtle" id="advance">Mô phỏng đến hiệu lực</button></div></section>
+<main class="mock"><section class="scene" aria-label="Bối cảnh Hàng xóm hiện có"><img src="../../public/pixel/scene-background-neighbors-v1.png" alt="Bối cảnh làng hiện có, dùng đối chiếu bố cục"><span class="scene-label">Làng Mùa Vui · 3/12 nhà</span></section><section class="sheet"><nav class="nav">Làng › Luật ghé thăm</nav><div id="content"></div><p class="notice" id="notice" role="status" aria-live="polite"></p></section></main>
+<dialog id="confirm" aria-labelledby="confirm-title"><h2 id="confirm-title"></h2><p id="confirm-copy"></p><div class="actions"><button class="btn subtle" id="cancel">Để sau</button><button class="btn primary" id="accept">Xác nhận</button></div></dialog>
+<script>
+const content=document.querySelector('#content'),notice=document.querySelector('#notice'),dialog=document.querySelector('#confirm');
+let screen='create',mode='friendly',stage='none',votes=0,action='';
+const names={friendly:'Thân thiện',classic:'Tinh nghịch'};
+const rules=kind=>kind==='friendly'?'<li>Thăm vườn, giao thương và góp đơn như thường.</li><li>Không lấy nông sản ở vườn, kho hoặc câu trộm ao.</li><li>Câu ở hồ làng và chăm ao của mình vẫn hoạt động.</li>':'<li>Có thể lấy nông sản và câu ao hàng xóm theo luật hiện tại.</li><li>Áp dụng hạn mức, hàng rào và đóng cổng.</li><li>Không bảo đảm nông sản được giữ nguyên khi bạn vắng mặt.</li>';
+function reset(example){screen=example;mode=example==='classic'||example==='join'?'classic':'friendly';stage='none';votes=0;notice.textContent='';render();document.querySelectorAll('[data-example]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.example===example)));}
+function render(){
+ if(screen==='create'){
+ content.innerHTML='<h2>Tạo làng mới</h2><p>Chọn luật ghé thăm cho làng của bạn.</p><div class="choices">'+['friendly','classic'].map(kind=>'<button class="btn '+(mode===kind?'primary':'subtle')+'" data-mode="'+kind+'" aria-pressed="'+(mode===kind)+'"><strong>'+names[kind]+'</strong><small>'+(kind==='friendly'?'Giữ nông sản của mỗi người':'Có lấy nông sản theo hạn mức')+'</small></button>').join('')+'</div><div class="law-card"><span class="mode">'+names[mode]+'</span><ul>'+rules(mode)+'</ul></div><button class="btn primary" id="create">Tạo làng '+names[mode].toLowerCase()+'</button><p class="fine">Lựa chọn áp dụng cho cả làng, không phải cài đặt riêng từng người.</p>';return;
+ }
+ if(screen==='join'){
+ content.innerHTML='<h2>Vào làng bạn</h2><div class="law-card"><h3>Làng Mùa Vui · Mã ABC123</h3><span class="mode">Tinh nghịch</span><ul>'+rules('classic')+'</ul></div><button class="btn primary" id="join">Đồng ý luật và vào làng</button><p class="fine">Thành viên mới không tự đổi luật làng. Đây là dữ liệu mẫu để duyệt.</p>';return;
+ }
+ const pending=stage==='pending';
+ content.innerHTML='<h2>Làng Mùa Vui</h2><span class="mode">Hiện tại: '+names[mode]+'</span><div class="law-card"><h3>Ghé thăm hàng xóm</h3><ul>'+rules(mode)+'</ul><button class="btn subtle" id="visit">Xem vườn Bắp</button></div>'+
+ (mode==='classic'?(stage==='none'?'<div class="status-card"><h3>Muốn giữ nông sản riêng?</h3><p>Đề xuất chuyển cả làng sang Thân thiện. Cần cả 3 chủ vườn đồng ý.</p><button class="btn subtle" id="propose">Đề xuất chuyển chế độ</button></div>':'<div class="status-card"><h3>'+(pending?'Đã đủ đồng ý · Chờ hiệu lực':'Đề xuất: Thân thiện')+'</h3><p class="progress-row">'+votes+'/3 chủ vườn đồng ý</p><p>'+(pending?'Hiệu lực từ đầu ngày game kế tiếp đủ thời gian chuyển tiếp. Trước đó vẫn theo luật Tinh nghịch.':'Luật hiện tại chưa đổi. Đề xuất hết hạn sau 72 giờ thực nếu chưa đủ đồng ý.')+'</p>'+(pending?'<p class="fine">Cần câu trộm mới dừng trong 61 giây cuối trước khi chuyển. Cần đã thả phải kết thúc trước thời điểm hiệu lực.</p><button class="btn subtle" id="withdraw">Rút đề xuất</button>':'<div class="actions"><button class="btn subtle" id="decline">Mô phỏng một người từ chối</button><button class="btn subtle" id="withdraw">Rút đề xuất</button></div>')+'</div>'):'<div class="status-card"><h3>Nông sản được giữ riêng</h3><p>Không cần mua bảo vệ để ngăn hàng xóm lấy đồ. Không có thưởng thêm vì bật chế độ này.</p></div>')+
+ '<details><summary>Tiến độ làng và đồ đã nâng</summary><p>Giữ xu, vật phẩm, công trình và đơn đang làm. Các ngày game đã kết thúc tiếp tục được xét bình yên; không cộng đủ ngày ngay khi chuyển.</p><p>Rào bảo vệ, túi ghé vườn và thời gian đóng cổng cũ vẫn được lưu, nhưng không còn tác dụng lấy/giữ nông sản trong làng Thân thiện. Không hoàn xu tự động. Rào trang trí vẫn dùng được.</p></details>';
+}
+function confirm(title,copy,next,label='Xác nhận'){action=next;document.querySelector('#confirm-title').textContent=title;document.querySelector('#confirm-copy').textContent=copy;document.querySelector('#accept').textContent=label;document.querySelector('#accept').hidden=false;dialog.showModal();}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.example){reset(b.dataset.example);return;}
+ if(b.dataset.mode){mode=b.dataset.mode;render();return;}
+ if(b.id==='create')confirm('Tạo làng '+names[mode].toLowerCase()+'?',mode==='friendly'?'Mọi thành viên giữ nông sản riêng. Vẫn thăm vườn, mua bán, góp đơn và câu hồ làng.':'Mọi thành viên có thể lấy nông sản của nhau theo hạn mức. Người vào làng sẽ được xem luật này trước khi xác nhận.','create','Tạo làng');
+ else if(b.id==='join')confirm('Vào làng Tinh nghịch?','Bạn đồng ý rằng hàng xóm có thể lấy nông sản theo luật hiện tại. Chế độ không đổi khi bạn tham gia.','join','Đồng ý và vào');
+ else if(b.id==='propose')confirm('Đề xuất làng Thân thiện?','Cần cả 3 chủ vườn đồng ý. Đồ và cấp đã mua được giữ, không hoàn xu; rào bảo vệ/túi ghé vườn không còn tác dụng trong chế độ mới. Chuyển một chiều, không bật lại Tinh nghịch.','propose','Gửi đề xuất');
+ else if(b.id==='vote'){
+   if(stage!=='voting'){notice.textContent='Mở Làng cũ và gửi đề xuất trước.';return;}
+   votes=Math.min(3,votes+1);if(votes===3)stage='pending';notice.textContent=stage==='pending'?'Đã đủ đồng ý; luật chưa đổi trước giờ hiệu lực.':'Đã ghi thêm một phiếu mô phỏng.';render();
+ }else if(b.id==='advance'){
+   if(stage!=='pending'){notice.textContent='Chỉ mô phỏng chuyển sau khi đủ đồng ý.';return;}
+   mode='friendly';stage='none';notice.textContent='Đã mô phỏng đến hiệu lực. Không thay dữ liệu thật.';render();
+ }else if(b.id==='withdraw'||b.id==='decline'){stage='none';votes=0;notice.textContent=b.id==='decline'?'Một người từ chối: đề xuất kết thúc, giữ luật cũ.':'Đã rút đề xuất, giữ luật cũ.';render();}
+ else if(b.id==='visit'){
+   confirm('Vườn Bắp',mode==='friendly'?'Bạn có thể ngắm vườn; nông sản thuộc chủ vườn. Muốn mua, hãy tới sạp Chợ làng.':'Có thể lấy một món khi đủ điều kiện theo luật hiện tại. Bản mẫu không thực hiện hành động lấy đồ.','visit','Đã hiểu');
+ }else if(b.id==='cancel')dialog.close();
+ else if(b.id==='accept'){
+   dialog.close();
+   if(action==='create'){screen='classic';stage='none';notice.textContent='Đã mô phỏng tạo làng '+names[mode].toLowerCase()+'.';}
+   else if(action==='join'){screen='classic';mode='classic';notice.textContent='Đã mô phỏng vào làng, giữ nguyên luật Tinh nghịch.';}
+   else if(action==='propose'){stage='voting';votes=1;notice.textContent='Chủ làng đồng ý: 1/3. Chưa đổi luật.';}
+   render();
+ }
+});reset('create');
+</script></body></html>
