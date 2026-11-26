@@ -786,3 +786,26 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
   dialog{max-height:calc(100vh - 16px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 16px)}
   #world[data-wide="false"] .world-stage>canvas{width:min(100%,calc(100vh * 5 / 3));width:min(100%,calc(100dvh * 5 / 3));width:min(100%,calc(100cqh * 5 / 3))}
 }
+/* Compact animal care and the shared village delivery board. */
+.order-kind-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.village-drive{background:#fff9e9;border-color:#d2bd8a}
+.village-drive-items{display:grid;gap:7px}
+.animal-care-card .animal-care-product{font-size:11px;margin:6px 0;color:#526247}
+.animal-care-card .care-note{margin:5px 0}
+.animal-care-card .actions .btn{flex:1}
+.animal-care-warning{color:#8a5d31}
+.animal-manage-hero{display:flex;align-items:center;gap:12px;padding:10px;background:#f4e9cc;border:1px solid #d3bb84;border-radius:9px}
+.animal-manage-hero p{margin:4px 0;font-size:12px}
+.animal-manage-hero .animal-illustration{flex:none}
+.animal-manage-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.animal-manage-facts div{padding:8px;background:#f7efd9;border-radius:7px}
+.animal-manage-facts dt{font-size:11px;color:#73674e}
+.animal-manage-facts dd{margin:4px 0 0;font-weight:700;font-size:13px}
+.animal-manage-sale{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;padding-top:10px;border-top:1px solid #dac99f}
+.drive-personal{padding:9px;background:#f2e5be;border:1px solid #c7aa71;border-radius:8px;margin:10px 0;font-size:12px}
+.drive-personal p{margin:5px 0 0;font-size:11px}
+.village-drive .drive-need{padding:9px;border:1px solid #d2bd8a;border-radius:8px;background:#f8efd7}
+.village-drive .drive-need.is-pinned{border-color:#5a7a52;box-shadow:inset 0 0 0 1px #5a7a52}
+.drive-need .row>strong{font-size:11px;white-space:nowrap}
+.drive-need .actions{gap:4px;flex-wrap:wrap}
+.drive-need .actions .btn{font-size:10px;padding:5px 7px;min-height:30px}

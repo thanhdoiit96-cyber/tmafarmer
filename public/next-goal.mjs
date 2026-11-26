@@ -2,6 +2,11 @@ import {buildingUpgrade,buildings,capacity,cropGoal,cropYield,crops,gameDay,good
 import {plotAt} from './land.mjs';
 
 const version=1;
+export function pinVillageGoods(snapshot,item){
+  const drive=snapshot.villageDrive;
+  return drive&&!drive.completed&&snapshot.now<drive.endsAt&&drive.items.some(r=>r.item===item&&r.delivered<r.required)
+    ?{version,kind:'villageGoods',driveId:drive.id,item}:noGoal();
+}
 const stages=['plant','water','grow','sell','done'];
 export const goalStorageKey=(snapshot,session)=>'mua-vui-goal:1:'+JSON.stringify([session?'online':'demo',session?.code??'',snapshot.me.id]);
 export const noGoal=()=>({version,kind:'none'});
@@ -21,6 +26,7 @@ export function pinBuilding(farm,key){
 export function loadGoal(raw,snapshot){
   if(raw?.version===version){
     if(raw.kind==='none')return noGoal();
+    if(raw.kind==='villageGoods'&&Number.isSafeInteger(raw.driveId)&&Object.hasOwn(goods,raw.item))return {...raw};
     if(raw.kind==='building'&&Object.hasOwn(buildings,raw.building)&&Number.isInteger(raw.level)&&raw.level>(buildings[raw.building].base??1)&&raw.level<=(buildings[raw.building].base??1)+buildings[raw.building].costs.length)return {...raw};
     if(raw.kind==='intro'&&stages.includes(raw.stage)&&(!raw.crop||(Number.isInteger(raw.crop.index)&&snapshot.me.plotIndexes.includes(raw.crop.index)&&(raw.crop.plantedAt===null||Number.isFinite(raw.crop.plantedAt)))))return {...raw};
     return noGoal();
@@ -72,6 +78,14 @@ export function goalAfterAction(goal,input,before,after){
 export function goalView(goal,snapshot){
   const f=snapshot.me;
   if(goal.kind==='none')return null;
+  if(goal.kind==='villageGoods'){
+    const drive=snapshot.villageDrive,row=drive?.id===goal.driveId&&drive.items.find(r=>r.item===goal.item);
+    const title='Chuẩn bị '+goods[goal.item].name.toLowerCase();
+    if(!row||snapshot.now>=drive.endsAt)return {title,copy:'Đợt đang theo dõi đã hết hạn hoặc được thay thế.',meta:'Mục tiêu không tự đổi sang đợt mới.',cta:'Chọn mục tiêu khác',route:{kind:'choose'},done:true};
+    const remaining=Math.max(0,row.required-row.delivered),owned=f.inventory[goal.item]??0;
+    if(drive.completed||!remaining)return {title,copy:drive.completed?'Làng đã hoàn thành đợt góp hàng.':'Làng đã đủ món đang ghim.',meta:'Có thể bỏ ghim hoặc chọn món khác.',cta:'Xem đơn làng',route:{kind:'villageGoods'},done:true};
+    return {title,copy:'Góp từng phần cùng làng; xác nhận trước khi trừ kho.',meta:'Làng thiếu '+remaining+' · Kho bạn '+owned,cta:owned?'Tới đơn góp hàng':'Xem cách có',route:owned?{kind:'villageGoods'}:{kind:'goodsSource',item:goal.item}};
+  }
   if(goal.kind==='building'){
     const def=buildings[goal.building],level=f[goal.building]??def.base??1;
     if(level>=goal.level)return {title:def.name+' cấp '+goal.level+' đã sẵn sàng!',copy:'Bạn đã hoàn thành mục tiêu công trình này.',meta:'Chọn điều mình muốn làm tiếp.',route:{kind:'choose'},cta:'Chọn mục tiêu khác',done:true};
