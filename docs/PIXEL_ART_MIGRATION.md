@@ -370,3 +370,7 @@ Camera Hồ làng hiển thị world 720×432 trên Canvas 640×384, scale nền
 ### 26/11/2026 — Ông Sáu runtime V1
 
 Hoàn thiện nguồn idle bốn frame từ mẫu NPC riêng bằng imagegen; xuất 192×64 RGBA, ô 48×64, alpha cứng, crop và baseline chung. Metadata/decoder/render dùng atlas riêng, idle nhẹ và reduced motion tĩnh; không chắp tay hay dụng cụ lên nhân vật cũ. Đã xem atlas 4× và Canvas toàn ao. NPC (260,365), điểm đứng (286,374), approach trước hội thoại, E/touch và mở mục có sẵn; 188 kiểm thử, build/asset audit đạt. [Nguồn, pipeline và kiểm chứng](LAKE_ELDER_V1.md).
+
+### 26/11/2026 — Chòi Ông Sáu và bố cục/UI Ao V2
+
+Thay chòi cũ lệch trên mặt nước bằng sprite chòi tre mái lá RGBA 106×100, nguồn imagegen tham chiếu plate ao, alpha cứng và tâm/sàn đăng ký riêng; NPC vẫn dùng atlas idle được duyệt. Chòi ở mép cỏ (542,402), NPC (542,398), điểm đứng trước (520,414); lớp sàn nằm sau người, chỉ cột chặn di chuyển. Spawn (365,377) ở lối giữa bờ, không sửa polygon nước/cầu. UI dùng thẻ giấy/viền gỗ và ba tab đều; xưng hô theo avatar. 189 kiểm thử, build/asset audit đạt; đã xem Canvas thực và kiểm tra mobile ngang. [Phạm vi](LAKE_LAYOUT_UI_V2.md).

@@ -1,5 +1,7 @@
 # Ông Sáu bên Hồ làng — runtime V1
 
+Cập nhật theo phản hồi: [bố cục/UI V2](LAKE_LAYOUT_UI_V2.md) đã chuyển NPC vào chòi ở mép cỏ, đổi lối vào giữa bờ và lời xưng hô theo tuổi/giới tính. Các tọa độ và lời thoại mặc định trong bản V1 dưới đây là lịch sử.
+
 26/11/2026. Đã hoàn thiện trong source theo mẫu NPC riêng và góc nhìn toàn ao được chọn. Chưa commit/push/deploy.
 
 ## Trải nghiệm

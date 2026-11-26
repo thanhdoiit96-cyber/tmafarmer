@@ -1,6 +1,6 @@
 import {cropImpacts} from './crop-impact.mjs';
 import {lakeSpecies,fishBookComplete} from './lake-social.mjs';
-import {lakeElder,lakeElderGreeting} from './lake-elder.mjs';
+import {lakeElder,lakeElderGreeting,lakeElderVoice} from './lake-elder.mjs';
 import {prankActive,prankUnlocked} from './prank.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {optionalIndex} from './action-input.mjs';
@@ -695,21 +695,27 @@ function fishingControls(source,now,{target,index,allowed=true}={}){
     'data-action="cast" data-source="'+source+'"'+(target?' data-target="'+target+'" data-index="'+index+'"':''),'primary',!allowed)+'</div>';
 }
 function renderLake(farm,now){
-  const tabs='<div class="market-tabs">'+[['fishing','Bến câu'],['shore','Ven ao'],['book','Sổ cá']].map(([key,label])=>btn(label,'data-lake-tab="'+key+'" aria-pressed="'+(lakeTab===key)+'"',lakeTab===key?'primary':'subtle')).join('')+'</div><p class="care-note">'+btn('Gặp Ông Sáu','data-lake-elder','subtle')+'</p>';
+  const head='<div class="lake-heading"><div><h2>Ao làng</h2><span class="care-note">Bến nước chung của làng</span></div>'+btn('Gặp Ông Sáu','data-lake-elder','subtle')+'</div>';
+  const tabs='<div class="stock-tabs lake-tabs" aria-label="Hoạt động Ao làng">'+[['fishing','Bến câu'],['shore','Ven ao'],['book','Sổ cá']].map(([key,label])=>btn(label,'data-lake-tab="'+key+'" aria-pressed="'+(lakeTab===key)+'"',lakeTab===key?'primary':'subtle')).join('')+'</div>';
+  const wrap=body=>'<section class="lake-panel">'+head+tabs+body+'</section>';
   if(lakeTab==='shore'){
     const job=farm.shoreJob,daily=farm.lakeDaily??{},marks=farm.lakeMarks??0;
-    return tabs+'<div class="row"><h2>Việc ven ao</h2><span class="badge">'+marks+'/6 dấu ao</span></div><p>Dọn cỏ bờ ao · 10 giây · 2 dấu · 1 lần/ngày</p>'+
-      (job?'<p role="status">Đang dọn · '+Math.min(10,job.elapsed)+'/10 giây. Di chuyển sẽ dừng việc.</p>'+act('Dừng','shoreCancel','','','subtle'):
+    const reason=daily.worked?'Đã hoàn thành hôm nay':farm.xp<25?'Mở ở nông trại cấp 2':marks>4?'Đổi bớt dấu trước khi nhận thêm':'10 giây · Nhận 2 dấu · 1 lần/ngày';
+    const feedReason=daily.exchanged?'Đã đổi hôm nay':marks<2?'Cần 2 dấu':(farm.inventory.aquaFeed??0)>=supplyLimit?'Túi đã đầy':'2 dấu → 1 phần';
+    const jarReason=daily.exchanged?'Đã đổi hôm nay':!prankUnlocked(farm)?'Mở ở cấp 3':(farm.prankJars??0)>=2?'Đã đủ 2 lọ':marks<2?'Cần 2 dấu':'2 dấu → 1 lọ';
+    return wrap('<div class="care-overview"><span>Dấu ao <b>'+marks+'/6</b></span><span>Thức ăn <b>'+(farm.inventory.aquaFeed??0)+'</b></span><span>Lọ sâu <b>'+(farm.prankJars??0)+'/2</b></span></div><article class="lake-card"><div class="row"><h3>Việc ven ao</h3><span class="care-state">'+(job?'Đang làm':daily.worked?'Đã xong':'Dọn cỏ')+'</span></div><p class="care-note">'+reason+'</p>'+
+      (job?valueBar(Math.min(10,job.elapsed),10)+'<p class="care-note" role="status">Đang dọn · '+Math.min(10,job.elapsed)+'/10 giây. Di chuyển sẽ dừng việc.</p>'+act('Dừng','shoreCancel','','','subtle'):
         act(daily.worked?'Hôm nay đã dọn':farm.xp<25?'Mở ở cấp 2':'Tới bờ ao · Dọn cỏ','shoreStart','','','primary',daily.worked||farm.xp<25||marks>4))+
-      '<p>Đổi 2 dấu · Chọn một gói/ngày</p><div class="actions">'+act(daily.exchanged?'Hôm nay đã đổi':'1 thức ăn thủy sản','lakeExchange','aquaFeed','','subtle',daily.exchanged||marks<2||(farm.inventory.aquaFeed??0)>=supplyLimit)+
-      act('1 lọ sâu nghịch · '+(farm.prankJars??0)+'/2','lakeExchange','prankJar','','subtle',daily.exchanged||marks<2||!prankUnlocked(farm)||(farm.prankJars??0)>=2)+'</div><p class="care-note">Lọ sâu mở từ cấp 3, chỉ dùng với chủ vườn đồng ý.</p>';
+      '</article><div class="lake-exchange-heading"><h3>Đổi dấu ao</h3><span class="care-note">Chọn 1 gói/ngày</span></div><div class="lake-exchange">'+
+      act('<strong>Thức ăn ao</strong><small>'+feedReason+'</small>','lakeExchange','aquaFeed','','subtle',daily.exchanged||marks<2||(farm.inventory.aquaFeed??0)>=supplyLimit)+
+      act('<strong>Lọ sâu nghịch</strong><small>'+jarReason+'</small>','lakeExchange','prankJar','','subtle',daily.exchanged||marks<2||!prankUnlocked(farm)||(farm.prankJars??0)>=2)+'</div><p class="care-note">Nghịch vui chỉ với chủ vườn đã đồng ý.</p>');
   }
-  if(lakeTab==='book')return tabs+'<h2>Sổ cá Hồ làng</h2><p>Ghi nhận cá tự câu ở hồ làng từ phiên bản này. Đủ 3 loài nhận 1 phiếu trang trí, một lần duy nhất.</p><div class="card-grid">'+lakeSpecies.map(key=>{
+  if(lakeTab==='book')return wrap('<div class="row lake-section-heading"><h3>Sổ cá Hồ làng</h3><span class="badge">'+lakeSpecies.filter(key=>farm.fishBook?.[key]?.count>0).length+'/3 loài</span></div><div class="lake-book-list">'+lakeSpecies.map(key=>{
     const entry=farm.fishBook?.[key];
-    return '<article class="itemrow">'+itemLink(key)+'<span>'+(entry?.count?'Đã câu · '+entry.count:'Chưa gặp')+'</span></article>';
-  }).join('')+'</div>'+act(farm.fishBookClaimed?'Đã nhận phiếu':'Nhận phiếu trang trí','claimFishBook','','','primary',farm.fishBookClaimed||!fishBookComplete(farm));
+    return '<article class="lake-fish-card" data-found="'+!!entry?.count+'">'+itemLink(key)+'<span class="care-state">'+(entry?.count?'Đã câu · '+entry.count:'Chưa gặp')+'</span></article>';
+  }).join('')+'</div><p class="care-note">Chỉ ghi cá tự câu ở Hồ làng.</p><article class="lake-card"><h3>Kỷ niệm bến nước</h3><p class="care-note">Đủ 3 loài · 1 phiếu trang trí · Nhận một lần</p>'+act(farm.fishBookClaimed?'Đã nhận phiếu':'Nhận phiếu trang trí','claimFishBook','','','primary',farm.fishBookClaimed||!fishBookComplete(farm))+'</article>');
   const odds=state.weather.id==='storm'?'Dông lớn làm tạm dừng thả câu.':'Cá nhỏ thường gặp. Tỷ lệ cá chép vàng '+catchOdds(state.weather)+'%.';
-  return tabs+'<div class="row"><h2>Câu ở hồ làng</h2><span class="badge">'+(state.fishingLimit-farm.fishing.used)+' / '+state.fishingLimit+' lượt</span></div><p>'+odds+'</p>'+fishingControls('public',now);
+  return wrap('<article class="lake-card"><div class="row"><h3>Câu ở hồ làng</h3><span class="badge">'+(state.fishingLimit-farm.fishing.used)+'/'+state.fishingLimit+' lượt</span></div><p class="care-note">'+odds+'</p>'+fishingControls('public',now)+'</article><p class="care-note">Chọn thả câu để tự đi tới một trong hai bến.</p>');
 }
 function fencePreview(style){
   const row=['wood','white','bamboo'].indexOf(style);
@@ -1454,8 +1460,8 @@ function showLakeElder(){
   if(tab!=='lake'||neighborId)return;
   const pose=world.position();
   if(Math.hypot(pose.x-lakeElder.approach.x,pose.y-lakeElder.approach.y)>31)return;
-  modal(lakeElder.name,'<p class="elder-greeting">“'+escape(lakeElderGreeting(state.weather.id))+'”</p><div class="actions">'+
-    btn('Việc ven ao','data-elder-open="shore"','primary')+btn('Sổ cá','data-elder-open="book"','subtle')+btn('Chào ông, cháu đi nhé','data-close','subtle')+'</div>');
+  modal(lakeElder.name,'<p class="elder-greeting">“'+escape(lakeElderGreeting(state.weather.id,state.me.avatar))+'”</p><div class="actions">'+
+    btn('Việc ven ao','data-elder-open="shore"','primary')+btn('Sổ cá','data-elder-open="book"','subtle')+btn(escape(lakeElderVoice(state.me.avatar).farewell),'data-close','subtle')+'</div>');
 }
 function showMobileMenu(){
   if(!state)return;

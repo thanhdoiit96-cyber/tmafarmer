@@ -185,4 +185,6 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 26/11/2026 | Ao — góc nhìn và NPC V2 | Camera đã sửa; mẫu NPC riêng chờ duyệt | [Toàn cảnh ao](LAKE_OVERVIEW_V1.md), giữ scale/hitbox đồng bộ; [mẫu Ông Sáu mới](LAKE_LIFE_DRAFT_V1.md) có nguồn alpha/preview thu nhỏ, chưa thay NPC runtime |
 | 26/11/2026 | Social/Ao — pilot | Đã chuẩn bị cách thử, chưa có dữ liệu người chơi | [Tình huống, dữ liệu tối thiểu và cách quyết định](SOCIAL_LAKE_PILOT_V1.md); chưa gửi lời mời/deploy |
 | 26/11/2026 | Ao — Ông Sáu runtime V1 | Hoàn thiện source, chưa deploy | Sprite idle alpha riêng, approach rồi hội thoại thời tiết, mở Ven ao/Sổ cá; [phạm vi và kiểm chứng](LAKE_ELDER_V1.md) |
+| 26/11/2026 | Ao — chỉnh theo phản hồi V2 | Hoàn thiện source, chưa deploy | Xưng hô theo sáu avatar, spawn giữa bờ, chòi mái lá/NPC khỏi đường và UI ba tab gọn; [kiểm chứng](LAKE_LAYOUT_UI_V2.md). Chờ đánh giá gameplay sau |
+| 26/11/2026 | Social/Ao — bộ chạy pilot | Hoàn thiện bộ ghi nhận, chưa chạy với người chơi | [Checklist và quy trình](SOCIAL_LAKE_PILOT_V1.md), [form offline xuất/nhập JSON và CSV](assets/social-lake-pilot-kit-v1.html); chờ môi trường/build/nhóm tham gia, chưa có kết quả pilot |
 | Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tiếp theo: pilot người chơi theo kế hoạch; P2.1 và ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |

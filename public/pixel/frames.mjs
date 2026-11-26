@@ -5,6 +5,7 @@ import additionalLivestockFrames from './additional-livestock-frames-v1.mjs';
 
 export const pixelViewport={width:640,height:384};
 export const lakeElderAtlas={source:'/pixel/ong-sau-idle-v1.png',cellWidth:48,cellHeight:64,frames:4};
+export const lakeShelterArt={source:'/pixel/lake-shelter-v1.png',width:106,height:100};
 export const pixelCharacter={
   source:'/pixel/characters-v2-hd.png',cellWidth:48,cellHeight:64,columns:16,
   directions:{down:0,up:1,left:2,right:3},

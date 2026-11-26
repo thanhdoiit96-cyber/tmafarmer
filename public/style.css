@@ -119,6 +119,23 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 .stock-heading{margin-bottom:7px}
 .stock-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
 .stock-tabs .btn{padding-inline:2px}
+.lake-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.lake-heading h2{margin:0;font-size:18px}.lake-heading .care-note{display:block;margin:2px 0 0}
+.lake-heading>.btn{flex:none;font-size:11px;padding:5px 8px}
+.lake-tabs{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:9px}
+.lake-panel h3{font-size:13px;line-height:1.4;margin:0}
+.lake-card{padding:9px;border:1px solid #b99a67;border-radius:8px;background:#f1e3c2;box-shadow:0 1px #b49a70;margin-top:8px}
+.lake-card>.btn{margin-top:5px}.lake-card .actions{margin-top:8px}
+.lake-card .badge,.lake-section-heading .badge{font-size:10px;white-space:nowrap}
+.lake-section-heading,.lake-exchange-heading{margin:10px 0 7px}
+.lake-exchange-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.lake-exchange{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.lake-exchange>.btn{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;white-space:normal;padding:9px 7px;background:#f9f4e6}
+.lake-exchange strong{font-size:12px}.lake-exchange small{font-size:10px;line-height:1.4}
+.lake-book-list{display:grid;gap:6px}.lake-fish-card{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px;border:1px solid #d5c19c;border-radius:7px;background:#f9f4e6}
+.lake-fish-card[data-found="false"]{background:#eee8da}.lake-fish-card .item-link{min-width:0}
+.lake-fish-card .care-state{flex:none;font-size:10px}.lake-fish-card[data-found="true"] .care-state{color:#35613d;font-weight:700}
+.lake-panel .btn{min-height:34px}.elder-greeting{line-height:1.7;color:#4c5139}
 .stock-pages{display:grid;grid-template-columns:minmax(68px,1fr) auto minmax(68px,1fr);align-items:center;gap:5px;margin-top:7px;text-align:center;color:var(--muted);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
 .stock-pages .btn{min-height:36px;padding-inline:6px}
 .stock-grid{margin-top:7px;align-items:stretch}

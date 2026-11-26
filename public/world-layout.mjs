@@ -1,7 +1,7 @@
 import {coopCapacity,fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {shoreWork} from './lake-social.mjs';
-import {lakeElder} from './lake-elder.mjs';
+import {lakeElder,lakeEntry,lakeShelter} from './lake-elder.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam,expandedParcelAnimalSeats} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
@@ -42,7 +42,7 @@ export const maps = {
     trees:[[34,45],[38,268],[29,560],[60,780],[786,44],[790,151],[790,305],[786,495],[778,700],[540,880],[684,880]],
     water:[mainPond],
     objects:[{x:houseDoor.x,y:houseDoor.y-15,type:'house',style:'home',label:'Vào nhà vườn',w:72,h:60}, {x:442,y:183,type:'barn',label:'Kho nông sản',w:63,h:36}, {x:94,y:270,type:'well',label:'Uống nước ở giếng',w:23,h:19}],
-    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',coopGate,'right'),exit(188,273,'Sang xóm bên','neighbors',neighborEntry,'down'), exit(699,402,'Ra hồ làng','lake',[36,309],'right')],
+    exits:[exit(188,13,'Đường sang chợ','market',[188,260],'up'),exit(448,198,'Qua chuồng trại','coop',coopGate,'right'),exit(188,273,'Sang xóm bên','neighbors',neighborEntry,'down'), exit(699,402,'Ra hồ làng','lake',lakeEntry,'right')],
   },
   home: {
     name:'Nhà vườn', spawn:homeSpawn, water:[], objects:[], trees:[],
@@ -91,11 +91,11 @@ export const maps = {
       water:[[132,63],[220,48],[340,48],[460,63],[565,82],[642,109],[690,143],[692,214],[648,260],[580,286],[474,307],[365,313],[273,305],[204,286],[139,261],[102,221],[91,166],[104,108]],
       decks:[[[117,205],[190,211],[213,232],[201,254],[140,276],[120,293],[86,273],[102,253]],[[548,196],[584,197],[590,225],[650,243],[647,264],[587,279],[542,253]]],
     },
-    name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:[36,309],bounds:wide,
+    name:'Hồ làng', subtitle:'HỒ LÀNG', spawn:lakeEntry,bounds:wide,
     paths:[[[0,308],[66,311],[104,319],[150,308],[150,295],[130,275],[178,245]],[[150,308],[169,344],[205,365],[269,369],[326,350],[411,352],[484,324],[541,292],[559,257],[580,213]],[[150,308],[136,267],[124,231],[114,195],[117,160],[102,128]],[[484,324],[564,351],[623,370],[665,371],[719,377]]],
     trees:[[20,56],[55,93],[21,173],[73,227],[121,267],[197,377],[333,407],[432,413],[561,405],[690,336],[688,264],[685,157],[645,86],[605,51],[525,45],[441,35],[302,37],[194,52]],
     water:[rect(178,66,448,172)],
-    objects:[{x:101,y:122,type:'pavilion',label:'Chòi nghỉ ven hồ',w:85,h:45}],
+    objects:[lakeShelter],
     exits:[exit(16,309,'Về vườn nhà','field',[679,402],'left')],
   },
   visit: {
@@ -162,6 +162,12 @@ export function features(id, snapshot, neighbor, page=0) {
     hotspots.push({type:lakeElder.type,label:'Trò chuyện với '+lakeElder.name,...lakeElder.approach,hitBox:lakeElder.hitBox});
   }
   for(const obj of map.objects) {
+    if(obj.type==='lake-shelter'){
+      actors.push({...obj,y:obj.y-32,baseY:obj.y});
+      // Only the side posts are solid; keep the open floor reachable.
+      blocks.push(rect(obj.x-31,obj.y-16,5,16),rect(obj.x+28,obj.y-16,5,16));
+      continue;
+    }
     if(obj.type==='coop'&&!farm.coop) {
       actors.push({...obj,type:'foundation',label:'Xây chuồng'});
       hotspots.push({...obj,type:'coop',y:obj.y+15,label:'Xây chuồng'});
