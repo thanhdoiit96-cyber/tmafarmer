@@ -1,4 +1,5 @@
 import {cropImpacts} from './crop-impact.mjs';
+import {animalOutlook,pondOutlook} from './husbandry-outlook.mjs';
 import {lakeSpecies,fishBookComplete} from './lake-social.mjs';
 import {lakeElder,lakeElderGreeting,lakeElderVoice} from './lake-elder.mjs';
 import {prankActive,prankUnlocked} from './prank.mjs';
@@ -469,6 +470,14 @@ function upgrade(farm,key) {
     (cost?act(level?'Nâng cấp':'Xây','upgrade',key,'','',farm.coins<cost||!!upgradeRequirement(farm,key)):'<span class="badge">Tối đa</span>')+
     '</div><p>'+escape(benefit)+'</p>'+next+(required?'<ul class="recipe-ingredients upgrade-materials" aria-label="Vật tư nâng cấp">'+required+'</ul>':'')+(cost?unlockButton('building',key):'')+'</article>';
 }
+function husbandryEstimate(outlook,key){
+  if(outlook.ready)return '';
+  const percent=value=>{const n=Math.round(value*100);return (n>0?'+':'')+n+'%';};
+  const eta='~'+duration(Math.ceil(outlook.seconds/60)*60);
+  return '<div class="care-progress-label husbandry-estimate"><span>'+(outlook.feeding?'Ước tính còn':'Sau khi cho ăn')+'</span><b>'+eta+'</b></div>'+
+    (outlook.needsMoreFood?'<p class="care-note">'+(outlook.feeding?'Thức ăn hiện tại chưa đủ đến lúc thu.':'Đang dừng lớn.')+' Cần cho ăn tiếp để đạt ước tính.</p>':'')+
+    '<details class="panel-fold" data-panel-fold="husbandry-outlook-'+key+'"><summary>Yếu tố ảnh hưởng</summary><div class="care-progress-label"><span>Tốc độ</span><b>'+percent(outlook.rate-1)+'</b></div><p class="care-note">Theo thời tiết'+(key.startsWith('animal')?' &amp; chuồng':'')+'.</p><div class="care-progress-label"><span>Sản lượng</span><b>'+percent(outlook.yieldChange)+'</b></div><p class="care-note">'+(outlook.yieldChange?'Giảm theo số lứa đã thu.':'Thời tiết không đổi sản lượng.')+'</p><p class="care-note">Ước tính khi đủ ăn, thời tiết giữ nguyên.</p></details>';
+}
 function animalIllustration(kind){
   const atlas=additionalLivestockAtlas.frames[kind]?additionalLivestockAtlas:progressionLivestockAtlas.frames[kind]?progressionLivestockAtlas:livestockAtlas;
   const frame=atlas.frames[kind];
@@ -513,6 +522,7 @@ function renderCoop(farm,now,lot){
   const rank=pen=>pen.progress>=productGoal(pen)?0:pen.fedUntil<=now?1:2;
   const cards=pens.sort((a,b)=>rank(a.pen)-rank(b.pen)||a.i-b.i).map(({pen,i})=>{
     const info=animals[pen.kind],condition=animalCondition(pen,now);
+    const outlook=animalOutlook(farm,pen,state.weather,now);
     const targetAge=growthGoal(pen),targetProduct=productGoal(pen),grown=pen.age>=targetAge,ready=pen.progress>=targetProduct,eating=pen.fedUntil>now;
     const status=ready?(info.oneTime?'Đến lúc xuất chuồng':'Có thể thu'):!eating?'Cần cho ăn':!grown?'Đang lớn':info.oneTime?'Đang vỗ béo':'Đang tạo sản phẩm';
     const ref=' data-target="'+(pen.id??i)+'" data-index="'+i+'"';
@@ -521,7 +531,7 @@ function renderCoop(farm,now,lot){
     return '<article class="husbandry-card" data-pen="'+i+'" data-care-state="'+(ready?'ready':!eating?'hungry':'growing')+'"><header>'+animalIllustration(pen.kind)+'<div><h3>'+info.name+' '+(i+1)+'</h3><span class="care-state">'+status+'</span></div>'+btn('ⓘ','data-manage-animal="'+(pen.id??i)+'" aria-label="Chi tiết '+info.name+' '+(i+1)+'"','subtle')+'</header>'+
       '<div class="care-facts"><span><small>'+(ready?'Có thể thu':'Mỗi lứa')+'</small><b>'+condition.yield+' '+escape(goods[info.product].name.toLowerCase())+'</b></span><span><small>Thức ăn</small><b>'+(eating?'Còn '+duration(pen.fedUntil-now):ready&&info.oneTime?'Không cần thêm':food<info.food?'Thiếu '+(info.food-food)+' phần':'Cần '+info.food+' phần')+'</b></span></div>'+
       '<div class="care-progress-label"><span>'+(!grown?'Lớn lên':info.oneTime?'Vỗ béo':'Tạo sản phẩm')+'</span><b>'+progress(grown?pen.progress:pen.age,grown?targetProduct:targetAge)+'%</b></div>'+valueBar(grown?pen.progress:pen.age,grown?targetProduct:targetAge)+
-      (!eating&&!ready?'<p class="care-note">Đang dừng lớn · Cho ăn để tiếp tục.</p>':'')+
+      husbandryEstimate(outlook,'animal-'+(pen.id??i))+
       (condition.yield<info.yield?'<p class="care-note">'+condition.label+' · Sản lượng giảm theo số lứa đã thu.</p>':'')+
       '<div class="actions">'+(ready?collect+(info.oneTime?'':feed):feed)+'</div></article>';
   }).join('');
@@ -672,7 +682,7 @@ function renderPonds(farm,now){
     const def=aquatic[batch.kind],ripe=pondReady(batch),eating=batch.fedUntil>now,cost=pondFood(batch);
     const status=ripe?'Có thể thu':eating?'Đang lớn':'Cần cho ăn';
     const action=ripe?act(careIcon('animalHarvest')+'Thu · '+pondYield(batch),'aquaHarvest',batch.kind,pondTab,'primary'):act(careIcon('feed')+'Cho ăn · '+cost+' phần','aquaFeed',batch.kind,pondTab,'primary',eating||food<cost);
-    return '<article class="husbandry-card" data-care-state="'+(ripe?'ready':!eating?'hungry':'growing')+'"><header><div><h3>'+itemLink(batch.kind,def.name)+'</h3><span class="care-state">'+status+' · '+(batch.count??1)+' giống</span></div></header><div class="care-facts"><span><small>'+(ripe?'Có thể thu':'Tạm tính khi lớn')+'</small><b>'+pondYield(batch)+' '+escape(def.name.toLowerCase())+'</b></span><span><small>Thức ăn cả lứa</small><b>'+(ripe?'Không cần thêm':eating?'Còn '+duration(batch.fedUntil-now):food<cost?'Thiếu '+(cost-food)+' phần':cost+' phần')+'</b></span></div><div class="care-progress-label"><span>Lớn lên</span><b>'+progress(batch.progress,def.time)+'%</b></div>'+valueBar(batch.progress,def.time)+(!ripe&&!eating?'<p class="care-note">Đang dừng lớn · Cho ăn để tiếp tục.</p>':'')+'<div class="actions">'+action+'</div><details class="panel-fold pond-care-details" data-panel-fold="pond-care-'+pondTab+'-'+batch.kind+'"><summary>Cách nuôi &amp; sản lượng</summary><p class="care-note">Mỗi giống cho '+def.yield+' sản phẩm. Lứa này đã lấy '+(batch.picked??0)+' sản phẩm; còn '+pondYield(batch)+'. Một lần cho ăn cả lứa dùng '+cost+' phần. Ngừng lớn khi hết thức ăn. Thời gian cơ sở '+duration(def.time)+'; tốc độ thực tế thay đổi theo thời tiết.</p></details></article>';
+    return '<article class="husbandry-card" data-care-state="'+(ripe?'ready':!eating?'hungry':'growing')+'"><header><div><h3>'+itemLink(batch.kind,def.name)+'</h3><span class="care-state">'+status+' · '+(batch.count??1)+' giống</span></div></header><div class="care-facts"><span><small>'+(ripe?'Có thể thu':'Tạm tính khi lớn')+'</small><b>'+pondYield(batch)+' '+escape(def.name.toLowerCase())+'</b></span><span><small>Thức ăn cả lứa</small><b>'+(ripe?'Không cần thêm':eating?'Còn '+duration(batch.fedUntil-now):food<cost?'Thiếu '+(cost-food)+' phần':cost+' phần')+'</b></span></div><div class="care-progress-label"><span>Lớn lên</span><b>'+progress(batch.progress,def.time)+'%</b></div>'+valueBar(batch.progress,def.time)+husbandryEstimate(pondOutlook(batch,state.weather,now),'pond-'+pondTab+'-'+batch.kind)+'<div class="actions">'+action+'</div><details class="panel-fold pond-care-details" data-panel-fold="pond-care-'+pondTab+'-'+batch.kind+'"><summary>Cách nuôi &amp; sản lượng</summary><p class="care-note">Mỗi giống cho '+def.yield+' sản phẩm. Lứa này đã lấy '+(batch.picked??0)+' sản phẩm; còn '+pondYield(batch)+'. Một lần cho ăn cả lứa dùng '+cost+' phần. Ngừng lớn khi hết thức ăn. Thời gian cơ sở '+duration(def.time)+'.</p></details></article>';
   }).join('');
   return header+'<div class="husbandry-list">'+(rows||'<p class="care-empty">Ao còn trống. Chọn con giống bên dưới để bắt đầu nuôi.</p>')+'</div><details class="panel-fold pond-stock-fold" data-panel-fold="pond-stock"'+(!batches.length?' open':'')+'><summary>Thả thêm con giống · Còn '+Math.max(0,limit-used)+' chỗ</summary><p class="care-note">Mỗi loài một lứa trong mỗi ao. Giá và điều kiện con giống xem tại Chợ làng.</p><div class="pond-stock-grid">'+seeds+'</div>'+btn('Đến chợ','data-tab="market"','subtle')+'</details>';
 }

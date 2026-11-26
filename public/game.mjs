@@ -411,13 +411,16 @@ export function projectPlot(room, plot, now) {
   result.at=now;
   return result;
 }
+export function animalGrowthRate(farm,w){
+  const shade=farm.coop>=2?Math.max(.95,w.animal):w.animal;
+  return shade*(w.wet&&farm.coop===1?.95:1);
+}
 export function projectAnimal(room, farm, pen, now) {
   const result={...pen};
   if (pen.fedUntil>pen.at) {
     eachWeather(room,pen.at,Math.min(now,pen.fedUntil),(w,from,to)=>{
       const grow=growthGoal(pen), production=productGoal(pen);
-      const shade=farm.coop>=2?Math.max(.95,w.animal):w.animal;
-      const rate=shade*(w.wet&&farm.coop===1?.95:1);
+      const rate=animalGrowthRate(farm,w);
       const effort=(to-from)*rate;
       if(result.age<grow) {
         const mature=Math.min(effort,grow-result.age);
