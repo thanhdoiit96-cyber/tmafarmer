@@ -1,10 +1,10 @@
 import {avatarDetails,avatarOf} from './avatar-models.mjs';
 // One stationary NPC; no economic rewards or save state.
 export const lakeEntry=[365,377];
-export const lakeShelter={x:542,y:402,type:'lake-shelter',w:106,h:100,label:'Chòi Ông Sáu'};
+export const lakeShelter={x:390,y:365,type:'lake-shelter',w:106,h:100,label:'Chòi Ông Sáu'};
 export const lakeElder={
-  name:'Ông Sáu',type:'lake-elder',x:542,y:398,
-  approach:{x:520,y:414},hitBox:{x:526,y:354,w:32,h:48},
+  name:'Ông Sáu',type:'lake-elder',x:390,y:361,
+  approach:{x:390,y:386},hitBox:{x:374,y:317,w:32,h:48},
 };
 export const lakeElderLines={
   sun:'Nắng dịu rồi, {visitor} ghé bến câu nhé. Tiện tay dọn ít cỏ bờ ao cho lối đi sạch hơn.',

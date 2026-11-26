@@ -76,9 +76,9 @@ export function createWorld(root, onInteract, landscape) {
     grass(ctx,maps[sceneId],sceneId,scene);
   }
   function sizeCanvas(){
-    const nextScale=sceneId==='lake'?pixelViewport.width/bounds.width:nativeScale;
+    const nextScale=nativeScale;
     let width=pixelViewport.width, height=pixelViewport.height;
-    if(landscape.matches&&sceneId!=='lake'){
+    if(landscape.matches){
       const rect=canvas.getBoundingClientRect();
       if(!rect.width||!rect.height)return;
       const aspect=rect.width/rect.height;
@@ -504,7 +504,8 @@ export function createWorld(root, onInteract, landscape) {
     if(event.pointerType!=='touch')pointer=pointerLocation(event);
   });
   canvas.addEventListener('pointerleave',()=>{pointer=null;});
-  canvas.addEventListener('pointerup',event=>{
+  // Activate on click so a touch cannot also press a newly opened dialog button.
+  canvas.addEventListener('click',event=>{
     if(!scene||event.button!==0) return;
     const point=pointerLocation(event);
     const px=camera.x+point.x,py=camera.y+point.y,target=targetAt(px,py);

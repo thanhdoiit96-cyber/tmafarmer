@@ -1,5 +1,7 @@
 # Hồ làng — xưng hô, lối vào, chòi và UI V2
 
+> Tỉ lệ camera và vị trí chòi/Ông Sáu đã thay bằng [V3](LAKE_LAYOUT_SCALE_V3.md). Các tọa độ dưới đây là lịch sử V2.
+
 26/11/2026. Hoàn thiện trong source theo phản hồi người dùng; chưa commit/push/deploy. Chưa kết luận gameplay/pilot; chờ người dùng đánh giá sau thay đổi này.
 
 ## Những gì đã đổi

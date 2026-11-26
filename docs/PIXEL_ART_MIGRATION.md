@@ -1,5 +1,9 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### Ao làng: tỉ lệ và chòi giữa sân V3
+
+26/11/2026: dùng lại artwork đã có, khôi phục tỉ lệ render chung, chuyển chòi/Ông Sáu lên sân đá giữa bờ nam; đồng bộ hitbox, tiếp cận và viewport ngang. Không thêm PNG. Canvas desktop và chạm 844×390/568×320 đã kiểm tra; 192 tests/build đạt. Xem [chi tiết V3](LAKE_LAYOUT_SCALE_V3.md).
+
 ### Đàn vật nuôi Chuồng trại V9
 
 Đã thay bước tại chỗ bằng đi giữa các vị trí trống, đổi hàng/đi chéo khi có
