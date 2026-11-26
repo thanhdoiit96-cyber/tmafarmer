@@ -1,5 +1,7 @@
 # Hàng xóm đa tương tác và Ao làng — phác thảo V1
 
+Cập nhật mới hơn: người dùng yêu cầu nghịch bật sẵn và bỏ nút bật/tắt. [Runtime V2](NEIGHBOR_VISIT_UI_V2.md) đã thực hiện, giữ các bảo vệ và quota. Đề xuất opt-in bên dưới chỉ giữ làm lịch sử thiết kế.
+
 **Định hướng mới theo yêu cầu người dùng:** giữ toàn bộ lấy trộm hiện tại; phát triển giúp nhau và nghịch vui **song song trong cùng làng**. Không chọn Thân thiện/Tinh nghịch làm hai chế độ loại trừ nhau. Bản này thay [đề xuất tách chế độ trước đó](FRIENDLY_VILLAGE_DRAFT_V1.md).
 
 Trạng thái 26/11/2026: giúp tưới, việc ven ao, đổi thức ăn và sổ cá đã triển khai trong source; xem [runtime đầu](SOCIAL_LAKE_V1.md). Phần sâu nghịch có đồng ý/giới hạn và đổi lọ cũng đã có trong source; xem [quy tắc và kiểm chứng](PRANK_PLAY_V1.md). Chưa deploy. Bản mẫu dưới đây vẫn bao gồm các hướng dài hạn chưa triển khai; thông số runtime xem hai tài liệu trên.

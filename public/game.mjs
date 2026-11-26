@@ -897,7 +897,7 @@ export function snapshot(room, farm, time) {
     extraPlots:Object.fromEntries(plots.filter(i=>mainPlotSlot(i)<0).map(i=>[i,projectPlot(room,plotAt(farm,i),time)])),
     ponds:Object.fromEntries(Object.entries(pondBatches).map(([i,batches])=>[i,batches[0]??null])),
     pondBatches, fishing:fishingState(farm,day,time),
-    journal:journalAt(farm,day),daily:dailyAt(room,farm,time),neighborHelp:helpDay(farm,day),lakeDaily:lakeDay(farm,day),fishBook:fishBook(farm),prankDaily:prankDay(farm,day)};
+    journal:journalAt(farm,day),daily:dailyAt(room,farm,time),neighborHelp:helpDay(farm,day),lakeDaily:lakeDay(farm,day),fishBook:fishBook(farm),prankDaily:prankDay(farm,day),prankEnabled:true};
   delete me.recent;
   delete me.orders;
   delete me.soilAt;
@@ -941,7 +941,7 @@ export function snapshot(room, farm, time) {
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
         }),id:f.id,name:f.name,level:farmProgress(f).rank.level,field:f.field,coop:f.coop,workshop:f.workshop??0,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
-        prankEnabled:f.prankEnabled===true,prankBlock:prankAccess(farm,f,day,time),
+        prankEnabled:true,prankBlock:prankAccess(farm,f,day,time),
         prankPlots:indexes.flatMap(index=>{
           const p=cropAt(index);
           return prankPlotBlock(p,p?cropGoal(p):1)?[]:[{index,kind:p.kind}];
@@ -1041,15 +1041,7 @@ function applyAction(room,id,input,now,catchRoll){
   const quantityLimit=action==='sell'?Infinity:action==='buy'?supplyLimit:20;
   check(Number.isSafeInteger(qty)&&qty>=1&&qty<=quantityLimit,'Số lượng không hợp lệ.');
   if(action==='prankPreference'){
-    check(item==='on'||item==='off','Lựa chọn không hợp lệ.');
-    if(item==='on')check(prankUnlocked(farm),'Cần nông trại cấp 3 để nhận nghịch vui.');
-    if(item==='off'&&farm.prankActive?.until>now){
-      const active=farm.prankActive,p=projectPlot(room,plotAt(farm,active.index),now);
-      if(p?.prank){p.prank={...p.prank,until:Math.min(p.prank.until,now)};savePlot(farm,active.index,p);}
-      farm.prankActive=null;
-    }
-    farm.prankEnabled=item==='on';
-    return farm.prankEnabled?'Đã bật nhận nghịch vui.':'Đã tắt nhận nghịch vui; giữ nguyên thời hạn miễn nhận.';
+    fail('Nghịch vui đã bật mặc định. Hãy tải lại game để cập nhật giao diện.');
   }
   if(action==='releasePrank'){
     const owner=room.farms[target],day=dayAt(room,now);

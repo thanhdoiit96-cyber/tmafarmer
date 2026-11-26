@@ -18,10 +18,11 @@ function setup(){
 }
 const send=(r,id,action,time=now,props={})=>apply(r,id,{action,...props},time);
 const release=(r,id='1',target='0',time=now,index=0)=>send(r,id,'releasePrank',time,{target,index});
-test('prank defaults off, requires both ranks, permission, open gate, jar and appropriate crop',()=>{
+test('prank defaults on but still requires both ranks, open gate, jar and appropriate crop',()=>{
   const r=setup(),owner=r.farms[0],actor=r.farms[1];
-  delete owner.prankEnabled;assert.throws(()=>release(r),/chưa cho phép/);
-  owner.prankEnabled=true;owner.xp=69;assert.throws(()=>release(r),/cấp 3/);
+  delete owner.prankEnabled;assert.equal(prankAccess(actor,owner,0,now),'');
+  owner.prankEnabled=false;assert.equal(prankAccess(actor,owner,0,now),'');
+  owner.xp=69;assert.throws(()=>release(r),/cấp 3/);
   owner.xp=70;actor.xp=69;assert.throws(()=>release(r),/cấp 3/);
   actor.xp=70;owner.shieldUntil=now+10;assert.throws(()=>release(r),/Cổng/);
   owner.shieldUntil=0;actor.prankJars=0;assert.throws(()=>release(r),/chưa có lọ/);
@@ -43,7 +44,7 @@ test('twelve villagers cannot stack or exceed received quota and immunity surviv
   const immunity=owner.prankImmuneUntil;
   assert.equal(immunity,now+180+1800);
   for(let i=2;i<12;i++)assert.throws(()=>release(r,String(i),'0',now+31),/miễn nhận/);
-  send(r,'0','prankPreference',now+40,{item:'off'});send(r,'0','prankPreference',now+41,{item:'on'});
+  assert.throws(()=>send(r,'0','prankPreference',now+40,{item:'off'}),/bật mặc định/);
   assert.equal(owner.prankImmuneUntil,immunity);
   owner.plots[0]=crop(immunity);release(r,'2','0',immunity);
   owner.plots[0]=crop(immunity*2);assert.throws(()=>release(r,'3','0',now+4000),/2 lượt nghịch/);
@@ -82,10 +83,12 @@ test('growth is slowed only within absolute interval and never directly changes 
   assert.equal(prankActive(changed,now+300),false);
   const expiredOutlook=cropOutlook(changed,weather,now+300);assert.equal(expiredOutlook.rate,rate);
 });
-test('catch and opt out first settle elapsed progress then remove effect without rewriting past time',()=>{
-  for(const action of ['catchPrank','prankPreference']){
+test('catch settles elapsed progress then removes effect; obsolete toggle cannot clear it',()=>{
+  for(const action of ['catchPrank']){
     const r=setup();release(r);
     const owner=r.farms[0],before=structuredClone(owner.plots[0]);
+    assert.throws(()=>send(r,'0','prankPreference',now+30,{item:'off'}),/bật mặc định/);
+    assert.deepEqual(owner.plots[0],before);
     const expected=projectPlot(r,before,now+60);
     send(r,'0',action,now+60,{index:0,item:'off'});
     assert.equal(owner.plots[0].progress,expected.progress);assert.equal(owner.plots[0].prank.until,now+60);
@@ -93,6 +96,22 @@ test('catch and opt out first settle elapsed progress then remove effect without
     assert.equal(owner.inventory.spray,1);assert.equal(owner.xp,70);assert.equal(owner.wellness,undefined);
     const later=projectPlot(r,owner.plots[0],now+240),noPrank={...owner.plots[0]};delete noPrank.prank;
     assert.equal(later.progress,projectPlot(r,noPrank,now+240).progress);
+  }
+});
+
+test('new and saved disabled farms receive pranks by default without losing quotas or immunity',()=>{
+  for(const saved of [undefined,false,true]){
+    const r=setup(),owner=r.farms[0];
+    if(saved===undefined)delete owner.prankEnabled;else owner.prankEnabled=saved;
+    release(r);
+    const view=snapshot(r,r.farms[1],now);
+    assert.equal(view.neighbors.find(n=>n.id==='0').prankEnabled,true);
+    assert.equal(snapshot(r,owner,now).me.prankEnabled,true);
+    assert.equal(owner.prankDaily.received,1);
+    assert.throws(()=>release(r,'2'),/đang có sâu/);
+    const savedRoom=JSON.parse(JSON.stringify(r));
+    assert.equal(savedRoom.farms[0].prankImmuneUntil,owner.prankImmuneUntil);
+    assert.throws(()=>release(savedRoom,'2','0',now+181),/miễn nhận/);
   }
 });
 test('long absence agrees with continuous simulation across weather, wetness, fertilizer and hazards',()=>{

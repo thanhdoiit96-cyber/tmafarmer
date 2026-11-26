@@ -5,7 +5,7 @@ import {DatabaseSync} from 'node:sqlite';
 import worker from '../server/worker.mjs';
 import {plotPosition} from '../public/world-layout.mjs';
 
-test('server rechecks exact host and opt in; concurrent releases and exchanges are atomic',async()=>{
+test('server rechecks exact host, ignores legacy opt out and keeps concurrent actions atomic',async()=>{
   const db=new DatabaseSync(':memory:');
   for(const name of ['0000_rooms','0001_scene_social','0002_accounts'])db.exec(readFileSync(new URL('../drizzle/'+name+'.sql',import.meta.url),'utf8'));
   const DB={prepare(sql){const q=db.prepare(sql);return {bind(...args){return {first:async()=>q.get(...args),all:async()=>({results:q.all(...args)}),run:async()=>({meta:q.run(...args)})};}};}};
@@ -24,10 +24,9 @@ test('server rechecks exact host and opt in; concurrent releases and exchanges a
   assert.equal((await send(a,'releasePrank',input)).status,400);
   await enter(a,c.state.me.id);assert.equal((await send(a,'releasePrank',input)).status,400);
   await enter(a,bid);await enter(c,bid);
-  await send(b,'prankPreference',{item:'off'});
-  assert.equal((await send(a,'releasePrank',input)).status,400);
+  update(room=>{room.farms[bid].prankEnabled=false;});
+  assert.equal((await send(b,'prankPreference',{item:'off'})).status,400);
   assert.equal(read().farms[aid].prankJars,2);
-  await send(b,'prankPreference',{item:'on'});
   const idA=crypto.randomUUID(),idC=crypto.randomUUID();
   const attempts=await Promise.all([send(a,'releasePrank',input,idA),send(c,'releasePrank',input,idC)]);
   assert.deepEqual(attempts.map(r=>r.status).sort(),[200,400]);
@@ -41,7 +40,7 @@ test('server rechecks exact host and opt in; concurrent releases and exchanges a
   await api('scene',{area:'field',pose:{...plotPosition(0),facing:'up',walking:false}},b);
   const caught=await send(b,'catchPrank',{index:0});assert.equal(caught.status,200);
   assert.equal(caught.state.me.inventory.spray,1);
-  await send(b,'prankPreference',{item:'off'});await send(b,'prankPreference',{item:'on'});
+  assert.equal((await send(b,'prankPreference',{item:'off'})).status,400);
   assert.equal(read().farms[bid].prankImmuneUntil,state.farms[bid].prankImmuneUntil);
   update(room=>{room.farms[aid].prankJars=0;});
   await api('scene',{area:'lake',pose:{x:326,y:350,facing:'up',walking:false}},a);

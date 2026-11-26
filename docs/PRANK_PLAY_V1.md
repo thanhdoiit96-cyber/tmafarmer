@@ -1,5 +1,7 @@
 # Sâu nghịch có giới hạn — V1
 
+**Cập nhật theo yêu cầu mới:** [Ghé thăm/luật V2](NEIGHBOR_VISIT_UI_V2.md) đã bật nghịch mặc định, bỏ nút và guard opt-in, áp dụng cả save từng tắt; cấp, cổng, quota và miễn nhận giữ nguyên. Phần opt-in và kiểm chứng bên dưới là lịch sử V1, không phải hành vi hiện tại.
+
 Ngày 26/11/2026. Hoàn thiện trong source, chưa commit/push/deploy. Tiếp nối [giúp tưới và Hồ làng](SOCIAL_LAKE_V1.md), theo [phác thảo đã chọn](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).
 
 ## Cách chơi

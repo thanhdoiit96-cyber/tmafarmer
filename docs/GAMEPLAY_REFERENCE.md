@@ -2,7 +2,7 @@
 
 Hồ làng có [Ông Sáu](LAKE_ELDER_V1.md): click hoặc chọn Gặp Ông Sáu để đi tới gần rồi trò chuyện theo thời tiết, mở Việc ven ao/Sổ cá. Hội thoại không phát thưởng và không bắt buộc để chơi các hoạt động này. Đã có trong source, chưa deploy.
 
-Cập nhật 26/11/2026: Hàng xóm có tưới giúp độc lập lượt trộm; Hồ làng có dọn bờ 10 giây từ cấp 2, dấu ao đổi thức ăn và sổ ba loài cá với phiếu trang trí nhận một lần. [Quy tắc, giới hạn và cách chơi V1](SOCIAL_LAKE_V1.md). Từ cấp 3 có [sâu nghịch opt-in V1](PRANK_PLAY_V1.md): đổi lọ bằng dấu ao, tốc độ −10% tối đa 3 phút, bắt miễn phí, quota và miễn nhận riêng; mặc định không nhận. Đã có trong source, chưa deploy.
+Cập nhật 26/11/2026: Hàng xóm có tưới giúp độc lập lượt trộm; Hồ làng có dọn bờ 10 giây từ cấp 2, dấu ao đổi thức ăn và sổ ba loài cá với phiếu trang trí nhận một lần. [Quy tắc Ao V1](SOCIAL_LAKE_V1.md). [Ghé thăm V2](NEIGHBOR_VISIT_UI_V2.md) có bốn tab gọn, sáu item/trang; nghịch vui bật sẵn, cả hai vườn vẫn cần cấp 3, không còn nút bật/tắt. Đổi lọ bằng dấu ao, tốc độ −10% tối đa 3 phút, bắt miễn phí, quota/cổng/miễn nhận giữ nguyên. Áp dụng cả save từng tắt; đã có trong source, chưa deploy.
 
 Kiểm tra nghỉ dài 8 giờ–7 ngày đã sửa lỗi tính bù thời tiết chỉ xét 32 giờ cuối: cây nay dùng đúng thời tiết từ timestamp đã lưu và dừng khi chín. Không thay tuổi, bảo hộ hay thức ăn; xem [báo cáo P1.3](LONG_ABSENCE_AUDIT_V1.md).
 

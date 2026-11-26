@@ -1,6 +1,6 @@
 import {progressionLevelForXp} from './progression-levels.mjs';
 
-export const prankRules={version:1,level:3,factor:.9,seconds:180,immunity:1800,given:2,received:2,jars:2};
+export const prankRules={version:2,level:3,factor:.9,seconds:180,immunity:1800,given:2,received:2,jars:2};
 export const prankDay=(farm,day)=>farm.prankDaily?.day===day?farm.prankDaily:{day,given:0,received:0,targets:[]};
 export const prankUnlocked=farm=>progressionLevelForXp(farm.xp??0).level>=prankRules.level;
 export const prankActive=(plot,time)=>!!(plot?.prank&&time>=plot.prank.startedAt&&time<plot.prank.until);
@@ -14,7 +14,6 @@ export function prankPlotBlock(plot,goal){
 export function prankAccess(actor,owner,day,time){
   if(!owner||actor.id===owner.id)return 'Hãy chọn vườn hàng xóm.';
   if(!prankUnlocked(actor)||!prankUnlocked(owner))return 'Cả hai nông trại cần đạt cấp 3.';
-  if(owner.prankEnabled!==true)return 'Chủ vườn chưa cho phép nghịch vui.';
   if(owner.shieldUntil>time)return 'Cổng đang đóng.';
   if(owner.prankActive?.until>time)return 'Vườn đang có sâu nghịch; không thể thả thêm.';
   if(owner.prankImmuneUntil>time)return 'Vườn đang được miễn nhận sâu nghịch.';
