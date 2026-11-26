@@ -3,6 +3,8 @@
 Ngày: 26/11/2026. Đã triển khai trong source; chưa commit/push/deploy.
 Theo lát cắt đầu của [thiết kế song song](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).
 
+Cập nhật tiếp nối cùng ngày: [sâu nghịch V1](PRANK_PLAY_V1.md) đã có trong source. Hồ làng nay cho chọn thức ăn hoặc lọ sâu, dùng chung một gói/ngày. Những câu “chưa có sâu nghịch” dưới đây ghi lại phạm vi lát cắt đầu, không phải trạng thái source mới nhất.
+
 ## Cách chơi
 
 - **Hàng xóm → Ghé thăm → Tưới giúp:** chọn cây đang khô, chưa chín; nhân vật tự đi tới ô rồi tưới. Danh sách tối đa 6 ô/trang, giữ nhãn ruộng chính/vườn mở rộng. Mỗi người giúp 3 lượt/ngày game, tối đa 2 lượt cùng chủ; mỗi chủ nhận 6 lượt/ngày. Tưới thành công dùng 2 nước, 1 no bụng, 3 thể lực của người giúp; trời nóng thêm 1 nước như tưới thường. Không thưởng xu/XP và không tiêu lượt trộm. Trong danh sách Hàng xóm, mở mục Tưới giúp để bật/tắt quyền nhận giúp, mặc định bật.

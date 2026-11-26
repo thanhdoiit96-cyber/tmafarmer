@@ -5,6 +5,7 @@ import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fi
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
 import {helpDay,lakeDay,fishBook,fishBookComplete,recordLakeCatch,shoreWork} from './lake-social.mjs';
+import {prankRules,prankDay,prankUnlocked,prankActive,prankPlotBlock,prankAccess} from './prank.mjs';
 export {homesteadSize} from './land.mjs';
 export {coopSize} from './coop-layout.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
@@ -389,8 +390,9 @@ export function projectPlot(room, plot, now) {
       const baseRisk=weeds?(weedWeatherRate[w.id]??.14):w.pests;
       const pestRate=(damp?Math.max(.44,baseRisk):baseRisk)*120/goal;
       const pressure=weeds?result.weeds:result.pests;
-      const rate=cropGrowthRate(plot,w,wet,pressure);
-      const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<protection?protection:to,damp?dampUntil:to);
+      const rate=cropGrowthRate(plot,w,wet,pressure,t);
+      const prankBoundary=plot.prank?(t<plot.prank.startedAt?plot.prank.startedAt:t<plot.prank.until?plot.prank.until:to):to;
+      const end=Math.min(to,t<plot.wetUntil?plot.wetUntil:to,t<protection?protection:to,damp?dampUntil:to,prankBoundary);
       const pestThreshold=exposed&&pressure<40?(40-pressure)/pestRate:Infinity;
       const duration=Math.min(end-t,pestThreshold,(goal-result.progress)/rate);
       if(duration<=1e-8) {
@@ -621,17 +623,17 @@ function record(farm,time,message) {
   farm.log.unshift({time,message});
   farm.log=farm.log.slice(0,14);
 }
-export function cropGrowthRate(plot,weather,wet,pressure){
-  return weather.crop*cropWeatherEffect(plot.kind,weather.id).growth*(wet?1.38:dryGrowthFactor)*(pressure>=40?.68:1)*(plot.fertilized?1.3:1);
+export function cropGrowthRate(plot,weather,wet,pressure,time=plot.at){
+  return weather.crop*cropWeatherEffect(plot.kind,weather.id).growth*(wet?1.38:dryGrowthFactor)*(pressure>=40?.68:1)*(plot.fertilized?1.3:1)*(prankActive(plot,time)?prankRules.factor:1);
 }
 // A current-condition estimate, not a simulation of future weather or care.
 export function cropOutlook(plot,weather,now){
   const goal=cropGoal(plot),ripe=plot.progress>=goal;
   const wet=weather.wet||plot.wetUntil>now;
   const pressure=(cropHazard(plot)==='weeds'?plot.weeds:plot.pests)??0;
-  const rate=cropGrowthRate(plot,weather,wet,pressure);
+  const rate=cropGrowthRate(plot,weather,wet,pressure,now);
   const potential=cropPotentialYield(plot),total=cropYield(plot);
-  return {ripe,wet,pressure,rate,seconds:ripe?0:Math.ceil(Math.max(0,goal-plot.progress)/rate),
+  return {ripe,wet,pressure,rate,prank:prankActive(plot,now),seconds:ripe?0:Math.ceil(Math.max(0,goal-plot.progress)/rate),
     potential,total,remaining:Math.max(0,total-(plot.picked??0)),lost:potential-total};
 }
 export function cropPotentialYield(plot){
@@ -895,7 +897,7 @@ export function snapshot(room, farm, time) {
     extraPlots:Object.fromEntries(plots.filter(i=>mainPlotSlot(i)<0).map(i=>[i,projectPlot(room,plotAt(farm,i),time)])),
     ponds:Object.fromEntries(Object.entries(pondBatches).map(([i,batches])=>[i,batches[0]??null])),
     pondBatches, fishing:fishingState(farm,day,time),
-    journal:journalAt(farm,day),daily:dailyAt(room,farm,time),neighborHelp:helpDay(farm,day),lakeDaily:lakeDay(farm,day),fishBook:fishBook(farm)};
+    journal:journalAt(farm,day),daily:dailyAt(room,farm,time),neighborHelp:helpDay(farm,day),lakeDaily:lakeDay(farm,day),fishBook:fishBook(farm),prankDaily:prankDay(farm,day)};
   delete me.recent;
   delete me.orders;
   delete me.soilAt;
@@ -913,8 +915,13 @@ export function snapshot(room, farm, time) {
     listings:Object.values(room.listings).map(listing=>({...listing,sellerName:room.farms[listing.seller].name})),
     neighbors:Object.values(room.farms).filter(f=>f.id!==farm.id).map(f=>{
       const items=candidates(f);
+      const projected=new Map();
+      const cropAt=i=>{
+        if(!projected.has(i))projected.set(i,projectPlot(room,plotAt(f,i),time));
+        return projected.get(i);
+      };
       const publicPlot=i=>{
-        const p=projectPlot(room,plotAt(f,i),time);
+        const p=cropAt(i);
         return p?{kind:p.kind,stage:cropStage(p),weeds:p.weeds??0,hazard:cropHazard(p),ripe:p.progress>=cropGoal(p),available:p.progress>=cropGoal(p)&&cropYield(p)-(p.picked||0)>=3}:null;
       };
       const indexes=cropIndexes(f);
@@ -934,9 +941,13 @@ export function snapshot(room, farm, time) {
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
         }),id:f.id,name:f.name,level:farmProgress(f).rank.level,field:f.field,coop:f.coop,workshop:f.workshop??0,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
-        helpEnabled:f.helpEnabled!==false,helpReceived:helpDay(f,day).received,
+        prankEnabled:f.prankEnabled===true,prankBlock:prankAccess(farm,f,day,time),
+        prankPlots:indexes.flatMap(index=>{
+          const p=cropAt(index);
+          return prankPlotBlock(p,p?cropGoal(p):1)?[]:[{index,kind:p.kind}];
+        }),helpEnabled:f.helpEnabled!==false,helpReceived:helpDay(f,day).received,
         helpPlots:f.helpEnabled===false?[]:indexes.flatMap(index=>{
-          const p=projectPlot(room,plotAt(f,index),time);
+          const p=cropAt(index);
           return plotWorkBlock('water',p,weatherAt(room,time),time)?[]:[{index,kind:p.kind}];
         }),available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
@@ -1029,6 +1040,39 @@ function applyAction(room,id,input,now,catchRoll){
   const qty=input.qty??1;
   const quantityLimit=action==='sell'?Infinity:action==='buy'?supplyLimit:20;
   check(Number.isSafeInteger(qty)&&qty>=1&&qty<=quantityLimit,'Số lượng không hợp lệ.');
+  if(action==='prankPreference'){
+    check(item==='on'||item==='off','Lựa chọn không hợp lệ.');
+    if(item==='on')check(prankUnlocked(farm),'Cần nông trại cấp 3 để nhận nghịch vui.');
+    if(item==='off'&&farm.prankActive?.until>now){
+      const active=farm.prankActive,p=projectPlot(room,plotAt(farm,active.index),now);
+      if(p?.prank){p.prank={...p.prank,until:Math.min(p.prank.until,now)};savePlot(farm,active.index,p);}
+      farm.prankActive=null;
+    }
+    farm.prankEnabled=item==='on';
+    return farm.prankEnabled?'Đã bật nhận nghịch vui.':'Đã tắt nhận nghịch vui; giữ nguyên thời hạn miễn nhận.';
+  }
+  if(action==='releasePrank'){
+    const owner=room.farms[target],day=dayAt(room,now);
+    const reason=prankAccess(farm,owner,day,now);check(!reason,reason);
+    check(cropIndexes(owner).includes(index),'Ô đất không tồn tại.');
+    const plot=projectPlot(room,plotAt(owner,index),now);
+    const blocked=prankPlotBlock(plot,plot?cropGoal(plot):1);check(!blocked,blocked);
+    const mine=prankDay(farm,day),theirs=prankDay(owner,day),until=now+prankRules.seconds;
+    plot.prank={startedAt:now,until};savePlot(owner,index,plot);
+    owner.prankActive={index,until};owner.prankImmuneUntil=until+prankRules.immunity;
+    farm.prankJars--;farm.prankDaily={...mine,given:mine.given+1,targets:[...mine.targets,target]};
+    owner.prankDaily={...theirs,received:theirs.received+1};
+    record(owner,now,farm.name+' thả sâu nghịch: chậm 10%, tối đa 3 phút. Có thể bắt miễn phí.');
+    return 'Đã thả sâu nghịch. Không gây mất sản phẩm trực tiếp.';
+  }
+  if(action==='catchPrank'){
+    check(cropIndexes(farm).includes(index),'Ô đất không tồn tại.');
+    const plot=projectPlot(room,plotAt(farm,index),now);
+    check(prankActive(plot,now),'Ô này không còn sâu nghịch.');
+    plot.prank={...plot.prank,until:now};savePlot(farm,index,plot);
+    farm.prankActive=null;
+    return 'Đã bắt sâu nghịch; không dùng thuốc, không trả lọ. Vườn vẫn được miễn nhận.';
+  }
   if(action==='helpPreference'){
     check(item==='on'||item==='off','Lựa chọn không hợp lệ.');
     farm.helpEnabled=item==='on';
@@ -1084,12 +1128,19 @@ function applyAction(room,id,input,now,catchRoll){
   }
   if(action==='lakeExchange'){
     const daily=lakeDay(farm,dayAt(room,now));
-    check(!daily.exchanged,'Bạn đã đổi thức ăn hôm nay.');
+    check(!daily.exchanged,'Bạn đã đổi một gói quà Hồ làng hôm nay.');
     check((farm.lakeMarks??0)>=2,'Cần 2 dấu ao.');
-    check(own(farm,'aquaFeed')<supplyLimit,'Túi thức ăn thủy sản đã đầy.');
-    add(farm,'aquaFeed',1);farm.lakeMarks-=2;
+    check(!item||item==='aquaFeed'||item==='prankJar','Gói quà không hợp lệ.');
+    if(item==='prankJar'){
+      check(prankUnlocked(farm),'Cần nông trại cấp 3 để đổi lọ sâu nghịch.');
+      check((farm.prankJars??0)<prankRules.jars,'Bạn đã có tối đa 2 lọ sâu nghịch.');
+      farm.prankJars=(farm.prankJars??0)+1;
+    }else{
+      check(own(farm,'aquaFeed')<supplyLimit,'Túi thức ăn thủy sản đã đầy.');add(farm,'aquaFeed',1);
+    }
+    farm.lakeMarks-=2;
     farm.lakeDaily={...daily,exchanged:true};
-    return 'Đã đổi 2 dấu ao lấy 1 thức ăn thủy sản.';
+    return item==='prankJar'?'Đã đổi 2 dấu ao lấy 1 lọ sâu nghịch.':'Đã đổi 2 dấu ao lấy 1 thức ăn thủy sản.';
   }
   if(action==='claimFishBook'){
     check(fishBookComplete(farm),'Hãy câu đủ 3 loài trong sổ cá.');

@@ -10,5 +10,6 @@ export function cropImpacts(plot,weather,outlook){
     {label:outlook.wet?'Đất ẩm':'Đất khô',growth:change(outlook.wet?1.38:dryGrowthFactor),yield:0},
     {label:(plot.hazard==='weeds'?'Cỏ dại':'Sâu')+(outlook.lost?' · đã tích lũy':''),growth:outlook.pressure>=40?-32:0,yield:-Math.round(outlook.lost/outlook.potential*100)},
     {label:plot.fertilized?'Đã bón phân':'Chưa bón phân',growth:plot.fertilized?30:0,yield:plot.fertilized?Math.round(100/crops[plot.kind].yield):0},
+    ...(outlook.prank?[{label:'Sâu nghịch · tạm thời',growth:-10,yield:0}]:[]),
   ];
 }

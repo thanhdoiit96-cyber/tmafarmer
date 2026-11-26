@@ -180,4 +180,5 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 25/11/2026 | P1.4 — phác thảo | Đã thay thế: không tách chế độ làng, giữ bản lịch sử | [Bản tương tác, đánh đổi và kiểm chứng](FRIENDLY_VILLAGE_DRAFT_V1.md) |
 | 26/11/2026 | P1.4 + Ao — hướng song song | Giữ trộm, phác thảo giúp/nghịch có giới hạn và việc ven ao/sổ cá; chưa đổi gameplay | [Bản mới theo yêu cầu](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md) |
 | 26/11/2026 | P1.4 + Ao — runtime V1 | Đã triển khai, chưa deploy | Giúp tưới quota riêng, việc ven ao 10 giây, đổi thức ăn và sổ cá có quà một lần. [Phạm vi và kiểm chứng](SOCIAL_LAKE_V1.md) |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tiếp theo: sâu nghịch có đồng ý và giới hạn, tách khỏi sâu tự nhiên. P2.1 và ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |
+| 26/11/2026 | P1.4 — sâu nghịch V1 | Đã triển khai, chưa deploy | Nhận nghịch mặc định tắt, giảm tốc tạm thời tách sâu tự nhiên, quota/miễn nhận, bắt miễn phí và đổi lọ tại hồ. [Quy tắc và kiểm chứng](PRANK_PLAY_V1.md) |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Tiếp theo: pilot tương tác xã hội và phác thảo mỹ thuật/cảm xúc bờ ao; P2.1 và ETA vật nuôi-thủy sản còn backlog; chưa mở thanh toán |

@@ -269,9 +269,11 @@ export function createWorld(root, onInteract, landscape) {
       .sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
   }
   function particle(input,{cast,caught}={}) {
-    const palette=effectStyle[input.action==='helpWater'?'water':['shoreStart','shoreTick'].includes(input.action)?'weed':input.action];
+    const visualAction={helpWater:'water',releasePrank:'plant',catchPrank:'harvest',shoreStart:'weed',shoreTick:'weed'}[input.action]??input.action;
+    const palette=effectStyle[visualAction];
     if(!palette||!scene)return;
     let target=null;
+    if(input.action==='releasePrank'&&sceneId==='visit'||input.action==='catchPrank'&&sceneId==='field')target=plotPosition(input.index);
     if(input.action==='helpWater'&&sceneId==='visit')target=plotPosition(input.index);
     if(['shoreStart','shoreTick'].includes(input.action)&&sceneId==='lake')target=scene.hotspots.find(a=>a.type==='shore-work');
     if(['till','weed','water','plant','fertilize','spray','harvest'].includes(input.action)&&sceneId==='field') target=plotPosition(input.index);
@@ -287,7 +289,7 @@ export function createWorld(root, onInteract, landscape) {
     }
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
-    pose=['shoreStart','shoreTick','weed'].includes(input.action)?'till':input.action==='helpWater'?'water':input.action;
+    pose=visualAction==='weed'?'till':visualAction;
     posePlot=input.index;
     poseStarted=performance.now();
     if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {

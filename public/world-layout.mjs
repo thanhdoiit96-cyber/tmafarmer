@@ -108,7 +108,7 @@ Object.assign(maps.visit,{
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
 export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','weed','harvest']);
-export const needsPlayerLocation=action=>plotWorkActions.has(action)||['helpWater','shoreStart','shoreTick','lakeExchange','claimFishBook','drink','eat','rest'].includes(action);
+export const needsPlayerLocation=action=>plotWorkActions.has(action)||['helpWater','releasePrank','catchPrank','shoreStart','shoreTick','lakeExchange','claimFishBook','drink','eat','rest'].includes(action);
 export function taskMarkers(sceneId,hotspots,tasks){
   if(sceneId!=='field'&&sceneId!=='coop')return [];
   const positions=new Map(hotspots.map(point=>[point.type+':'+point.index,point]));
@@ -128,14 +128,14 @@ function withinReach(point,pose){
   return !!(point&&pose&&Math.hypot(point.x-pose.x,point.y-pose.y)<=interactionRange);
 }
 export function playerLocationBlock({action,index},area,pose,hasPublicWell=false){
-  if(action==='helpWater'){
+  if(action==='helpWater'||action==='releasePrank'){
     if(area!=='visit'||!Number.isSafeInteger(index)||index<0)return 'Hãy ghé đúng vườn hàng xóm.';
     const plot=plotPosition(index);
     return withinReach({x:plot.x,y:plot.y+plotHotspotOffset},pose)?'':'Hãy đến gần ô cây để tưới giúp.';
   }
   if(['shoreStart','shoreTick'].includes(action))return area==='lake'&&withinReach(shoreWork,pose)&&!pose.walking?'':'Hãy đứng lại ở bờ ao để dọn cỏ.';
   if(['lakeExchange','claimFishBook'].includes(action))return area==='lake'?'':'Hãy đến Hồ làng để nhận hoặc đổi quà.';
-  if(plotWorkActions.has(action)){
+  if(plotWorkActions.has(action)||action==='catchPrank'){
     if(area!=='field'||!Number.isSafeInteger(index)||index<0)return 'Hãy đến đúng ô đất trong vườn của bạn.';
     const plot=plotPosition(index);
     return withinReach({x:plot.x,y:plot.y+plotHotspotOffset},pose)?'':'Hãy đến gần ô đất để thực hiện.';

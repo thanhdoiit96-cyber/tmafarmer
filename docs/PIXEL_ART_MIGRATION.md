@@ -358,3 +358,7 @@ Thay đề xuất hai chế độ bằng lấy/giúp/nghịch song song; prototy
 ### 26/11/2026 — Runtime giúp tưới và việc ven ao
 
 Dùng lại atlas tưới cho giúp hàng xóm và cuốc đất cho dọn bờ ao. Điểm làm việc (326,350) nằm trên bờ phía nam, không sửa nền, đường đi hoặc collision nước/cầu. Hoạt ảnh cuốc lặp trong khi job còn hợp lệ, dừng khi di chuyển; reduced motion giữ pose tĩnh. Không thêm bitmap. 177 kiểm thử, build và asset audit đạt; đã xem Canvas thực ở Edge và kiểm tra UI desktop/mobile ngang. Chưa kiểm tra Safari thật. [Phạm vi](SOCIAL_LAKE_V1.md).
+
+### 26/11/2026 — Sâu nghịch opt-in V1
+
+Dùng lại động tác gieo để thả và chăm/thu để bắt, không sửa atlas hoặc vẽ thêm tay/dụng cụ. Không gắn icon sâu tự nhiên cho sâu nghịch; thông tin ở ô cây có nhãn riêng, −10%, countdown và nút bắt miễn phí. Danh sách chọn ô 6/trang, giữ tên ruộng/vườn. Đã xem Canvas thực trong Edge và thử chạm ở mobile ngang; 186 kiểm thử, build và audit tài nguyên đạt. Không thêm ảnh sản xuất, chưa kiểm tra Safari thật. [Luật và kiểm chứng](PRANK_PLAY_V1.md).
