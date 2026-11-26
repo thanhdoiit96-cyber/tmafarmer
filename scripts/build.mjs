@@ -6,6 +6,7 @@ await mkdir('dist/server',{recursive:true});
 await cp('server','dist/server',{recursive:true});
 await cp('public/game.mjs','dist/server/game.mjs');
 await cp('public/lake-social.mjs','dist/server/lake-social.mjs');
+await cp('public/lake-elder.mjs','dist/server/lake-elder.mjs');
 await cp('public/prank.mjs','dist/server/prank.mjs');
 await cp('public/progression-levels.mjs','dist/server/progression-levels.mjs');
 await cp('public/avatar-models.mjs','dist/server/avatar-models.mjs');

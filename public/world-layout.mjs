@@ -1,6 +1,7 @@
 import {coopCapacity,fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {shoreWork} from './lake-social.mjs';
+import {lakeElder} from './lake-elder.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam,expandedParcelAnimalSeats} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
@@ -156,6 +157,10 @@ export function features(id, snapshot, neighbor, page=0) {
   const hotspots=[...map.exits,...(map.hotspots??[])];
   const farm=snapshot.me;
   const owner=id==='visit'?neighbor:farm;
+  if(id==='lake'){
+    actors.push({...lakeElder});
+    hotspots.push({type:lakeElder.type,label:'Trò chuyện với '+lakeElder.name,...lakeElder.approach,hitBox:lakeElder.hitBox});
+  }
   for(const obj of map.objects) {
     if(obj.type==='coop'&&!farm.coop) {
       actors.push({...obj,type:'foundation',label:'Xây chuồng'});

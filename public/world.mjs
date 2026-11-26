@@ -27,7 +27,8 @@ const effectStyle={
 
 export function createWorld(root, onInteract, landscape) {
   const canvas=root.querySelector('canvas'), context=canvas.getContext('2d');
-  const scale=pixelViewport.width/size.width;
+  const nativeScale=pixelViewport.width/size.width;
+  let scale=nativeScale;
   canvas.width=pixelViewport.width;
   canvas.height=pixelViewport.height;
   context.setTransform(scale,0,0,scale,0,0);
@@ -75,15 +76,17 @@ export function createWorld(root, onInteract, landscape) {
     grass(ctx,maps[sceneId],sceneId,scene);
   }
   function sizeCanvas(){
+    const nextScale=sceneId==='lake'?pixelViewport.width/bounds.width:nativeScale;
     let width=pixelViewport.width, height=pixelViewport.height;
-    if(landscape.matches){
+    if(landscape.matches&&sceneId!=='lake'){
       const rect=canvas.getBoundingClientRect();
       if(!rect.width||!rect.height)return;
       const aspect=rect.width/rect.height;
-      width=Math.max(1,Math.round(Math.min(bounds.width,size.height*aspect)*scale));
+      width=Math.max(1,Math.round(Math.min(bounds.width,size.height*aspect)*nextScale));
       height=Math.max(1,Math.min(pixelViewport.height,Math.round(width/aspect)));
     }
-    if(canvas.width===width&&canvas.height===height)return;
+    if(canvas.width===width&&canvas.height===height&&scale===nextScale)return;
+    scale=nextScale;
     canvas.width=width;
     canvas.height=height;
     context.setTransform(scale,0,0,scale,0,0);

@@ -1,5 +1,6 @@
 import {cropImpacts} from './crop-impact.mjs';
 import {lakeSpecies,fishBookComplete} from './lake-social.mjs';
+import {lakeElder,lakeElderGreeting} from './lake-elder.mjs';
 import {prankActive,prankUnlocked} from './prank.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {optionalIndex} from './action-input.mjs';
@@ -694,7 +695,7 @@ function fishingControls(source,now,{target,index,allowed=true}={}){
     'data-action="cast" data-source="'+source+'"'+(target?' data-target="'+target+'" data-index="'+index+'"':''),'primary',!allowed)+'</div>';
 }
 function renderLake(farm,now){
-  const tabs='<div class="market-tabs">'+[['fishing','Bến câu'],['shore','Ven ao'],['book','Sổ cá']].map(([key,label])=>btn(label,'data-lake-tab="'+key+'" aria-pressed="'+(lakeTab===key)+'"',lakeTab===key?'primary':'subtle')).join('')+'</div>';
+  const tabs='<div class="market-tabs">'+[['fishing','Bến câu'],['shore','Ven ao'],['book','Sổ cá']].map(([key,label])=>btn(label,'data-lake-tab="'+key+'" aria-pressed="'+(lakeTab===key)+'"',lakeTab===key?'primary':'subtle')).join('')+'</div><p class="care-note">'+btn('Gặp Ông Sáu','data-lake-elder','subtle')+'</p>';
   if(lakeTab==='shore'){
     const job=farm.shoreJob,daily=farm.lakeDaily??{},marks=farm.lakeMarks??0;
     return tabs+'<div class="row"><h2>Việc ven ao</h2><span class="badge">'+marks+'/6 dấu ao</span></div><p>Dọn cỏ bờ ao · 10 giây · 2 dấu · 1 lần/ngày</p>'+
@@ -1238,7 +1239,7 @@ function goToPinnedGoal(){
 const focusSelector='[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
-  if(!element?.matches(focusSelector+', [data-lake-tab], [data-help-page], [data-prank-page]')) return '';
+  if(!element?.matches(focusSelector+', [data-lake-elder], [data-lake-tab], [data-help-page], [data-prank-page]')) return '';
   return Object.entries(element.dataset).map(([key,value])=>key+'='+value).join('|')+
     ('itemInfo' in element.dataset?(element.getAttribute('aria-label')??''):'');
 }
@@ -1322,7 +1323,7 @@ function render(arrival) {
   const quickGardenForm=dialog.open&&dialog.querySelector('.quick-garden-form');
   if(quickGardenForm&&!busy)updateQuickGarden(quickGardenForm);
   if(focus&&!dialog.open){
-    const control=Array.from(document.querySelectorAll(focusSelector+', [data-lake-tab], [data-help-page], [data-prank-page], [data-panel-fold]>summary')).find(el=>focusKey(el)===focus);
+    const control=Array.from(document.querySelectorAll(focusSelector+', [data-lake-elder], [data-lake-tab], [data-help-page], [data-prank-page], [data-panel-fold]>summary')).find(el=>focusKey(el)===focus);
     control?.focus({preventScroll:true});
     if(control&&searchSelection)control.setSelectionRange(...searchSelection);
   }
@@ -1390,7 +1391,9 @@ function reveal(selector) {
 }
 function interactWithWorld(target) {
   if(!state||dialog.open)return;
-  if(target.type==='bed'){
+  if(target.type===lakeElder.type){
+    showLakeElder();
+  } else if(target.type==='bed'){
     showRecovery('stamina');
   } else if(target.type==='land'){
     selectedLot=target.index;panel='land';render();reveal('.control-panel');
@@ -1446,6 +1449,13 @@ function modal(title,html) {
   hideStockTooltip();
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
   if(!dialog.open) dialog.showModal();
+}
+function showLakeElder(){
+  if(tab!=='lake'||neighborId)return;
+  const pose=world.position();
+  if(Math.hypot(pose.x-lakeElder.approach.x,pose.y-lakeElder.approach.y)>31)return;
+  modal(lakeElder.name,'<p class="elder-greeting">“'+escape(lakeElderGreeting(state.weather.id))+'”</p><div class="actions">'+
+    btn('Việc ven ao','data-elder-open="shore"','primary')+btn('Sổ cá','data-elder-open="book"','subtle')+btn('Chào ông, cháu đi nhé','data-close','subtle')+'</div>');
 }
 function showMobileMenu(){
   if(!state)return;
@@ -1925,6 +1935,13 @@ document.addEventListener('click',async e=>{
     prankPage=Number(d.prankPage);render();
   } else if('helpPage' in d){
     helpPage=Number(d.helpPage);render();
+  } else if('lakeElder' in d){
+    if(tab!=='lake'||busy)return;
+    if(world.approach(lakeElder.type,undefined,showLakeElder))reveal('#world');
+    else showToast('Chưa tìm được đường đến Ông Sáu.',true);
+  } else if('elderOpen' in d){
+    if(tab!=='lake'||!['shore','book'].includes(d.elderOpen))return;
+    dialog.close();lakeTab=d.elderOpen;panel='area';render();reveal('.control-panel');
   } else if('lakeTab' in d){
     lakeTab=d.lakeTab;render();
   } else if('action' in d) {

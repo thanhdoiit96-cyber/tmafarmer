@@ -362,3 +362,11 @@ Dùng lại atlas tưới cho giúp hàng xóm và cuốc đất cho dọn bờ 
 ### 26/11/2026 — Sâu nghịch opt-in V1
 
 Dùng lại động tác gieo để thả và chăm/thu để bắt, không sửa atlas hoặc vẽ thêm tay/dụng cụ. Không gắn icon sâu tự nhiên cho sâu nghịch; thông tin ở ô cây có nhãn riêng, −10%, countdown và nút bắt miễn phí. Danh sách chọn ô 6/trang, giữ tên ruộng/vườn. Đã xem Canvas thực trong Edge và thử chạm ở mobile ngang; 186 kiểm thử, build và audit tài nguyên đạt. Không thêm ảnh sản xuất, chưa kiểm tra Safari thật. [Luật và kiểm chứng](PRANK_PLAY_V1.md).
+
+### 26/11/2026 — Toàn cảnh Hồ làng và mẫu Ông Sáu riêng
+
+Camera Hồ làng hiển thị world 720×432 trên Canvas 640×384, scale nền/actor/tương tác đồng bộ; mobile giữ tỷ lệ 5:3, ẩn minimap riêng ao. 186 kiểm thử, build và asset audit đạt; đã xem Canvas thực và kiểm tra pointer/chuyển scene desktop/mobile ngang. Mẫu NPC riêng được tạo bằng imagegen theo skill, nguồn RGBA và preview 48×64 chỉ trong docs/assets; chưa thêm atlas/NPC runtime. [Phạm vi và kiểm chứng](LAKE_OVERVIEW_V1.md), [phác thảo V2](LAKE_LIFE_DRAFT_V1.md).
+
+### 26/11/2026 — Ông Sáu runtime V1
+
+Hoàn thiện nguồn idle bốn frame từ mẫu NPC riêng bằng imagegen; xuất 192×64 RGBA, ô 48×64, alpha cứng, crop và baseline chung. Metadata/decoder/render dùng atlas riêng, idle nhẹ và reduced motion tĩnh; không chắp tay hay dụng cụ lên nhân vật cũ. Đã xem atlas 4× và Canvas toàn ao. NPC (260,365), điểm đứng (286,374), approach trước hội thoại, E/touch và mở mục có sẵn; 188 kiểm thử, build/asset audit đạt. [Nguồn, pipeline và kiểm chứng](LAKE_ELDER_V1.md).

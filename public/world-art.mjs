@@ -1,4 +1,6 @@
 import {gardenHelperName} from './garden-helper.mjs';
+import {lakeElderFrame} from './lake-elder.mjs';
+import {lakeElderAtlas} from './pixel/frames.mjs';
 import {cropGoal, growthGoal} from './game.mjs';
 import frames from './sprite-frames.mjs';
 import {landscapeFor} from './landscapes.mjs';
@@ -17,6 +19,7 @@ const load = source => {
   image.src = source;
   return image;
 };
+const lakeElderArt=load(lakeElderAtlas.source);
 const atlas = load('/ve-lang-vat-nuoi.webp');
 const surfaceArt=load('/pixel/terrain-materials-v3.png');
 const homesteadSoilArt=load('/pixel/scene-background-homestead-v1.png');
@@ -74,7 +77,7 @@ function mirrorTile(image,index,name){
   context.fillStyle=terrainColors[name];context.fillRect(0,0,cell*2,cell*2);
   return tile;
 }
-export const artReady=Promise.allSettled([tillTaskArt.decode(),drySoilArt.decode(),animalTaskArt.decode(),careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
+export const artReady=Promise.allSettled([lakeElderArt.decode(),tillTaskArt.decode(),drySoilArt.decode(),animalTaskArt.decode(),careIconArt.decode(),...Object.values(ageCharacterArt).flatMap(a=>[a.base.decode(),a.actions.decode()]),plotGrassArt.decode(),gardenFenceArt.decode(),neighborHomesArt.decode(),neighborHallArt.decode(),marketShopperArt.decode(),marketBoardArt.decode(),villageWellArt.decode(),atlas.decode(),surfaceArt.decode(),homesteadSoilArt.decode(),parcelShelterArt.decode(),workshopBuildingArt.decode(),parcelPondArt.decode(),parcelGroveArt.decode(),pondDockArt.decode(),...Object.values(yardPetArt).map(image=>image.decode()),...Object.values(sceneBackgroundArt).map(image=>image.decode()),pixelCharacters.decode(),farmerWalk.decode(),pixelObjects.decode(),gardenDecorArt.decode(),gardenHelperArt.decode(),farmerActionArt.female.decode(),farmerActionArt.male.decode()]).then(()=>{
   if(surfaceArt.naturalWidth)floors.forEach((name,index)=>surfaces[name]=mirrorTile(surfaceArt,index,name));
 });
 const dim = image => image.complete && image.naturalWidth > 0;
@@ -1254,6 +1257,13 @@ function neighborHouse(c,a,t){
   }
 }
 export function actor(c,a,t,state){
+  if(a.type==='lake-elder'){
+    if(!dim(lakeElderArt))return;
+    const frame=lakeElderFrame(t,t===0),unit=.75;
+    shade(c,a.x,a.y,8,2.5);
+    c.drawImage(lakeElderArt,frame*lakeElderAtlas.cellWidth,0,48,64,snapPixel(a.x-24*unit),snapPixel(a.y-59*unit),48*unit,64*unit);
+    return;
+  }
   if(a.type==='market-shopper'){
     if(!dim(marketShopperArt))return;
     shade(c,a.x,a.y,6,2);
