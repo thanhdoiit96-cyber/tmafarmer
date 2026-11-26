@@ -354,3 +354,7 @@ HTML/CSS độc lập dùng nền Hàng xóm sẵn có, không thêm ảnh PNG h
 ### 26/11/2026 — Phác thảo Hàng xóm đa tương tác và Ao làng
 
 Thay đề xuất hai chế độ bằng lấy/giúp/nghịch song song; prototype HTML dùng background Hàng xóm và khung Ao trong atlas môi trường hiện có, không ảnh/atlas mới. Điểm bến câu/bờ ao chỉ minh họa tương tác, chưa sửa map/collision. Đã kiểm tra Chromium desktop/mobile ngang/dọc và luồng UI; chưa áp gameplay. [Bản mẫu và quy tắc](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).
+
+### 26/11/2026 — Runtime giúp tưới và việc ven ao
+
+Dùng lại atlas tưới cho giúp hàng xóm và cuốc đất cho dọn bờ ao. Điểm làm việc (326,350) nằm trên bờ phía nam, không sửa nền, đường đi hoặc collision nước/cầu. Hoạt ảnh cuốc lặp trong khi job còn hợp lệ, dừng khi di chuyển; reduced motion giữ pose tĩnh. Không thêm bitmap. 177 kiểm thử, build và asset audit đạt; đã xem Canvas thực ở Edge và kiểm tra UI desktop/mobile ngang. Chưa kiểm tra Safari thật. [Phạm vi](SOCIAL_LAKE_V1.md).

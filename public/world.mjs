@@ -1,4 +1,5 @@
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
+import {shoreWork} from './lake-social.mjs';
 import {features, interactionRange as range, maps, plotPosition, route, size, taskMarkers, walkable} from './world-layout.mjs';
 import {landscapeFor} from './landscapes.mjs';
 import {pixelViewport} from './pixel/frames.mjs';
@@ -268,9 +269,11 @@ export function createWorld(root, onInteract, landscape) {
       .sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
   }
   function particle(input,{cast,caught}={}) {
-    const palette=effectStyle[input.action];
+    const palette=effectStyle[input.action==='helpWater'?'water':['shoreStart','shoreTick'].includes(input.action)?'weed':input.action];
     if(!palette||!scene)return;
     let target=null;
+    if(input.action==='helpWater'&&sceneId==='visit')target=plotPosition(input.index);
+    if(['shoreStart','shoreTick'].includes(input.action)&&sceneId==='lake')target=scene.hotspots.find(a=>a.type==='shore-work');
     if(['till','weed','water','plant','fertilize','spray','harvest'].includes(input.action)&&sceneId==='field') target=plotPosition(input.index);
     if(['feed','collect'].includes(input.action)&&sceneId==='coop') target=scene.hotspots.find(a=>a.type==='animal'&&a.index===input.index);
     if(input.action.startsWith('aqua')&&sceneId==='field') target=scene.hotspots.find(a=>a.type==='pond'&&a.index===input.index);
@@ -284,7 +287,7 @@ export function createWorld(root, onInteract, landscape) {
     }
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
-    pose=input.action==='weed'?'till':input.action;
+    pose=['shoreStart','shoreTick','weed'].includes(input.action)?'till':input.action==='helpWater'?'water':input.action;
     posePlot=input.index;
     poseStarted=performance.now();
     if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {
@@ -409,8 +412,9 @@ export function createWorld(root, onInteract, landscape) {
       const reach=a.type==='fence-front'?a.area.w/2+4:75;
       if(a.x<cameraX-reach||a.y<cameraY-28||a.x>cameraX+view.width+reach||a.y>cameraY+view.height+95)continue;
       if(a.type==='player'){
-        const elapsed=(now-poseStarted)/1000;
-        const action=!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
+        const shore=!walking&&sceneId==='lake'&&snapshot.me.shoreJob&&gameNow-snapshot.me.shoreJob.lastAt<=shoreWork.pulseGap&&Math.hypot(x-shoreWork.x,y-shoreWork.y)<=range;
+        const elapsed=shore?ambient%actionPoseSeconds.till:(now-poseStarted)/1000;
+        const action=shore?'till':!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
         const fishing=!walking&&dock&&distance(dock,x,y)<range&&(action==='cast'||action==='reel'||fishingHere);
         const poseTime=reduce.matches?(actionPoseSeconds[action]??0)*.55:elapsed;
         drawPerson(context,x,y,fishing?dock.side:facing,ambient,{avatar:a.avatar,walking:walking&&!reduce.matches,walkDistance,action,elapsed:poseTime});

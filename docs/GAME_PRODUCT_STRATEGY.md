@@ -175,4 +175,4 @@ Mục tiêu không phải có nhiều hệ thống nhất, mà là người chơ
 
 ## Điều chỉnh hướng xã hội và Ao làng — 26/11/2026
 
-Theo yêu cầu người dùng, không tách làng thành Thân thiện/Tinh nghịch. Giữ lấy trộm cũ; phát triển hành động giúp và chọc phá nhẹ có đồng ý, quota nhận/thả riêng, không biến sâu tự nhiên gây thiệt hại vĩnh viễn thành công cụ phá. Ao làng bổ sung việc ven bờ, sổ cá và đổi phần thưởng nhỏ có giới hạn để nối vòng ghé làng. Đây là hướng và bản mẫu chưa triển khai, không thay quyền hoặc kinh tế hiện có. Xem [đặc tả, giới hạn và thứ tự triển khai](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).
+Theo yêu cầu người dùng, không tách làng thành Thân thiện/Tinh nghịch. Giữ lấy trộm cũ; phát triển hành động giúp và chọc phá nhẹ có đồng ý, quota nhận/thả riêng, không biến sâu tự nhiên gây thiệt hại vĩnh viễn thành công cụ phá. Ao làng bổ sung việc ven bờ, sổ cá và đổi phần thưởng nhỏ có giới hạn để nối vòng ghé làng. Lát cắt giúp tưới, việc ven ao, đổi thức ăn và sổ cá đã có trong source, chưa deploy; sâu nghịch chưa triển khai. Xem [runtime V1](SOCIAL_LAKE_V1.md) và [đặc tả dài hạn](SOCIAL_PLAY_AND_LAKE_DRAFT_V1.md).

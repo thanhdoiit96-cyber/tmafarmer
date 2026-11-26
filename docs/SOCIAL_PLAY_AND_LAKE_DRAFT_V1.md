@@ -2,7 +2,7 @@
 
 **Định hướng mới theo yêu cầu người dùng:** giữ toàn bộ lấy trộm hiện tại; phát triển giúp nhau và nghịch vui **song song trong cùng làng**. Không chọn Thân thiện/Tinh nghịch làm hai chế độ loại trừ nhau. Bản này thay [đề xuất tách chế độ trước đó](FRIENDLY_VILLAGE_DRAFT_V1.md).
 
-Trạng thái: đề xuất và prototype, **chưa thay gameplay**. Các hạn mức/con số bên dưới là giá trị V1 cần duyệt và thử cân bằng, không phải thông số đã deploy.
+Trạng thái 26/11/2026: lát cắt giúp tưới, việc ven ao, đổi thức ăn và sổ cá đã triển khai trong source, chưa deploy; xem [phạm vi và kiểm chứng runtime](SOCIAL_LAKE_V1.md). Sâu nghịch/lọ sâu vẫn là đề xuất chưa triển khai. Bản mẫu dưới đây mô tả cả hướng dài hạn, không đồng nghĩa toàn bộ đã có trong game.
 
 [Mở bản mẫu tương tác](assets/social-lake-draft-v1.html). Không gọi API hoặc lưu vào game; dùng hình nền hiện có. Không thêm PNG/atlas để tránh phình dự án.
 

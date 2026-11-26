@@ -1,5 +1,6 @@
 import {coopCapacity,fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
+import {shoreWork} from './lake-social.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam,expandedParcelAnimalSeats} from './pixel/homestead-buildings.mjs';
 import {yardPets} from './yard-pets.mjs';
@@ -83,6 +84,7 @@ export const maps = {
     exits:[exit(360,14,'Về vườn nhà','field',[188,251],'up'),exit(704,345,'Sang chuồng trại','coop',coopGate,'right')],
   },
   lake: {
+    hotspots:[{x:shoreWork.x,y:shoreWork.y,type:'shore-work',label:'Dọn bờ ao'}],
     // Trace the painted shoreline, allowing only the two wooden decks over water.
     navigation:{
       water:[[132,63],[220,48],[340,48],[460,63],[565,82],[642,109],[690,143],[692,214],[648,260],[580,286],[474,307],[365,313],[273,305],[204,286],[139,261],[102,221],[91,166],[104,108]],
@@ -106,7 +108,7 @@ Object.assign(maps.visit,{
   objects:maps.field.objects.map(o=>o.type==='house'?{...o,style:'visit'}:o),
 });
 export const plotWorkActions=new Set(['till','plant','water','fertilize','spray','weed','harvest']);
-export const needsPlayerLocation=action=>plotWorkActions.has(action)||['drink','eat','rest'].includes(action);
+export const needsPlayerLocation=action=>plotWorkActions.has(action)||['helpWater','shoreStart','shoreTick','lakeExchange','claimFishBook','drink','eat','rest'].includes(action);
 export function taskMarkers(sceneId,hotspots,tasks){
   if(sceneId!=='field'&&sceneId!=='coop')return [];
   const positions=new Map(hotspots.map(point=>[point.type+':'+point.index,point]));
@@ -126,6 +128,13 @@ function withinReach(point,pose){
   return !!(point&&pose&&Math.hypot(point.x-pose.x,point.y-pose.y)<=interactionRange);
 }
 export function playerLocationBlock({action,index},area,pose,hasPublicWell=false){
+  if(action==='helpWater'){
+    if(area!=='visit'||!Number.isSafeInteger(index)||index<0)return 'Hãy ghé đúng vườn hàng xóm.';
+    const plot=plotPosition(index);
+    return withinReach({x:plot.x,y:plot.y+plotHotspotOffset},pose)?'':'Hãy đến gần ô cây để tưới giúp.';
+  }
+  if(['shoreStart','shoreTick'].includes(action))return area==='lake'&&withinReach(shoreWork,pose)&&!pose.walking?'':'Hãy đứng lại ở bờ ao để dọn cỏ.';
+  if(['lakeExchange','claimFishBook'].includes(action))return area==='lake'?'':'Hãy đến Hồ làng để nhận hoặc đổi quà.';
   if(plotWorkActions.has(action)){
     if(area!=='field'||!Number.isSafeInteger(index)||index<0)return 'Hãy đến đúng ô đất trong vườn của bạn.';
     const plot=plotPosition(index);

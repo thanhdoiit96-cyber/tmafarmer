@@ -1,4 +1,5 @@
 import {cropImpacts} from './crop-impact.mjs';
+import {lakeSpecies,fishBookComplete} from './lake-social.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName} from './garden-helper.mjs';
 import {optionalIndex} from './action-input.mjs';
 import {unlockGuide,itemUnlockTarget} from './unlock-guide.mjs';
@@ -43,6 +44,7 @@ let session=store.read(sessionKey);
 let accountSession=store.read(accountKey);
 let demo;
 let state, tab='field', selected=0, neighborId, busy=false, toastTimer, inviteCode='';
+let lakeTab='fishing',helpPage=0,lastShorePulse=0;
 let revision=-1, receivedAt=Date.now(), villagePage=0, panel='area', marketPane='orders', pondTab=0, selectedLot=0, plotGroup=-1, visitPond=0, baseDecorOpen=false, showTomorrow=false;
 const areaIcons={field:'leaf',home:'home',workshop:'build',coop:'coop',market:'market',neighbors:'users',lake:'fish'};
 const panels={area:['leaf','Khu vực'],land:['build','Đất'],ponds:['fish','Ao nuôi'],orders:['orders','Đơn hàng'],stock:['bag','Kho'],buildings:['build','Xây dựng'],log:['log','Nhật ký']};
@@ -596,6 +598,7 @@ function renderNeighbors(farm,now) {
   const villageLeft=state.village.theftsLeft;
   const left=Math.max(0,Math.min(villageLeft,visitLimit(farm)-farm.daily.taken));
   let html=boardBar(neighborId?'Ghé thăm':'Hàng xóm','🎒 '+left+'/'+visitLimit(farm)+' lượt');
+  html+='<details data-panel-fold="neighbor-help"><summary>Tưới giúp · '+(farm.neighborHelp?.given??0)+'/3 lượt đã dùng</summary><p>Mỗi vườn tối đa 2 lượt; mỗi chủ nhận 6 lượt/ngày. Giúp tưới dùng sức của bạn, không dùng lượt lấy trộm.</p>'+act(farm.helpEnabled===false?'Bật nhận tưới giúp':'Tắt nhận tưới giúp','helpPreference',farm.helpEnabled===false?'on':'off','','subtle')+'</details>';
   const homes=neighborHomes(state);
   const current=state.neighbors.find(n=>n.id===neighborId);
   if(!current) {
@@ -610,6 +613,12 @@ function renderNeighbors(farm,now) {
   const unavailable=left<1||current.available<1||farm.daily.targets.includes(current.id)||current.shieldUntil>now;
   const message=villageLeft<1?'Cả làng đã hết lượt trộm hôm nay.':current.shieldUntil>now?'Cổng đang đóng.':farm.daily.targets.includes(current.id)?'Bạn đã lấy một món tại đây hôm nay.':current.available<1?'Vườn đã đạt giới hạn bị lấy hôm nay.':left<1?'Túi ghé vườn đã hết lượt hôm nay.':'Mỗi lần lấy một món.';
   const pick=(key,source,index='')=>btn('Lấy 1 '+nice(key),`data-action="steal" data-target="${current.id}" data-source="${source}" data-index="${index}" data-item="${key}"`,'gold',unavailable);
+  const help=farm.neighborHelp??{given:0,targets:{}};
+  const helpBlocked=help.given>=3||(help.targets[current.id]??0)>=2||current.helpReceived>=6;
+  const helpPlots=current.helpPlots??[],helpPages=Math.max(1,Math.ceil(helpPlots.length/6));
+  helpPage=Math.max(0,Math.min(helpPage,helpPages-1));
+  const helpPager=helpPages>1?'<div class="row">'+btn('‹','data-help-page="'+(helpPage-1)+'" aria-label="Trang ô cây trước"','subtle',helpPage===0)+'<span>'+(helpPage+1)+'/'+helpPages+'</span>'+btn('›','data-help-page="'+(helpPage+1)+'" aria-label="Trang ô cây sau"','subtle',helpPage+1>=helpPages)+'</div>':'';
+  html+='<article><h3>Tưới giúp hàng xóm</h3>'+(current.helpEnabled===false?'<p>Chủ vườn đang tắt nhận giúp.</p>':helpPlots.length?'<div class="actions action-grid">'+helpPlots.slice(helpPage*6,helpPage*6+6).map(p=>btn(careIcon('water')+(gardenFor(p.index)<0?'Ruộng chính':'Vườn '+(gardenFor(p.index)+1))+' · Ô '+plotNumber(p.index)+' · '+nice(p.kind),'data-action="helpWater" data-target="'+current.id+'" data-index="'+p.index+'"','subtle',helpBlocked)).join('')+'</div>'+helpPager:'<p>Chưa có cây cần tưới.</p>')+'</article>';
   return html+'<div class="farm-list"><article><div class="row"><h3>🏡 '+escape(current.name)+'</h3>'+btn('Về danh sách','data-return')+'</div><p>Ruộng cấp '+current.field+' · '+current.animalCount+' vật nuôi</p><p>'+message+'</p></article>'+
     '<article id="visit-garden"><h3>🌱 Ngoài vườn</h3>'+(current.garden.length?'<div class="actions action-grid">'+current.garden.map(p=>pick(p.kind,'garden',p.index)).join('')+'</div>':'<p>Chưa có ô nào đủ nông sản để lấy.</p>')+'</article>'+
     '<article id="visit-barn"><h3>📦 Trong kho</h3>'+(current.items.length?'<div class="actions action-grid">'+current.items.map(key=>pick(key,'barn')).join('')+'</div>':'<p>Kho đang giữ lại nông sản cho chủ vườn.</p>')+'</article>'+
@@ -675,8 +684,20 @@ function fishingControls(source,now,{target,index,allowed=true}={}){
     'data-action="cast" data-source="'+source+'"'+(target?' data-target="'+target+'" data-index="'+index+'"':''),'primary',!allowed)+'</div>';
 }
 function renderLake(farm,now){
+  const tabs='<div class="market-tabs">'+[['fishing','Bến câu'],['shore','Ven ao'],['book','Sổ cá']].map(([key,label])=>btn(label,'data-lake-tab="'+key+'" aria-pressed="'+(lakeTab===key)+'"',lakeTab===key?'primary':'subtle')).join('')+'</div>';
+  if(lakeTab==='shore'){
+    const job=farm.shoreJob,daily=farm.lakeDaily??{},marks=farm.lakeMarks??0;
+    return tabs+'<div class="row"><h2>Việc ven ao</h2><span class="badge">'+marks+'/6 dấu ao</span></div><p>Dọn cỏ bờ ao · 10 giây · 2 dấu · 1 lần/ngày</p>'+
+      (job?'<p role="status">Đang dọn · '+Math.min(10,job.elapsed)+'/10 giây. Di chuyển sẽ dừng việc.</p>'+act('Dừng','shoreCancel','','','subtle'):
+        act(daily.worked?'Hôm nay đã dọn':farm.xp<25?'Mở ở cấp 2':'Tới bờ ao · Dọn cỏ','shoreStart','','','primary',daily.worked||farm.xp<25||marks>4))+
+      '<p>Đổi 2 dấu lấy 1 thức ăn thủy sản · 1 lần/ngày</p>'+act(daily.exchanged?'Hôm nay đã đổi':'Đổi thức ăn','lakeExchange','','','subtle',daily.exchanged||marks<2||(farm.inventory.aquaFeed??0)>=supplyLimit);
+  }
+  if(lakeTab==='book')return tabs+'<h2>Sổ cá Hồ làng</h2><p>Ghi nhận cá tự câu ở hồ làng từ phiên bản này. Đủ 3 loài nhận 1 phiếu trang trí, một lần duy nhất.</p><div class="card-grid">'+lakeSpecies.map(key=>{
+    const entry=farm.fishBook?.[key];
+    return '<article class="itemrow">'+itemLink(key)+'<span>'+(entry?.count?'Đã câu · '+entry.count:'Chưa gặp')+'</span></article>';
+  }).join('')+'</div>'+act(farm.fishBookClaimed?'Đã nhận phiếu':'Nhận phiếu trang trí','claimFishBook','','','primary',farm.fishBookClaimed||!fishBookComplete(farm));
   const odds=state.weather.id==='storm'?'Dông lớn làm tạm dừng thả câu.':'Cá nhỏ thường gặp. Tỷ lệ cá chép vàng '+catchOdds(state.weather)+'%.';
-  return '<div class="row"><h2>Câu ở hồ làng</h2><span class="badge">'+(state.fishingLimit-farm.fishing.used)+' / '+state.fishingLimit+' lượt</span></div><p>'+odds+'</p>'+fishingControls('public',now);
+  return tabs+'<div class="row"><h2>Câu ở hồ làng</h2><span class="badge">'+(state.fishingLimit-farm.fishing.used)+' / '+state.fishingLimit+' lượt</span></div><p>'+odds+'</p>'+fishingControls('public',now);
 }
 function fencePreview(style){
   const row=['wood','white','bamboo'].indexOf(style);
@@ -1206,7 +1227,7 @@ function goToPinnedGoal(){
 const focusSelector='[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
-  if(!element?.matches(focusSelector)) return '';
+  if(!element?.matches(focusSelector+', [data-lake-tab], [data-help-page]')) return '';
   return Object.entries(element.dataset).map(([key,value])=>key+'='+value).join('|')+
     ('itemInfo' in element.dataset?(element.getAttribute('aria-label')??''):'');
 }
@@ -1290,7 +1311,7 @@ function render(arrival) {
   const quickGardenForm=dialog.open&&dialog.querySelector('.quick-garden-form');
   if(quickGardenForm&&!busy)updateQuickGarden(quickGardenForm);
   if(focus&&!dialog.open){
-    const control=Array.from(document.querySelectorAll(focusSelector+', [data-panel-fold]>summary')).find(el=>focusKey(el)===focus);
+    const control=Array.from(document.querySelectorAll(focusSelector+', [data-lake-tab], [data-help-page], [data-panel-fold]>summary')).find(el=>focusKey(el)===focus);
     control?.focus({preventScroll:true});
     if(control&&searchSelection)control.setSelectionRange(...searchSelection);
   }
@@ -1365,7 +1386,9 @@ function interactWithWorld(target) {
   } else if(target.type==='pond'){
     pondTab=target.index;panel='ponds';render();reveal('.control-panel');
   } else if(target.type==='public-fishing'){
-    panel='area';render();reveal('.control-panel');
+    lakeTab='fishing';panel='area';render();reveal('.control-panel');
+  } else if(target.type==='shore-work'){
+    lakeTab='shore';panel='area';render();reveal('.control-panel');
   } else if(target.type==='neighbor-fishing'){
     visitPond=target.index;panel='area';render();reveal('#visit-pond');
   } else if(target.type==='order-board'){
@@ -1526,7 +1549,7 @@ async function perform(input) {
           if(!sameLocation())return null;
           const pose=world.position();
           checkLocation(pose);
-          await api('scene',{area:actionTab,pose},credentials);
+          await api('scene',{area:actionNeighbor?'visit':actionTab,host:actionNeighbor,pose},credentials);
           if(!sameLocation())return null;
           checkLocation();
         }
@@ -1559,7 +1582,7 @@ async function perform(input) {
       const caught=reel&&[previousFarm.fishing.cast?.item,'minnow','tilapia','goldenCarp'].some(key=>key&&(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
       world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
     }
-    showToast(message);
+    if(input.action!=='shoreTick'||!state.me.shoreJob)showToast(message);
     return true;
   } catch(error) {
     updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','upgradeGarden','upgradeParcelCoop','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
@@ -1884,6 +1907,10 @@ document.addEventListener('click',async e=>{
     dialog.close();
     store.write(previousKey,session);
     backToDemo();
+  } else if('helpPage' in d){
+    helpPage=Number(d.helpPage);render();
+  } else if('lakeTab' in d){
+    lakeTab=d.lakeTab;render();
   } else if('action' in d) {
     const input={action:d.action,item:d.item||''};
     if(d.index!==undefined) input.index=optionalIndex(d.index);
@@ -1893,12 +1920,12 @@ document.addEventListener('click',async e=>{
     const fishing=input.action==='cast'||input.action==='reel';
     const livestock=input.action==='feed'||input.action==='collect';
     const aquaculture=input.action==='aquaFeed'||input.action==='aquaHarvest';
-    if(fishing||plotWorkActions.has(input.action)||livestock||aquaculture){
+    if(fishing||plotWorkActions.has(input.action)||livestock||aquaculture||input.action==='helpWater'||input.action==='shoreStart'){
       if(busy)return;
       const cast=state.me.fishing.cast;
       const type=fishing
         ?((input.source??cast?.source)==='public'?'public-fishing':'neighbor-fishing')
-        :livestock?'animal':aquaculture?'pond':'plot';
+        :input.action==='shoreStart'?'shore-work':livestock?'animal':aquaculture?'pond':'plot';
       const started=world.approach(type,input.index??(fishing?cast?.index:undefined),()=>{void perform(input);});
       if(!started)showToast(
         fishing?'Hãy đến cầu câu để dùng cần.':
@@ -2057,5 +2084,13 @@ setInterval(()=>{
   document.querySelectorAll('[data-clock]').forEach(node=>node.textContent=duration((node.dataset.clock==='day'?state.dayEnds:state.next)-now));
 },1000);
 setInterval(()=>{ if(!document.hidden) refresh(); },4000);
+setInterval(()=>{
+  if(!state?.me.shoreJob||busy)return;
+  const away=document.hidden||tab!=='lake'||world.position().walking||locationBlock({action:'shoreTick'});
+  if(away){void perform({action:'shoreCancel'});return;}
+  if(Date.now()-lastShorePulse<1900)return;
+  lastShorePulse=Date.now();
+  void perform({action:'shoreTick'});
+},250);
 window.addEventListener('focus',()=>refresh());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});

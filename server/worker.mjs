@@ -279,9 +279,10 @@ async function handleFarmRequest(request,env,metrics) {
         }
         let area;
         if(needsPlayerLocation(input.action)){
-          const here=await db.prepare('SELECT scene,x,y FROM farm_presence WHERE room=? AND player=? AND seen>=?')
+          const here=await db.prepare('SELECT scene,x,y,walking FROM farm_presence WHERE room=? AND player=? AND seen>=?')
             .bind(code,id,time-recentSeconds).first();
           area=['field','home','market','lake'].find(name=>here?.scene===sceneKey(state.farms,id,name));
+          if(input.action==='helpWater'&&input.target!==id&&has(state.farms,input.target)&&here?.scene===sceneKey(state.farms,id,'visit',input.target))area='visit';
           const blocked=playerLocationBlock(input,area,here,hasVillageProject(state,'well'));
           if(blocked)throw new GameError(blocked);
         }

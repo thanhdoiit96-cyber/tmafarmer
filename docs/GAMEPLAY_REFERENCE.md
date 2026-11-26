@@ -1,5 +1,7 @@
 # Gameplay hiện tại — tài liệu tham chiếu
 
+Cập nhật 26/11/2026: Hàng xóm có tưới giúp độc lập lượt trộm; Hồ làng có dọn bờ 10 giây từ cấp 2, dấu ao đổi thức ăn và sổ ba loài cá với phiếu trang trí nhận một lần. [Quy tắc, giới hạn và cách chơi V1](SOCIAL_LAKE_V1.md). Đã có trong source, chưa deploy; chưa có sâu nghịch.
+
 Kiểm tra nghỉ dài 8 giờ–7 ngày đã sửa lỗi tính bù thời tiết chỉ xét 32 giờ cuối: cây nay dùng đúng thời tiết từ timestamp đã lưu và dừng khi chín. Không thay tuổi, bảo hộ hay thức ăn; xem [báo cáo P1.3](LONG_ABSENCE_AUDIT_V1.md).
 
 Chuồng phụ có thể nâng riêng từ 2 lên 4 chỗ tại Nông trại → Đất, giá 160 xu và yêu cầu chuồng chính cấp 2. Save cũ giữ nguyên cấp 1; xem [phạm vi và kiểm chứng](PARCEL_COOP_UPGRADE_V1.md).

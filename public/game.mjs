@@ -4,6 +4,7 @@ import {parcelCoopUpgrade,coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
+import {helpDay,lakeDay,fishBook,fishBookComplete,recordLakeCatch,shoreWork} from './lake-social.mjs';
 export {homesteadSize} from './land.mjs';
 export {coopSize} from './coop-layout.mjs';
 export {aquatic, fishing, catchOdds} from './aqua.mjs';
@@ -894,7 +895,7 @@ export function snapshot(room, farm, time) {
     extraPlots:Object.fromEntries(plots.filter(i=>mainPlotSlot(i)<0).map(i=>[i,projectPlot(room,plotAt(farm,i),time)])),
     ponds:Object.fromEntries(Object.entries(pondBatches).map(([i,batches])=>[i,batches[0]??null])),
     pondBatches, fishing:fishingState(farm,day,time),
-    journal:journalAt(farm,day),daily:dailyAt(room,farm,time)};
+    journal:journalAt(farm,day),daily:dailyAt(room,farm,time),neighborHelp:helpDay(farm,day),lakeDaily:lakeDay(farm,day),fishBook:fishBook(farm)};
   delete me.recent;
   delete me.orders;
   delete me.soilAt;
@@ -933,7 +934,11 @@ export function snapshot(room, farm, time) {
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
         }),id:f.id,name:f.name,level:farmProgress(f).rank.level,field:f.field,coop:f.coop,workshop:f.workshop??0,fence:f.fence,shieldUntil:f.shieldUntil,garden,items,animalCount:f.pens.length,
-        available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
+        helpEnabled:f.helpEnabled!==false,helpReceived:helpDay(f,day).received,
+        helpPlots:f.helpEnabled===false?[]:indexes.flatMap(index=>{
+          const p=projectPlot(room,plotAt(f,index),time);
+          return plotWorkBlock('water',p,weatherAt(room,time),time)?[]:[{index,kind:p.kind}];
+        }),available:Math.max(0,theftLossLimit(f)-dailyAt(room,f,time).lost)};
     })};
 }
 export function apply(room,id,input,now,catchRoll=0.5,{area,superAdmin=false}={}){
@@ -1024,6 +1029,74 @@ function applyAction(room,id,input,now,catchRoll){
   const qty=input.qty??1;
   const quantityLimit=action==='sell'?Infinity:action==='buy'?supplyLimit:20;
   check(Number.isSafeInteger(qty)&&qty>=1&&qty<=quantityLimit,'Số lượng không hợp lệ.');
+  if(action==='helpPreference'){
+    check(item==='on'||item==='off','Lựa chọn không hợp lệ.');
+    farm.helpEnabled=item==='on';
+    return farm.helpEnabled?'Đã cho phép hàng xóm tưới giúp.':'Đã tắt nhận tưới giúp.';
+  }
+  if(action==='helpWater'){
+    const owner=room.farms[target],day=dayAt(room,now);
+    check(owner&&target!==id,'Hãy chọn vườn hàng xóm.');
+    check(owner.helpEnabled!==false,'Chủ vườn đã tắt nhận tưới giúp.');
+    const mine=helpDay(farm,day),theirs=helpDay(owner,day);
+    check(mine.given<3,'Bạn đã giúp đủ 3 lượt hôm nay.');
+    check((mine.targets[target]??0)<2,'Bạn đã giúp vườn này 2 lượt hôm nay.');
+    check(theirs.received<6,'Vườn này đã nhận đủ 6 lượt giúp hôm nay.');
+    check(cropIndexes(owner).includes(index),'Ô đất không tồn tại.');
+    const plot=projectPlot(room,plotAt(owner,index),now);
+    const reason=plotWorkBlock('water',plot,weatherAt(room,now),now);
+    check(!reason,reason);
+    waterPlot(owner,index,plot,now);
+    farm.neighborHelp={...mine,given:mine.given+1,targets:{...mine.targets,[target]:(mine.targets[target]??0)+1}};
+    owner.neighborHelp={...theirs,received:theirs.received+1};
+    record(owner,now,farm.name+' đã tưới giúp một ô cây.');
+    owner.log=owner.log.slice(-30);
+    return 'Đã tưới giúp '+owner.name+'.';
+  }
+  if(action==='shoreCancel'){
+    farm.shoreJob=null;
+    return 'Đã dừng việc ven ao; chưa dùng lượt hôm nay.';
+  }
+  if(action==='shoreStart'||action==='shoreTick'){
+    const day=dayAt(room,now),daily=lakeDay(farm,day);
+    if(action==='shoreTick'){
+      const job=farm.shoreJob;
+      check(job,'Chưa bắt đầu việc ven ao.');
+      if(job.day!==day||now-job.lastAt>shoreWork.pulseGap){
+        farm.shoreJob=null;
+        return 'Công việc đã gián đoạn. Hãy bắt đầu lại, chưa mất lượt.';
+      }
+      check(now>=job.lastAt,'Thời gian công việc không hợp lệ.');
+      job.elapsed+=now-job.lastAt;job.lastAt=now;
+      if(job.elapsed<shoreWork.seconds)return 'Đang dọn bờ ao…';
+      check(!daily.worked,'Bạn đã hoàn thành việc ven ao hôm nay.');
+      check((farm.lakeMarks??0)+shoreWork.marks<=shoreWork.cap,'Hãy đổi dấu ao trước; ví chỉ chứa 6 dấu.');
+      farm.lakeMarks=(farm.lakeMarks??0)+shoreWork.marks;
+      farm.lakeDaily={...daily,worked:true};farm.shoreJob=null;
+      return 'Bờ ao đã sạch! Nhận 2 dấu ao.';
+    }
+    check(farm.xp>=shoreWork.minXp,'Cần nông trại cấp 2 để làm việc ven ao.');
+    check(!daily.worked,'Bạn đã hoàn thành việc ven ao hôm nay.');
+    check((farm.lakeMarks??0)+shoreWork.marks<=shoreWork.cap,'Hãy đổi dấu ao trước; ví chỉ chứa 6 dấu.');
+    check(!farm.shoreJob||now-farm.shoreJob.lastAt>shoreWork.pulseGap,'Bạn đang làm việc ven ao.');
+    farm.shoreJob={day,lastAt:now,elapsed:0};
+    return 'Đang dọn bờ ao. Đứng gần đây trong 10 giây.';
+  }
+  if(action==='lakeExchange'){
+    const daily=lakeDay(farm,dayAt(room,now));
+    check(!daily.exchanged,'Bạn đã đổi thức ăn hôm nay.');
+    check((farm.lakeMarks??0)>=2,'Cần 2 dấu ao.');
+    check(own(farm,'aquaFeed')<supplyLimit,'Túi thức ăn thủy sản đã đầy.');
+    add(farm,'aquaFeed',1);farm.lakeMarks-=2;
+    farm.lakeDaily={...daily,exchanged:true};
+    return 'Đã đổi 2 dấu ao lấy 1 thức ăn thủy sản.';
+  }
+  if(action==='claimFishBook'){
+    check(fishBookComplete(farm),'Hãy câu đủ 3 loài trong sổ cá.');
+    check(!farm.fishBookClaimed,'Bạn đã nhận quà sổ cá.');
+    farm.fishBookClaimed=true;farm.decorVouchers=(farm.decorVouchers??0)+1;
+    return 'Nhận 1 phiếu trang trí từ sổ cá!';
+  }
   if(action==='hireGardenHelper')return hireGardenHelper(room,farm,input,now);
   if(action==='craft'){
     const reason=craftRequirement(farm,item);
@@ -1199,6 +1272,7 @@ function applyAction(room,id,input,now,catchRoll){
       roomFor(farm,1);
       const item=publicCatch(catchRoll,{id:cast.weather});
       add(farm,item,1);
+      recordLakeCatch(farm,item,now);
       farm.fishing={day,used:info.used+1,nextAt:now+fishing.cooldown,cast:null};
       record(farm,now,'Câu được 1 '+goods[item].name.toLowerCase()+' ở hồ làng.');
       return 'Câu được '+goods[item].name.toLowerCase()+'!';
