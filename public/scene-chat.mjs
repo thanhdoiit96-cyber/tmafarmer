@@ -92,11 +92,12 @@ export function createSceneChat({api,world,showToast,context}){
       if(queued&&!usingPosition){queued=false;void refresh();}
     }
   }
-  async function withPosition(run){
+  async function withPosition(run,{onReady}={}){
     usingPosition=true;
     try {
       // Finish the previous heartbeat before syncing and using the action's position.
       await heartbeat?.catch(()=>{});
+      onReady?.();
       return await run();
     } finally {
       usingPosition=false;

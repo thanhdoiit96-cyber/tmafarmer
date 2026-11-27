@@ -24,6 +24,8 @@ test('summary counts ready work rather than yield and calculates net change and 
   const s=view(),before=structuredClone(s),summary=returnSummary(prior,s,{title:'Xưởng máy cấp 1',copy:'Thiếu xu.',done:false});
   assert.equal(summary.rows.length,3);assert.match(summary.rows[0].title,/1 ô cây/);assert.match(summary.rows[0].copy,/Tăng 1/);
   assert.equal(summary.rows[1].title,'Kho đã đầy');assert.match(summary.rows[2].title,/Xưởng/);assert.equal(summary.minutes,60);
+  assert.equal(summary.ready,1);assert.equal(summary.free,0);assert.equal(summary.capacity,30);
+  assert.equal(summary.urgent,farmTasks(s).filter(t=>t.type==='urgent').length);
   assert.deepEqual(s,before);
   const readyMark=visitMark(s);farm.plots[0]=null;
   assert.match(returnSummary({...readyMark,at:now-600},view(),null).rows[0].copy,/Giảm 1/);

@@ -131,16 +131,18 @@ export function createWorld(root, onInteract, landscape) {
     }
     mini.fillStyle='#fff5c5';mini.beginPath();mini.arc(x*sx,y*sy,2.1,0,2*Math.PI);mini.fill();
   }
-  let x=236,y=221,facing='down',walking=false,walkDistance=0,waypoints=[],pending,onArrival,active,previousTime=0,poseStarted=0,pose='',effects=[];
+  let x=236,y=221,facing='down',walking=false,walkDistance=0,waypoints=[],pending,onArrival,onApproachCancel,active,previousTime=0,poseStarted=0,pose='',effects=[],previewPose;
   let fishingDock=null,caughtFish=false,posePlot;
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
     releaseControls();
-    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;fishingDock=null;
+    delete canvas.dataset.pendingWork;
+    x=px;y=py;facing=dir;stop();walkDistance=0;pose='';previewPose=null;effects=[];pointer=null;routeMarker=null;fishingDock=null;
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
   function stop() {
+    const cancel=onApproachCancel;onApproachCancel=null;cancel?.();
     waypoints=[];pending=null;onArrival=null;walking=false;
     if(animalHoldUntil===Infinity)animalHoldUntil=performance.now()/1000+2.5;
   }
@@ -219,6 +221,7 @@ export function createWorld(root, onInteract, landscape) {
   function walkTo(px,py,target,callback) {
     const path=route(scene,[x,y],[px,py]);
     if(!path)return false;
+    const cancel=onApproachCancel;onApproachCancel=null;cancel?.();
     if(target?.type!=='animal'&&animalHoldUntil===Infinity)animalHoldUntil=performance.now()/1000;
     holdAnimal(target);
     waypoints=path;
@@ -241,7 +244,7 @@ export function createWorld(root, onInteract, landscape) {
       return hit&&(!best||distance<best.distance)?{p,distance}:best;
     },null)?.p;
   }
-  function approach(type,index,callback,{style}={}){
+  function approach(type,index,callback,{style,onCancel}={}){
     const points=scene?.hotspots.filter(p=>p.type===type&&(index===undefined||index===p.index)&&(style===undefined||p.style===style))??[];
     const dock=points.sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
     if(!dock)return false;
@@ -249,6 +252,7 @@ export function createWorld(root, onInteract, landscape) {
     updateCoopAnimals(performance.now()/1000);
     if(distance(dock,x,y)<16){stop();callback?.();return true;}
     const started=walkTo(dock.x,dock.y,dock,callback);
+    if(started)onApproachCancel=onCancel;
     if(!started&&heldAnimal===dock.index)animalHoldUntil=performance.now()/1000;
     return started;
   }
@@ -273,7 +277,7 @@ export function createWorld(root, onInteract, landscape) {
     return scene.hotspots.filter(a=>a.type===type&&(index===undefined||a.index===index))
       .sort((a,b)=>distance(a,x,y)-distance(b,x,y))[0];
   }
-  function particle(input,{cast,caught}={}) {
+  function particle(input,{cast,caught,preview=false,effectsOnly=false}={}) {
     const visualAction={helpWater:'water',releasePrank:'plant',catchPrank:'harvest',shoreStart:'weed',shoreTick:'weed'}[input.action]??input.action;
     const palette=effectStyle[visualAction];
     if(!palette||!scene)return;
@@ -294,16 +298,20 @@ export function createWorld(root, onInteract, landscape) {
     }
     if(input.action==='steal'&&sceneId==='visit') target=input.source==='garden'?plotPosition(input.index):scene.hotspots.find(a=>a.type==='barn');
     const spot=target??{x,y};
-    pose=visualAction==='weed'?'till':visualAction;
-    posePlot=input.index;
-    poseStarted=performance.now();
+    const now=performance.now();
+    if(!effectsOnly){pose=visualAction==='weed'?'till':visualAction;posePlot=input.index;poseStarted=now;}
     if(input.action!=='cast'&&input.action!=='reel'&&target&&distance(target,x,y)<64) {
       facing=facingFromDelta(target.x-x,target.y-y);
     }
+    if(preview){
+      const token={started:poseStarted};previewPose=token;
+      canvas.dataset.pendingWork=visualAction;
+      return confirmed=>{if(previewPose===token){previewPose=null;delete canvas.dataset.pendingWork;if(!confirmed&&poseStarted===token.started)pose='';}};
+    }
     const delay={till:350,weed:350,plant:320,cast:420}[input.action]??0;
-    effects.push({x:spot.x,y:spot.y,time:poseStarted+delay,palette});
+    effects.push({x:spot.x,y:spot.y,time:now+delay,palette});
     if(input.action==='plant'&&target&&!reduce.matches){
-      effects.push({x:spot.x,y:spot.y,fromX:x,fromY:y-14,time:poseStarted+90,palette,seeds:true});
+      effects.push({x:spot.x,y:spot.y,fromX:x,fromY:y-14,time:now+90,palette,seeds:true});
     }
   }
   function drawEffects(now) {
@@ -349,11 +357,12 @@ export function createWorld(root, onInteract, landscape) {
           if(!walking&&dt>0)stop();
         } else if(pending){
           const next=pending, callback=onArrival;
+          const cancelled=onApproachCancel;onApproachCancel=null;
           stop();
           if(distance(next,x,y)<range){
             if(callback)callback();
             else use(next);
-          }
+          }else cancelled?.();
         }
       }
     }
@@ -419,7 +428,7 @@ export function createWorld(root, onInteract, landscape) {
       if(a.x<cameraX-reach||a.y<cameraY-28||a.x>cameraX+view.width+reach||a.y>cameraY+view.height+95)continue;
       if(a.type==='player'){
         const shore=!walking&&sceneId==='lake'&&snapshot.me.shoreJob&&gameNow-snapshot.me.shoreJob.lastAt<=shoreWork.pulseGap&&Math.hypot(x-shoreWork.x,y-shoreWork.y)<=range;
-        const elapsed=shore?ambient%actionPoseSeconds.till:(now-poseStarted)/1000;
+        const elapsed=shore?ambient%actionPoseSeconds.till:previewPose&&previewPose.started===poseStarted?((now-poseStarted)/1000)%(actionPoseSeconds[pose]??.75):(now-poseStarted)/1000;
         const action=shore?'till':!walking&&elapsed<(actionPoseSeconds[pose]??.75)?pose:'';
         const fishing=!walking&&dock&&distance(dock,x,y)<range&&(action==='cast'||action==='reel'||fishingHere);
         const poseTime=reduce.matches?(actionPoseSeconds[action]??0)*.55:elapsed;
@@ -539,5 +548,5 @@ export function createWorld(root, onInteract, landscape) {
     }));
   }
   const position=()=>({x:Math.round(x),y:Math.round(y),facing,walking});
-  return {sync,particle,approach,position,setPeers,setSpeech};
+  return {sync,particle,approach,position,setPeers,setSpeech,startWork:input=>particle(input,{preview:true})};
 }

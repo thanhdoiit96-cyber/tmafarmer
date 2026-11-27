@@ -20,7 +20,7 @@ export function returnSummary(previous,snapshot,goal){
   const labels=[ready.plot&&ready.plot+' ô cây',ready.animal&&ready.animal+' vật nuôi',ready.pond&&ready.pond+' lứa thủy sản'].filter(Boolean);
   const urgent=tasks.filter(t=>t.type==='urgent').length;
   const free=Math.max(0,capacity(snapshot.me)-stock(snapshot.me));
-  return {minutes:Math.max(1,Math.floor((snapshot.now-previous.at)/60)),rows:[
+  return {minutes:Math.max(1,Math.floor((snapshot.now-previous.at)/60)),ready:total,urgent,free,capacity:capacity(snapshot.me),rows:[
     {kind:'tasks',title:total?'Đã sẵn sàng: '+labels.join(', '):'Chưa có vụ hoặc vật nuôi sẵn sàng thu',
       copy:(delta>0?'Tăng '+delta+' mục so với lần ghé trước. ':delta<0?'Giảm '+(-delta)+' mục so với lần ghé trước. ':'')+(urgent?urgent+' việc chăm sóc cần chú ý.':!delta?'Xem trạng thái hiện tại của vườn.':''),cta:'Xem việc cần làm'},
     {kind:'stock',title:free?'Kho còn '+free+' / '+capacity(snapshot.me)+' chỗ':'Kho đã đầy',

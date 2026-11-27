@@ -1,3 +1,4 @@
+import {createActionFeedback,requestTiming} from './action-feedback.mjs';
 import {recipeView} from './recipe-view.mjs';
 import {catalogPage} from './ui-catalog.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
@@ -34,6 +35,8 @@ import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalConditi
 
 installScrollIndicators();
 const $=selector=>document.querySelector(selector);
+const actionFeedback=createActionFeedback($('[data-action-feedback]'));
+window.farmActionDiagnostics=Object.freeze({recent:actionFeedback.recent,clear:actionFeedback.clear});
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={
   read(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
@@ -171,12 +174,12 @@ function seedDemoPonds(time){
   demo.fishingTour=true;
   store.write(demoKey,demo);
 }
-let visitKey='',returnBaseline=null,visitInMemory=null;
+let visitKey='',returnBaseline=null,visitInMemory=null,initialScreenReady=false;
 function setState(next) {
   state=next;
   receivedAt=Date.now();
   const key=visitStorageKey(next,session);
-  if(key!==visitKey){visitKey=key;returnBaseline=null;visitInMemory=null;}
+  if(key!==visitKey){if(dialog.open&&dialog.classList.contains('return-popup'))dialog.close();visitKey=key;returnBaseline=null;visitInMemory=null;}
   if(!document.hidden){
     const previous=previousVisit(visitInMemory??store.read(key),next);
     if(previous)returnBaseline=previous;
@@ -196,26 +199,19 @@ function updateDemo() {
   if(advanceVillage(demo,day)||started||soilStarted||livestockStarted||driveUpdated||helpersUpdated)store.write(demoKey,demo);
   setState(snapshot(demo,demo.farms.demo,time));
 }
-async function api(path, payload, credentials=session) {
+async function api(path, payload, credentials=session, timing) {
   const headers={};
-  if(credentials) {
-    headers.authorization='Bearer '+credentials.token;
-    if(credentials.code)headers['x-room-code']=credentials.code;
-  }
-  let response;
-  try {
-    if(payload) headers['content-type']='application/json';
-    response=await fetch('/api/'+path,{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store',signal:AbortSignal.timeout(8500)});
-  } catch {
-    throw new Error('Không thể kết nối với làng. Kiểm tra mạng rồi thử lại.');
-  }
-  const result=await response.json().catch(()=>null);
-  if(!result||!response.ok) {
-    const error=new Error(result?.error||'Máy chủ làng chưa sẵn sàng.');
-    error.status=response.status;
-    throw error;
-  }
-  return result;
+  if(credentials){headers.authorization='Bearer '+credentials.token;if(credentials.code)headers['x-room-code']=credentials.code;}
+  const started=performance.now();let response;
+  try{
+    try{
+      if(payload)headers['content-type']='application/json';
+      response=await fetch('/api/'+path,{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store',signal:AbortSignal.timeout(8500)});
+    }catch{throw new Error('Không thể kết nối với làng. Kiểm tra mạng rồi thử lại.');}
+    const result=await response.json().catch(()=>null);
+    if(!result||!response.ok){const error=new Error(result?.error||'Máy chủ làng chưa sẵn sàng.');error.status=response.status;throw error;}
+    return result;
+  }finally{timing?.request(path,requestTiming(started,performance.now(),response));}
 }
 async function apiAccount(path,payload,credentials) {
   const headers={};
@@ -1273,12 +1269,17 @@ function savePinnedGoal(goal){
   store.write(goalStorageKey(state,session),goal);
 }
 function renderReturnSummary(){
-  const view=returnSummary(returnBaseline,state,pinnedGoalView),node=$('#return-summary');
-  node.hidden=!view;
-  if(!view){node.innerHTML='';return;}
+  if(!initialScreenReady||!state||!returnBaseline||document.hidden||busy||dialog.open)return;
+  const view=returnSummary(returnBaseline,state,pinnedGoalView);if(!view)return;
   const elapsed=view.minutes<60?view.minutes+' phút':view.minutes<1440?Math.floor(view.minutes/60)+' giờ':Math.floor(view.minutes/1440)+' ngày thực';
-  const html='<article class="return-card"><div class="row"><h2>Vườn khi bạn quay lại</h2>'+btn('Đóng','data-return-summary="dismiss" aria-label="Đóng tóm tắt khi quay lại"','subtle')+'</div><p class="return-elapsed">Lần ghé trước cách đây khoảng '+elapsed+'.</p><ul>'+view.rows.filter(row=>row.kind!=='goal').map(row=>'<li>'+btn('<strong>'+escape(row.title)+'</strong><span class="return-row-copy">'+escape(row.copy)+'</span><span class="return-row-cta">'+row.cta+' →</span>','data-return-summary="'+row.kind+'"','subtle')+'</li>').join('')+'</ul></article>';
-  if(node.innerHTML!==html)node.innerHTML=html;
+  const [work,storage]=view.rows;
+  modal('Chào mừng trở lại','<p class="return-intro">Vườn sau khoảng '+elapsed+' bạn vắng mặt</p><div class="return-popup-grid">'+
+    btn('<span class="return-popup-heading">Sẵn sàng thu <b class="coop-count ready'+(!view.ready?' quiet':'')+'">'+view.ready+'</b></span><span class="return-popup-copy">'+escape(work.title)+'</span><span class="return-popup-copy">'+escape(work.copy)+'</span><span class="return-popup-care">Cần chăm sóc <b class="coop-count hungry'+(!view.urgent?' quiet':'')+'">'+view.urgent+'</b></span><span class="return-popup-cta">Xem việc cần làm ›</span>','data-return-summary="tasks"','return-popup-item')+
+    btn('<span class="return-popup-heading">Chỗ trống trong kho</span><span class="return-stock-value"><b>'+view.free+'</b><small> / '+view.capacity+' chỗ</small></span><span class="return-popup-copy">'+escape(storage.copy)+'</span><span class="return-popup-cta">Mở kho ›</span>','data-return-summary="stock"','return-popup-item')+
+    '</div><div class="return-popup-footer">'+btn('Vào vườn','data-return-summary="dismiss"','primary')+'</div>');
+  dialog.classList.add('game-management','return-popup');dialog.setAttribute('aria-label','Chào mừng trở lại');
+  returnBaseline=null;
+  dialog.querySelector('[data-return-summary="dismiss"]').focus({preventScroll:true});
 }
 function renderNextGoal(now){
   const snapshot={...state,now};
@@ -1554,7 +1555,8 @@ function interactWithWorld(target) {
 }
 function modal(title,html) {
   delete dialog.dataset.adoptionLot;
-  dialog.classList.remove('game-management');
+  dialog.classList.remove('game-management','return-popup');
+  dialog.removeAttribute('aria-label');
   hideStockTooltip();
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
   if(!dialog.open) dialog.showModal();
@@ -1654,16 +1656,18 @@ function listingDialog() {
 function help() {
   modal('Cách chơi','<ol><li>Dùng phím WASD/mũi tên, kéo cần di chuyển trên mobile hoặc chạm bản đồ để đi. Đến gần một địa điểm rồi nhấn E hoặc chọn Tương tác. Khi xoay ngang, bấm Khu vực để chuyển cảnh hoặc Công cụ để mở bảng quản lý.</li><li>Chọn thao tác trên ô cây để nhân vật tự đi tới rồi làm. Uống nước ở giếng hoặc trong Nhà vườn, ăn cơm nắm trong Nhà vườn. Đồ chế biến trong túi dùng được ở mọi khu vực.</li><li>Chạm Thể lực → Về Nhà vườn. Khi vào nhà, chọn Nghỉ ngay. Sau 60 giây, bạn hồi tối đa 75 điểm thể lực.</li><li>Ô bỏ trống 8 giờ cần cuốc trước khi gieo. Khi cây chín, chọn Thu và giữ 1 giống hoặc đổi nông sản trong Kho thành giống. Bảng đơn ở Chợ làng trao thưởng cho vườn giao đủ hàng đầu tiên. Mục Cấp làng có tiến độ và quỹ xây công trình.</li><li>Tưới nước để cây lớn nhanh hơn. Mưa tưới tự nhiên, nhưng sau khi tạnh sâu vẫn dễ xuất hiện trong 20 phút. Trị sâu sớm để giữ sản lượng. Nắng nóng làm cây và vật nuôi lớn chậm hơn.</li><li>Xây chuồng, đón vật nuôi rồi cho ăn. Vật nuôi lớn lên trước khi cho sản phẩm. Chọn Quản lý để chuyển chuồng hoặc bán sống. Vật nuôi lấy sản phẩm cho ít hơn sau 3 và 7 ngày thực. Khi lợn hoặc thỏ sẵn sàng, chọn Xuất chuồng để thu thịt.</li><li>Ở Hàng xóm, mỗi vườn cho lấy một món mỗi ngày. Nâng túi để tăng số món từ nhiều vườn.</li><li>Mỗi ngày trong game kéo dài 8 giờ. Mở Ao nuôi để thả cá, tôm và cua chung ao. Sức chứa tùy diện tích. Đến Hồ làng để câu miễn phí. Câu ao hàng xóm dùng chung lượt lấy đồ với vườn và kho.</li></ol>');
 }
-async function perform(input) {
-  if(busy)return false;
+async function perform(input,operation) {
+  if(busy){operation?.finish('cancelled');return false;}
+  const feedback=operation??actionFeedback.start(input.action,session?'online':'demo');
+  feedback?.stage('arrived');
   const block=workBlock(wellnessAt(state.me,currentTime()),workCost(input.action,state.weather.id),currentTime());
-  if(block){showToast(block,true);return false;}
+  if(block){feedback?.finish('blocked');showToast(block,true);return false;}
   busy=true;
   const credentials=session;
   const previousFarm=state.me, actionTab=tab, actionNeighbor=neighborId;
   const previousGoalKey=goalStorageKey(state,credentials),previousGoalRaw=store.read(previousGoalKey);
   const previousGoal=loadGoal(previousGoalRaw,state);
-  let updateAfter=false;
+  let updateAfter=false,outcome='cancelled',endPreview;
   try {
     let message;
     const located=needsPlayerLocation(input.action);
@@ -1672,6 +1676,7 @@ async function perform(input) {
       if(blocked)throw new GameError(blocked);
     };
     if(located)checkLocation();
+    if(feedback)endPreview=world.startWork(input);
     if(credentials) {
       const sameLocation=()=>credentials===session&&actionTab===tab&&actionNeighbor===neighborId;
       const submit=async()=>{
@@ -1679,20 +1684,24 @@ async function perform(input) {
           if(!sameLocation())return null;
           const pose=world.position();
           checkLocation(pose);
-          await api('scene',{area:actionNeighbor?'visit':actionTab,host:actionNeighbor,pose},credentials);
+          feedback?.stage('position');
+          await api('scene',{area:actionNeighbor?'visit':actionTab,host:actionNeighbor,pose},credentials,feedback);
+          feedback?.stage('positionReady');
           if(!sameLocation())return null;
           checkLocation();
         }
-        input.requestId=crypto.randomUUID();
+        input.requestId=crypto.randomUUID();feedback?.stage('action');
         try {
-          return await api('action',input,credentials);
+          return await api('action',input,credentials,feedback);
         } catch(error) {
           if(error.status)throw error;
-          return api('action',input,credentials);
+          feedback?.stage('retry');
+          return api('action',input,credentials,feedback);
         }
       };
-      const result=located?await sceneChat.withPosition(submit):await submit();
+      const result=located?await sceneChat.withPosition(submit,{onReady:()=>feedback?.stage('positionQueueReady')}):await submit();
       if(!result||credentials!==session)return false;
+      feedback?.stage('actionDone');
       revision=result.revision;
       setState(result.state);
       message=result.message;
@@ -1706,15 +1715,18 @@ async function perform(input) {
     if(JSON.stringify(store.read(previousGoalKey))===JSON.stringify(previousGoalRaw)){
       store.write(previousGoalKey,goalAfterAction(previousGoal,input,previousFarm,state.me));
     }
+    feedback?.stage('render');
     render();
+    feedback?.stage('rendered');
     if(!['removeMember','villageGoods','hireGardenHelper'].includes(input.action)&&tab===actionTab&&neighborId===actionNeighbor){
       const reel=input.action==='reel';
       const caught=reel&&[previousFarm.fishing.cast?.item,'minnow','tilapia','goldenCarp'].some(key=>key&&(state.me.inventory[key]??0)>(previousFarm.inventory[key]??0));
-      world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught});
+      world.particle(input,{cast:reel?previousFarm.fishing.cast:state.me.fishing.cast,caught,effectsOnly:!!endPreview});
     }
     if(input.action!=='shoreTick'||!state.me.shoreJob)showToast(message);
-    return true;
+    outcome='success';return true;
   } catch(error) {
+    outcome='failed';
     updateAfter=error.status===401||['order','villageGoods','villageFund','sell','till','plant','hireGardenHelper','upgradeGarden','upgradeParcelCoop','moveAnimal','sellAnimal','placeGardenDecor','stowGardenDecor','arrangeGardenDecor','removeMember'].includes(input.action);
     const message=error instanceof GameError||error instanceof Error?error.message:'Không thể thực hiện thao tác.';
     showToast(message,true);
@@ -1722,6 +1734,7 @@ async function perform(input) {
     if(inline) inline.textContent=message;
     return false;
   } finally {
+    endPreview?.(outcome==='success');feedback?.finish(outcome);
     busy=false;
     if(updateAfter)void refresh();
   }
@@ -1836,10 +1849,8 @@ document.addEventListener('click',async e=>{
     goTo('market');if(!world.approach('market',undefined,()=>reveal('#board'),{style:'red'}))reveal('#board');
   }else if('returnSummary' in d){
     if(!state||busy)return;
-    if(d.returnSummary==='dismiss'){
-      returnBaseline=null;renderReturnSummary();
-      ($('#next-goal button')??panelBody).focus({preventScroll:true});
-    }else if(d.returnSummary==='tasks'){panel='tasks';render();reveal('#side');}
+    returnBaseline=null;dialog.close();
+    if(d.returnSummary==='tasks'){panel='tasks';render();reveal('#side');}
     else if(d.returnSummary==='stock'){stockTab='produce';stockPage=0;panel='stock';render();reveal('#side');}
     else if(d.returnSummary==='goal'){if(pinnedGoalView)goToPinnedGoal();else showGoalChoices();}
   }else if('unlock' in d){if(state)showUnlock(d.unlock,d.key,optionalIndex(d.lot));}
@@ -2103,7 +2114,9 @@ document.addEventListener('click',async e=>{
       const type=fishing
         ?((input.source??cast?.source)==='public'?'public-fishing':'neighbor-fishing')
         :input.action==='shoreStart'?'shore-work':livestock?'animal':aquaculture?'pond':'plot';
-      const started=world.approach(type,input.index??(fishing?cast?.index:undefined),()=>{void perform(input);});
+      const operation=actionFeedback.start(input.action,session?'online':'demo');
+      const started=world.approach(type,input.index??(fishing?cast?.index:undefined),()=>{void perform(input,operation);},{onCancel:()=>operation?.finish('cancelled')});
+      if(!started)operation?.finish('unreachable');
       if(!started)showToast(
         fishing?'Hãy đến cầu câu để dùng cần.':
         livestock?'Chưa tìm được đường tới chuồng hoặc vật nuôi.':
@@ -2242,6 +2255,9 @@ const requested=new URL(location.href).searchParams.get('lang')?.toUpperCase();
 if(requested&&/^[A-F0-9]{8}$/.test(requested)) inviteCode=requested;
 await refresh(true);
 if(!session) showRoom();
+initialScreenReady=true;
+renderReturnSummary();
+dialog.addEventListener('close',()=>queueMicrotask(renderReturnSummary));
 setInterval(()=>{
   if(!state||document.hidden) return;
   const now=currentTime();

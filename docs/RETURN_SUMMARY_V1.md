@@ -1,5 +1,17 @@
 # P1.1 — Tóm tắt khi quay lại V1
 
+## Cập nhật popup — 27/11/2026
+
+Theo yêu cầu mới, tóm tắt đã chuyển thành **popup phía trước màn hình**, bỏ section/thẻ cũ khỏi bảng Công cụ. Giữ ngưỡng vắng ít nhất 10 phút thực, checkpoint tách theo vườn/làng/demo và không dựng tóm tắt cho lần ghé đầu tiên.
+
+Popup dùng khung gỗ/giấy, hai ô Việc sẵn sàng và Kho; badge xanh số mục có thể thu, đỏ số việc chăm sóc, số 0 dùng sắc độ trung tính. Lượng kho tách số và đơn vị. Chạm từng ô đóng popup và mở đúng Việc cần làm/Kho; Vào vườn, nút đóng hoặc Escape trở lại chơi. Mục tiêu ghim tiếp tục dành cho Việc cần làm.
+
+Chờ luồng mở game hoàn tất và hộp thoại đang có đóng rồi mới hiện; không thay nội dung của một hộp thoại khác. Baseline được tiêu thụ khi mở, nên polling, đổi cảnh và reload ngay không mở lại. Khi chuyển danh tính vườn, đóng popup của vườn cũ. Không tự thu hoạch, thưởng hoặc tiêu tài nguyên.
+
+Đã kiểm popup thật ở desktop 1100×850, giả lập mobile ngang 844×390/568×320 và dọc 390×844: nằm trong viewport, nút Vào vườn nhìn thấy. Kiểm lần đầu, sau một giờ, điều hướng Việc/Kho, đóng và không hiện lặp. Chưa kiểm Safari/Android thật. [Desktop](assets/return-popup-1100.png), [ngang](assets/return-popup-844.png), [ngang thấp](assets/return-popup-568.png), [dọc](assets/return-popup-390.png).
+
+Các mục bên dưới ghi lịch sử bản V1; mô tả “không mở popup” và vị trí trong Công cụ không còn áp dụng.
+
 Cập nhật [giao diện V2](GAME_UI_V2.md): thẻ quay lại chỉ hiện hai dòng Việc sẵn sàng và Kho. Mục tiêu ghim được dành riêng cho Việc cần làm; mô tả ba dòng bên dưới ghi lại phạm vi V1.
 
 Hoàn thiện trong source ngày 25/11/2026, tiếp nối [Mục tiêu tiếp theo](NEXT_GOAL_V1.md) và [Chỉ dẫn mở khóa](UNLOCK_GUIDANCE_V1.md). Chưa commit, push hoặc deploy.
