@@ -193,4 +193,5 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 26/11/2026 | P1.2 — vật nuôi/thủy sản | Hoàn thiện source, chưa deploy | ETA gồm lớn lên và sản xuất, trạng thái thiếu ăn, tác động tốc độ/sản lượng; [phạm vi và kiểm chứng](HUSBANDRY_OUTLOOK_V1.md) |
 | 26/11/2026 | P2.1 — runtime | Đã duyệt, hoàn thiện source, chưa deploy | [Đơn làng và UI vật nuôi gọn](VILLAGE_DRIVE_UI_V1.md): ghim theo đợt, nguồn hàng, xác nhận; quản lý vật nuôi gọn, không đổi luật thưởng/nuôi |
 | 27/11/2026 | UI đơn hàng/vật nuôi V4 | Đã duyệt và hoàn thiện runtime, chưa deploy | [Sổ 6 ô, phiếu góp và quản lý dữ liệu thật](ORDERS_ANIMAL_UI_V4.md); giữ ID, approach, trang/lọc, không đổi kinh tế |
+| 27/11/2026 | UI chuẩn — Kho/Ao | Hoàn thiện source, chưa deploy | [Rà soát và ảnh runtime](UI_STANDARD_AUDIT_2026_11_27.md): Kho 8/4 ô, phân trang dưới lưới; Sổ ao theo Sổ chuồng, lưới 6/3 lứa, lọc/badge, quản lý chi tiết riêng |
 | Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Ưu tiên chốt UI đơn hàng/vật nuôi trước P2.2; pilot chờ người chơi; chưa mở thanh toán |

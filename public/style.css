@@ -917,6 +917,25 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .animal-picker .seed-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .seed-card>.btn:not(.seed-info),.seed-card .seed-lock-label{min-height:30px}
 .animal-slot>.btn:not(.seed-info){justify-content:center;text-align:center}
+.stock-pages.game-book-pager{display:grid;grid-template-columns:32px 1fr 32px;margin-top:7px;color:#60492b}
+.stock-pages.game-book-pager>.btn{padding:3px;min-height:30px}
+.pond-book .stable-face{overflow:hidden}
+.pond-book .stable-face .crop-item-icon{transform:scale(1.25);margin:0}
+.pond-symbol{font-size:28px;line-height:1;display:inline-block}
+.pond-book .stable-face .aqua-icon{transform:scale(1.25);margin:0}
+@media(max-height:480px) and (orientation:landscape){
+ .pond-tabs{margin:0 0 3px}.pond-tabs>.btn{min-height:28px;padding:3px 6px}
+ .pond-book .stable-face .pond-symbol{font-size:22px}
+ .pond-book .game-book-foot{margin:4px 0;font-size:8px}
+}
+.pond-overview .coop-count{color:#fff;font-size:10px}
+@media(max-height:480px) and (orientation:landscape){
+ .stock-heading{margin-bottom:4px;gap:4px}.stock-heading h2{font-size:18px;margin:0}.stock-heading p{margin:2px 0;font-size:10px}
+ .stock-heading>.btn,.stock-tabs>.btn{min-height:30px;padding:4px;font-size:10px}
+ .stock-pages{margin-top:4px;gap:3px;font-size:9px}.stock-pages>.btn{min-height:30px;padding:3px}
+ .stock-grid{margin-top:4px;gap:4px}.stock-card{min-height:48px;padding:4px;gap:2px 4px}
+ .stock-name{font-size:10px}.stock-quantity{font-size:10px}.stock-status{font-size:8px;padding:2px 3px}
+}
 .recipe-catalog,.market-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .recipe-slot,.market-catalog-slot,.market-catalog>.market-sale{min-width:0;border:1px solid #b69b65;background:#f5e8c7;border-radius:7px;padding:5px;display:flex;flex-direction:column;align-items:stretch;gap:5px}
 .recipe-info{border:0;background:none;padding:0;color:var(--deep);font:inherit;cursor:pointer;text-align:center;min-width:0;display:flex;align-items:center;flex-direction:column;gap:4px}

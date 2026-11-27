@@ -92,7 +92,7 @@ const stockItems={
   produce:Object.keys(goods).filter(key=>goods[key].sell&&!recipes[key]),
   seeds:[...supplyGroups.seeds.items,...supplyGroups.aquatic.items],
 };
-let stockTab='produce', stockPage=0, renderedStock='';
+let stockTab='produce', stockPage=0, stockPageSize=8, renderedStock='';
 const stockTooltip=$('#stock-tooltip');
 let stockTooltipCard;
 let supplyGroup='all', workshopTab='food';
@@ -357,7 +357,7 @@ function showItem(item,fromStock=false){
   const locked=fromStock&&stockLock(farm,item);
   const saveSeed=fromStock&&Object.hasOwn(crops,item)&&count?
     '<div class="actions">'+btn('Giữ giống','data-seed-crop="'+item+'"','subtle',(farm.inventory[crops[item].seed]??0)>=supplyLimit)+'</div>':'';
-  const art=aquaIllustration(item);
+  const art=pondIllustration(item);
   modal(art?art+escape(goods[item].name):nice(item),itemDescription(item)+'<p>Đang có '+count+'</p>'+
     (locked?'<p><strong>Đang khóa.</strong> '+escape(locked)+'</p>':'')+
     (itemUnlockTarget(item)?unlockButton(itemUnlockTarget(item).type,itemUnlockTarget(item).key):'')+
@@ -492,7 +492,11 @@ function animalIllustration(kind){
 }
 let animalGroup='open',animalPage=0,animalPageSize=8;
 const animalPickerSize=()=>matchMedia('(orientation:landscape) and (max-height:480px)').matches?4:8;
-window.addEventListener('resize',()=>{if(animalPickerSize()!==animalPageSize)refreshAdoptionPicker();});
+window.addEventListener('resize',()=>{
+  if(animalPickerSize()!==animalPageSize)refreshAdoptionPicker();
+  if(panel==='stock'&&animalPickerSize()!==stockPageSize)render();
+  if(panel==='ponds')render();
+});
 let workshopPage=0;const marketPages={stall:0,supplies:0,sales:0};
 function catalogPager(view,attribute){return '<nav class="seed-pagination catalog-pagination" aria-label="Trang danh sách">'+btn('‹',attribute+'="'+(view.index-1)+'" aria-label="Trang trước"','subtle',!view.index)+'<span>'+(view.index+1)+' / '+view.count+'</span>'+btn('›',attribute+'="'+(view.index+1)+'" aria-label="Trang sau"','subtle',view.index===view.count-1)+'</nav>';}
 
@@ -685,28 +689,41 @@ function visitFishing(current,unavailable,now){
   const buttons=ponds.length===1?'':'<div class="actions">'+ponds.map(i=>btn(i===0?'Ao chính':'Ao ô '+(i-pondOffset+1),'data-visit-pond="'+i+'"',i===visitPond?'primary':'subtle')).join('')+'</div>';
   return buttons+'<p>'+(batch?.available?'Có '+goods[batch.kind].name.toLowerCase()+' đủ lớn.':'Ao chưa có đủ cá trưởng thành.')+'</p>'+fishingControls('pond',now,{target:current.id,index:visitPond,allowed:!unavailable&&!!batch?.available});
 }
+const pondViews=new Map();
+function pondStatus(batch,now){return pondReady(batch)?'ready':batch.fedUntil<=now?'hungry':'growing';}
+function pondIllustration(kind){return itemIllustration(kind)||'<span class="pond-symbol" aria-hidden="true">'+goods[kind].icon+'</span>';}
 function renderPonds(farm,now){
-  if(!farm.pondIndexes.includes(pondTab))pondTab=0;
-  const tabs=farm.pondIndexes.map(index=>btn(index===0?'Ao chính':'Ao ô '+(index-pondOffset+1),'data-pond-tab="'+index+'" aria-pressed="'+(pondTab===index)+'"',pondTab===index?'primary':'subtle')).join('');
-  const batches=visiblePondBatches(farm,pondTab),used=batches.reduce((sum,batch)=>sum+(batch.count??1),0);
-  const limit=pondCapacity(farm,pondTab),food=farm.inventory.aquaFeed??0;
-  const ready=batches.filter(pondReady).length,hungry=batches.filter(batch=>!pondReady(batch)&&batch.fedUntil<=now).length;
-  const header='<div class="row"><h2>Ao nuôi</h2>'+btn('Tới cầu gỗ','data-pond-go','subtle')+'</div><div class="market-tabs pond-tabs">'+tabs+'</div><div class="care-overview"><span><b>'+used+'/'+limit+'</b> chỗ</span><span><b>'+ready+'</b> lứa có thể thu</span><span><b>'+hungry+'</b> lứa cần ăn</span><span>Trong túi <b>'+food+'</b> thức ăn</span></div>';
-  const seeds=Object.entries(aquatic).map(([item,def])=>{
-    const available=farm.inventory[def.seed]??0,locked=aquaRequirement(farm,item),present=batches.some(batch=>batch.kind===item);
-    const title=aquaIllustration(item)||goods[item].icon+' ';
-    if(locked)return unlockButton('aqua',item,title+'<span>'+def.name+'<small>Khóa · Xem điều kiện</small></span>');
-    const reason=present?'Đang nuôi trong ao':used>=limit?'Ao đã đầy':!available?'Chưa có giống':available+' giống · Chọn số lượng';
-    return btn(title+'<span>'+def.name+'<small>'+reason+'</small></span>','data-aqua-stock="'+item+'"','subtle aqua-stock',present||used>=limit||!available);
+  if(!farm.pondIndexes.includes(pondTab))pondTab=farm.pondIndexes[0]??0;
+  const batches=visiblePondBatches(farm,pondTab),used=batches.reduce((sum,b)=>sum+(b.count??1),0),limit=pondCapacity(farm,pondTab),food=farm.inventory.aquaFeed??0;
+  const view=pondViews.get(pondTab)??{filter:'all',page:0};
+  const ready=batches.filter(b=>pondStatus(b,now)==='ready').length,hungry=batches.filter(b=>pondStatus(b,now)==='hungry').length;
+  const size=animalPickerSize()===4?3:6;
+  if(view.size&&view.size!==size)view.page=Math.floor(view.page*view.size/size);
+  const page=catalogPage(batches.filter(b=>view.filter==='all'||pondStatus(b,now)===view.filter),view.page,size);view.page=page.index;view.size=size;pondViews.set(pondTab,view);
+  const tabs=farm.pondIndexes.map(i=>btn(i===0?'Ao chính':'Ao ô '+(i-pondOffset+1),'data-pond-tab="'+i+'" aria-pressed="'+(pondTab===i)+'"',pondTab===i?'primary':'subtle')).join('');
+  const cards=page.entries.map(batch=>{
+    const def=aquatic[batch.kind],status=pondStatus(batch,now),outlook=pondOutlook(batch,state.weather,now),cost=pondFood(batch);
+    const action=status==='ready'?act(careIcon('animalHarvest')+'Thu '+pondYield(batch),'aquaHarvest',batch.kind,pondTab,'stable-action'):status==='hungry'?act(careIcon('feed')+cost+' phần','aquaFeed',batch.kind,pondTab,'stable-action feed',food<cost):'<span class="stable-timer" title="Ước tính nếu luôn đủ ăn và thời tiết giữ nguyên">~'+duration(Math.ceil(outlook.seconds/60)*60)+'</span>';
+    return '<article class="stable-tile" data-care-state="'+status+'"><span class="stable-status">'+(status==='ready'?'Sẵn sàng':status==='hungry'?'Cần ăn':'Đang lớn')+'</span>'+btn(pondIllustration(batch.kind),'data-manage-pond="'+batch.kind+'" data-pond="'+pondTab+'" aria-label="Quản lý '+escape(def.name)+'"','stable-face')+'<h3>'+escape(def.name)+'</h3>'+action+'</article>';
   }).join('');
-  const rank=batch=>pondReady(batch)?0:batch.fedUntil<=now?1:2;
-  const rows=[...batches].sort((a,b)=>rank(a)-rank(b)).map(batch=>{
-    const def=aquatic[batch.kind],ripe=pondReady(batch),eating=batch.fedUntil>now,cost=pondFood(batch);
-    const status=ripe?'Có thể thu':eating?'Đang lớn':'Cần cho ăn';
-    const action=ripe?act(careIcon('animalHarvest')+'Thu · '+pondYield(batch),'aquaHarvest',batch.kind,pondTab,'primary'):act(careIcon('feed')+'Cho ăn · '+cost+' phần','aquaFeed',batch.kind,pondTab,'primary',eating||food<cost);
-    return '<article class="husbandry-card" data-care-state="'+(ripe?'ready':!eating?'hungry':'growing')+'"><header><div><h3>'+itemLink(batch.kind,def.name)+'</h3><span class="care-state">'+status+' · '+(batch.count??1)+' giống</span></div></header><div class="care-facts"><span><small>'+(ripe?'Có thể thu':'Tạm tính khi lớn')+'</small><b>'+pondYield(batch)+' '+escape(def.name.toLowerCase())+'</b></span><span><small>Thức ăn cả lứa</small><b>'+(ripe?'Không cần thêm':eating?'Còn '+duration(batch.fedUntil-now):food<cost?'Thiếu '+(cost-food)+' phần':cost+' phần')+'</b></span></div><div class="care-progress-label"><span>Lớn lên</span><b>'+progress(batch.progress,def.time)+'%</b></div>'+valueBar(batch.progress,def.time)+husbandryEstimate(pondOutlook(batch,state.weather,now),'pond-'+pondTab+'-'+batch.kind)+'<div class="actions">'+action+'</div><details class="panel-fold pond-care-details" data-panel-fold="pond-care-'+pondTab+'-'+batch.kind+'"><summary>Cách nuôi &amp; sản lượng</summary><p class="care-note">Mỗi giống cho '+def.yield+' sản phẩm. Lứa này đã lấy '+(batch.picked??0)+' sản phẩm; còn '+pondYield(batch)+'. Một lần cho ăn cả lứa dùng '+cost+' phần. Ngừng lớn khi hết thức ăn. Thời gian cơ sở '+duration(def.time)+'.</p></details></article>';
+  return '<div class="market-tabs pond-tabs">'+tabs+'</div><section class="game-book stable-book pond-book"><header class="game-book-head"><h2>Sổ ao</h2><span>'+used+'/'+limit+' chỗ</span><span class="stable-food" aria-label="Trong túi còn '+food+' phần thức ăn ao">'+careIcon('feed')+'<strong>'+food+'</strong><span>thức ăn ao</span></span></header><nav class="game-book-tabs" aria-label="Lọc lứa thủy sản">'+[['all','Tất cả'],['ready','Thu <span class="coop-count ready">'+ready+'</span>'],['hungry','Cần ăn <span class="coop-count hungry">'+hungry+'</span>']].map(([id,label])=>btn(label,'data-pond-filter="'+id+'" aria-pressed="'+(view.filter===id)+'"',view.filter===id?'primary':'subtle')).join('')+'</nav><div class="stable-grid">'+(cards||'<p class="stable-empty">'+(batches.length?'Không có lứa trong nhóm này.':'Ao còn trống. Thả con giống để bắt đầu.')+'</p>')+'</div><footer class="game-book-pager">'+btn('‹','data-pond-page="'+(page.index-1)+'" aria-label="Trang thủy sản trước"','subtle',!page.index)+'<span>'+(page.index+1)+' / '+page.count+'</span>'+btn('＋ Thả giống','data-pond-adopt','subtle',used>=limit)+btn('›','data-pond-page="'+(page.index+1)+'" aria-label="Trang thủy sản sau"','subtle',page.index===page.count-1)+'</footer><p class="game-book-foot">Chạm hình để quản lý · Số Thu/Cần ăn tính theo lứa</p></section>'+btn('Tới cầu gỗ','data-pond-go','subtle');
+}
+function showPondManagement(kind,index){
+  const batch=visiblePondBatches(state.me,index).find(b=>b.kind===kind);if(!batch)return;
+  const def=aquatic[kind],now=currentTime(),outlook=pondOutlook(batch,state.weather,now),ready=pondReady(batch),cost=pondFood(batch);
+  const where=index===0?'Ao chính':'Ao ô '+(index-pondOffset+1),eta=ready?'Có thể thu':(outlook.feeding?'~':'Sau cho ăn ~')+duration(Math.ceil(outlook.seconds/60)*60);
+  const percent=Math.round((outlook.rate-1)*100);
+  modal('Quản lý '+def.name.toLowerCase(),'<div class="animal-manage-hero">'+pondIllustration(kind)+'<div><strong>'+where+'</strong><p>'+(ready?'Sẵn sàng thu':outlook.feeding?'Đang lớn':'Cần cho ăn')+' · '+(batch.count??1)+' con giống</p></div></div><dl class="animal-manage-facts"><div><dt>Lứa này còn</dt><dd>'+pondYield(batch)+' '+escape(def.name.toLowerCase())+'</dd></div><div><dt>Thời gian</dt><dd>'+eta+'</dd></div></dl><details class="panel-fold" open><summary>Tốc độ &amp; sản lượng</summary><table class="animal-impact-table"><tbody><tr><th>Thời tiết · tốc độ</th><td>'+(percent>0?'+':'')+percent+'%</td></tr><tr><th>Thời tiết · sản lượng</th><td>0%</td></tr><tr class="impact-total"><th>Tốc độ hiện tại</th><td>'+Math.round(outlook.rate*100)+'%</td></tr></tbody></table><p class="care-note">'+(ready?'Đã tới kỳ thu.':outlook.feeding?'Ước tính nếu thời tiết giữ nguyên và luôn đủ ăn.':'Đang dừng lớn. Thời gian tính từ lúc cho ăn lại.')+'</p></details><details class="panel-fold"><summary>Thức ăn · '+(ready?'không cần thêm để thu':outlook.feeding?'còn '+duration(outlook.feedSeconds):'đang đói')+'</summary><p>'+cost+' phần mỗi lần cho ăn cả lứa.</p>'+(outlook.needsMoreFood&&!ready?'<p class="care-note">Cần cho ăn tiếp để đạt thời gian ước tính.</p>':'')+'</details><details class="panel-fold"><summary>Quá trình &amp; sản lượng</summary><div class="care-progress-label"><span>Lớn lên</span><b>'+progress(batch.progress,def.time)+'%</b></div>'+valueBar(batch.progress,def.time)+'<p>Mỗi giống cho '+def.yield+' sản phẩm. Đã lấy '+(batch.picked??0)+'; còn '+pondYield(batch)+'.</p><p class="care-note">Thời gian cơ sở '+duration(def.time)+'.</p></details>');
+  dialog.classList.add('game-management');
+}
+function showPondAdoption(){
+  const farm=state.me,batches=visiblePondBatches(farm,pondTab),used=batches.reduce((sum,b)=>sum+(b.count??1),0),limit=pondCapacity(farm,pondTab);
+  const cards=Object.entries(aquatic).map(([item,def])=>{
+    const available=farm.inventory[def.seed]??0,locked=aquaRequirement(farm,item),present=batches.some(b=>b.kind===item),art=aquaIllustration(item);
+    if(locked)return unlockButton('aqua',item,art+'<span>'+def.name+'<small>Khóa · Xem điều kiện</small></span>');
+    return btn(art+'<span>'+def.name+'<small>'+(present?'Đang nuôi':used>=limit?'Ao đã đầy':!available?'Chưa có giống':available+' giống trong túi')+'</small></span>','data-aqua-stock="'+item+'"','subtle aqua-stock',present||used>=limit||!available);
   }).join('');
-  return header+'<div class="husbandry-list">'+(rows||'<p class="care-empty">Ao còn trống. Chọn con giống bên dưới để bắt đầu nuôi.</p>')+'</div><details class="panel-fold pond-stock-fold" data-panel-fold="pond-stock"'+(!batches.length?' open':'')+'><summary>Thả thêm con giống · Còn '+Math.max(0,limit-used)+' chỗ</summary><p class="care-note">Mỗi loài một lứa trong mỗi ao. Giá và điều kiện con giống xem tại Chợ làng.</p><div class="pond-stock-grid">'+seeds+'</div>'+btn('Đến chợ','data-tab="market"','subtle')+'</details>';
+  modal('Thả con giống','<p>Còn '+Math.max(0,limit-used)+' chỗ · Mỗi loài một lứa trong mỗi ao.</p><div class="pond-stock-grid">'+cards+'</div>'+btn('Đến chợ','data-tab="market"','subtle'));
 }
 function showPondStock(item){
   const farm=state.me, def=aquatic[item];
@@ -1196,12 +1213,13 @@ function renderStock(farm){
     btn(label,'data-stock-tab="'+key+'" aria-pressed="'+(stockTab===key)+'" aria-controls="stock-items"',stockTab===key?'primary':'subtle')
   ).join('')+'</div>';
   const keys=stockItems[stockTab].filter(key=>stockTab!=='produce'||(farm.inventory[key]??0)>0);
-  const pageSize=8, pageCount=Math.max(1,Math.ceil(keys.length/pageSize));
-  stockPage=Math.min(stockPage,pageCount-1);
-  const pageControls=pageCount>1?'<div class="stock-pages" aria-label="Trang vật phẩm">'+
-    btn('‹ Trước','data-stock-page="'+(stockPage-1)+'" aria-label="Trang trước"','subtle',stockPage===0)+
-    '<span>Trang '+(stockPage+1)+' / '+pageCount+' · '+keys.length+' món</span>'+
-    btn('Sau ›','data-stock-page="'+(stockPage+1)+'" aria-label="Trang sau"','subtle',stockPage+1>=pageCount)+'</div>':'';
+  const pageSize=animalPickerSize(), pageCount=Math.max(1,Math.ceil(keys.length/pageSize));
+  if(pageSize!==stockPageSize){stockPage=Math.floor(stockPage*stockPageSize/pageSize);stockPageSize=pageSize;}
+  stockPage=Math.max(0,Math.min(stockPage,pageCount-1));
+  const pageControls=pageCount>1?'<footer class="game-book-pager stock-pages" aria-label="Trang vật phẩm">'+
+    btn('‹','data-stock-page="'+(stockPage-1)+'" aria-label="Trang trước"','subtle',stockPage===0)+
+    '<span>'+(stockPage+1)+' / '+pageCount+'</span>'+
+    btn('›','data-stock-page="'+(stockPage+1)+'" aria-label="Trang sau"','subtle',stockPage+1>=pageCount)+'</footer>':'';
   const cards=keys.slice(stockPage*pageSize,(stockPage+1)*pageSize).map(item=>{
     const {name,icon:picture}=goods[item];
     const locked=Boolean(stockLock(farm,item));
@@ -1212,7 +1230,7 @@ function renderStock(farm){
   }).join('');
   return '<div class="row stock-heading"><div><h2>Kho &amp; túi</h2><p>'+stock(farm)+' / '+capacity(farm)+' chỗ kho</p></div>'+
     btn('Nâng cấp kho','data-panel="buildings"','subtle')+'</div>'+tabs+
-    pageControls+'<div id="stock-items" class="stock-grid card-grid">'+(cards||'<p>Chưa có nông sản.</p>')+'</div>';
+    '<div id="stock-items" class="stock-grid card-grid">'+(cards||'<p>Chưa có nông sản.</p>')+'</div>'+pageControls;
 }
 function renderPanel(farm,now) {
   if(panel==='tasks')return renderTasks(farm,now);
@@ -1300,7 +1318,7 @@ function goToPinnedGoal(){
     if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
   }
 }
-const focusSelector='[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+const focusSelector='[data-manage-pond],[data-pond-filter],[data-pond-page],[data-pond-adopt],[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector+', [data-lake-elder], [data-lake-tab], [data-help-page], [data-prank-page], [data-visit-pane], [data-visit-source], [data-visit-take-page]')) return '';
@@ -1927,6 +1945,10 @@ document.addEventListener('click',async e=>{
     world.approach('pond',pondTab,()=>{});
     reveal('#world');
   }
+  else if('managePond' in d)showPondManagement(d.managePond,Number(d.pond));
+  else if('pondAdopt' in d)showPondAdoption();
+  else if('pondFilter' in d){if(['all','ready','hungry'].includes(d.pondFilter)){pondViews.set(pondTab,{filter:d.pondFilter,page:0});render();}}
+  else if('pondPage' in d){const view=pondViews.get(pondTab)??{filter:'all',page:0};view.page=Math.max(0,Number(d.pondPage)||0);pondViews.set(pondTab,view);render();}
   else if('pondTab' in d) { pondTab=Number(d.pondTab); render(); }
   else if('fenceInfo' in d)showFenceChoice(d.fenceInfo,Number(d.fenceIndex));
   else if('aquaStock' in d)showPondStock(d.aquaStock);

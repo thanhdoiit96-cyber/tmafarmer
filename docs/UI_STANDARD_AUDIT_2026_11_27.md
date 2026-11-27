@@ -21,3 +21,21 @@
 - Ảnh đối chiếu: [desktop](assets/ui-standard-adoption-desktop.png), [ngang](assets/ui-standard-adoption-landscape.png), [chi tiết cuộn](assets/ui-standard-detail-scroll.png).
 
 Chưa kiểm tra trên thiết bị Android/iOS Safari thật. Các mục Kho, Ao và hàng rào được rà cấu trúc; không khẳng định đã chạy mọi tổ hợp dữ liệu trên mọi màn hình. Các danh sách thông tin cũ khác tiếp tục phải được rà theo chuẩn khi chỉnh sửa, không xem đợt này là chứng nhận toàn bộ UI.
+
+## Bổ sung: Kho & túi và Ao nuôi
+
+- Kho giữ tám ô trên desktop, bốn ô khi màn hình ngang cao tối đa 480px. Đổi kích thước giữ trang chứa vật phẩm đầu tiên đang xem; lọc nhóm về trang đầu, polling không đổi trang. Thu gọn tiêu đề/tab/phân trang trên màn hình thấp để bốn ô hiển thị trọn ở 568×320.
+- Ao có badge xanh **Thu**, đỏ **Cần ăn**, đếm số lứa trong ao đang chọn, không đếm số con giống. Lứa đã thu được không cộng vào số đói. Số thức ăn ao trong túi là một nhãn riêng trên tiêu đề.
+- Lượng thức ăn một lần nằm ở nút cho ăn; bỏ câu lặp trong phần cách nuôi. Khi thiếu vẫn ghi rõ phần còn thiếu, khi đang ăn vẫn có thời gian còn lại.
+- Đã chạy runtime desktop 1100×850, cảm ứng giả lập 844×390 và 568×320, mở bảng Công cụ thực tế. Kiểm tra chuyển trang, giữ vật phẩm khi resize/polling và mở/đóng chi tiết. Fixture ao có một lứa sẵn sàng, một đói, một đang ăn: badge tương ứng 1/1, túi 17 phần. Không đổi dữ liệu lưu hay engine.
+- Ảnh: [Kho 844×390](assets/stock-standard-844.png), [Kho 568×320](assets/stock-standard-568.png), [Ao desktop](assets/pond-standard-desktop.png), [Ao màn hình ngang](assets/pond-standard-568.png). Ao vẫn cần cuộn để xem thông tin nuôi; không đánh dấu đã hoàn thiện việc đưa toàn bộ chi tiết ao vào hộp thoại.
+- Build, kiểm tra cú pháp, tài liệu gameplay và `git diff --check` đạt. Chưa thử trên Safari/Android thật; bộ 201 kiểm thử ở trên là kết quả của đợt trước, không chạy lại cho thay đổi bố cục này.
+
+## Chỉnh theo phản hồi: phân trang dưới và Sổ ao
+
+- Kho chuyển phân trang xuống dưới lưới, dùng mũi tên và số trang cùng mẫu Sổ chuồng. Giữ mật độ 8/4 ô, trạng thái khóa, nhóm và logic giữ trang đã có.
+- Ao chuyển sang Sổ ao theo mẫu Sổ chuồng: lọc Tất cả/Thu/Cần ăn, ô hình + tên + thao tác chính, thức ăn trong túi trên tiêu đề, phân trang và Thả giống ở chân sổ. Desktop sáu lứa/trang; ngang thấp ba lứa/trang để không cắt hàng cuối. Chuyển trang dùng loài thật, thao tác giữ chỉ số ao thật (bao gồm 0).
+- Chạm hình mở Quản lý thủy sản: lứa còn, ETA, tốc độ/sản lượng, thức ăn và quá trình. Không nhét thông tin dài vào ô chăm sóc. Bộ chọn thả giống mở riêng; giữ nguyên giới hạn chỗ, một loài/lứa và điều kiện giống hiện có.
+- Dùng tài nguyên có sẵn; ba loài cũ chưa có atlas riêng tiếp tục dùng icon hiện có, ba loài mới dùng atlas thủy sản. Không tạo hoặc thay artwork trong đợt này.
+- Runtime: kiểm tra Kho desktop/844×390/568×320 có phân trang dưới lưới và nằm trong màn hình. Ao thử cả ba và sáu loài, lọc đúng, polling giữ bộ lọc, chuyển trang hai chiều, mở/đóng chi tiết, thả giống khi còn chỗ; kiểm tra nút thu giữ `index=0`. Cho ăn/thu đi qua handler `world.approach()` hiện có, không đổi engine. Build/cú pháp/diff đạt; chưa chạy Safari thật.
+- Ảnh hiện hành: [Kho ngang thấp](assets/stock-bottom-568.png), [Kho ngang](assets/stock-bottom-844.png), [Sổ ao desktop](assets/pond-book-desktop.png), [Sổ ao ngang thấp](assets/pond-book-568.png), [Quản lý desktop](assets/pond-management-desktop.png), [Quản lý ngang thấp](assets/pond-management-568.png). Các ảnh phần trước là lịch sử, không phải bố cục cuối.

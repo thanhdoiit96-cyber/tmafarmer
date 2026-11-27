@@ -8,6 +8,7 @@ Các bảng chọn giống, vật nuôi, chăm sóc, kho/túi, cửa hàng, đơ
 
 - Mỗi item ưu tiên hình minh họa, tên, một trạng thái/số lượng chính và hành động cần dùng. Chạm/click hình hoặc nút thông tin để mở chi tiết; không nhét toàn bộ mô tả, công thức và điều kiện vào từng ô.
 - Hiện trang hiện tại/tổng trang, nút trước/sau rõ và vô hiệu đúng ở hai đầu. Lọc hoặc đổi nhóm thì về trang đầu; dữ liệu cập nhật không tự đưa người chơi về trang đầu.
+- Đặt phân trang **dưới lưới**, dùng mẫu mũi tên trước/sau và số trang như Sổ chuồng. Giữ đồng nhất trong Kho, bộ chọn và các sổ chăm sóc; không đặt phân trang xen giữa bộ lọc và item.
 - Giữ trang/lọc theo ngữ cảnh: chuồng chính/chuồng phụ, kho/túi, nhóm hàng. Khi item biến mất hoặc số trang giảm, đưa về trang hợp lệ. Điều hướng từ nhiệm vụ/map phải mở đúng trang chứa đối tượng.
 - Dùng ID thật của đối tượng, đợt và vật phẩm. Không lấy vị trí trong lưới làm ID thao tác; không bỏ qua index 0. Phân trang trong hộp thoại phải cập nhật chính hộp thoại đó.
 
