@@ -43,3 +43,19 @@ Chưa kiểm tra trên thiết bị Android/iOS Safari thật. Các mục Kho, A
 - Dùng tài nguyên có sẵn; ba loài cũ chưa có atlas riêng tiếp tục dùng icon hiện có, ba loài mới dùng atlas thủy sản. Không tạo hoặc thay artwork trong đợt này.
 - Runtime: kiểm tra Kho desktop/844×390/568×320 có phân trang dưới lưới và nằm trong màn hình. Ao thử cả ba và sáu loài, lọc đúng, polling giữ bộ lọc, chuyển trang hai chiều, mở/đóng chi tiết, thả giống khi còn chỗ; kiểm tra nút thu giữ `index=0`. Cho ăn/thu đi qua handler `world.approach()` hiện có, không đổi engine. Build/cú pháp/diff đạt; chưa chạy Safari thật.
 - Ảnh hiện hành: [Kho ngang thấp](assets/stock-bottom-568.png), [Kho ngang](assets/stock-bottom-844.png), [Sổ ao desktop](assets/pond-book-desktop.png), [Sổ ao ngang thấp](assets/pond-book-568.png), [Quản lý desktop](assets/pond-management-desktop.png), [Quản lý ngang thấp](assets/pond-management-568.png). Các ảnh phần trước là lịch sử, không phải bố cục cuối.
+
+## Kho — mật độ theo diện tích bảng thực tế
+
+Cập nhật sau phản hồi còn nhiều khoảng trống trên mobile ngang. Thay phần Kho 8/4 cố định ở trên; Ao và các bộ chọn khác không đổi.
+
+Nguyên nhân: `renderStock()` dùng chung `animalPickerSize()` của bộ chọn Đón vật nuôi, nên mọi màn hình ngang cao tối đa 480px đều chỉ có bốn món. Thẻ vẫn có nền trắng/nhãn Đã mở lặp lại, số lượng ghép dấu × thay vì badge; sản phẩm vật nuôi có thể quay về icon cũ.
+
+Đã tách `stock-layout.mjs`. Chọn hai hoặc ba cột theo chiều rộng thật, tính số hàng từ chiều cao có thể dùng sau khi trừ tiêu đề, tab, khung và phân trang. ResizeObserver và kiểm tra sau render cập nhật khi mở Công cụ, đổi chiều cao hoặc xoay máy. Đổi mật độ giữ trang chứa vật phẩm đầu tiên trước đó; lọc đổi nhóm về trang đầu, polling giữ trang. Tối đa bốn hàng, không ép nhỏ ảnh/chữ để đạt số món cố định.
+
+Kho dùng khung gỗ/giấy, phân trang dưới theo Sổ chuồng; tên/số/đơn vị tách riêng. Bỏ nhãn Đã mở lặp lại, chỉ hiện Khóa khi cần; số 0 dùng màu trung tính. Giống cây dùng đơn vị hạt, thủy sản con giống dùng con; chi tiết vẫn mở bằng click/touch cả ô. Sản phẩm vật nuôi dùng atlas cùng loài qua animalProductIllustration, không tạo tranh mới. Chín món chế biến/vật tư chưa có tranh riêng vẫn dùng icon hiện có; không coi đợt UI này là hoàn tất mỹ thuật của chúng.
+
+Kết quả Edge demo: desktop 1100×850 tám món, 844×390 sáu món, 844×480 chín món, 568×320 bốn món. Màn hình thấp không tăng vượt bốn vì phải dành chỗ cho tên và phân trang. Đã duyệt đủ bốn nhóm và mọi trang, không cần cuộn bảng để tới phân trang; ảnh không đè chữ, số/đơn vị không tràn; mở chi tiết được. Kiểm giữ trang qua polling, giữ item khi đổi mật độ, giống khóa/số lượng 0 và kho rỗng đạt. Demo riêng, không thay dữ liệu hoặc giá/sức chứa. Chưa thử thiết bị Safari/Android thật.
+
+225 tests, build và audit assets đạt. Chưa commit/push/deploy.
+
+Ảnh hiện hành: [844×390](assets/stock-density-844.png), [844×480](assets/stock-density-tall-844.png), [568×320](assets/stock-density-568.png), [giống khóa/số 0](assets/stock-density-locked-568.png). Các ảnh Kho ở phần trước giữ làm lịch sử.

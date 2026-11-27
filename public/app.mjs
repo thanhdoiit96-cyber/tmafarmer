@@ -3,6 +3,7 @@ import {createNotices} from './notices.mjs';
 import {farmNavigation} from './navigation.mjs';
 import {recipeView} from './recipe-view.mjs';
 import {catalogPage} from './ui-catalog.mjs';
+import {stockLayout} from './stock-layout.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
 import {driveItem} from './village-drive-view.mjs';
 import {driveResult} from './village-drive-history.mjs';
@@ -501,7 +502,7 @@ window.addEventListener('resize',()=>{
   if(dialog.open&&dialog.querySelector('.quick-garden-form'))updateQuickGarden(dialog.querySelector('.quick-garden-form'));
   if(dialog.open&&recoveryKey)showRecovery(recoveryKey,{preserve:true});
   if(animalPickerSize()!==animalPageSize)refreshAdoptionPicker();
-  if(panel==='stock'&&animalPickerSize()!==stockPageSize)render();
+  if(panel==='stock')render();
   if(panel==='ponds')render();
   if(tab==='workshop'&&(animalPickerSize()===4?3:6)!==workshopPageSize)render();
   if(tab==='market'&&marketPane==='sales')render();
@@ -1271,29 +1272,44 @@ function showSeedCrop(item){
     '<form data-form="seedFromCrop" data-item="'+item+'"><label>Số nông sản đổi thành giống<input name="qty" type="number" min="1" max="'+maximum+'" value="1" required></label>'+
     '<button class="btn primary">Giữ giống</button></form><p id="dialog-error" role="status"></p>');
 }
+function currentStockLayout(){
+  const style=getComputedStyle(panelBody),navigation=farmPanel.querySelector('.panel-navigation');
+  const height=landscape.matches?panelBody.clientHeight:parseFloat(getComputedStyle(farmPanel).maxHeight)-navigation.getBoundingClientRect().height;
+  const compact=landscape.matches&&innerHeight<=340;
+  const grid=panelBody.querySelector('.stock-grid'),book=panelBody.querySelector('.stock-book');
+  const chrome=grid&&book&&grid.getBoundingClientRect().height?grid.getBoundingClientRect().top-panelBody.getBoundingClientRect().top+panelBody.scrollTop+book.getBoundingClientRect().bottom-grid.getBoundingClientRect().bottom+parseFloat(style.paddingBottom):(compact?112:140);
+  return stockLayout({width:panelBody.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-14,height:height||240,chrome,rowHeight:compact?60:64});
+}
+let stockResizeFrame;
+new ResizeObserver(()=>{
+  if(panel!=='stock'||!state||!panelBody.clientHeight)return;
+  cancelAnimationFrame(stockResizeFrame);
+  stockResizeFrame=requestAnimationFrame(()=>{if(panel==='stock'&&currentStockLayout().size!==stockPageSize)render();});
+}).observe(panelBody);
 function renderStock(farm){
   const tabs='<div class="stock-tabs" role="group" aria-label="Nhóm vật phẩm trong kho">'+Object.entries(stockTabs).map(([key,label])=>
     btn(label,'data-stock-tab="'+key+'" aria-pressed="'+(stockTab===key)+'" aria-controls="stock-items"',stockTab===key?'primary':'subtle')
   ).join('')+'</div>';
   const keys=stockItems[stockTab].filter(key=>stockTab!=='produce'||(farm.inventory[key]??0)>0);
-  const pageSize=animalPickerSize(), pageCount=Math.max(1,Math.ceil(keys.length/pageSize));
+  const layout=currentStockLayout(),pageSize=layout.size, pageCount=Math.max(1,Math.ceil(keys.length/pageSize));
   if(pageSize!==stockPageSize){stockPage=Math.floor(stockPage*stockPageSize/pageSize);stockPageSize=pageSize;}
   stockPage=Math.max(0,Math.min(stockPage,pageCount-1));
-  const pageControls=pageCount>1?'<footer class="game-book-pager stock-pages" aria-label="Trang vật phẩm">'+
+  const pageControls='<footer class="game-book-pager task-book-pager stock-pages" aria-label="Trang vật phẩm">'+
     btn('‹','data-stock-page="'+(stockPage-1)+'" aria-label="Trang trước"','subtle',stockPage===0)+
     '<span>'+(stockPage+1)+' / '+pageCount+'</span>'+
-    btn('›','data-stock-page="'+(stockPage+1)+'" aria-label="Trang sau"','subtle',stockPage+1>=pageCount)+'</footer>':'';
+    btn('›','data-stock-page="'+(stockPage+1)+'" aria-label="Trang sau"','subtle',stockPage+1>=pageCount)+'</footer>';
   const cards=keys.slice(stockPage*pageSize,(stockPage+1)*pageSize).map(item=>{
     const {name,icon:picture}=goods[item];
     const locked=Boolean(stockLock(farm,item));
-    return '<button type="button" class="stock-card" data-stock-item data-item-info="'+item+'" aria-haspopup="dialog">'+
-      '<span class="stock-icon" aria-hidden="true">'+(itemIllustration(item)||picture)+'</span><span class="stock-name">'+escape(name)+'</span>'+
-      '<span class="stock-quantity">× '+(farm.inventory[item]??0)+'</span>'+
-      '<span class="stock-status" data-locked="'+locked+'">'+(locked?'Đang khóa':'Đã mở')+'</span></button>';
+    const unit=stockTab==='seeds'?(Object.values(aquatic).some(species=>species.seed===item)?'con':'hạt'):'món';
+    return '<button type="button" class="stock-card" data-stock-item data-item-info="'+item+'" aria-haspopup="dialog" aria-label="'+escape(name)+', '+(farm.inventory[item]??0)+' '+unit+(locked?', đang khóa':'')+'">'+
+      '<span class="stock-icon" aria-hidden="true">'+(itemIllustration(item)||animalProductIllustration(item)||picture)+'</span><span class="stock-name">'+escape(name)+'</span>'+
+      '<span class="stock-quantity"><b class="coop-count '+((farm.inventory[item]??0)>0?'ready':'quiet')+'">'+(farm.inventory[item]??0)+'</b><small>'+unit+'</small>'+
+      (locked?'<span class="stock-status" data-locked="true">Khóa</span>':'')+'</span></button>';
   }).join('');
   return '<div class="row stock-heading"><div><h2>Kho &amp; túi</h2><p>'+stock(farm)+' / '+capacity(farm)+' chỗ kho</p></div>'+
     btn('Nâng cấp kho','data-panel="buildings"','subtle')+'</div>'+tabs+
-    '<div id="stock-items" class="stock-grid card-grid">'+(cards||'<p>Chưa có nông sản.</p>')+'</div>'+pageControls;
+    '<section class="game-book stock-book"><div id="stock-items" class="stock-grid" style="--stock-columns:'+layout.columns+'">'+(cards||'<p>Chưa có nông sản.</p>')+'</div>'+pageControls+'</section>';
 }
 function renderPanel(farm,now) {
   if(panel==='tasks')return renderTasks(farm,now);
@@ -1485,6 +1501,10 @@ function render(arrival) {
   if(seedHover&&!dialog.open){if(hoveredSeed)showSeedTooltip(seedHover);else queueCatalogTooltip(seedHover,showSeedTooltip);}
   const animalHover=canHoverSeeds?(hoveredAnimal?panelBody.querySelector('[data-animal-info="'+hoveredAnimal+'"]'):panelBody.querySelector('[data-animal-info]:hover')):null;
   if(animalHover&&!dialog.open){if(hoveredAnimal)showAnimalTooltip(animalHover);else queueCatalogTooltip(animalHover,showAnimalTooltip);}
+  if(panel==='stock'){
+    cancelAnimationFrame(stockResizeFrame);
+    stockResizeFrame=requestAnimationFrame(()=>{if(panel==='stock'&&panelBody.clientHeight&&currentStockLayout().size!==stockPageSize)render();});
+  }
 }
 function goTo(area,arrival,targetPanel='area') {
   if(landscape.matches)setPanelOpen(false);

@@ -1,0 +1,16 @@
+﻿/* Inventory shares the existing wood/paper book, count badges and bottom pager. */
+.stock-heading{margin-bottom:5px;gap:5px}.stock-heading h2{font-size:17px;margin:0}.stock-heading p{margin:2px 0 0;font-size:10px}.stock-heading>.btn{font-size:10px;min-height:28px;padding:4px}
+.stock-tabs{margin:0 0 5px;gap:4px}.panel-body .stock-tabs>.btn{min-height:28px;padding:4px 2px;font-size:10px}
+.stock-book{padding:4px;margin:0}.stock-book .stock-grid{display:grid;grid-template-columns:repeat(var(--stock-columns,2),minmax(0,1fr));gap:4px;margin:0}
+.stock-book .stock-card{position:relative;display:grid;grid-template-columns:26px minmax(0,1fr);grid-template-rows:1fr auto;align-items:center;min-height:64px;padding:4px;gap:2px 4px;border:1px solid #b59a65;border-radius:5px;background:#f4e7c4;box-shadow:inset 0 1px #fff5d9,0 1px #896b43;color:#493d29;text-align:left}
+.stock-book .stock-card:hover,.stock-book .stock-card:focus-visible{background:#e5e9c3;border-color:#6d8853}
+.stock-book .stock-icon{grid-column:1;grid-row:1/3;width:26px;height:30px;background:none;border-radius:0;font-size:23px;overflow:visible}.stock-book .stock-icon .animal-icon{transform:scale(.7);margin:0}.stock-book .stock-icon .crop-item-icon{margin:0}
+.stock-book .stock-name{grid-column:2;grid-row:1;min-width:0;font-size:10px;line-height:12px;overflow-wrap:anywhere;white-space:normal}
+.stock-book .stock-quantity{grid-column:2;grid-row:2;display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-width:0;line-height:14px}.stock-book .stock-quantity .coop-count{margin:0;min-width:18px;font-size:10px;text-align:center}.stock-book .stock-quantity small{font-size:8px;color:#786543}.stock-book .stock-status{padding:1px 3px;font-size:8px;line-height:12px;border-radius:3px;background:#e6d2a4;color:#705126}
+.stock-book .stock-pages{display:flex;justify-content:center;gap:12px;margin:5px 0 0;color:#fff0cd;font-size:10px}.panel-body .stock-book .stock-pages>.btn{min-height:28px;min-width:28px;padding:3px 7px}
+.stock-book .stock-icon{display:flex;align-items:center;justify-content:center}.stock-book .stock-icon .animal-icon{flex:none}
+.stock-book .stock-quantity .coop-count.quiet{background:#d6c399;color:#645237;box-shadow:none}
+@media(orientation:landscape) and (max-height:340px){
+ .stock-heading{margin-bottom:3px}.stock-heading>div{display:flex;align-items:baseline;gap:4px}.stock-heading h2{font-size:15px;line-height:18px}.stock-heading p{font-size:8px;margin:0;white-space:nowrap}.panel-body .stock-heading>.btn{min-height:24px;font-size:9px;padding:3px}
+ .stock-tabs{margin-bottom:3px}.panel-body .stock-tabs>.btn{min-height:26px;padding:3px 1px;font-size:9px}.stock-book{border-width:2px;padding:3px}.stock-book .stock-card{min-height:60px;padding:3px;gap:1px 3px}.stock-book .stock-name{font-size:10px;line-height:11px}.stock-book .stock-quantity .coop-count{height:16px}.stock-book .stock-pages{margin-top:3px}.panel-body .stock-book .stock-pages>.btn{min-height:26px;padding:3px 6px}
+}
