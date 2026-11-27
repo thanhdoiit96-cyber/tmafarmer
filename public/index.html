@@ -68,15 +68,12 @@
             <button class="btn landscape-only mobile-menu" type="button" data-mobile-menu aria-haspopup="dialog"><svg aria-hidden="true"><use href="#i-pin"/></svg>Khu vực</button>
           </div>
           <div class="map-radar" id="map-radar" aria-hidden="true"><canvas width="104" height="63" data-radar></canvas></div>
-          <div class="world-dpad" aria-label="Điều khiển hướng">
-            <button type="button" data-direction="up" aria-label="Đi lên"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
-            <button type="button" data-direction="left" aria-label="Đi trái"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
-            <button type="button" data-direction="down" aria-label="Đi xuống"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
-            <button type="button" data-direction="right" aria-label="Đi phải"><svg aria-hidden="true"><use href="#i-chevron"/></svg></button>
+          <div class="world-joystick" data-joystick role="group" aria-label="Cần di chuyển: kéo theo hướng muốn đi, thả để dừng. Có thể dùng phím WASD hoặc mũi tên.">
+            <span class="joystick-knob" aria-hidden="true"></span>
           </div>
         </div>
         <div class="world-footer">
-          <div class="map-help"><svg aria-hidden="true"><use href="#i-pin"/></svg><div><strong data-world-hint>Chọn một điểm trên bản đồ</strong><small id="world-controls">Chạm bản đồ hoặc dùng WASD và các nút mũi tên để đi.</small></div></div>
+          <div class="map-help"><svg aria-hidden="true"><use href="#i-pin"/></svg><div><strong data-world-hint>Chọn một điểm trên bản đồ</strong><small id="world-controls">Chạm bản đồ, kéo cần di chuyển hoặc dùng phím WASD/mũi tên để đi.</small></div></div>
           <div class="world-buttons">
             <span data-scene-count hidden></span>
             <button class="btn" type="button" data-chat-toggle aria-controls="scene-chat" aria-expanded="false" hidden><span>Chat</span></button>

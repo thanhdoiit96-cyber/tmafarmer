@@ -1,3 +1,4 @@
+import {installJoystick} from './joystick.mjs';
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
 import {shoreWork} from './lake-social.mjs';
 import {features, interactionRange as range, maps, plotPosition, route, size, taskMarkers, walkable} from './world-layout.mjs';
@@ -38,7 +39,7 @@ export function createWorld(root, onInteract, landscape) {
   const ctx=terrain.getContext('2d');
   void artReady.then(()=>{if(sceneId)paintTerrain();});
   const keys=new Set();
-  const touchKeys=new Map();
+  let stickX=0,stickY=0;
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   const interacted=root.querySelector('[data-world-act]');
   const hint=root.querySelector('[data-world-hint]');
@@ -135,6 +136,7 @@ export function createWorld(root, onInteract, landscape) {
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
+    releaseControls();
     x=px;y=py;facing=dir;stop();walkDistance=0;pose='';effects=[];pointer=null;routeMarker=null;fishingDock=null;
     canvas.dataset.position=Math.round(x)+','+Math.round(y);
   }
@@ -334,9 +336,8 @@ export function createWorld(root, onInteract, landscape) {
     updateCoopAnimals(now/1000);
     walking=false;
     if(!document.querySelector('dialog[open]')){
-      if(keys.size||touchKeys.size) {
-        const held=new Set([...keys,...touchKeys.values()]);
-        const [dx,dy]=[...held].reduce(([a,b],key)=>[a+deltas[key][0],b+deltas[key][1]],[0,0]);
+      if(keys.size||stickX||stickY) {
+        const [dx,dy]=[...keys].reduce(([a,b],key)=>[a+deltas[key][0],b+deltas[key][1]],[stickX,stickY]);
         move(dx*100,dy*100,dt);
       } else if(waypoints.length) {
         while(waypoints.length&&Math.hypot(waypoints[0][0]-x,waypoints[0][1]-y)<1.1){
@@ -495,8 +496,7 @@ export function createWorld(root, onInteract, landscape) {
   window.addEventListener('keyup',e=>keys.delete(directions[e.key.length===1?e.key.toLowerCase():e.key]));
   function releaseControls(){
     keys.clear();
-    touchKeys.clear();
-    root.querySelectorAll('[data-held]').forEach(button=>delete button.dataset.held);
+    resetJoystick();
   }
   window.addEventListener('blur',releaseControls);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseControls();});
@@ -515,17 +515,13 @@ export function createWorld(root, onInteract, landscape) {
       routeMarker={x,y,until:Infinity};
     }else routeMarker={x:px,y:py,blocked:true,until:performance.now()+600};
   });
-  root.querySelectorAll('[data-direction]').forEach(button=>{
-    const direction=button.dataset.direction;
-    button.addEventListener('pointerdown',event=>{
-      if(event.button!==0)return;
-      button.setPointerCapture(event.pointerId);button.dataset.held='true';stop();routeMarker=null;touchKeys.set(event.pointerId,direction);
-    });
-    for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,event=>{
-      touchKeys.delete(event.pointerId);
-      if(!Array.from(touchKeys.values()).includes(direction))delete button.dataset.held;
-    });
+  const resetJoystick=installJoystick(root.querySelector('[data-joystick]'),{
+    enabled:()=>!!scene&&!document.querySelector('dialog[open]'),
+    onStart:()=>{stop();routeMarker=null;},
+    onChange:(dx,dy)=>{stickX=dx;stickY=dy;},
   });
+  new MutationObserver(()=>{if(document.querySelector('dialog[open]'))releaseControls();})
+    .observe(document.querySelector('#dialog'),{attributes:true,attributeFilter:['open']});
   interacted.addEventListener('click',()=>use());
   function setPeers(players){
     const next=new Map();
