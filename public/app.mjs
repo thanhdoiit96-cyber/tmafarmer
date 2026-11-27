@@ -1426,8 +1426,6 @@ function render(arrival) {
   const selectedNeighbor=tab==='neighbors'?state.neighbors.find(n=>n.id===neighborId):undefined;
   if(!selectedNeighbor)neighborId=null;
   $('#nav').innerHTML=areaButtons(farm);
-  $('.farm-shortcuts').innerHTML=farmNavigation(farm,{tab,panel,visiting:!!neighborId}).filter(entry=>['stock','coop','ponds'].includes(entry.id)).map(entry=>
-    '<button type="button" '+(entry.panel?'data-nav-panel="'+entry.panel+'"':'data-tab="coop"')+' aria-label="'+entry.label+'" title="'+entry.label+'"'+(entry.active?' aria-current="page"':'')+'>'+icon(entry.icon)+'</button>').join('');
   $('#coin').textContent=formatCoins(farm.coins)+' xu';
   $('#room span').textContent=session?'Làng '+session.code:'Vào làng';
   $('#sub-title').textContent=session?farm.name+' · '+state.village.name:'Vườn chơi thử';
@@ -1437,7 +1435,7 @@ function render(arrival) {
   $('#date').textContent='Ngày '+(state.day+1);
   villagePage=neighborPage(state,villagePage).index;
   world.sync(selectedNeighbor?'visit':tab,state,{neighbor:selectedNeighbor,selection:selected,page:villagePage,arrival,tasks});
-  $('#world-weather').innerHTML=tab==='home'||tab==='workshop'?'':'<button class="world-weather" type="button" data-weather aria-label="Xem dự báo: '+state.weather.name+'">'+icon('weather')+'<span class="weather-name">'+state.weather.name+'</span><span class="landscape-only weather-symbol" aria-hidden="true">'+state.weather.icon+'</span></button>';
+  $('#world-weather').innerHTML=tab==='home'||tab==='workshop'?'':'<button class="world-weather" type="button" data-weather title="'+escape(state.weather.name+' · '+state.weather.note+' · Bấm để xem dự báo')+'" aria-label="Xem dự báo: '+escape(state.weather.name)+'"><span class="weather-symbol" aria-hidden="true">'+state.weather.icon+'</span></button>';
   $('#board').innerHTML={
     home:()=>renderHome(farm,now), workshop:()=>renderWorkshop(farm), field:()=>renderField(farm), lake:()=>renderLake(farm,now), coop:()=>renderCoop(farm,now), market:()=>renderMarket(farm), neighbors:()=>renderNeighbors(farm,now)
   }[tab]();
@@ -2023,7 +2021,6 @@ document.addEventListener('click',async e=>{
   else if('taskDetailPage' in d){taskDetailPage=Number(d.taskDetailPage);render();}
   else if('taskRef' in d){tasks=farmTasks(state,currentTime());const index=tasks.findIndex(t=>taskKey(t)===d.taskRef);if(index>=0)openTask(index);else {render();showToast('Việc này đã thay đổi.');}}
   else if('hireMenu' in d)showHireMenu();
-  else if('quickEdit' in d){const form=dialog.querySelector('.quick-garden-form');form.classList.remove('is-confirming');delete form.dataset.confirmed;form.querySelector('.hire-confirm')?.remove();form.querySelector('button[type=submit]').textContent='Xác nhận thuê '+gardenHelperName;}
   else if('quickPage' in d){const form=dialog.querySelector('.quick-garden-form');if(form){form.dataset.page=d.quickPage;updateQuickGarden(form);}}
   else if('quickGarden' in d){if(Object.hasOwn(gardenHelperActions,d.quickGarden)&&!(dialog.open&&dialog.querySelector('.quick-garden-form')?.dataset.operation===d.quickGarden))showQuickGarden(d.quickGarden);}
   else if('quickAll' in d){
@@ -2323,15 +2320,8 @@ dialog.addEventListener('submit',async e=>{
       if(inline) inline.textContent=error.message;
     } finally { busy=false; }
   } else if(mode==='hireGardenHelper'){
-    const {ready,plots,space,cost}=updateQuickGarden(form);
+    const {ready,plots,space}=updateQuickGarden(form);
     if(!ready)return;
-    const confirmation=JSON.stringify([plots,cost,space,values.source??'all']);
-    if(form.dataset.confirmed!==confirmation){
-      form.dataset.confirmed=confirmation;form.classList.add('is-confirming');form.querySelector('.hire-confirm')?.remove();
-      const summary=document.createElement('section');summary.className='hire-confirm';
-      summary.innerHTML='<h3>Xác nhận thuê '+gardenHelperName+'</h3><p>'+(form.dataset.operation==='water'?'Tưới cây':'Thu hoạch')+' trên <strong>'+plots.length+'</strong> ô đã chọn.</p><p>Chi phí <strong>'+cost+'</strong> xu · Còn lại <strong>'+(state.me.coins-cost)+'</strong> xu.</p>'+btn('‹ Chọn lại','data-quick-edit','subtle');
-      button.before(summary);button.textContent='Đồng ý · '+cost+' xu';button.disabled=false;return;
-    }
     button.disabled=true;
     const operation=form.dataset.operation;
     const request={action:'hireGardenHelper',item:operation,plots,expectedSpace:space};

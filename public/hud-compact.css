@@ -1,0 +1,22 @@
+﻿/* Keep the current HUD/panel placement; only reduce day/weather clutter. */
+#world-weather .world-weather{width:30px;min-height:30px;height:30px;padding:3px;justify-content:center}
+#world-weather .weather-symbol{display:block;font-size:17px;line-height:1}
+@media(orientation:landscape) and (min-width:500px) and (max-width:1100px) and (max-height:600px){
+ .world-hud .world-stat,.world-hud .vital,.world-hud .task-summary,.world-hud .mobile-menu{min-height:28px;height:28px;padding:3px 4px;gap:3px;border-radius:5px;box-sizing:border-box}
+ .world-hud .world-stat{font-size:10px}
+ .world-hud .world-stat svg{width:12px;height:12px}
+ #world-day{min-height:28px;padding:3px 4px;gap:3px;font-size:9px;border-radius:5px;align-self:flex-start}
+ #world-day svg{width:11px;height:11px}
+ .world-hud .status-hud,.world-hud #vital-hud{gap:3px}
+ .world-hud .vital-icon{width:15px;height:18px;border-radius:4px}
+ .world-hud .vital-icon svg{width:11px;height:11px}
+ .world-hud .vital-text{min-width:16px;gap:1px}
+ .world-hud .vital-text strong{font-size:10px}
+ .world-hud .vital-text i{height:2px}
+ .world-hud .task-summary .task-mark{width:20px;height:20px;font-size:10px;border-radius:5px}
+ .world-hud .mobile-menu{font-size:10px}
+ .world-hud .mobile-menu svg{width:12px;height:12px}
+ .layout[data-panel-open] .world-hud .mobile-menu{min-width:28px;width:28px;padding:3px;font-size:0;justify-content:center}
+ #world-weather .world-weather{width:28px;min-height:28px;height:28px;padding:3px;border-radius:5px}
+ #world-weather .weather-symbol{font-size:16px}
+}
