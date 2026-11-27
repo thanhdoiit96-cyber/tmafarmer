@@ -120,6 +120,8 @@ Trình duyệt gọi `/api/*` trên tên miền Vercel. Vercel chuyển tiếp s
 
 ## Tổ chức mã nguồn
 
+Chuẩn thiết kế giao diện cho tính năng mới và các lần sửa UI: [GAME_UI_STANDARD.md](docs/GAME_UI_STANDARD.md). Bảng Công cụ ưu tiên lưới/phân trang; chi tiết ưu tiên cuộn có chỉ báo rõ; số việc dùng badge, tên và số lượng được tách riêng.
+
 | Thư mục | Nội dung |
 | --- | --- |
 | `public/` | Giao diện, bản đồ Canvas và engine JavaScript dùng chung với bản thử |

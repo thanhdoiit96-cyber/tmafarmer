@@ -45,3 +45,18 @@ Chromium runtime dùng demo riêng: giữ trang/lựa chọn qua polling, cho ă
 - [Quản lý với tác động thật](assets/animal-management-v4-runtime.png)
 
 Giữ bản phác thảo ở [V4](ORDERS_ANIMAL_UI_DRAFT_V4.md) để đối chiếu. Bước tiếp theo là đánh giá bản chạy này trên thiết bị thật trước khi chuyển sang nội dung P2.2; pilot Social/Ao vẫn chưa có kết quả người chơi.
+
+## Sửa phân trang đón vật nuôi và nhấn mạnh lượt chăm sóc
+
+27/11/2026, đã sửa trong source, chưa commit/push/deploy:
+
+- Nút đổi nhóm/trang trước đây chỉ render bảng sau hộp thoại, nên hộp thoại đón vật nuôi vẫn hiện danh sách cũ. Giờ thay đúng phần picker trong hộp thoại, xóa tooltip cũ và giữ focus ở điều khiển phân trang. Không đóng/mở lại hộp thoại mỗi lần đổi trang.
+- Lưu chuồng đích trên hộp thoại, phân biệt chuồng chính với parcel index 0; xóa ngữ cảnh khi mở hộp thoại khác. Mỗi lần mở Đón thêm bắt đầu ở trang 1; đổi nhóm cũng về trang 1.
+- Số thức ăn còn trong túi nằm ngay trên thanh tiêu đề Sổ chuồng, trong ô vàng sáng có icon và chữ số lớn. Hiển thị cả trên màn hình ngang thấp, không phụ thuộc cuộn tới cuối sổ hoặc lời hướng dẫn.
+- Số con có thể thu dùng badge xanh, số con cần ăn dùng badge đỏ trên bộ lọc. Giữ cả nhãn chữ/số, màu badge không mất khi bộ lọc được chọn. Các số vẫn lấy từ trạng thái chuồng hiện tại, không phải số con của riêng trang đang xem.
+
+201 tests/build/audit assets đạt. Chromium demo kiểm tra trang 2 sau polling, đổi nhóm khóa/mở, mua trâu từ trang 2, chuồng phụ index 0, chạm phân trang ở 844×390/568×320 và ô thức ăn trong vùng nhìn thấy khi sổ có đủ sáu item. Chưa thử Safari/Android thật.
+
+- [Sổ chuồng với thức ăn/badge](assets/stable-food-badges-v4.png)
+- [Màn hình ngang](assets/stable-food-badges-v4-landscape.png)
+- [Trang 2 của bộ chọn](assets/adoption-page-two-v4.png)

@@ -880,3 +880,63 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
  .stable-book .game-book-tabs{margin-bottom:4px}.stable-book .game-book-pager{margin-top:4px}
  .stable-grid{gap:4px}.stable-book{padding:4px}
 }
+.coop-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;margin-left:2px;border-radius:5px;color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:inset 0 1px #ffffff30}
+.coop-count.ready{background:#3f703d;border:1px solid #2e552e}
+.coop-count.hungry{background:#b74135;border:1px solid #8f2e26}
+.stable-footer{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:7px}
+.stable-food{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#fff0be;color:#563d19;border:1px solid #8d6835;border-radius:6px;padding:2px 7px;box-shadow:0 2px #79563366;font-size:10px;white-space:nowrap}
+.stable-food strong{font-size:16px;line-height:1;font-weight:800;color:#49330d}
+.stable-food .care-icon{transform:scale(.8);margin:-2px}
+.stable-footer small{font-size:8px;color:#fae9bd}
+@media(max-height:350px) and (orientation:landscape){
+ .stable-book .stable-footer{display:flex;margin-top:4px}.stable-footer small{display:none}
+ .stable-food{padding:1px 7px;font-size:9px}.stable-food strong{font-size:14px}
+ .stable-tile{height:72px}.stable-face .animal-icon{transform:scale(.75)}
+ .coop-count{height:16px;min-width:16px;font-size:9px}.stable-book .game-book-pager{margin-top:3px}
+}
+.stable-book .game-book-head .stable-food{gap:2px;padding:2px 4px;box-shadow:0 1px #79563366;text-shadow:none}
+.stable-book .game-book-head .stable-food strong{font-size:15px}
+.stable-book .game-book-head .stable-food>span:last-child{display:none}
+@media(max-height:350px) and (orientation:landscape){
+ .stable-book .game-book-head{display:flex;padding-bottom:4px}
+ .stable-book .game-book-head h2{font-size:15px}
+ .stable-book .game-book-head .stable-food{padding:1px 4px}
+ .stable-book .game-book-head .stable-food strong{font-size:13px}
+}
+/* Catalog art owns a fixed box; transformed sprites cannot push the name down. */
+.seed-card .seed-info{display:flex;flex-direction:column;justify-content:flex-start;gap:3px;min-height:0;padding:4px 2px;text-align:center}
+.seed-card .seed-art{display:flex;align-items:center;justify-content:center;flex:0 0 32px;width:42px;height:32px;min-height:32px;overflow:hidden}
+.seed-card .seed-art .animal-icon{transform:scale(.8);transform-origin:center;flex:none;margin:0}
+.seed-card .seed-art .crop-item-icon{transform:scale(1);flex:none;margin:0}
+.seed-card .seed-card-text{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;width:100%}
+.seed-card .seed-card-text>strong{font-size:10px;line-height:12px;min-height:24px;height:24px;margin:0;width:100%;-webkit-line-clamp:2;overflow:hidden}
+.seed-card .seed-card-meta{display:block;margin:0;line-height:1}
+.seed-card .seed-card-meta b{position:static;display:inline-flex;align-items:baseline;gap:3px;padding:2px 4px;font-size:10px;max-width:100%}
+.seed-card .seed-card-meta .catalog-unit{display:inline;font-size:8px;color:inherit;line-height:1;min-height:0;margin:0}
+.catalog-number{font-weight:800}.catalog-unit{font-weight:500}
+.animal-picker .seed-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.seed-card>.btn:not(.seed-info),.seed-card .seed-lock-label{min-height:30px}
+.animal-slot>.btn:not(.seed-info){justify-content:center;text-align:center}
+.recipe-catalog,.market-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.recipe-slot,.market-catalog-slot,.market-catalog>.market-sale{min-width:0;border:1px solid #b69b65;background:#f5e8c7;border-radius:7px;padding:5px;display:flex;flex-direction:column;align-items:stretch;gap:5px}
+.recipe-info{border:0;background:none;padding:0;color:var(--deep);font:inherit;cursor:pointer;text-align:center;min-width:0;display:flex;align-items:center;flex-direction:column;gap:4px}
+.recipe-info strong,.market-catalog .item-link{font-size:10px;line-height:1.3;overflow-wrap:anywhere}
+.recipe-art{display:grid;place-items:center;min-height:28px}.recipe-art .crop-item-icon{transform:none}
+.recipe-owned,.catalog-stock{font-size:9px;color:#74603c}.recipe-owned b,.catalog-stock b{display:inline-block;font-size:11px;color:#3e5b33;margin-left:2px}
+.panel-body .recipe-slot>.btn,.panel-body .market-catalog .btn{min-height:30px;padding:4px 3px;font-size:9px;white-space:normal}
+.market-catalog .actions{flex-direction:column;gap:3px;margin:0}.market-catalog .item-link{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
+.market-catalog .market-sale{padding:5px;align-items:stretch}
+.market-catalog>.row{grid-column:1/-1}
+.catalog-pagination{margin:8px 0 4px}
+#market-results>.market-catalog,#market-results>.catalog-pagination{grid-column:1/-1}
+.panel-body,dialog{scrollbar-width:thin;scrollbar-color:#8e6d3f #e4d3a9;scrollbar-gutter:stable}
+.panel-body::-webkit-scrollbar,dialog::-webkit-scrollbar{width:8px;height:8px}
+.panel-body::-webkit-scrollbar-track,dialog::-webkit-scrollbar-track{background:#e4d3a9;border-radius:5px}
+.panel-body::-webkit-scrollbar-thumb,dialog::-webkit-scrollbar-thumb{background:#8e6d3f;border:1px solid #e4d3a9;border-radius:5px}
+.ui-scroll-rail{position:fixed;width:4px;background:#e2ce9d;border:1px solid #b99b64;border-radius:4px;pointer-events:none;z-index:1000;overflow:hidden}
+.ui-scroll-rail>span{position:absolute;top:0;left:0;width:100%;background:#795c32;border-radius:3px;min-height:18px}
+@media(max-height:350px) and (orientation:landscape){
+ .seed-card .seed-art{height:28px;min-height:28px;flex-basis:28px}
+ .seed-card .seed-info{padding:2px 1px;gap:2px}.seed-card .seed-card-text{gap:2px}
+ .seed-card .seed-card-text>strong{font-size:9px;line-height:11px;min-height:22px;height:22px}
+}

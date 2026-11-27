@@ -130,6 +130,8 @@ Mỗi action có idempotency key ổn định qua retry; đồng bộ event vớ
 
 ## 6. Quy trình mỗi thay đổi
 
+Mọi thay đổi UI phải theo [chuẩn UI chung](GAME_UI_STANDARD.md): lưới/phân trang cho bảng Công cụ, cuộn có thanh/chỉ báo rõ trong chi tiết, badge số việc và tách tên/số lượng. Rà mật độ trong vùng bảng thật trước khi nghiệm thu; không mặc định UI cũ đã đạt chuẩn.
+
 1. Chọn một ID trong backlog, ghi vấn đề, baseline và tiêu chí xong.
 2. Đọc phần source/luật liên quan; liệt kê save cũ, scene, API và chỗ UI có thể xung đột.
 3. Với hình ảnh/flow lớn: phác thảo trên nền runtime, duyệt rồi mới hoàn thiện.
