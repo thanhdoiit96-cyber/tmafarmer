@@ -3,6 +3,7 @@ import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './well
 import {parcelCoopUpgrade,coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {driveTemplates,driveNeeds,scaleDriveNeeds} from './village-drive-demand.mjs';
+import {porchThemes} from './porch-themes.mjs';
 import {archiveDrive,driveHistoryFor} from './village-drive-history.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
@@ -940,7 +941,7 @@ export function snapshot(room, farm, time) {
       }))]));
       const ponds=Object.fromEntries(Object.entries(pondBatches).map(([i,batches])=>[i,batches.find(batch=>batch.available)??batches[0]??null]));
       const gardenDecor=Object.fromEntries(Object.entries(f.gardenDecor??{}).filter(([,spot])=>spot!==null));
-      return {ponds,pondBatches,land:getLand(f),decor:f.decor,gardenDecor,gardenHelperJob:visibleGardenHelper(f.gardenHelperJob),plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),wealth:wealthByFarm.get(f.id)??0,
+      return {ponds,pondBatches,land:getLand(f),decor:f.decor,gardenDecor,porchTheme:f.porchTheme??'classic',gardenHelperJob:visibleGardenHelper(f.gardenHelperJob),plots,extraPlots,plotIndexes:cropIndexes(f),pondIndexes:pondIndexes(f),wealth:wealthByFarm.get(f.id)??0,
         visiblePens:f.pens.map(p=>{
           const pen=projectedPen(room,f,p,time);
           return {kind:pen.kind,lot:pen.lot,age:pen.age,growGoal:growthGoal(pen)};
@@ -1167,14 +1168,25 @@ function applyAction(room,id,input,now,catchRoll){
     add(farm,seed,qty);
     return 'Đã giữ '+qty+' '+goods[seed].name.toLowerCase()+' để gieo lại.';
   }
+  if(action==='porchTheme'){
+    check(has(porchThemes,item),'Phong cách hiên không hợp lệ.');
+    farm.porchTheme=item;
+    return 'Đã chọn '+porchThemes[item].name.toLowerCase()+'.';
+  }
   if(action==='arrangeGardenDecor'){
     const owned=farm.gardenDecor??{};
     const placed=Object.keys(gardenDecorItems).filter(kind=>owned[kind]);
     check(placed.length>0,'Hãy đặt ít nhất một món trang trí trước.');
-    for(const kind of placed)owned[kind]=gardenDecorRecommendedSpots[kind];
+    const used=new Set();
+    for(const kind of placed){
+      const recommended=gardenDecorRecommendedSpots[kind];
+      const spot=used.has(recommended)?Object.keys(gardenDecorSpots).find(key=>!used.has(key)):recommended;
+      owned[kind]=spot;used.add(spot);
+    }
     return 'Đã sắp xếp đồ trang trí theo bối cảnh vườn.';
   }
   if(action==='placeGardenDecor'||action==='stowGardenDecor'){
+    if(input.porchTheme!==undefined)check(has(porchThemes,input.porchTheme),'Phong cách hiên không hợp lệ.');
     check(has(gardenDecorItems,item),'Món trang trí không tồn tại.');
     const owned=farm.gardenDecor??{};
     const name=gardenDecorItems[item].name.toLowerCase();
@@ -1195,6 +1207,7 @@ function applyAction(room,id,input,now,catchRoll){
     }
     owned[item]=target;
     farm.gardenDecor=owned;
+    if(input.porchTheme!==undefined)farm.porchTheme=input.porchTheme;
     return 'Đã đặt '+name+' ở '+gardenDecorSpots[target].name.toLowerCase()+'.';
   }
   if(action==='buyLand'||action==='buildLand'||action==='decorate'||action==='upgradeGarden'||action==='upgradeParcelCoop'){

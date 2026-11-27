@@ -1,5 +1,7 @@
 # P3.3 — Xem thử trang trí trên vườn
 
+Cập nhật sau duyệt P3.2: [Hiên ba miền V1](LOTUS_PORCH_RUNTIME_V1.md) bổ sung phong cách và vùng cản ở chân đồ. Ảnh thử dựng vùng cản dự kiến trên scene riêng; không sửa va chạm trong vườn thật trước xác nhận. Các kết quả 227 tests/không có vùng cản bên dưới thuộc phiên bản trước.
+
 Ngày: 27/11/2026. Trạng thái: hoàn thiện trong source cho các món trang trí đã có; chưa push/deploy. Cơ sở: [lộ trình](GAME_DEVELOPMENT_ROADMAP.md), [chuẩn UI](GAME_UI_STANDARD.md) và skill game-pixel-art.
 
 ## Phạm vi

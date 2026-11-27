@@ -59,6 +59,7 @@ export const aquaticAtlas={
   source:'/pixel/aquatic-v1.png',
   frames:{snakehead:[0,0,56,40],catfish:[56,0,56,40],fieldCrab:[112,0,56,40]},
 };
+export {porchAtlas,porchFrame} from '../porch-themes.mjs';
 export const gardenDecorAtlas={
   source:'/pixel/garden-decor-v2.png',width:728,cellWidth:56,cellHeight:48,
   ground:45,

@@ -1,4 +1,5 @@
 import {gardenHelperName} from './garden-helper.mjs';
+import {porchAtlas,porchFrame} from './pixel/frames.mjs';
 import {lakeElderFrame} from './lake-elder.mjs';
 import {lakeElderAtlas,lakeShelterArt} from './pixel/frames.mjs';
 import {cropGoal, growthGoal} from './game.mjs';
@@ -54,6 +55,8 @@ const additionalLivestockArt=load(additionalLivestockAtlas.source);
 const progressionCropArt=load(progressionCropAtlas.source);
 const aquaticArt=load(aquaticAtlas.source);
 const gardenDecorArt=load(gardenDecorAtlas.source);
+const porchArt=load(porchAtlas.source);
+void porchArt.decode().catch(()=>{});
 const gardenHelperArt=load(gardenHelperAtlas.source);
 const farmerActionArt={female:load(farmerActionAtlas.female),male:load(farmerActionAtlas.male)};
 const ageCharacterArt=Object.fromEntries(Object.entries(ageCharacterAtlases).map(([key,info])=>[key,{base:load(info.base),actions:load(info.actions)}]));
@@ -772,9 +775,18 @@ export function drawGardenHelper(c,pose,target,reduced){
   c.restore();
 }
 export function drawGardenDecor(c,item,daylight){
+  const regional=porchFrame(item.kind,item.theme);
+  if(regional&&dim(porchArt)){
+    const [sx,sy,sw,sh]=regional,scale=item.w/sw;
+    shade(c,item.x,item.y,item.w*.3,2.5);
+    c.drawImage(porchArt,sx,sy,sw,sh,snapPixel(item.x-item.w/2),snapPixel(item.y-porchAtlas.ground*scale),item.w,sh*scale);
+    return;
+  }
   if(!dim(gardenDecorArt))return;
   const {kind,x,y,w,name}=item;
-  const [sx,sy,sw,sh]=gardenDecorAtlas.frames[kind];
+  const frame=gardenDecorAtlas.frames[kind];
+  if(!frame)return;
+  const [sx,sy,sw,sh]=frame;
   const scale=w/sw, h=sh*scale;
   const left=snapPixel(x-w/2), top=snapPixel(y-gardenDecorAtlas.ground*scale);
   shade(c,x,y,w*.34,2.7);
@@ -1195,6 +1207,10 @@ function neighborHouse(c,a,t){
   if(dim(neighborHomesArt)){
     const {x,y,w,h,tier=0,name='',selected=false,mine=false}=a;
     c.drawImage(neighborHomesArt,tier*420,0,420,216,snapPixel(x-w/2),snapPixel(y-h),w,h);
+    if(porchFrame('porchOrnament',a.theme)){
+      drawGardenDecor(c,{kind:'porchOrnament',theme:a.theme,x:x+80,y:y-34,w:28},0);
+      if(a.lotus)drawGardenDecor(c,{kind:'lotusPot',theme:a.theme,x:x-78,y:y-34,w:28},0);
+    }
     // Owner labels belong to the gate, never float over neighboring roofs.
     const signWidth=94,signY=y-28;
     box(c,'#67452e',x-signWidth/2-1,signY-1,signWidth+2,14,2);

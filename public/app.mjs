@@ -4,6 +4,8 @@ import {farmNavigation} from './navigation.mjs';
 import {recipeView} from './recipe-view.mjs';
 import {catalogPage} from './ui-catalog.mjs';
 import {stockLayout} from './stock-layout.mjs';
+import {porchThemes} from './porch-themes.mjs';
+import {porchFrame,porchAtlas} from './pixel/frames.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
 import {driveItem} from './village-drive-view.mjs';
 import {driveResult} from './village-drive-history.mjs';
@@ -808,13 +810,16 @@ function showFenceChoice(style,index){
   modal(style==='none'?'Gỡ hàng rào':option.name,(option?fencePreview(style):'')+'<p><b>'+where+'</b> · Hiện tại: '+(fences[current]?.name??'Chưa đặt rào')+'</p><p>'+(option?'Đặt mẫu này tốn '+option.cost+' xu. '+(current?'Mẫu cũ sẽ được thay thế. ':''):'Gỡ miễn phí. ')+'Không hoàn lại xu đã dùng cho mẫu cũ; không thay đổi sức chứa hay sản lượng.</p><div class="actions">'+btn('Để sau','data-close','subtle')+act(option?'Đặt rào · '+option.cost+' xu':'Xác nhận gỡ','decorate',style,index,'primary',option?state.me.coins<option.cost:!current)+'</div><p id="dialog-error" role="status"></p>');
 }
 let gardenDecorPage=0,gardenDecorPageSize=6;
-function gardenDecorIcon(item){
-  const {source,width,cellHeight,frames}=gardenDecorAtlas, scale=.75;
+let porchDraft='classic';
+function gardenDecorIcon(item,theme=porchDraft){
+  const regional=porchFrame(item,theme),atlas=regional?porchAtlas:gardenDecorAtlas;
+  const {source,width,cellHeight}=atlas,frame=regional??gardenDecorAtlas.frames[item],scale=.75;
   return '<span class="garden-decor-icon" aria-hidden="true" style="background-image:url('+source+');background-size:'+
-    width*scale+'px '+cellHeight*scale+'px;background-position:-'+frames[item][0]*scale+'px 0"></span>';
+    width*scale+'px '+(atlas.height??cellHeight)*scale+'px;background-position:-'+frame[0]*scale+'px -'+frame[1]*scale+'px"></span>';
 }
 function showGardenDecor(preservePage=false){
   const farm=state.me, owned=farm.gardenDecor??{}, vouchers=farm.decorVouchers??0;
+  if(!preservePage)porchDraft=farm.porchTheme??'classic';
   const size=landscape.matches?(innerHeight<=340?2:4):6;
   if(!preservePage)gardenDecorPage=0;
   if(size!==gardenDecorPageSize)gardenDecorPage=Math.floor(gardenDecorPage*gardenDecorPageSize/size);
@@ -828,6 +833,7 @@ function showGardenDecor(preservePage=false){
       (spot?btn('Cất','data-stow-garden-decor="'+item+'" aria-label="Cất '+definition.name.toLowerCase()+'"','subtle'):'')+'</div></article>';
   }).join('');
   modal('Trang trí vườn','<p><strong>'+formatCoins(farm.coins)+' xu · '+vouchers+' phiếu trang trí</strong></p>'+
+    '<div class="porch-style-choice"><label>Phong cách · miễn phí<select data-porch-theme>'+Object.entries(porchThemes).map(([key,info])=>'<option value="'+key+'"'+(key===porchDraft?' selected':'')+'>'+info.name+'</option>').join('')+'</select></label>'+btn('Áp dụng','data-apply-porch-theme','subtle',porchDraft===(farm.porchTheme??'classic'))+'</div>'+
     '<div class="actions">'+btn('Sắp xếp theo bối cảnh','data-arrange-garden-decor','subtle',!Object.values(owned).some(Boolean))+'</div>'+
     '<div class="garden-decor-list" role="region" aria-label="Danh sách đồ trang trí">'+cards+'</div>'+taskBookPager(page.index,page.count,'garden-decor-page')+'<p id="dialog-error" role="status"></p>');
   dialog.classList.add('game-management','farm-book-dialog','decor-book-dialog');
@@ -850,7 +856,7 @@ function showGardenDecorPlacement(item){
     '<option value="voucher"'+((farm.decorVouchers??0)<1?' disabled':'')+'>1 phiếu trang trí</option></select></label>';
   const back=btn('Hủy xem thử','data-garden-decor-back','subtle');
   const form=spots.every(spot=>spot.disabled)?'<p>Cất một món để tạo chỗ trống.</p>'+back:
-    '<form data-form="placeGardenDecor" data-item="'+item+'"><div class="decor-placement-layout"><figure class="decor-placement-view"><canvas data-decor-preview aria-label="Xem thử '+definition.name.toLowerCase()+' tại vị trí đã chọn"></canvas><figcaption data-decor-preview-label></figcaption></figure><div class="decor-placement-options"><label>Vị trí<select name="target" required>'+positions+'</select></label>'+payment+
+    '<form data-form="placeGardenDecor" data-item="'+item+'"><input type="hidden" name="porchTheme" value="'+porchDraft+'"><div class="decor-placement-layout"><figure class="decor-placement-view"><canvas data-decor-preview aria-label="Xem thử '+definition.name.toLowerCase()+' tại vị trí đã chọn"></canvas><figcaption data-decor-preview-label></figcaption></figure><div class="decor-placement-options"><label>Vị trí<select name="target" required>'+positions+'</select></label>'+payment+
     '<p class="care-note">Xem thử miễn phí. Chỉ trừ xu hoặc phiếu khi xác nhận đặt.</p>'+(!canPay?'<p class="care-note">Chưa đủ xu hoặc phiếu để đặt món này.</p>':'')+
     '<div class="actions">'+back+'<button type="submit" class="btn primary"'+(canPay?'':' disabled')+'>Xác nhận đặt</button></div></div></div></form>';
   modal('Xem thử '+definition.name.toLowerCase(),form+'<p id="dialog-error" role="status"></p>');
@@ -864,7 +870,7 @@ function updateDecorPreview(){
   // Replace the canvas so a pending image load cannot paint an older selection.
   const next=canvas.cloneNode();canvas.replaceWith(next);
   form.querySelector('[data-decor-preview-label]').textContent=gardenDecorSpots[target].name+' · Chưa đặt';
-  void world.renderDecorPreview(next,form.dataset.item,target);
+  void world.renderDecorPreview(next,form.dataset.item,target,form.elements.porchTheme.value);
 }
 function renderLand(farm,now){
   const lot=farm.land[selectedLot], price=lotPrice(farm.land.filter(Boolean).length);
@@ -2091,6 +2097,7 @@ document.addEventListener('click',async e=>{
     else if(landscape.matches)setPanelOpen(true);
   }
   else if('gardenDecorPage' in d){gardenDecorPage=Number(d.gardenDecorPage);showGardenDecor(true);}
+  else if('applyPorchTheme' in d){if(await perform({action:'porchTheme',item:porchDraft})&&dialog.open)showGardenDecor(true);}
   else if('gardenDecorBack' in d)showGardenDecor(true);
   else if('gardenDecor' in d)showGardenDecor(dialog.contains(el));
   else if('gardenDecorItem' in d)showGardenDecorPlacement(d.gardenDecorItem);
@@ -2306,6 +2313,7 @@ dialog.addEventListener('input',event=>{
   if(event.target.id==='buy-quantity')updateBuyTotal(event.target);
 });
 dialog.addEventListener('change',event=>{
+  if(event.target.matches('[data-porch-theme]')){porchDraft=event.target.value;showGardenDecor(true);}
   if(event.target.matches('[data-form="placeGardenDecor"] select[name="target"]'))updateDecorPreview();
   if(!event.target.matches('[data-garden-plot],[data-harvest-mode]'))return;
   const form=event.target.form;
@@ -2386,6 +2394,7 @@ dialog.addEventListener('submit',async e=>{
     return;
   } else if(mode==='placeGardenDecor'){
     const input={action:mode,item:form.dataset.item,target:values.target};
+    input.porchTheme=values.porchTheme;
     if(values.source)input.source=values.source;
     if(await perform(input)&&form.isConnected&&dialog.open)showGardenDecor(true);
   } else if(mode==='avatar'){

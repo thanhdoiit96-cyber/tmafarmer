@@ -1,4 +1,8 @@
 /* Existing authored props, paper book and native map renderer. */
+.porch-style-choice{display:flex;gap:8px;align-items:end;margin-bottom:8px}
+.porch-style-choice label{flex:1;min-width:0;font-size:11px}
+.porch-style-choice select{font-size:11px;padding:4px;min-height:29px;width:100%}
+.porch-style-choice .btn{min-height:29px;padding:5px;font-size:10px}
 .decor-book-dialog,.decor-preview-dialog{width:min(680px,calc(100vw - 20px))}
 .decor-book-dialog .garden-decor-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible;padding:0;gap:6px}
 .decor-book-dialog .garden-decor-card{grid-template-columns:34px minmax(0,1fr) auto;gap:5px;border:1px solid #c3aa76;border-radius:4px;background:#f3e5bd;padding:6px;min-width:0}

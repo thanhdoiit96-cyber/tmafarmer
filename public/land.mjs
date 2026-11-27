@@ -99,6 +99,7 @@ export const gardenDecorItems={
   wickerBasket:{name:'Giỏ mây',cost:35,width:39},
   hayBale:{name:'Kiện rơm',cost:40,width:45},
   birdFeeder:{name:'Máng chim',cost:85,width:40},
+  giftTable:{name:'Bàn trà sen',cost:75,width:44},
 };
 export const gardenDecorSpots={
   house:{name:'Bậc hiên bên trái nhà',x:95,y:184},
@@ -114,12 +115,23 @@ export const gardenDecorSpots={
   westLots:{name:'Giỏ mây bên xưởng',x:166,y:400},
   midLots:{name:'Góc rơm cạnh kho',x:386,y:210},
   eastLots:{name:'Máng chim dưới giếng',x:83,y:300},
+  teaCourt:{name:'Sân trà trước xưởng',x:100,y:435},
 };
 export const gardenDecorRecommendedSpots={
   flowerPot:'house',bambooLamp:'gate',gardenSign:'pond',bambooBench:'marketPath',
   wheelbarrow:'wellside',waterJar:'westMeadow',scarecrow:'barnSide',lotusPot:'workshopPath',
   windChime:'pondBank',flowerArch:'southPath',wickerBasket:'westLots',hayBale:'midLots',birdFeeder:'eastLots',
+  giftTable:'teaCourt',
 };
+// Block only the feet/base, not the entire illustrated canopy or foliage.
+export function gardenDecorBlocks(kind,x,y){
+  const w=gardenDecorItems[kind]?.width??0;
+  if(!w)return [];
+  if(kind==='flowerArch')return [-1,1].map(side=>({x:x+side*w*.34-2,y:y-3,w:4,h:5}));
+  const width=kind==='bambooLamp'?w*.18:kind==='giftTable'||kind==='bambooBench'?w*.7:w*.48;
+  const offset=kind==='bambooLamp'?-w*.18:0;
+  return [{x:x+offset-width/2,y:y-5,w:width,h:7}];
+}
 export const gardenParcelRect=i=>lotRect(i);
 export function gardenDecorAt(farm,spot){
   return Object.keys(gardenDecorItems).find(item=>farm.gardenDecor?.[item]===spot);

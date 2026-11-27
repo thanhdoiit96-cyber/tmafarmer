@@ -1,6 +1,7 @@
 import {installJoystick} from './joystick.mjs';
 import {decorPreviewFarm} from './decor-preview.mjs';
 import {gardenDecorSpots} from './land.mjs';
+import {clearDecorPosition} from './world-layout.mjs';
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
 import {shoreWork} from './lake-social.mjs';
 import {features, interactionRange as range, maps, plotPosition, route, size, taskMarkers, walkable} from './world-layout.mjs';
@@ -193,6 +194,10 @@ export function createWorld(root, onInteract, landscape) {
     activePage=page;
     currentVisit=neighbor?.id;
     scene=features(id,data,neighbor,page);
+    if(['field','visit','neighbors'].includes(id)&&!walkable(scene,x,y)){
+      const safe=clearDecorPosition(scene,[x,y]);
+      if(safe[0]!==x||safe[1]!==y)setPosition(safe,facing);
+    }
     if(id==='coop'&&pending?.type==='animal'){
       const current=scene.hotspots.find(p=>p.type==='animal'&&p.index===pending.index);
       if(!current||pending.data?.id!==undefined&&current.data?.id!==pending.data.id)stop();
@@ -566,10 +571,10 @@ export function createWorld(root, onInteract, landscape) {
     setWatchingHelper(true);shiftCamera(true);return true;
   }
   function followPlayer(){setWatchingHelper(false);shiftCamera(true);}
-  async function renderDecorPreview(targetCanvas,item,target){
+  async function renderDecorPreview(targetCanvas,item,target,theme){
     await artReady;
     if(!targetCanvas.isConnected)return;
-    const farm=decorPreviewFarm(snapshot.me,item,target);
+    const farm=decorPreviewFarm(snapshot.me,item,target,theme);
     if(!farm)return;
     const data={...snapshot,me:farm},preview=features('field',data),spot=gardenDecorSpots[target];
     const daylight=Math.max(0,Math.min(1,1-(data.dayEnds-data.now)/data.dayLength));

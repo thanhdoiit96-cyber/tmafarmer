@@ -1,5 +1,9 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### 27/11/2026 — Hiên nhà ba miền
+
+P3.1 đã duyệt, bổ sung Bắc–Trung–Nam và vùng cản. Xuất `lotus-porch-v1.png` alpha 224×144, 12 frame 56×48 từ master riêng; giữ atlas cũ. Chậu, đèn, bàn trà và họa tiết trụ dùng cùng nguồn trong Canvas/danh mục. Chi tiết, ảnh và kiểm chứng tại [runtime V1](LOTUS_PORCH_RUNTIME_V1.md). 233 kiểm thử, build và audit tài nguyên đạt; chưa deploy.
+
 ### 27/11/2026 — Sửa hướng chuyển động heo/vịt
 
 Atlas `additional-livestock-v1.png` có đầu heo/vịt quay trái ở cả bốn pose, nhưng bộ vẽ mặc định ảnh gốc quay phải. Thêm metadata `sourceFacing` cho hai loài và cho `critter()` dùng hướng gốc của từng atlas khi lật sprite. Giữ nguyên hình, tốc độ, đường đi, kích thước và dữ liệu nuôi. Đã kiểm Canvas thật: idle, walkA, walkB, feed với trái/phải ([đối chiếu](assets/pig-facing-fix-v1.png)); kiểm thử đàn đi cả hai hướng, 215 test và build/asset audit đạt.

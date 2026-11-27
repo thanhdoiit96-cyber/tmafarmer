@@ -92,14 +92,14 @@ test('decor is owned by the paying farm and only placed items appear for visitor
   assert.deepEqual(visible().map(actor=>actor.kind),['bambooLamp','gardenSign','flowerPot']);
 });
 
-test('all thirteen decorations can be placed together and render at the same points for visitors',()=>{
+test('all decorations can be placed together and render at the same points for visitors',()=>{
   const room=setup(),{a,b}=room.farms;
   a.coins=1000;
   const spots=Object.entries(gardenDecorSpots);
   const items=Object.entries(gardenDecorItems);
-  assert.equal(items.length,13);
-  assert.equal(spots.length,13);
-  assert.deepEqual(Object.keys(gardenDecorAtlas.frames),items.map(([kind])=>kind));
+  assert.equal(items.length,14);
+  assert.equal(spots.length,items.length);
+  assert.deepEqual([...Object.keys(gardenDecorAtlas.frames),'giftTable'],items.map(([kind])=>kind));
   for(const [i,[item,definition]] of items.entries()){
     const [target,{x,y}]=spots[i];
     assert.ok(x-definition.width/2>=0&&x+definition.width/2<=homesteadSize.width);

@@ -32,7 +32,7 @@ test('recommended decor clusters clear crops and pens while framing the entrance
     ...Array.from({length:30},(_,slot)=>{const p=plotPosition(mainPlotId(slot));return {x:p.x-20,y:p.y-13,w:40,h:26};})];
   const decorations=Object.entries(gardenDecorRecommendedSpots).map(([kind,key])=>{
     const p=gardenDecorSpots[key],width=gardenDecorItems[kind].width,scale=width/56;
-    const [left,top,right,bottom]=gardenDecorAtlas.bounds[kind];
+    const [left,top,right,bottom]=gardenDecorAtlas.bounds[kind]??[4,11,52,45];
     return {kind,x:p.x-width/2+left*scale,y:p.y+(top-45)*scale,w:(right-left)*scale,h:(bottom-top)*scale};
   });
   for(const decor of decorations){

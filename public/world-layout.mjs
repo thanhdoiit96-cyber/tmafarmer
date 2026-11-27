@@ -1,6 +1,7 @@
 import {coopCapacity,fenceAt,gardenDecorAt,gardenDecorItems,gardenDecorSpots,gardenForPlot,gardenPlotSlot,gardenPlotId,getLand,homesteadSize,landTypes,lotCount,lotRect,coopRect,gardenParcelRect,lotPondInset,mainPlotId,mainPlotSlot,mainPond,plotAt,plotOffset,plotPosition,pondOffset} from './land.mjs';
 import {fishing,visiblePondBatches} from './aqua.mjs';
 import {shoreWork} from './lake-social.mjs';
+import {gardenDecorBlocks} from './land.mjs';
 import {lakeElder,lakeEntry,lakeShelter} from './lake-elder.mjs';
 import {houseDoor,homeBed,homeSpawn} from './home-rules.mjs';
 import {homesteadWorkshop,parcelShelter,parcelAnimalSeats,parcelAnimalBaseline,parcelAnimalRoam,expandedParcelAnimalSeats} from './pixel/homestead-buildings.mjs';
@@ -190,7 +191,10 @@ export function features(id, snapshot, neighbor, page=0) {
     for(const [index,pet] of yardPets.entries())actors.push({type:'yard-pet',species:pet.species,index,x:pet.path[0][0],y:pet.path[0][1]});
     for(const [spot,{x,y}] of Object.entries(gardenDecorSpots)){
       const kind=gardenDecorAt(owner,spot);
-      if(kind)actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name});
+      if(kind){
+        actors.push({x,y,type:'garden-decor',kind,w:gardenDecorItems[kind].width,name:owner.name,theme:owner.porchTheme??'classic'});
+        blocks.push(...gardenDecorBlocks(kind,x,y));
+      }
     }
     if((owner.workshop??0)>0){
       const workshop={...homesteadWorkshop,type:'workshop',level:owner.workshop,label:'Xưởng máy cấp '+owner.workshop};
@@ -284,7 +288,11 @@ export function features(id, snapshot, neighbor, page=0) {
     for(const [i,data] of neighborPage(snapshot,page).homes.entries()) {
       const pos=neighborPosition(i);
       const tier=neighborHouseTier(data.wealth??0);
-      actors.push({...pos,...neighborLot,type:'neighbor',id:data.id,name:data.name,mine:data.mine,tier});
+      actors.push({...pos,...neighborLot,type:'neighbor',id:data.id,name:data.name,mine:data.mine,tier,theme:data.porchTheme??'classic',lotus:!!data.gardenDecor?.lotusPot});
+      if(['north','central','south'].includes(data.porchTheme)){
+        blocks.push(rect(pos.x+73,pos.y-38,6,7));
+        if(data.gardenDecor?.lotusPot)blocks.push(rect(pos.x-85,pos.y-39,14,7));
+      }
       blocks.push(rect(pos.x-70,pos.y-90,140,66),rect(pos.x-72,pos.y-15,53,16),rect(pos.x+19,pos.y-15,53,16));
       hotspots.push({...pos,...neighborLot,y:pos.y+16,drawY:pos.y-neighborLot.h/2,type:data.mine?'own-house':'neighbor',id:data.id,label:data.name+(data.mine?' · Nhà của bạn':'')});
     }
@@ -299,6 +307,16 @@ function insidePolygon(x,y,points){
     if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
   }
   return inside;
+}
+export function clearDecorPosition(scene,[x,y]){
+  if(walkable(scene,x,y))return [x,y];
+  for(let radius=2;radius<=40;radius+=2){
+    for(let step=0;step<24;step++){
+      const angle=step*Math.PI/12,px=x+Math.cos(angle)*radius,py=y+Math.sin(angle)*radius;
+      if(walkable(scene,px,py))return [px,py];
+    }
+  }
+  return [x,y];
 }
 export function walkable(scene,x,y){
   const bounds=scene.bounds??size;
