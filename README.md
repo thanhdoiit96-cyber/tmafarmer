@@ -71,6 +71,10 @@ npm run build
 
 Kiểm tra dung lượng bằng `npm run check:size`. Trên Windows, xem trước việc dọn bản build bằng `powershell -NoProfile -File scripts/clean-build.ps1`, thêm `-Apply` để dọn `dist`. Chạy lại `npm run build` khi cần bản xuất để deploy. Công cụ không dọn tài liệu, database hoặc backup. Xem [báo cáo dọn dung lượng](docs/PROJECT_CLEANUP_2026-11-25.md).
 
+Dọn cache kiểm thử cũ: `powershell -NoProfile -File scripts/clean-local-cache.ps1` để xem trước, thêm `-Apply` để sao lưu và dọn. Công cụ chỉ xử lý ba hồ sơ Edge QA đã nghỉ và các helper dùng một lần trong `.local`, kiểm tra trình duyệt đã đóng, giữ database/tài liệu/backup và các kiểm tra `qa-*`.
+
+Trước khi commit hoặc sau một đợt thử UI, chạy `npm run check:workspace` để phát hiện tệp tạm, database, cấu hình môi trường hoặc cache bị đưa nhầm vào source. Kiểm tra chỉ đọc, giữ ngoại lệ bản nén thiết kế trong `docs`, không báo lỗi chỉ vì có bản build `dist` đang được Git bỏ qua. Xuất báo cáo JSON bằng `node scripts/audit-workspace.mjs --json`; dùng cùng `npm run check:assets` để kiểm tra tham chiếu tài nguyên. Không có thao tác tự xóa hoặc tự chạy theo lịch.
+
 ## Deploy lên Vercel
 
 Chọn **Vercel** cho giao diện. Nếu muốn tạo làng, mời bạn bè, chat và lưu tiến trình online, dùng thêm **Cloudflare Worker + D1**. Bản chơi thử lưu riêng trong trình duyệt và chỉ cần Vercel.

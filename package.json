@@ -21,6 +21,7 @@
     "d1:create": "npx wrangler d1 create vuon-mua-vui",
     "d1:migrate": "npx wrangler d1 migrations apply DB --remote",
     "deploy:worker": "npx wrangler deploy",
-    "check:size": "node scripts/workspace-size.mjs"
+    "check:size": "node scripts/workspace-size.mjs",
+    "check:workspace": "node scripts/audit-workspace.mjs"
   }
 }
