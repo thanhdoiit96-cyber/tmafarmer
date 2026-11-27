@@ -59,3 +59,15 @@ Kết quả Edge demo: desktop 1100×850 tám món, 844×390 sáu món, 844×480
 225 tests, build và audit assets đạt. Chưa commit/push/deploy.
 
 Ảnh hiện hành: [844×390](assets/stock-density-844.png), [844×480](assets/stock-density-tall-844.png), [568×320](assets/stock-density-568.png), [giống khóa/số 0](assets/stock-density-locked-568.png). Các ảnh Kho ở phần trước giữ làm lịch sử.
+
+## Nhật ký, tiến trình Cô Lan và thời tiết
+
+Nhật ký ở nhóm Làng dùng khung gỗ/giấy cùng các sổ khác, tách thời điểm khỏi nội dung, mới nhất trước, phân trang dưới; đọc toàn bộ 14 bản ghi đang được game giữ thay vì chỉ năm dòng. Hiển thị bốn bản ghi trên desktop, ba trên mobile ngang và hai khi màn hình thấp. Không thay đổi cơ chế lưu lịch sử.
+
+Mục Nhờ Cô Lan chăm vườn hiển thị hành động, số ô hoàn tất/tổng ô, thanh tiến trình, số ô bỏ qua nếu có và thời gian còn lại cập nhật bằng đồng hồ hiện có. Giữ nút Xem Cô Lan. Bỏ khối trạng thái/báo cáo màu tím phía dưới mục này. Khi đang thuê, giảm số nhóm việc trên một trang để tiến trình không bị cắt; giữ phân trang. Không đổi phí, thời gian hoặc cơ chế thực hiện công việc.
+
+Thời tiết nằm trong nhóm icon Ngày/Xu bên trái, giữ tooltip và chạm để mở dự báo. Điều chỉnh điểm gắn HUD trên mobile để không phát sinh lỗi DOM khi đổi kích thước.
+
+Kiểm tra Edge demo ở 1100×850, 844×390 và 568×320: phân trang Nhật ký, mở thời tiết, thuê trực tiếp, đồng hồ đếm ngược và nút quan sát Cô Lan hoạt động. Nhật ký và mục thuê nằm trọn trong vùng Công cụ, không cần cuộn. Chưa kiểm tra trên Safari/Android thật. Bộ 225 kiểm thử và build đạt.
+
+Ảnh: [Nhật ký mobile](assets/journal-helper-log-844.png), [tiến trình màn hình thấp](assets/journal-helper-active-568.png).

@@ -68,11 +68,11 @@
         <div class="world-stage">
           <canvas tabindex="0" aria-label="Bản đồ vườn nhà" aria-describedby="world-controls"></canvas>
           <div class="world-hud">
-            <div class="world-stats" role="group" aria-label="Ngày và số xu">
+            <div class="world-stats" role="group" aria-label="Ngày, số xu và thời tiết">
               <span class="world-stat" id="world-day"><svg aria-hidden="true"><use href="#i-day"/></svg><span id="date">Ngày 1</span></span>
               <span class="world-stat wallet"><svg aria-hidden="true"><use href="#i-coins"/></svg><span id="coin">— xu</span></span>
+              <div id="world-weather"></div>
             </div>
-            <div id="world-weather"></div>
             <button class="btn landscape-only mobile-menu" type="button" data-mobile-menu aria-haspopup="dialog"><svg aria-hidden="true"><use href="#i-pin"/></svg>Khu vực</button>
           </div>
           <div class="map-radar" id="map-radar" aria-hidden="true"><canvas width="104" height="63" data-radar></canvas></div>

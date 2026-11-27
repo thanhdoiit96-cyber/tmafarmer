@@ -81,7 +81,7 @@ new ResizeObserver(()=>{
 }).observe(worldFrame);
 const worldHud=$('.world-hud'), statusHud=$('.status-hud'), statusSlot=$('#status-slot');
 function placeStatus(){
-  if(landscape.matches)worldHud.insertBefore(statusHud,$('#world-weather'));
+  if(landscape.matches)worldHud.insertBefore(statusHud,$('[data-mobile-menu]'));
   else statusSlot.append(statusHud);
   const dock=$('.world-notices');
   if(landscape.matches)worldHud.append(dock);
@@ -113,6 +113,7 @@ const world=createWorld(worldFrame,interactWithWorld,landscape);
 const sceneChat=createSceneChat({api,world,showToast,context:()=>state&&{session,player:state.me.id,area:tab==='neighbors'&&neighborId?'visit':tab,host:neighborId}});
 let tasks=[];
 let taskBookTab='tasks',taskBookPage=0,taskBookGroup=null,taskDetailPage=0,taskBookSize=6;
+let activityPage=0;
 let recoveryKey=null,recoveryPage=0,recoveryItem=null,recoveryStamp='',recoveryPageSize=4;
 let pinnedGoal, pinnedGoalView;
 const lotLabel=lot=>lot?.kind==='empty'?'Đất trống':landTypes[lot?.kind]?.name??'Chưa mua';
@@ -864,6 +865,15 @@ function renderLand(farm,now){
       '<div class="actions">'+act('Mở thêm 3 ô · '+gardenUpgradeCost+' xu','upgradeGarden','',selectedLot,'primary',farm.coins<gardenUpgradeCost)+'</div>'):'')+
     (lot.kind==='coop'?'<div class="lot-coop">'+renderCoop(farm,now,selectedLot)+'</div>':'')+(lot.kind==='pond'?'':'<details class="panel-fold lot-fences" data-panel-fold="lot-fences"><summary>Trang trí hàng rào · '+(fences[fenceAt(farm,selectedLot)]?.name??'Chưa đặt')+'</summary>'+decorOptions(farm,selectedLot)+'</details>');
 }
+function renderActivityLog(farm){
+  const size=landscape.matches?(innerHeight<=340?2:3):4;
+  const page=catalogPage(farm.log,activityPage,size);activityPage=page.index;
+  return '<section class="task-book activity-book"><header class="task-book-head"><h2>Nhật ký nhà nông</h2></header><div class="task-book-page"><div class="task-book-subhead"><strong>Chuyện trong vườn</strong><small>Mới nhất trước</small></div><ol class="activity-entries">'+page.entries.map(entry=>{
+    const date=new Date(entry.time*1000);
+    const stamp=Number.isFinite(date.getTime())?date.toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    return '<li><span class="activity-mark" aria-hidden="true">'+icon('log')+'</span><div><time'+(stamp?' datetime="'+date.toISOString()+'"':'')+'>'+stamp+'</time><p>'+escape(entry.message)+'</p></div></li>';
+  }).join('')+'</ol>'+(page.total?'':'<p class="care-note">Vườn vừa mở sổ. Những hoạt động mới sẽ được ghi lại ở đây.</p>')+taskBookPager(page.index,page.count,'activity-page')+'</div></section>';
+}
 function renderJournal(farm){
   const {done,claimed}=farm.journal, completed=dayGoals.filter(g=>done.includes(g.id)).length;
   return '<section class="journal journal-v2"><div class="task-book-subhead"><strong>Ba việc mỗi ngày</strong><span class="coop-count ready">'+completed+' / '+dayGoals.length+'</span></div>'+valueBar(completed,dayGoals.length)+
@@ -908,7 +918,7 @@ function renderTasks(farm,now){
       (page.entries.length?'<div class="task-book-details">'+page.entries.map(task=>'<div class="task-book-entry"><span class="task-book-symbol">'+(taskIcon(task)?careIcon(taskIcon(task)):icon('fish'))+'</span><div><strong>'+escape(task.title)+'</strong><small>'+escape(task.label)+'</small></div>'+btn('Đi tới ›','data-task-ref="'+escape(taskKey(task))+'"','primary')+'</div>').join('')+'</div>'+taskBookPager(page.index,page.count,'task-detail-page'):'<p class="care-note">Không còn việc cần làm trong nhóm này.</p>')+
       (current?.title==='Tưới cây'||current?.title==='Thu cây'?btn('Nhờ '+gardenHelperName+' '+(current.title==='Tưới cây'?'tưới cây':'thu hoạch'),'data-quick-garden="'+(current.title==='Tưới cây'?'water':'harvest')+'"','primary',!!farm.gardenHelperJob):'');
   }else{
-    const size=landscape.matches?(innerHeight<=340?2:4):6;
+    const size=landscape.matches?(innerHeight<=340||farm.gardenHelperJob?2:4):(farm.gardenHelperJob?2:4);
     if(size!==taskBookSize)taskBookPage=Math.floor(taskBookPage*taskBookSize/size);
     taskBookSize=size;
     const page=catalogPage(groups,taskBookPage,size);taskBookPage=page.index;
@@ -916,7 +926,9 @@ function renderTasks(farm,now){
       (groups.length?'<div class="task-book-grid">'+page.entries.map(group=>'<button type="button" class="task-book-task" data-task-group="'+escape(group.key)+'"><span class="task-book-symbol">'+(group.icon?careIcon(group.icon):icon('fish'))+'</span><span><strong>'+escape(group.title)+'</strong><small>'+(group.title==='Cuốc đất'?'ô đất':group.unit)+'</small></span><span class="coop-count '+(group.type==='ready'?'ready':'hungry')+'">'+group.tasks.length+'</span></button>').join('')+'</div>'+taskBookPager(page.index,page.count,'task-book-page'):'<p class="care-note">Vườn đang ổn. Dạo hồ hoặc sang chợ nhé!</p>');
   }
   const counts=Object.entries(gardenHelperActions).map(([action,info])=>{const n=gardenHelperTargets(farm,action,state.weather,now).length;return '<small>'+(action==='water'?'Tưới':'Thu hoạch')+' <b class="coop-count '+(action==='water'?'hungry':'ready')+'">'+n+'</b> ô · '+info.fee+' xu/ô</small>';}).join('');
-  const quick='<section class="task-book-hire"><div><strong>Nhờ '+gardenHelperName+' chăm vườn</strong>'+(farm.gardenHelperJob?'<small>Đang '+(farm.gardenHelperJob.action==='water'?'tưới cây':'thu hoạch')+'</small>':counts)+'</div>'+btn(farm.gardenHelperJob?'Xem '+gardenHelperName+' ›':'Thuê chăm vườn ›',farm.gardenHelperJob?'data-watch-helper':'data-hire-menu','primary')+'</section>'+gardenHelperStatus(farm,now,false);
+  const job=farm.gardenHelperJob;
+  const progress=job?'<small>Đang '+(job.action==='water'?'tưới cây':'thu hoạch')+(job.keepSeeds?' · Giữ giống':'')+'</small><div class="helper-inline-progress"><span>Đã làm <b class="coop-count ready">'+(job.processed-job.skipped)+' / '+job.steps.length+'</b> ô</span><span>Còn <b data-until="'+job.endsAt+'">'+duration(job.endsAt-now)+'</b></span></div>'+valueBar(job.processed,job.steps.length)+(job.skipped?'<small>Bỏ qua '+job.skipped+' ô không còn cần chăm</small>':''):counts;
+  const quick='<section class="task-book-hire"'+(job?' data-helper-active':'')+'><div><strong>Nhờ '+gardenHelperName+' chăm vườn</strong>'+progress+'</div>'+btn(job?'Xem '+gardenHelperName+' ›':'Thuê chăm vườn ›',job?'data-watch-helper':'data-hire-menu','primary')+'</section>';
   return '<section class="task-book">'+header+'<div class="task-book-page">'+list+quick+'</div></section>';
 }
 function showHireMenu(){
@@ -1325,7 +1337,7 @@ function renderPanel(farm,now) {
     ((farm.workshop??0)>0?'<div class="actions">'+btn('Vào Xưởng máy','data-workshop-go','primary')+'</div>':'')+
     '<details class="base-decor"'+(baseDecorOpen?' open':'')+'><summary>Hàng rào công trình chính</summary>'+[[-1,'Ruộng chính'],...(farm.coop?[[-4,'Chuồng chính']]:[])].map(([id,label])=>'<h3>'+label+'</h3>'+decorOptions(farm,id)).join('')+'</details>'+
     '<div class="actions">'+act(farm.shieldUntil>now?'Đóng cổng · '+duration(farm.shieldUntil-now):'Đóng cổng '+gateMinutes(farm)+' phút · 12 xu','shield','','','subtle',farm.coins<12||farm.shieldUntil>now)+'</div>';
-  return '<h2>Nhật ký</h2>'+farm.log.slice(0,5).map(entry=>'<div class="row itemrow"><p>'+escape(entry.message)+'</p></div>').join('');
+  return renderActivityLog(farm);
 }
 function showWeather(){
   const {weather,forecast,next}=state;
@@ -1402,7 +1414,7 @@ function goToPinnedGoal(){
     if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
   }
 }
-const focusSelector='[data-task-tab],[data-task-group],[data-task-back],[data-task-book-page],[data-task-detail-page],[data-task-ref],[data-hire-menu],[data-drive-history],[data-manage-pond],[data-pond-filter],[data-pond-page],[data-pond-adopt],[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+const focusSelector='[data-activity-page],[data-task-tab],[data-task-group],[data-task-back],[data-task-book-page],[data-task-detail-page],[data-task-ref],[data-hire-menu],[data-drive-history],[data-manage-pond],[data-pond-filter],[data-pond-page],[data-pond-adopt],[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector+', [data-lake-elder], [data-lake-tab], [data-help-page], [data-prank-page], [data-visit-pane], [data-visit-source], [data-visit-take-page]')) return '';
@@ -2037,6 +2049,7 @@ document.addEventListener('click',async e=>{
   else if('taskTab' in d){taskBookTab=d.taskTab==='journal'?'journal':'tasks';render();}
   else if('taskGroup' in d){taskBookGroup=d.taskGroup;taskDetailPage=0;render();}
   else if('taskBack' in d){taskBookGroup=null;render();}
+  else if('activityPage' in d){activityPage=Number(d.activityPage);render();}
   else if('taskBookPage' in d){taskBookPage=Number(d.taskBookPage);render();}
   else if('taskDetailPage' in d){taskDetailPage=Number(d.taskDetailPage);render();}
   else if('taskRef' in d){tasks=farmTasks(state,currentTime());const index=tasks.findIndex(t=>taskKey(t)===d.taskRef);if(index>=0)openTask(index);else {render();showToast('Việc này đã thay đổi.');}}

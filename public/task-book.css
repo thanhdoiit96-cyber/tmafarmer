@@ -17,3 +17,17 @@
 @media(max-height:600px) and (orientation:landscape){.task-book-task{min-height:36px;padding:4px 0}.task-book-subhead{font-size:11px;margin-bottom:4px}.task-book-hire{margin-top:5px}.task-book .task-book-pager{margin-top:5px}#next-goal:has(.goal-pin-empty){margin-bottom:5px}.panel-body .goal-pin-empty{min-height:27px;font-size:10px;padding:4px}.task-book-head{padding:4px 7px}.task-book-tabs .btn{line-height:1.2}.hire-dialog .quick-garden-form .quick-harvest-options label{min-height:27px;padding:3px 4px;gap:4px;font-size:9px}.hire-dialog .quick-harvest-options legend{font-size:9px;margin-bottom:2px}.hire-dialog .quick-garden-estimate{border-radius:5px}.task-book-task .coop-count{line-height:1.2}}
 @media(max-height:340px) and (orientation:landscape){.task-book-head{display:none}.task-book-tabs{padding-top:5px}.panel-body .task-book-tabs .btn{min-height:25px;padding:4px 2px;font-size:9px}.task-book-task{min-height:34px}.task-book-hire{padding:5px}.task-book-hire strong{font-size:9px}.task-book-hire small{font-size:8px;line-height:1.2;margin-top:2px}.panel-body .task-book-hire .btn{max-width:75px;min-height:29px;font-size:9px}.task-book-subhead{font-size:10px}.task-book-subhead small{font-size:8px}.task-book-pager{margin-top:4px}.task-book .task-book-pager .btn{min-height:25px}}
 .task-book-hire small .coop-count{font-size:8px;padding:1px 3px;margin:0;line-height:1.2}
+.helper-inline-progress{display:flex;flex-wrap:wrap;justify-content:space-between;gap:3px 8px;margin-top:5px;font-size:10px;color:#604b2e}
+.helper-inline-progress .coop-count{font-size:10px;padding:1px 4px}
+.task-book-hire .progress{height:4px;margin:5px 0 0;background:#cbb57c}
+.task-book-hire .progress i{background:#5d7c46}
+.activity-entries{list-style:none;padding:0;margin:4px 0 0}
+.activity-entries li{display:grid;grid-template-columns:23px minmax(0,1fr);gap:7px;padding:10px 0;border-bottom:1px solid #d8c499}
+.activity-entries li:last-child{border-bottom:0}
+.activity-mark{width:23px;height:25px;display:flex;align-items:center;justify-content:center;color:#6c7547;background:#e4d5ac;border:1px solid #c4ad77;border-radius:4px}
+.activity-mark svg{width:14px;height:14px}
+.activity-entries time{display:block;font-size:9px;color:#786343;font-variant-numeric:tabular-nums}
+.panel-body .activity-entries p{margin:3px 0 0;font-size:12px;line-height:1.45;color:#493b27;overflow-wrap:anywhere}
+@media(orientation:landscape) and (max-height:600px){.activity-entries li{padding:7px 0;gap:5px}.panel-body .activity-entries p{font-size:11px;line-height:1.35}.helper-inline-progress{font-size:9px;margin-top:3px;gap:2px 4px}.helper-inline-progress .coop-count{font-size:9px}.task-book-hire .progress{margin-top:3px}}
+@media(orientation:landscape) and (max-height:340px){.activity-entries li{padding:5px 0}.helper-inline-progress{font-size:8px}.helper-inline-progress .coop-count{font-size:8px}}
+@media(orientation:landscape) and (max-height:340px){.task-book-page:has(>.task-book-grid):has([data-helper-active])>.task-book-subhead{display:none}.task-book-hire[data-helper-active]{margin-top:3px}}
