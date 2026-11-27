@@ -116,3 +116,23 @@ Thêm `npm run check:workspace` (`scripts/audit-workspace.mjs`) để kiểm tra
 - Có `--json` cho công cụ khác đọc; khi không gọi được Git, báo lỗi rằng chưa kiểm tra, không trả kết quả đạt giả.
 
 Đã thử bằng tệp `.tmp` giả trong source: báo lỗi đúng; ZIP giả trong đường dẫn tài liệu thiết kế không bị báo nhầm. Các tệp thử đã được xóa và kiểm tra lại đạt. Build đạt; chạy audit khi có `dist` 54,52 MiB vẫn đạt và báo rõ đây là đầu ra sinh tự động; sau kiểm tra dọn `dist` trở lại. Không chạy lại test engine vì không thay code game; 223 kiểm thử của lần dọn trước đã đạt. Chưa commit/push.
+
+### Dọn tài nguyên không còn dùng — 27/11/2026
+
+Theo yêu cầu mới, mở rộng kiểm tra vào `docs/assets`. Xóa 28 ảnh khỏi source: 26 ảnh QA/phác thảo UI không còn được tài liệu/source/script tham chiếu và hai nền cũ `neighbors-background-v1-source.png`, `background-homestead-world-v1.png` đã có nguồn thay thế. Giữ `neighbors-background-v2-source.png`, `background-homestead-empty-v2.png`, concept đã duyệt, nguồn nhân vật/cây/vật nuôi, ảnh hiện hành và toàn bộ tài liệu/kế hoạch.
+
+Không dùng kết quả tìm tên file làm tiêu chí duy nhất: các nguồn nhân vật theo mẫu tên động, bản gốc nền scene còn dùng, nguồn sheep/goat và các atlas trong pipeline được giữ. Không có file media trùng SHA-256. `public` không có ứng viên dư rõ ràng nên không xóa tài nguyên runtime.
+
+Media trong `docs/assets` (tính cả thư mục con): **222,58 → 206,41 MiB**, giảm **16,17 MiB**, khoảng **7,3%**. Đã đối chiếu checksum của 284 media giữ lại: không file nào thay đổi. Tài nguyên runtime vẫn 22,66 MiB. Không chỉnh gameplay hoặc database.
+
+Sao lưu trước khi xóa: `.local/cleanup-backups/20261127T135859-unused-doc-assets.zip` (16,07 MiB). Đã mở ZIP, kiểm số entry, kích thước và SHA-256 từng file khớp bản gốc. [Manifest đầy đủ](ASSET_CLEANUP_2026_11_27.json) lưu đường dẫn, kích thước, checksum, lý do và checksum ZIP. ZIP nằm trong thư mục bị Git bỏ qua; cần giữ riêng nếu chuyển máy. Không đưa ZIP này vào source/deploy.
+
+Khôi phục vào thư mục tạm trong workspace trước để tránh ghi đè chỉnh sửa mới:
+
+```powershell
+Expand-Archive -LiteralPath '.local/cleanup-backups/20261127T135859-unused-doc-assets.zip' -DestinationPath '.local/restore-unused-doc-assets-20261127'
+```
+
+Các file sau giải nén nằm trong `docs/assets/` bên dưới thư mục đích. Đối chiếu manifest rồi chép lại đúng file cần dùng. Vì còn giữ ZIP ngay trong workspace, **dung lượng ổ đĩa tổng thể gần như chưa giảm**; phần giảm ở trên là tài nguyên source đang hoạt động. Lịch sử Git cũng vẫn giữ các bản cũ, chưa chạy thao tác viết lại lịch sử hoặc garbage collection.
+
+Kiểm chứng: kiểm tra tham chiếu toàn repo trước khi xóa không có tên file được chọn trong tài liệu/code/script; đối chiếu riêng mẫu tên động và nguồn thiết kế. Sau xóa, asset audit không có tham chiếu runtime thiếu, build đạt, checksum toàn bộ media giữ lại không đổi. Không chạy lại test engine vì không thay code game. Dọn `dist` sau build; chưa commit/push và chưa triển khai nội dung kế hoạch tiếp theo.

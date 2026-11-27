@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "createdAt": "2026-11-27T13:58:59.441Z",
+  "backup": ".local/cleanup-backups/20261127T135859-unused-doc-assets.zip",
+  "beforeBytes": 233396623,
+  "files": [
+    {
+      "path": "docs/assets/neighbors-background-v1-source.png",
+      "bytes": 3581348,
+      "sha256": "214aec4f92b9c69a75ec8856e29e9320243f67da801f6bec506aa977859dfcd3",
+      "refs": [],
+      "reason": "Superseded background; current sources retained"
+    },
+    {
+      "path": "docs/assets/background-homestead-world-v1.png",
+      "bytes": 3555094,
+      "sha256": "f862de2b1134350f43808297225085f8793d852c78342d82467b04217b075954",
+      "refs": [],
+      "reason": "Superseded background; current sources retained"
+    },
+    {
+      "path": "docs/assets/hud-compact-1100.png",
+      "bytes": 689003,
+      "sha256": "f0067f17bf3c1656f97e431818cca30b4657ce499399e75b75633a0c188deefa",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/husbandry-ui-v1-fences-desktop.png",
+      "bytes": 660872,
+      "sha256": "4514fcbac478be84b613f52e87806a13ff59f791c275e8fb9da2fe4c4a846046",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/husbandry-ui-v1-pond-desktop.png",
+      "bytes": 653735,
+      "sha256": "eb2272ac03903f8005b72c15d88914f205d361de260c71873edbe047acade701",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/expansion-viewport-v7.png",
+      "bytes": 653339,
+      "sha256": "aece303a71c1f941092b407dc846cece5eff4a752357bdb3ab0f50ccbc8d6eb6",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/next-goal-v1-ripe-scene.png",
+      "bytes": 648610,
+      "sha256": "55f2f973cbf9cd354e2804351dfb47f0436e53a33cd79e4bcdf952fe91dbc82a",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/next-goal-v1-young-scene.png",
+      "bytes": 648064,
+      "sha256": "aef28a8a31e275a7385afb905ae18072a99e358345d5d84380b1d7309fb7cf68",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/quick-sales-list-v3-long-1100.png",
+      "bytes": 647491,
+      "sha256": "b05bfb31d69b9a2c6d922577a2c95639f25df7b17b9c1efb96b8265677db213b",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/expansion-middle-viewport-v7.png",
+      "bytes": 633613,
+      "sha256": "7ac16478a5d854d82c889cdc8ad848dd2cc715fca9c236446e3b99879549d1e3",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/expansion-south-viewport-v7.png",
+      "bytes": 627219,
+      "sha256": "2beb97401906234dd2675a31f669a089b3cd887ce66a028cf359094d79cd24f5",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/weather-detail-1100.png",
+      "bytes": 471106,
+      "sha256": "408fb04eb74af1c40994083049cda6fb78daf6c77c9abe4759d507658a9b4b23",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/hire-one-confirm-1100.png",
+      "bytes": 439902,
+      "sha256": "06a3a109048eeff7321d91df9a35f059b397c4c23088db1d322753ab452dfb2e",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/crop-outlook-v1-landscape.png",
+      "bytes": 415949,
+      "sha256": "257c9f1492c98bee8a2cb1df078f06b6a74857b7dd8caddaf32830bc097b6e1e",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/husbandry-ui-v1-stock-landscape.png",
+      "bytes": 389705,
+      "sha256": "bb5901e405a6d412ce497148f3a336edbb72d163764f0f86afb79a6fe7d44375",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-v3-1100.png",
+      "bytes": 345639,
+      "sha256": "af6cc729d642f5f7ff119e6e02b24895953dc24bb80187e6d1ae8855a89fd2d6",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-hire-v4-1100.png",
+      "bytes": 344488,
+      "sha256": "a81c0ba070eaebe986e45d75f02a44835abf86fde510ea5cbe4671d104e26b59",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-hire-v3-1100.png",
+      "bytes": 337809,
+      "sha256": "eef7b9938f4a47cca5b22d1430fbf3c8982729f77d7410a945eeb7e487784499",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/workshop-format-844.png",
+      "bytes": 309878,
+      "sha256": "8ff17d7be2ceba43c0c25476659abea81f261974cdbe7efbc5602cc7f52ee8fe",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-draft-1100.png",
+      "bytes": 205945,
+      "sha256": "a8b5a6371eab4d5b5cdbd2fd0fbff8ddbaddce622a7c9dceb964dfac9d9e5feb",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/quick-sales-list-v3-long-568.png",
+      "bytes": 184559,
+      "sha256": "7b5eed486dc584550da059fd2875781f0510bcfadd938b3b0465f0c66c5900f0",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/weather-detail-568.png",
+      "bytes": 138911,
+      "sha256": "295e391cd4fb55e08df646757d3f50b1b474f54f440cbcb0eccab9036078be2e",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-journal-draft-844.png",
+      "bytes": 78829,
+      "sha256": "b04da9786e90260aa4e71555bd1ffc3e746a076d51c68c3dd18ec0044414958b",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-draft-844.png",
+      "bytes": 77346,
+      "sha256": "9a5c6261dab305061499257033454d0bcd3166a565ced723b7ee0d2b4bc2d6e6",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-hire-v4-568.png",
+      "bytes": 61865,
+      "sha256": "114d0362865fb4f3f23b39f09108bb7ab756265ea62a86b87899bc8ebc5a1fbb",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-v3-568.png",
+      "bytes": 60471,
+      "sha256": "306671106463697129c2c666bec75b5bd8b598a1ae464958ac7f42f3993c9a88",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-hire-v3-568.png",
+      "bytes": 55921,
+      "sha256": "eb5d693c739d748ced1039fb1e003acfaab94c9d89bc5a6cdf88ac393b903554",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    },
+    {
+      "path": "docs/assets/taskbook-draft-568.png",
+      "bytes": 43328,
+      "sha256": "403153991194bc159781ad72c353b45ef561846f83766ed0110826677bf6d2ac",
+      "refs": [],
+      "reason": "Unreferenced QA screenshot; current documented evidence retained"
+    }
+  ],
+  "backupSha256": "cd26e9335c7c3c5c7cf894e248ee7b8a29982654764dd47b5f89e0a72de95899",
+  "scope": "Unused documentation media only; no runtime assets removed"
+}
