@@ -1,0 +1,22 @@
+/* Existing authored props, paper book and native map renderer. */
+.decor-book-dialog,.decor-preview-dialog{width:min(680px,calc(100vw - 20px))}
+.decor-book-dialog .garden-decor-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible;padding:0;gap:6px}
+.decor-book-dialog .garden-decor-card{grid-template-columns:34px minmax(0,1fr) auto;gap:5px;border:1px solid #c3aa76;border-radius:4px;background:#f3e5bd;padding:6px;min-width:0}
+.decor-book-dialog .garden-decor-icon{transform:scale(.8);transform-origin:center;justify-self:center}
+.decor-book-dialog .garden-decor-card h3{font-size:12px;line-height:1.3}
+.decor-book-dialog .garden-decor-card p{font-size:10px;line-height:1.3}
+.decor-book-dialog .garden-decor-card .actions{display:flex;flex-direction:column;gap:3px}
+.decor-book-dialog .garden-decor-card .btn{font-size:10px;padding:5px;min-height:30px;white-space:nowrap}
+.decor-book-dialog .task-book-pager{margin-top:8px}
+.decor-placement-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);align-items:start;gap:12px}
+.decor-placement-view{margin:0;min-width:0;border:2px solid #8c6b42;border-radius:5px;overflow:hidden;background:#dbc18e}
+.decor-placement-view canvas{display:block;width:100%;height:auto;aspect-ratio:5/3;image-rendering:pixelated}
+.decor-placement-view figcaption{padding:5px 6px;font-size:10px;line-height:1.4;color:#544027}
+.decor-placement-options{min-width:0}
+.decor-placement-options label{font-size:12px}
+.decor-placement-options select{width:100%;min-width:0;font-size:11px}
+.decor-placement-options .actions{gap:5px}
+.decor-placement-options .btn{font-size:11px;padding:7px;min-height:32px}
+.decor-placement-options .care-note{font-size:11px;line-height:1.4}
+@media(orientation:landscape) and (max-height:600px){.decor-book-dialog,.decor-preview-dialog{width:min(660px,calc(100vw - 16px))}.decor-book-dialog .garden-decor-card{padding:4px}.decor-book-dialog .garden-decor-card h3{font-size:11px}.decor-book-dialog .garden-decor-card p{font-size:9px}.decor-placement-layout{gap:8px}.decor-placement-options label{font-size:10px}.decor-placement-options select{font-size:10px;padding:4px;min-height:29px}.decor-placement-options .care-note{font-size:9px;margin:6px 0}.decor-placement-options .btn{font-size:10px;min-height:29px;padding:5px}.decor-placement-view figcaption{font-size:9px;padding:4px}}
+@media(max-width:499px) and (orientation:portrait){.decor-book-dialog .garden-decor-list,.decor-placement-layout{grid-template-columns:1fr}.decor-placement-view{max-width:330px;margin-inline:auto;width:100%}}

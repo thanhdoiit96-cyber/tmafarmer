@@ -1,4 +1,6 @@
 import {installJoystick} from './joystick.mjs';
+import {decorPreviewFarm} from './decor-preview.mjs';
+import {gardenDecorSpots} from './land.mjs';
 import {gardenHelperPosition,gardenHelperStart} from './garden-helper.mjs';
 import {shoreWork} from './lake-social.mjs';
 import {features, interactionRange as range, maps, plotPosition, route, size, taskMarkers, walkable} from './world-layout.mjs';
@@ -564,5 +566,31 @@ export function createWorld(root, onInteract, landscape) {
     setWatchingHelper(true);shiftCamera(true);return true;
   }
   function followPlayer(){setWatchingHelper(false);shiftCamera(true);}
-  return {sync,particle,approach,position,setPeers,setSpeech,watchHelper,followPlayer,startWork:input=>particle(input,{preview:true})};
+  async function renderDecorPreview(targetCanvas,item,target){
+    await artReady;
+    if(!targetCanvas.isConnected)return;
+    const farm=decorPreviewFarm(snapshot.me,item,target);
+    if(!farm)return;
+    const data={...snapshot,me:farm},preview=features('field',data),spot=gardenDecorSpots[target];
+    const daylight=Math.max(0,Math.min(1,1-(data.dayEnds-data.now)/data.dayLength));
+    const map=maps.field,area=map.bounds??size;
+    const left=Math.max(0,Math.min(area.width-size.width,spot.x-size.width/2));
+    const top=Math.max(0,Math.min(area.height-size.height,spot.y-size.height*.6));
+    targetCanvas.width=pixelViewport.width;targetCanvas.height=pixelViewport.height;
+    const c=targetCanvas.getContext('2d'),s=pixelViewport.width/size.width;
+    c.scale(s,s);c.imageSmoothingEnabled=false;c.translate(-left,-top);
+    grass(c,map,'field',preview);water(c,preview,0,1);
+    const person=sceneId==='field'?{x,y}:map.spawn?{x:map.spawn[0],y:map.spawn[1]}:null;
+    const actors=preview.actors.filter(a=>!backgroundOwnsActor('field',a.type));
+    if(person)actors.push({...person,type:'preview-player'});
+    for(const a of actors.sort((a,b)=>a.y-b.y)){
+      if(a.type==='garden-decor')drawGardenDecor(c,a,daylight);
+      else if(a.type==='preview-player')drawPerson(c,a.x,a.y,'down',0,{avatar:farm.avatar});
+      else actor(c,a,0,data);
+    }
+    drawMapPointer(c,spot.x,spot.y+3,0,{opacity:.8});
+    c.setTransform(s,0,0,s,0,0);
+    atmosphere(c,0,data.weather.id,true,daylight,size);
+  }
+  return {sync,particle,approach,position,setPeers,setSpeech,watchHelper,followPlayer,renderDecorPreview,startWork:input=>particle(input,{preview:true})};
 }

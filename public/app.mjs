@@ -499,6 +499,7 @@ function animalIllustration(kind){
 let animalGroup='open',animalPage=0,animalPageSize=8;
 const animalPickerSize=()=>matchMedia('(orientation:landscape) and (max-height:480px)').matches?4:8;
 window.addEventListener('resize',()=>{
+  if(dialog.open&&dialog.classList.contains('decor-book-dialog'))showGardenDecor(true);
   if(panel==='tasks'&&state)render();
   if(dialog.open&&dialog.querySelector('.quick-garden-form'))updateQuickGarden(dialog.querySelector('.quick-garden-form'));
   if(dialog.open&&recoveryKey)showRecovery(recoveryKey,{preserve:true});
@@ -806,30 +807,33 @@ function showFenceChoice(style,index){
   const where=index===-1?'Ruộng chính':index===-4?'Chuồng chính':'Ô '+(index+1);
   modal(style==='none'?'Gỡ hàng rào':option.name,(option?fencePreview(style):'')+'<p><b>'+where+'</b> · Hiện tại: '+(fences[current]?.name??'Chưa đặt rào')+'</p><p>'+(option?'Đặt mẫu này tốn '+option.cost+' xu. '+(current?'Mẫu cũ sẽ được thay thế. ':''):'Gỡ miễn phí. ')+'Không hoàn lại xu đã dùng cho mẫu cũ; không thay đổi sức chứa hay sản lượng.</p><div class="actions">'+btn('Để sau','data-close','subtle')+act(option?'Đặt rào · '+option.cost+' xu':'Xác nhận gỡ','decorate',style,index,'primary',option?state.me.coins<option.cost:!current)+'</div><p id="dialog-error" role="status"></p>');
 }
-let gardenDecorScroll=0;
+let gardenDecorPage=0,gardenDecorPageSize=6;
 function gardenDecorIcon(item){
   const {source,width,cellHeight,frames}=gardenDecorAtlas, scale=.75;
   return '<span class="garden-decor-icon" aria-hidden="true" style="background-image:url('+source+');background-size:'+
     width*scale+'px '+cellHeight*scale+'px;background-position:-'+frames[item][0]*scale+'px 0"></span>';
 }
-function showGardenDecor(keepScroll=false){
+function showGardenDecor(preservePage=false){
   const farm=state.me, owned=farm.gardenDecor??{}, vouchers=farm.decorVouchers??0;
-  const cards=Object.entries(gardenDecorItems).map(([item,definition])=>{
+  const size=landscape.matches?(innerHeight<=340?2:4):6;
+  if(!preservePage)gardenDecorPage=0;
+  if(size!==gardenDecorPageSize)gardenDecorPage=Math.floor(gardenDecorPage*gardenDecorPageSize/size);
+  gardenDecorPageSize=size;
+  const page=catalogPage(Object.entries(gardenDecorItems),gardenDecorPage,size);gardenDecorPage=page.index;
+  const cards=page.entries.map(([item,definition])=>{
     const spot=owned[item];
     const status=spot?gardenDecorSpots[spot].name:Object.hasOwn(owned,item)?'Đang cất':definition.cost+' xu hoặc 1 phiếu';
-    const afford=Object.hasOwn(owned,item)||farm.coins>=definition.cost||vouchers>0;
     return '<article class="garden-decor-card">'+gardenDecorIcon(item)+'<div><h3>'+definition.name+'</h3><p>'+status+'</p></div><div class="actions">'+
-      btn(spot?'Chuyển':'Đặt','data-garden-decor-item="'+item+'" aria-label="'+(spot?'Chuyển ':'Đặt ')+definition.name.toLowerCase()+'"','primary',!afford)+
+      btn('Xem thử','data-garden-decor-item="'+item+'" aria-label="Xem thử '+definition.name.toLowerCase()+'"','primary')+
       (spot?btn('Cất','data-stow-garden-decor="'+item+'" aria-label="Cất '+definition.name.toLowerCase()+'"','subtle'):'')+'</div></article>';
   }).join('');
   modal('Trang trí vườn','<p><strong>'+formatCoins(farm.coins)+' xu · '+vouchers+' phiếu trang trí</strong></p>'+
     '<div class="actions">'+btn('Sắp xếp theo bối cảnh','data-arrange-garden-decor','subtle',!Object.values(owned).some(Boolean))+'</div>'+
-    '<div class="garden-decor-list" role="region" aria-label="Danh sách đồ trang trí" tabindex="0">'+cards+'</div><p id="dialog-error" role="status"></p>');
-  dialog.querySelector('.garden-decor-list').scrollTop=keepScroll?gardenDecorScroll:0;
+    '<div class="garden-decor-list" role="region" aria-label="Danh sách đồ trang trí">'+cards+'</div>'+taskBookPager(page.index,page.count,'garden-decor-page')+'<p id="dialog-error" role="status"></p>');
+  dialog.classList.add('game-management','farm-book-dialog','decor-book-dialog');
 }
 function showGardenDecorPlacement(item){
   if(!Object.hasOwn(gardenDecorItems,item))return;
-  gardenDecorScroll=dialog.querySelector('.garden-decor-list')?.scrollTop??0;
   const farm=state.me, definition=gardenDecorItems[item];
   const owned=Object.hasOwn(farm.gardenDecor??{},item);
   const spots=Object.entries(gardenDecorSpots).map(([key,spot])=>{
@@ -838,17 +842,29 @@ function showGardenDecorPlacement(item){
     return {key,label:(recommended?'Gợi ý · ':'')+spot.name+(usedBy?' · '+gardenDecorItems[usedBy].name:''),disabled:!!usedBy,recommended};
   }).sort((a,b)=>Number(b.recommended)-Number(a.recommended));
   const canPay=owned||(farm.decorVouchers??0)>0||farm.coins>=definition.cost;
-  const positions=spots.map(({key,label,disabled})=>'<option value="'+key+'"'+(disabled?' disabled':'')+'>'+label+'</option>').join('');
+  const initial=spots.find(spot=>!spot.disabled)?.key;
+  const positions=spots.map(({key,label,disabled})=>'<option value="'+key+'"'+(disabled?' disabled':'')+(key===initial?' selected':'')+'>'+label+'</option>').join('');
   const payment=owned?'<p>Bạn có thể đặt lại miễn phí.</p>':
     '<label>Thanh toán<select name="source" required><option value="" disabled selected>Chọn cách thanh toán</option>'+
     '<option value="coins"'+(farm.coins<definition.cost?' disabled':'')+'>'+definition.cost+' xu</option>'+
     '<option value="voucher"'+((farm.decorVouchers??0)<1?' disabled':'')+'>1 phiếu trang trí</option></select></label>';
-  const back=btn('Quay lại','data-garden-decor','subtle');
+  const back=btn('Hủy xem thử','data-garden-decor-back','subtle');
   const form=spots.every(spot=>spot.disabled)?'<p>Cất một món để tạo chỗ trống.</p>'+back:
-    '<form data-form="placeGardenDecor" data-item="'+item+'"><label>Vị trí<select name="target" required>'+
-    '<option value="" disabled selected>Chọn vị trí trống</option>'+positions+'</select></label>'+payment+
-    '<div class="actions">'+back+'<button type="submit" class="btn primary"'+(canPay?'':' disabled')+'>Xác nhận đặt</button></div></form>';
-  modal('Đặt '+definition.name.toLowerCase(),form+'<p id="dialog-error" role="status"></p>');
+    '<form data-form="placeGardenDecor" data-item="'+item+'"><div class="decor-placement-layout"><figure class="decor-placement-view"><canvas data-decor-preview aria-label="Xem thử '+definition.name.toLowerCase()+' tại vị trí đã chọn"></canvas><figcaption data-decor-preview-label></figcaption></figure><div class="decor-placement-options"><label>Vị trí<select name="target" required>'+positions+'</select></label>'+payment+
+    '<p class="care-note">Xem thử miễn phí. Chỉ trừ xu hoặc phiếu khi xác nhận đặt.</p>'+(!canPay?'<p class="care-note">Chưa đủ xu hoặc phiếu để đặt món này.</p>':'')+
+    '<div class="actions">'+back+'<button type="submit" class="btn primary"'+(canPay?'':' disabled')+'>Xác nhận đặt</button></div></div></div></form>';
+  modal('Xem thử '+definition.name.toLowerCase(),form+'<p id="dialog-error" role="status"></p>');
+  dialog.classList.add('game-management','farm-book-dialog','decor-preview-dialog');
+  updateDecorPreview();
+}
+function updateDecorPreview(){
+  const form=dialog.querySelector('[data-form="placeGardenDecor"]'),canvas=form?.querySelector('[data-decor-preview]');
+  if(!canvas)return;
+  const target=form.elements.target.value;
+  // Replace the canvas so a pending image load cannot paint an older selection.
+  const next=canvas.cloneNode();canvas.replaceWith(next);
+  form.querySelector('[data-decor-preview-label]').textContent=gardenDecorSpots[target].name+' · Chưa đặt';
+  void world.renderDecorPreview(next,form.dataset.item,target);
 }
 function renderLand(farm,now){
   const lot=farm.land[selectedLot], price=lotPrice(farm.land.filter(Boolean).length);
@@ -1651,7 +1667,7 @@ function modal(title,html) {
   delete dialog.dataset.adoptionLot;
   recoveryKey=null;recoveryStamp='';
   delete dialog.dataset.recovery;
-  dialog.classList.remove('game-management','return-popup','farm-book-dialog','hire-dialog','recovery-dialog');
+  dialog.classList.remove('game-management','return-popup','farm-book-dialog','hire-dialog','recovery-dialog','decor-book-dialog','decor-preview-dialog');
   dialog.removeAttribute('aria-label');
   hideStockTooltip();
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
@@ -2074,13 +2090,14 @@ document.addEventListener('click',async e=>{
     if(outsidePanel)reveal('.control-panel');
     else if(landscape.matches)setPanelOpen(true);
   }
+  else if('gardenDecorPage' in d){gardenDecorPage=Number(d.gardenDecorPage);showGardenDecor(true);}
+  else if('gardenDecorBack' in d)showGardenDecor(true);
   else if('gardenDecor' in d)showGardenDecor(dialog.contains(el));
   else if('gardenDecorItem' in d)showGardenDecorPlacement(d.gardenDecorItem);
   else if('arrangeGardenDecor' in d){
     if(await perform({action:'arrangeGardenDecor'})&&dialog.open)showGardenDecor(true);
   }
   else if('stowGardenDecor' in d){
-    gardenDecorScroll=dialog.querySelector('.garden-decor-list')?.scrollTop??0;
     if(await perform({action:'stowGardenDecor',item:d.stowGardenDecor})&&dialog.open)showGardenDecor(true);
   }
   else if('landTab' in d) {selectedLot=Number(d.landTab);render();}
@@ -2289,6 +2306,7 @@ dialog.addEventListener('input',event=>{
   if(event.target.id==='buy-quantity')updateBuyTotal(event.target);
 });
 dialog.addEventListener('change',event=>{
+  if(event.target.matches('[data-form="placeGardenDecor"] select[name="target"]'))updateDecorPreview();
   if(!event.target.matches('[data-garden-plot],[data-harvest-mode]'))return;
   const form=event.target.form;
   form.querySelector('#dialog-error').textContent='';
