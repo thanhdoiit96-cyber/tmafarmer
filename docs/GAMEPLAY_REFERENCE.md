@@ -1,5 +1,7 @@
 # Gameplay hiện tại — tài liệu tham chiếu
 
+Cập nhật 27/11/2026: [UI V4](ORDERS_ANIMAL_UI_V4.md) thay phần trình bày bên dưới bằng Sổ chuồng 6 ô/trang, lọc trạng thái, chạm hình để quản lý tốc độ/sản lượng thật và Bảng đơn dạng phiếu giấy. Cơ chế nuôi/góp/thưởng giữ nguyên.
+
 Cập nhật 26/11/2026: [Đơn làng và UI vật nuôi V2](VILLAGE_DRIVE_UI_V1.md) đã có trong source. Làng → Đơn hàng tách Đơn chợ và Góp hàng làng; có ghim món theo đợt trong Việc cần làm và chỉ dẫn nguồn hàng. Thẻ vật nuôi gọn; chi tiết thời tiết, sản lượng, chuyển chuồng và bán nằm trong Quản lý. Không đổi quy tắc thưởng hoặc nuôi.
 
 Hồ làng có [Ông Sáu](LAKE_ELDER_V1.md): click hoặc chọn Gặp Ông Sáu để đi tới gần rồi trò chuyện theo thời tiết, mở Việc ven ao/Sổ cá. Hội thoại không phát thưởng và không bắt buộc để chơi các hoạt động này. Đã có trong source, chưa deploy.

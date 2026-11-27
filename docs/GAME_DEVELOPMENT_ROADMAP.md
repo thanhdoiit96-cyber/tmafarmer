@@ -190,4 +190,5 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 26/11/2026 | Social/Ao — bộ chạy pilot | Hoàn thiện bộ ghi nhận, chưa chạy với người chơi | [Checklist và quy trình](SOCIAL_LAKE_PILOT_V1.md), [form offline xuất/nhập JSON và CSV](assets/social-lake-pilot-kit-v1.html); chờ môi trường/build/nhóm tham gia, chưa có kết quả pilot |
 | 26/11/2026 | P1.2 — vật nuôi/thủy sản | Hoàn thiện source, chưa deploy | ETA gồm lớn lên và sản xuất, trạng thái thiếu ăn, tác động tốc độ/sản lượng; [phạm vi và kiểm chứng](HUSBANDRY_OUTLOOK_V1.md) |
 | 26/11/2026 | P2.1 — runtime | Đã duyệt, hoàn thiện source, chưa deploy | [Đơn làng và UI vật nuôi gọn](VILLAGE_DRIVE_UI_V1.md): ghim theo đợt, nguồn hàng, xác nhận; quản lý vật nuôi gọn, không đổi luật thưởng/nuôi |
-| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Pilot chờ người chơi; tiếp theo đánh giá UX và thiết kế P2.2 cho làng nhỏ; chưa mở thanh toán |
+| 27/11/2026 | UI đơn hàng/vật nuôi V4 | Đã duyệt và hoàn thiện runtime, chưa deploy | [Sổ 6 ô, phiếu góp và quản lý dữ liệu thật](ORDERS_ANIMAL_UI_V4.md); giữ ID, approach, trang/lọc, không đổi kinh tế |
+| Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Ưu tiên chốt UI đơn hàng/vật nuôi trước P2.2; pilot chờ người chơi; chưa mở thanh toán |

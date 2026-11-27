@@ -15,6 +15,10 @@ export function animalOutlook(farm,pen,w,now){
   return {...estimate(effort,ready,animalGrowthRate(farm,w),pen.fedUntil,now),
     yield:condition.yield,yieldChange:condition.yield/def.yield-1};
 }
+export function animalImpacts(farm,pen,w,now){
+  const outlook=animalOutlook(farm,pen,w,now);
+  return {weather:w.animal-1,housing:outlook.rate/w.animal-1,total:outlook.rate-1,yield:outlook.yieldChange};
+}
 export function pondOutlook(batch,w,now){
   const def=aquatic[batch.kind],ready=batch.progress>=def.time;
   return {...estimate(Math.max(0,def.time-batch.progress),ready,w.water,batch.fedUntil,now),
