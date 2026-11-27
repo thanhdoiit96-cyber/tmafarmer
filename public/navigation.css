@@ -1,0 +1,28 @@
+/* Extend the existing SVG UI symbols rather than introducing a second art style. */
+.farm-shortcuts{display:none}
+#nav button{position:relative}#nav button.active svg{color:#f5e5b2}
+.recovery-direct.recovery-item{display:block;padding:7px;min-height:0}
+.recovery-direct-head{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:5px;align-items:center;min-height:32px}
+.recovery-direct-head>strong{font-size:11px;line-height:1.3;padding:0;min-width:0;overflow-wrap:anywhere}
+.recovery-direct-head .recovery-count{position:static;min-width:21px;line-height:1.3}
+.recovery-art.btn{display:grid;place-items:center;width:30px;height:32px;min-height:0;padding:0;border:0;background:none;box-shadow:none}
+.recovery-art .recovery-item-picture{font-size:25px;line-height:1}
+.recovery-direct-gains{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.recovery-direct-gains>span{display:flex;align-items:center;gap:3px;padding:3px 4px;border-radius:4px;background:#e0e6c3;color:#3b5c3a;font-size:10px}
+.recovery-direct-gains svg{display:block;width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8}
+.farm-book-dialog .recovery-direct-use.btn{width:100%;min-height:30px;font-size:11px;padding:5px 6px}
+@media(max-width:900px) and (min-width:761px){
+  #nav button{width:40px;height:36px;padding:8px}#nav button .nav-label{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);width:max-content;max-width:180px;background:#345640;color:#fff2cf;border:1px solid #bca576;border-radius:5px;padding:5px 7px;z-index:8;opacity:0;visibility:hidden;pointer-events:none;font-size:11px}
+  #nav button:hover .nav-label,#nav button:focus-visible .nav-label{opacity:1;visibility:visible}
+}
+@media(orientation:landscape) and (min-width:500px) and (max-width:1100px) and (max-height:600px){
+  .farm-shortcuts{display:flex;gap:2px;pointer-events:auto;align-items:center;padding:2px;border:1px solid #a4b18c;border-radius:7px;background:#eee8cfd9}
+  .farm-shortcuts button{position:relative;width:34px;height:30px;display:grid;place-items:center;border:0;border-radius:4px;background:none;color:#36533d;padding:5px}
+  .farm-shortcuts button svg{width:21px;height:21px}.farm-shortcuts [aria-current=page]{background:#466442;color:#fff0c5}
+  .layout[data-panel-open] .farm-shortcuts{display:none}
+  .recovery-direct.recovery-item{padding:5px}.recovery-direct-head{grid-template-columns:28px minmax(0,1fr) auto;gap:4px;min-height:29px}.recovery-direct-head>strong{font-size:10px}
+  .recovery-direct-gains{gap:3px;margin:5px 0}.recovery-direct-gains>span{font-size:9px;padding:2px 3px}.farm-book-dialog .recovery-direct-use.btn{min-height:29px;padding:4px 5px;font-size:10px}
+}
+@media(hover:hover){.farm-shortcuts button::after{content:attr(aria-label);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#345640;color:#fff2cf;border:1px solid #bca576;border-radius:4px;padding:5px 7px;white-space:nowrap;font-size:10px;opacity:0;visibility:hidden;pointer-events:none}.farm-shortcuts button:hover::after,.farm-shortcuts button:focus-visible::after{opacity:1;visibility:visible}}
+@media(max-height:340px) and (orientation:landscape){.recovery-direct-head{min-height:26px}.recovery-direct.recovery-item{padding:4px}.recovery-direct-gains{margin:4px 0}.recovery-direct-head>strong{font-size:10px}.recovery-direct-gains>span{font-size:9px;padding:1px 3px}.farm-book-dialog .recovery-direct-use.btn{min-height:27px}.recovery-wait{font-size:9px}}
+@media(max-height:340px) and (orientation:landscape){.recovery-direct-head{min-height:24px;grid-template-columns:25px minmax(0,1fr) auto}.recovery-art.btn{height:24px;width:24px}.recovery-art .recovery-item-picture{font-size:22px}.recovery-direct-gains{margin:3px 0}.recovery-direct-gains>span{line-height:1.2;padding:1px 3px}.recovery-dialog .progress{height:3px;margin:2px 0}.recovery-dialog>.row:first-child .btn{min-height:24px;padding:2px 6px;line-height:1.2}.recovery-direct.recovery-item{padding:3px}.farm-book-dialog .recovery-direct-use.btn{min-height:26px;padding:3px 5px}.recovery-direct-head>strong{line-height:1.2}}
