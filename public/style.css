@@ -823,6 +823,21 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .drive-paper-head{display:flex;justify-content:space-between;align-items:center;gap:5px}
 .drive-paper-head h3{font:700 18px var(--display);margin:0;overflow-wrap:anywhere}
 .drive-seal{border:2px solid #7f9153;border-radius:50%;width:39px;height:39px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;transform:rotate(9deg);color:#667c3f;flex:none}
+.drive-scale{display:inline-block;padding:2px 5px;margin-top:3px;border:1px solid #8a9b62;border-radius:4px;background:#e6ebce;color:#3c5c34;font-size:9px;line-height:1.4}
+@media(max-height:350px) and (orientation:landscape){
+ .order-book>.game-book-head{display:none}.order-book .game-book-tabs{margin-bottom:4px}
+ .order-book .drive-paper{padding:7px 5px 5px}.drive-paper-head h3{font-size:15px}
+ .drive-paper .drive-seal{width:26px;height:26px;font-size:8px}
+ .drive-paper .drive-scale{font-size:8px;padding:1px 4px}
+ .drive-paper .drive-deadline{display:inline;font-size:8px;margin-left:4px}
+ .drive-paper .drive-ingredients{gap:3px;margin:4px 0}
+ .drive-paper .drive-art{height:24px}.drive-paper .drive-art .crop-item-icon{transform:none;margin:0}
+ .panel-body .drive-paper .drive-ingredient.btn{padding:3px 1px;gap:1px}
+ .drive-paper .drive-ingredient strong,.drive-paper .drive-ingredient b{font-size:9px}
+ .drive-paper .drive-ingredient small{font-size:8px}
+ .drive-paper .drive-chosen{padding-top:4px;margin-top:4px}.drive-paper .drive-chosen .actions{margin-top:4px}
+ .drive-paper .drive-reward{margin-top:5px;padding-top:4px;font-size:8px}
+}
 .drive-deadline{font-size:9px;color:#8e764b;margin:5px 0 9px}
 .drive-ingredients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:12px}
 .panel-body .drive-ingredient.btn{position:relative;display:flex;align-items:center;flex-direction:column;justify-content:flex-start;min-width:0;gap:2px;padding:6px 1px 5px;background:#e9dcaf;border:2px solid transparent;border-radius:6px;box-shadow:none;color:#574a2e;font-size:10px;line-height:1.3;text-align:center}

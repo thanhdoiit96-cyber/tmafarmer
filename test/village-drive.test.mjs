@@ -7,6 +7,7 @@ const period=48*60*60;
 function setup(){
   const room=newRoom(start);
   for(const id of ['a','b','c'])room.farms[id]=newFarm(id,id.toUpperCase(),start);
+  advanceVillageDrive(room,start);
   return room;
 }
 

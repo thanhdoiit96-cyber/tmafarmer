@@ -22,6 +22,7 @@ await cp('public/garden-helper.mjs','dist/server/garden-helper.mjs');
 await cp('public/wellness.mjs','dist/server/wellness.mjs');
 await cp('public/home-rules.mjs','dist/server/home-rules.mjs');
 await cp('public/village.mjs','dist/server/village.mjs');
+await cp('public/village-drive-demand.mjs','dist/server/village-drive-demand.mjs');
 await writeFile('dist/server/engine.mjs',"export * from './game.mjs';\n");
 await cp('public','dist/client',{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg'};

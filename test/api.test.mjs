@@ -27,6 +27,10 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
   const b=await api('join',{name:'Vườn Bắp',code:a.code,avatar:'male'});
   const c=await api('join',{name:'Vườn Lúa',code:a.code});
   assert.equal(a.status,201);
+  assert.deepEqual(a.state.villageDrive.items.map(r=>r.required),[8,6,6]);
+  assert.equal(a.state.villageDrive.memberCount,1);
+  assert.deepEqual(b.state.villageDrive.items.map(r=>r.required),[8,6,6]);
+  assert.equal(b.state.villageDrive.memberCount,1); // Joining does not resize this drive.
   assert.match(a.serverTiming,/^app;dur=[\d.]+, db;dur=[\d.]+, dbq;desc="\d+"$/);
   assert.equal(b.status,201);
   assert.equal(a.state.canManageMembers,true);
@@ -213,6 +217,29 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
     const contributionValue=(i===0?16*6:12*15)+(i===winner?12*10:0);
     assert.equal(result.state.me.coins,before.coins+Math.ceil(contributionValue*1.25));
     assert.equal(result.state.me.xp,before.xp+12);
+  }
+
+  // Race the final contribution on a scaled drive, then retry its successful request.
+  const solo=await api('join',{name:'Làng nhỏ'});
+  const partner=await api('join',{name:'Bạn mới',code:solo.code});
+  const small=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(solo.code).state);
+  for(const f of Object.values(small.farms))Object.assign(f.inventory,{wheat:8,carrot:6,corn:6});
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(small),solo.code);
+  const smallId=solo.state.villageDrive.id;
+  assert.equal((await send(solo,'villageGoods',{index:smallId,item:'wheat',qty:8})).status,200);
+  assert.equal((await send(partner,'villageGoods',{index:smallId,item:'corn',qty:6})).status,200);
+  const finishRequests=[solo,partner].map(()=>({action:'villageGoods',index:smallId,item:'carrot',qty:6,requestId:crypto.randomUUID()}));
+  const smallFinish=await Promise.all([solo,partner].map((player,i)=>api('action',finishRequests[i],player)));
+  assert.deepEqual(smallFinish.map(r=>r.status).sort(),[200,400]);
+  const smallWinner=smallFinish.findIndex(r=>r.status===200);
+  const smallRetry=await api('action',finishRequests[smallWinner],[solo,partner][smallWinner]);
+  assert.equal(smallRetry.state.me.coins,smallFinish[smallWinner].state.me.coins);
+  const smallPaid=await Promise.all([solo,partner].map(player=>api('state',null,player)));
+  for(const [i,r]of smallPaid.entries()){
+    assert.equal(r.state.villageDrive.completed,true);
+    assert.equal(r.state.me.coins,100+Math.ceil(((i===0?8*6:6*15)+(i===smallWinner?6*10:0))*1.25));
+    assert.equal(r.state.me.xp,12);assert.equal(r.state.me.decorVouchers,1);
+    assert.equal(r.state.me.inventory.carrot,i===smallWinner?0:6);
   }
 
   const target=b.state.me.id;

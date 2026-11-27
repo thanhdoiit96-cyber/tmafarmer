@@ -56,6 +56,8 @@ Xưởng mở thêm cây/công thức. Chế tạo dùng nguyên liệu đang c�
 
 Hoàn thành đợt đủ điều kiện còn có phiếu trang trí. Có thể trang trí bằng xu hoặc phiếu theo lựa chọn trong game. Góp xu xây công trình làng là một việc khác với góp hàng cho đơn.
 
+Đơn góp hàng mới cần ít hàng hơn khi làng chỉ có 1–2 vườn lúc mở đợt: 50% hoặc 75% định mức; từ 3 vườn giữ mức đầy đủ. Người vào/rời làng không làm đổi đợt đang mở. Xem nhãn **Quy mô** và phần **Quy mô & quà** trên phiếu; đợt cũ giữ nguyên tới hết hạn.
+
 Trong luật hiện tại, hàng xóm có thể lấy một ít đồ theo giới hạn; nâng an ninh/đóng cổng giúp bảo vệ. Hàng rào trang trí không thay hàng rào an ninh. Không cần lấy đồ của ai để hiểu vòng trồng/chăm/thu cơ bản.
 
 ## 6. Khi nhân vật mệt

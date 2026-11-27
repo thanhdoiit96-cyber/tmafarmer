@@ -185,6 +185,7 @@ async function join(db,request,superAdminAccountId) {
       state.ownerId=id;
       if(admin)state.ownerAccountId=admin.account_id;
       state.farms[id]=newFarm(id,name,time,avatar);
+      advanceVillageDrive(state,time);
       const result=await db.prepare('INSERT OR IGNORE INTO farm_rooms(code,state) VALUES (?,?)').bind(newCode,JSON.stringify(state)).run();
       if(result.meta.changes===1) return joined(state,newCode,id,time,201);
       continue;

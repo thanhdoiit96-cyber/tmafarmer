@@ -156,6 +156,8 @@ Nhà trong Hàng xóm theo **tổng tài sản**, ngưỡng nghiêm ngặt: mặ
 
 Hai hệ trên không dùng chung điều kiện và không thay thế nhau. Góp hàng không tự hoàn thành dự án góp xu. Đợt góp hàng không phải đơn giao trước nhận trước.
 
+**Quy mô đơn góp hàng mới:** chốt theo số vườn đã tham gia lúc mở đợt: 1 vườn cần 50% định mức, 2 vườn cần 75%, từ 3 vườn giữ 100%; làm tròn lên từng món. Giỏ nông sản tương ứng 8/6/6, 12/9/9 hoặc 16/12/12 lúa mì/cà rốt/bắp. Thêm/rời làng và nâng cấp không đổi nhu cầu giữa đợt. Đợt cũ đang mở vẫn giữ định mức cũ tới hết hạn; phần thưởng và ngưỡng ba món không đổi. Đây là số vườn lúc mở, không phải số người online.
+
 ## 12. Hàng xóm, lấy đồ và xã hội
 
 Có vườn riêng và khu vực chung. Chat nổi trong phạm vi gần ở cùng scene, tồn tại ngắn và không phải hộp thư lưu lâu dài. Làng có chủ/quyền quản lý thành viên theo server; không suy ra mọi người được quyền xóa vườn khác.
