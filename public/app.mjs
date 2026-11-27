@@ -1,3 +1,4 @@
+import {recipeView} from './recipe-view.mjs';
 import {catalogPage} from './ui-catalog.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
 import {driveItem} from './village-drive-view.mjs';
@@ -261,18 +262,21 @@ function renderField(farm) {
     }).join('')+'</div>';
 }
 function renderWorkshop(farm){
-  const tabs='<div class="workshop-tabs" role="group" aria-label="Nhóm chế biến">'+Object.entries(workshopTabs).map(([key,label])=>
+  const tabs='<div class="workshop-tabs game-book-tabs" role="group" aria-label="Nhóm chế biến">'+Object.entries(workshopTabs).map(([key,label])=>
     btn(label,'data-workshop-tab="'+key+'" aria-pressed="'+(workshopTab===key)+'"',workshopTab===key?'primary':'subtle')).join('')+'</div>';
   const available=Object.entries(recipes).filter(([,recipe])=>recipeCategory(recipe)===workshopTab);
   const orders=state.orders.some(order=>order.category==='workshop')?
     '<div class="actions">'+btn('Đơn Xưởng','data-panel="orders"','subtle')+'</div>':'';
-  const heading=boardBar('Xưởng máy','⚙️ Cấp '+farm.workshop)+tabs+orders;
-  if(!available.length)return heading+'<p class="workshop-empty">Công cụ sẽ được triển khai sau.</p>';
-  const page=catalogPage(available,workshopPage);workshopPage=page.index;
-  return heading+'<div class="recipe-catalog">'+page.entries.map(([item,recipe])=>{
-    const locked=craftRequirement(farm,item), owned=farm.inventory[item]??0;
-    return '<article class="recipe-slot"><button class="recipe-info" data-recipe-info="'+item+'" aria-label="Xem công thức '+escape(goods[item].name)+'"><span class="recipe-art" aria-hidden="true">'+(itemIllustration(item)||'<span class="recipe-symbol">'+escape(goods[item].icon)+'</span>')+'</span><strong>'+escape(goods[item].name)+'</strong><span class="recipe-owned">Kho <b>'+owned+'</b></span></button>'+act('Chế biến','craft',item,'','primary',!!locked)+'</article>';
-  }).join('')+'</div>'+catalogPager(page,'data-workshop-page');
+  const heading='<header class="game-book-head"><h2>Xưởng máy</h2><span>Cấp '+farm.workshop+'</span></header>'+tabs;
+  if(!available.length)return '<section class="game-book workshop-book">'+heading+'<p class="stable-empty">Công cụ sẽ được triển khai sau.</p></section>'+orders;
+  const size=animalPickerSize()===4?3:6;
+  if(size!==workshopPageSize){workshopPage=Math.floor(workshopPage*workshopPageSize/size);workshopPageSize=size;}
+  const page=catalogPage(available,workshopPage,size);workshopPage=page.index;
+  return '<section class="game-book workshop-book">'+heading+'<div class="recipe-catalog">'+page.entries.map(([item])=>{
+    const view=recipeView(farm,item),art=itemIllustration(item)||'<span class="recipe-symbol">'+escape(goods[item].icon)+'</span>';
+    const action=view.locked?btn('Điều kiện','data-recipe-info="'+item+'"','recipe-locked-action'):act('Chế biến','craft',item,'','primary',!!view.reason);
+    return '<article class="recipe-slot" data-locked="'+view.locked+'" data-ready="'+(!view.reason)+'"><button class="recipe-info" data-recipe-info="'+item+'" aria-label="Xem công thức '+escape(goods[item].name)+'"><span class="recipe-status">'+view.label+(view.count?'<b class="coop-count ready" aria-label="Có thể chế biến '+view.count+' lần">'+view.count+'</b>':'')+'</span><span class="recipe-art" aria-hidden="true">'+art+'</span><strong>'+escape(goods[item].name)+'</strong><span class="recipe-owned"><span>Kho</span><b>'+view.owned+'</b></span></button>'+action+'</article>';
+  }).join('')+'</div><footer class="game-book-pager workshop-pages">'+btn('‹','data-workshop-page="'+(page.index-1)+'" aria-label="Trang công thức trước"','subtle',!page.index)+'<span>'+(page.index+1)+' / '+page.count+'</span>'+btn('›','data-workshop-page="'+(page.index+1)+'" aria-label="Trang công thức sau"','subtle',page.index===page.count-1)+'</footer></section>'+orders;
 }
 function showRecipeInfo(item){const recipe=recipes[item];if(!recipe)return;const reason=craftRequirement(state.me,item);modal('Công thức · '+escape(goods[item].name),'<p>'+escape(recipe.gain?recoveryText(recipe.gain):'Vật liệu dùng giao đơn hoặc nâng cấp.')+'</p><ul class="recipe-ingredients">'+Object.entries(recipe.ingredients).map(([key,count])=>'<li>'+itemLink(key)+'<strong>'+Math.min(count,state.me.inventory[key]??0)+' / '+count+'</strong></li>').join('')+'</ul>'+(reason?'<p>'+escape(reason)+'</p>':'')+unlockButton('recipe',item,'Điều kiện mở')+'<p class="care-note">Đóng để trở lại đúng trang công thức.</p>');}
 const recoveryText=gain=>Object.entries(gain).map(([key,value])=>'+'+value+' '+({stamina:'thể lực',water:'điểm nước',food:'điểm no'})[key]).join(' · ');
@@ -496,8 +500,9 @@ window.addEventListener('resize',()=>{
   if(animalPickerSize()!==animalPageSize)refreshAdoptionPicker();
   if(panel==='stock'&&animalPickerSize()!==stockPageSize)render();
   if(panel==='ponds')render();
+  if(tab==='workshop'&&(animalPickerSize()===4?3:6)!==workshopPageSize)render();
 });
-let workshopPage=0;const marketPages={stall:0,supplies:0,sales:0};
+let workshopPage=0,workshopPageSize=6;const marketPages={stall:0,supplies:0,sales:0};
 function catalogPager(view,attribute){return '<nav class="seed-pagination catalog-pagination" aria-label="Trang danh sách">'+btn('‹',attribute+'="'+(view.index-1)+'" aria-label="Trang trước"','subtle',!view.index)+'<span>'+(view.index+1)+' / '+view.count+'</span>'+btn('›',attribute+'="'+(view.index+1)+'" aria-label="Trang sau"','subtle',view.index===view.count-1)+'</nav>';}
 
 const coopViews=new Map();
