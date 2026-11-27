@@ -9,6 +9,8 @@ import {porchFrame,porchAtlas} from './pixel/frames.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
 import {driveItem} from './village-drive-view.mjs';
 import {driveResult} from './village-drive-history.mjs';
+import {driveMemory} from './drive-memory.mjs';
+import {fitGateName} from './neighbors-layout.mjs';
 import {coopPage} from './coop-view.mjs';
 import {cropImpacts} from './crop-impact.mjs';
 import {animalImpacts,animalOutlook,pondOutlook} from './husbandry-outlook.mjs';
@@ -1212,7 +1214,36 @@ function renderVillageDrive(farm,now){
   const pinned=chosen&&pinnedGoal.kind==='villageGoods'&&pinnedGoal.driveId===drive.id&&pinnedGoal.item===chosen.item;
   const controls=!ended&&chosen?.remaining?'<div class="drive-chosen"><div class="row"><strong>'+escape(goods[chosen.item].name)+'</strong><small>'+(chosen.maximum?'Góp tối đa '+chosen.maximum:'Chưa có hàng')+'</small></div><div class="actions">'+btn('Góp','data-village-goods="'+chosen.item+'"','primary',!chosen.maximum)+btn(pinned?'Bỏ ghim':'Ghim','data-drive-pin="'+chosen.item+'"','subtle')+btn('Cách có','data-drive-source="'+chosen.item+'"','subtle')+'</div></div>':chosen&&!ended?'<p class="care-note">Món này đã đủ. Chọn món khác để chuẩn bị.</p>':'';
   const personal=drive.mine.paid?'Đã nhận thưởng':drive.completed&&drive.mine.quantity>0&&drive.mine.quantity<drive.minimum?'Chưa đủ '+drive.minimum+' món để nhận thưởng':ended?'Đợt đã kết thúc':drive.mine.quantity<drive.minimum?'Còn '+(drive.minimum-drive.mine.quantity)+' để đủ mốc':'Đủ mốc cá nhân';
-  return '<section class="drive-paper" aria-label="Phiếu góp hàng"><header class="drive-paper-head"><h3>'+escape(drive.title)+'</h3><span class="drive-seal">'+delivered+'/'+total+'</span></header><span class="drive-scale">'+driveScaleLabel(drive)+'</span><p class="drive-deadline">'+(drive.completed?'Đã hoàn thành':ended?'Đã hết hạn':'Còn <span data-until="'+drive.endsAt+'">'+duration(drive.endsAt-now)+'</span> thực')+'</p><div class="drive-ingredients">'+rows+'</div>'+controls+'<footer class="drive-reward"><span>Bạn góp '+drive.mine.quantity+' · '+personal+'</span>'+btn('Quy mô & quà ›','data-drive-rules','subtle')+'</footer>'+(drive.mine.decorVoucher?btn('Trang trí vườn','data-garden-decor','subtle'):'')+'</section><div class="drive-people">'+btn('Người cùng góp','data-drive-people','subtle')+btn('Sổ góp hàng','data-drive-history','subtle')+'</div>';
+  return '<section class="drive-paper" aria-label="Phiếu góp hàng"><header class="drive-paper-head"><h3>'+escape(drive.title)+'</h3><span class="drive-seal">'+delivered+'/'+total+'</span></header><span class="drive-scale">'+driveScaleLabel(drive)+'</span><p class="drive-deadline">'+(drive.completed?'Đã hoàn thành':ended?'Đã hết hạn':'Còn <span data-until="'+drive.endsAt+'">'+duration(drive.endsAt-now)+'</span> thực')+'</p><div class="drive-ingredients">'+rows+'</div>'+controls+'<footer class="drive-reward"><span>Bạn góp '+drive.mine.quantity+' · '+personal+'</span>'+btn('Quy mô & quà ›','data-drive-rules','subtle')+'</footer>'+(drive.mine.decorVoucher?btn('Trang trí vườn','data-garden-decor','subtle'):'')+'</section><div class="drive-people">'+btn('Người cùng góp','data-drive-people','subtle')+btn('Sổ góp hàng','data-drive-history','subtle')+(drive.completed?btn('Trang kỷ niệm','data-drive-memory="current"','primary'):'')+'</div>';
+}
+let memoryId='current',memoryPage=0,memoryEntry=null;
+function showDriveMemory(id='current',page=0){
+  const entry=driveMemory(state?.villageDrive,id);
+  if(!entry){modal('Kỷ niệm góp hàng','<p>Đợt này chưa hoàn thành hoặc đã ra khỏi sổ sáu đợt gần nhất.</p>');return;}
+  memoryId=id;memoryEntry=entry;
+  const size=landscape.matches?4:6,view=catalogPage(entry.people,page,size);memoryPage=view.index;
+  const date=entry.at===null?'Đợt '+entry.id:new Date(entry.at*1000).toLocaleDateString('vi-VN');
+  const personal=entry.mine.paid?'Đã cộng '+entry.mine.coins+' xu · '+entry.mine.xp+' XP'+(entry.mine.decorVoucher?' · 1 phiếu':''):entry.mine.quantity?'Chưa đủ mốc '+entry.minimum+' món để nhận thưởng.':'Bạn chưa góp trong đợt này.';
+  modal('Kỷ niệm góp hàng','<section class="memory-book"><div class="memory-layout"><div class="memory-cover">'+gardenDecorIcon('lotusPot',state.me.porchTheme==='classic'?'north':state.me.porchTheme??'north')+'<small>Làng mình đã hoàn thành</small><h3>'+escape(entry.title)+'</h3><time>'+date+'</time><p>Bạn góp <b class="coop-count ready">'+entry.mine.quantity+'</b> món</p><small>'+personal+'</small></div><div class="memory-roll"><strong>Những người cùng góp</strong><div class="memory-people">'+view.entries.map((p,i)=>'<button type="button" class="memory-person" data-memory-person="'+(view.index*size+i)+'"><span title="'+escape(p.name)+'">'+escape(p.name)+'</span><small><b class="coop-count ready">'+p.quantity+'</b> món</small></button>').join('')+'</div>'+taskBookPager(view.index,view.count,'memory-page')+'</div></div><footer class="memory-actions">'+btn('Tạo ảnh kỷ niệm','data-memory-photo','primary')+(entry.mine.decorVoucher?btn('Trang trí vườn','data-garden-decor','subtle'):'')+btn('Đóng','data-close','subtle')+'</footer><p class="care-note">Chỉ ghi nhận · Không phát thưởng lại · Sổ giữ sáu đợt.</p></section>');
+  dialog.classList.add('game-management','farm-book-dialog','memory-dialog');
+}
+async function showMemoryPhoto(){
+  const entry=memoryEntry,origin=dialog.firstElementChild;if(!entry)return;
+  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=720;
+  const c=canvas.getContext('2d');c.fillStyle='#f5e5bf';c.fillRect(0,0,960,720);c.strokeStyle='#8c6943';c.lineWidth=6;c.strokeRect(16,16,928,688);
+  const text=(value,x,y,size=22,color='#493a29')=>{c.font=size+'px sans-serif';c.fillStyle=color;c.fillText(value,x,y);};
+  const fit=(value,maxWidth)=>fitGateName(value,t=>c.measureText(t).width,maxWidth);
+  c.textAlign='center';text('VƯỜN MÙA VUI',480,65,26,'#345a40');text('Cùng góp, cùng vui',480,111,32);
+  c.font='24px sans-serif';text(fit(entry.title,850),480,158,24);
+  text(entry.at===null?'Đợt '+entry.id:new Date(entry.at*1000).toLocaleDateString('vi-VN'),480,192,18);
+  const image=new Image();image.src=porchAtlas.source;
+  try{await image.decode();const frame=porchFrame('lotusPot',state.me.porchTheme==='classic'?'north':state.me.porchTheme??'north');c.imageSmoothingEnabled=false;c.drawImage(image,...frame,396,205,168,144);}catch{}
+  if(!dialog.open||!origin.isConnected)return;
+  c.textAlign='left';entry.people.forEach((p,i)=>{const x=i%2?495:65,y=375+Math.floor(i/2)*43;c.font='20px sans-serif';text(fit(p.name,280),x,y,20);text(p.quantity+' món',x+300,y,18);});
+  c.textAlign='center';text('Lưu kỷ niệm · Không có nội dung chat',480,671,17);
+  const url=canvas.toDataURL('image/png');
+  modal('Ảnh kỷ niệm','<img class="memory-photo" src="'+url+'" alt="Ảnh ghi nhận đợt góp hàng, có tên và số lượng của người góp"><div class="actions"><a class="btn primary" href="'+url+'" download="ky-niem-gop-hang-'+entry.id+'.png">Lưu ảnh PNG</a>'+btn('Quay lại','data-drive-memory="'+memoryId+'"','subtle')+'</div><p class="care-note">Nếu trình duyệt chưa hỗ trợ tải, nhấn giữ ảnh để lưu. Ảnh có tên người góp trong sổ.</p>');
+  dialog.classList.add('game-management','farm-book-dialog','memory-dialog');
 }
 function showDriveHistory(id){
   const entries=state?.villageDrive?.history??[];
@@ -1221,6 +1252,7 @@ function showDriveHistory(id){
   const date=new Date((entry.completedAt??entry.endsAt)*1000).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   const people=entry.contributors.map(p=>'<li><span>'+escape(p.name)+'</span><strong>'+p.quantity+' món</strong></li>').join('');
   modal('Sổ góp hàng','<section class="drive-history"><div class="animal-manage-hero"><div><strong>'+escape(entry.title)+'</strong><p>'+(entry.completedAt!==null?'Làng hoàn thành':'Hết hạn chưa đủ hàng')+' · '+date+'</p></div></div><dl class="animal-manage-facts"><div><dt>Bạn đã góp</dt><dd>'+entry.mine.quantity+' món</dd></div><div><dt>Kết quả cá nhân</dt><dd>'+result.label+'</dd></div></dl><p class="care-note">'+result.reason+'</p>'+(entry.mine.paid?'<p class="drive-history-reward">'+entry.mine.coins+' xu · '+entry.mine.xp+' XP'+(entry.mine.decorVoucher?' · 1 phiếu trang trí':'')+'</p>':'')+'<details class="panel-fold"><summary>Hàng làng đã góp</summary><ul class="recipe-ingredients">'+entry.items.map(row=>'<li><span>'+escape(goods[row.item].name)+'</span><strong>'+row.delivered+' / '+row.required+'</strong></li>').join('')+'</ul></details><details class="panel-fold"><summary>Người góp nhiều nhất · tối đa 12</summary>'+(people?'<ul class="recipe-ingredients">'+people+'</ul>':'<p>Chưa có đóng góp được ghi nhận.</p>')+'</details><footer class="game-book-pager history-pages">'+btn('‹','data-drive-history="'+(entries[index-1]?.id??'')+'" aria-label="Đợt mới hơn"','subtle',index===0)+'<span>'+(index+1)+' / '+entries.length+'</span>'+btn('›','data-drive-history="'+(entries[index+1]?.id??'')+'" aria-label="Đợt cũ hơn"','subtle',index===entries.length-1)+'</footer><p class="care-note">Sáu đợt gần nhất · Chỉ xem kết quả, không cần nhận thưởng lại.</p></section>');
+  if(entry.completedAt!==null)dialog.querySelector('.drive-history').insertAdjacentHTML('afterbegin',btn('Trang kỷ niệm','data-drive-memory="'+entry.id+'"','primary'));
   dialog.classList.add('game-management');
 }
 function animalProductIllustration(item){const kind=Object.keys(animals).find(k=>animals[k].product===item);return kind?animalIllustration(kind):'';}
@@ -1673,7 +1705,7 @@ function modal(title,html) {
   delete dialog.dataset.adoptionLot;
   recoveryKey=null;recoveryStamp='';
   delete dialog.dataset.recovery;
-  dialog.classList.remove('game-management','return-popup','farm-book-dialog','hire-dialog','recovery-dialog','decor-book-dialog','decor-preview-dialog');
+  dialog.classList.remove('game-management','return-popup','farm-book-dialog','hire-dialog','recovery-dialog','decor-book-dialog','decor-preview-dialog','memory-dialog');
   dialog.removeAttribute('aria-label');
   hideStockTooltip();
   dialog.innerHTML='<div class="row"><h2>'+title+'</h2>'+btn('✕','data-close aria-label="Đóng"','subtle')+'</div>'+html;
@@ -1989,6 +2021,11 @@ document.addEventListener('click',async e=>{
   else if('marketOrderPage' in d){marketOrderId=null;marketOrderPage=Number(d.marketOrderPage);render();}
   else if('driveSelect' in d){if(state?.villageDrive?.items.some(r=>r.item===d.driveSelect)){driveSelection={id:state.villageDrive.id,item:d.driveSelect};render();}}
   else if('driveRules' in d){if(state)showDriveRules();}
+  else if('driveMemory' in d)showDriveMemory(d.driveMemory);
+  else if('memoryPage' in d)showDriveMemory(memoryId,Number(d.memoryPage));
+  else if('memoryBack' in d)showDriveMemory(memoryId,memoryPage);
+  else if('memoryPerson' in d){const person=memoryEntry?.people[Number(d.memoryPerson)];if(person){modal('Người cùng góp','<p>'+escape(person.name)+'</p><p>Đã góp <b>'+person.quantity+'</b> món</p>'+btn('Quay lại','data-memory-back','primary'));dialog.classList.add('game-management','farm-book-dialog');}}
+  else if('memoryPhoto' in d)void showMemoryPhoto();
   else if('driveHistory' in d)showDriveHistory(d.driveHistory);
   else if('drivePeople' in d){if(state)showDrivePeople();}
   else if('orderPane' in d){if(['market','village'].includes(d.orderPane)){orderPane=d.orderPane;render();}}

@@ -563,7 +563,7 @@ function villageDriveSnapshot(room,farm,time){
   return {
     id:drive.id,title,version:drive.version??1,memberCount:drive.version>=2?drive.memberCount:null,endsAt:drive.id+driveDuration,completed:drive.completedAt!==undefined,
     items:Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
-    minimum:driveMinimum,rewardXp:driveXp,contributors:driveRanking(drive),previous:drive.previous,history:driveHistoryFor(room,farm),
+    minimum:driveMinimum,rewardXp:driveXp,completedAt:drive.completedAt??null,contributors:driveRanking(drive),previous:drive.previous,history:driveHistoryFor(room,farm),
     mine:{quantity:me?.quantity??0,coins:me?.quantity>=driveMinimum?driveReward(me.value):0,paid:!!me?.paid,decorVoucher:!!me?.decorVoucher},
   };
 }

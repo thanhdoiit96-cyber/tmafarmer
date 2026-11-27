@@ -1,0 +1,19 @@
+.memory-dialog{width:min(680px,calc(100vw - 18px))}
+.memory-layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr);gap:12px}
+.memory-cover{text-align:center;background:#eddbaf;border:1px solid #b69a65;border-radius:5px;padding:10px;color:#59432b;min-width:0}
+.memory-cover .garden-decor-icon{display:block;margin:0 auto 4px}
+.memory-cover h3{font:700 20px/1.25 Georgia,serif;margin:7px 0;color:#38543b;overflow-wrap:anywhere}
+.memory-cover small,.memory-cover time{display:block;font-size:11px;line-height:1.4}
+.memory-cover p{font-size:12px;margin:7px 0}
+.memory-roll{min-width:0}.memory-roll>strong{display:block;font-size:12px;margin-bottom:7px}
+.memory-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.memory-person{padding:8px 6px;min-width:0;border:1px solid #c9b17d;background:#fbefcf;border-radius:4px;text-align:left;color:#493a29;font-family:inherit;cursor:pointer}
+.memory-person:hover,.memory-person:focus-visible{background:#ead9aa;outline:2px solid #59734a;outline-offset:1px}
+.memory-person>span{display:block;font-size:11px;line-height:1.35;overflow-wrap:anywhere;min-height:30px}
+.memory-person small{display:block;font-size:10px;margin-top:4px}
+.memory-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.memory-actions .btn{font-size:11px;min-height:32px;padding:6px 9px}
+.memory-photo{display:block;max-width:100%;max-height:calc(100dvh - 175px);width:auto;height:auto;margin:auto;object-fit:contain}
+@media(orientation:landscape) and (max-height:600px){.memory-layout{gap:8px}.memory-cover{padding:6px}.memory-cover h3{font-size:16px;margin:4px 0}.memory-cover small,.memory-cover time{font-size:9px}.memory-cover p{margin:4px 0;font-size:10px}.memory-cover .garden-decor-icon{margin-bottom:0}.memory-person{padding:5px}.memory-person>span{font-size:10px;min-height:27px}.memory-person small{font-size:9px;margin-top:2px}.memory-roll>strong{font-size:11px;margin-bottom:5px}.memory-actions{margin-top:6px}.memory-dialog .care-note{font-size:9px;margin:6px 0}.memory-actions .btn{min-height:28px;padding:5px;font-size:10px}}
+@media(max-height:340px) and (orientation:landscape){.memory-cover h3{font-size:14px}.memory-cover .garden-decor-icon{display:none}.memory-person>span{max-height:27px;overflow:hidden}.memory-people{gap:4px}.memory-roll .task-book-pager{margin-top:4px}}
+@media(max-width:499px) and (orientation:portrait){.memory-layout{grid-template-columns:1fr}.memory-cover{padding:8px}}

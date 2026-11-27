@@ -44,3 +44,5 @@ Tắt hình mới bằng Mẫu hiện tại, cất bàn nếu cần; không xóa
 Ảnh thật: [Vườn nhà](assets/porch-three-regions-field-v1.png), [Hàng xóm](assets/porch-three-regions-neighbors-v1.png), [popup ngang thấp](assets/porch-regional-preview-568.png). Chỉ giữ hai ảnh Canvas và một popup; dọn profile QA/dist sau kiểm tra.
 
 Bước tiếp theo: P3.4 trang kỷ niệm từ kết quả góp hàng hiện có. Chưa bắt đầu; pilot chưa có dữ liệu, chưa mở thanh toán.
+
+Cập nhật tiếp nối: [P3.4 trang kỷ niệm V1](DRIVE_MEMORY_V1.md) đã hoàn thiện source. Pilot vẫn chưa có dữ liệu người chơi.
