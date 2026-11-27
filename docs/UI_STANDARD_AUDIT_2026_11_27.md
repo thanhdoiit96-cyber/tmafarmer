@@ -1,5 +1,7 @@
 # Rà soát UI theo chuẩn công cụ — 27/11/2026
 
+Sửa hồi quy ảnh Xưởng: công thức không có atlas riêng dùng lại `goods[item].icon`, bỏ fallback SVG `i-workshop` không tồn tại. Khung ảnh cố định 32px, icon 26px. Đã kiểm đủ 18 công thức qua mọi nhóm/trang ở desktop, ngang 844×390 và 568×320: không trống ảnh/đè tên, mở chi tiết nguyên liệu được; build đạt. [Desktop](assets/workshop-art-fixed-1100.png), [ngang](assets/workshop-art-fixed-844.png), [ngang thấp](assets/workshop-art-fixed-568.png). Không thay artwork hoặc công thức chế tạo.
+
 Áp dụng [GAME_UI_STANDARD.md](GAME_UI_STANDARD.md). Đợt này tập trung bộ chọn giống/vật nuôi và các danh mục công cụ dùng chung; không thay đổi giá, sức chứa, công thức chăm sóc hay dữ liệu lưu.
 
 ## Đã cập nhật

@@ -270,8 +270,7 @@ function renderWorkshop(farm){
   const page=catalogPage(available,workshopPage);workshopPage=page.index;
   return heading+'<div class="recipe-catalog">'+page.entries.map(([item,recipe])=>{
     const locked=craftRequirement(farm,item), owned=farm.inventory[item]??0;
-    const note=recipe.gain?recoveryText(recipe.gain):'Có trong kho: '+owned+' · Dùng giao đơn xưởng hoặc nâng cấp.';
-    return '<article class="recipe-slot"><button class="recipe-info" data-recipe-info="'+item+'" aria-label="Xem công thức '+escape(goods[item].name)+'"><span class="recipe-art" aria-hidden="true">'+(itemIllustration(item)||icon('workshop'))+'</span><strong>'+escape(goods[item].name)+'</strong><span class="recipe-owned">Kho <b>'+owned+'</b></span></button>'+act('Chế biến','craft',item,'','primary',!!locked)+'</article>';
+    return '<article class="recipe-slot"><button class="recipe-info" data-recipe-info="'+item+'" aria-label="Xem công thức '+escape(goods[item].name)+'"><span class="recipe-art" aria-hidden="true">'+(itemIllustration(item)||'<span class="recipe-symbol">'+escape(goods[item].icon)+'</span>')+'</span><strong>'+escape(goods[item].name)+'</strong><span class="recipe-owned">Kho <b>'+owned+'</b></span></button>'+act('Chế biến','craft',item,'','primary',!!locked)+'</article>';
   }).join('')+'</div>'+catalogPager(page,'data-workshop-page');
 }
 function showRecipeInfo(item){const recipe=recipes[item];if(!recipe)return;const reason=craftRequirement(state.me,item);modal('Công thức · '+escape(goods[item].name),'<p>'+escape(recipe.gain?recoveryText(recipe.gain):'Vật liệu dùng giao đơn hoặc nâng cấp.')+'</p><ul class="recipe-ingredients">'+Object.entries(recipe.ingredients).map(([key,count])=>'<li>'+itemLink(key)+'<strong>'+Math.min(count,state.me.inventory[key]??0)+' / '+count+'</strong></li>').join('')+'</ul>'+(reason?'<p>'+escape(reason)+'</p>':'')+unlockButton('recipe',item,'Điều kiện mở')+'<p class="care-note">Đóng để trở lại đúng trang công thức.</p>');}
