@@ -242,6 +242,19 @@ test('two guest sessions share durable D1-style state with atomic sales, presenc
     assert.equal(r.state.me.inventory.carrot,i===smallWinner?0:6);
   }
 
+  const agedSmall=JSON.parse(db.prepare('SELECT state FROM farm_rooms WHERE code=?').get(solo.code).state);
+  agedSmall.villageDrive.id-=48*3600;
+  const closedId=agedSmall.villageDrive.id;
+  db.prepare('UPDATE farm_rooms SET state=? WHERE code=?').run(JSON.stringify(agedSmall),solo.code);
+  const historyViews=await Promise.all([solo,partner].map(player=>api('state',null,player)));
+  for(const [i,r]of historyViews.entries()){
+    assert.equal(r.state.villageDrive.history.length,1);
+    assert.equal(r.state.villageDrive.history[0].id,closedId);
+    assert.equal(r.state.villageDrive.history[0].mine.paid,true);
+    assert.equal(r.state.me.coins,smallPaid[i].state.me.coins);
+    assert.equal(r.state.me.decorVouchers,1);
+  }
+
   const target=b.state.me.id;
   assert.equal((await send(c,'removeMember',{target})).status,403);
   assert.equal((await send(a,'removeMember',{target:a.state.me.id})).status,400);

@@ -856,6 +856,17 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
 .drive-reward{display:flex;align-items:center;justify-content:space-between;gap:4px;border-top:1px dashed #bea675;margin-top:9px;padding-top:7px;font-size:9px;color:#735a33}
 .panel-body .drive-reward .btn{font-size:9px;padding:3px 2px;min-height:30px;background:none;border:0;box-shadow:none;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .drive-people{text-align:center;margin-top:7px}.panel-body .drive-people .btn{font-size:10px;min-height:28px;padding:4px 8px;background:#ead7a6;color:#5b482c;border-color:#8f713f}
+.drive-people{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.history-pages{color:#60492b}.drive-history-reward{padding:7px;background:#e6ebce;border:1px solid #a3af79;border-radius:5px;color:#3c5c34;font-size:12px;font-weight:700}
+.drive-history .animal-manage-hero{min-height:0}.drive-history .recipe-ingredients li{gap:8px}
+@media(max-height:480px) and (orientation:landscape){
+ .drive-history .animal-manage-hero{padding:6px}.drive-history .animal-manage-hero strong{font-size:13px}
+ .drive-history .animal-manage-hero p{font-size:10px;margin:2px 0}
+ .drive-history .animal-manage-facts{margin:6px 0;gap:5px}.drive-history .animal-manage-facts div{padding:5px}
+ .drive-history .animal-manage-facts dt{font-size:10px}.drive-history .animal-manage-facts dd{font-size:11px;margin-top:2px}
+ .drive-history .panel-fold{padding:3px 6px}.drive-history .panel-fold summary{font-size:10px;padding:3px 0}
+ .drive-history .care-note{font-size:10px;margin:6px 0}.drive-history .history-pages{margin-top:5px}
+}
 .order-book .market-banner h2{font-size:17px}.order-book .market-banner p{font-size:10px}
 .order-book .order-ticket{border-color:#c2a368;background:#f8edcd;box-shadow:0 2px #876b4266}
 .order-book .order-preview{font-size:10px}.order-book .order-preview .btn{font-size:10px;min-height:30px}

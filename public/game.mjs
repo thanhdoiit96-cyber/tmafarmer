@@ -3,6 +3,7 @@ import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './well
 import {parcelCoopUpgrade,coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {driveTemplates,driveNeeds,scaleDriveNeeds} from './village-drive-demand.mjs';
+import {archiveDrive,driveHistoryFor} from './village-drive-history.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
 import {farmRanks} from './progression-levels.mjs';
 import {helpDay,lakeDay,fishBook,fishBookComplete,recordLakeCatch,shoreWork} from './lake-social.mjs';
@@ -547,6 +548,7 @@ export function advanceVillageDrive(room,time){
   const previous=current?{
     title:driveTemplates[current.template].title,completed:current.completedAt!==undefined,top:driveRanking(current)[0]??null
   }:null;
+  if(current)archiveDrive(room,current,{duration:driveDuration,minimum:driveMinimum,rewardXp:driveXp});
   room.villageDrive={id:current?current.id+steps*driveDuration:time,template,version:2,memberCount:farms.length,
     needs:scaleDriveNeeds(driveTemplates[template].needs,farms.length),delivered:{},contributors:{},previous};
   return true;
@@ -560,7 +562,7 @@ function villageDriveSnapshot(room,farm,time){
   return {
     id:drive.id,title,version:drive.version??1,memberCount:drive.version>=2?drive.memberCount:null,endsAt:drive.id+driveDuration,completed:drive.completedAt!==undefined,
     items:Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
-    minimum:driveMinimum,rewardXp:driveXp,contributors:driveRanking(drive),previous:drive.previous,
+    minimum:driveMinimum,rewardXp:driveXp,contributors:driveRanking(drive),previous:drive.previous,history:driveHistoryFor(room,farm),
     mine:{quantity:me?.quantity??0,coins:me?.quantity>=driveMinimum?driveReward(me.value):0,paid:!!me?.paid,decorVoucher:!!me?.decorVoucher},
   };
 }
@@ -592,6 +594,8 @@ function donateVillageGoods(room,farm,input,time){
     member.decorVouchers=(member.decorVouchers??0)+1;
     contribution.decorVoucher=true;
     contribution.paid=true;
+    contribution.coins=coins;
+    contribution.rewardXp=driveXp;
     record(member,time,'Hoàn thành đơn góp hàng · +'+coins+' xu · +'+driveXp+' XP · +1 phiếu trang trí.');
   }
   return entry.paid?'Làng đã góp đủ hàng. Bạn nhận '+driveReward(entry.value)+' xu, '+driveXp+' XP và 1 phiếu trang trí.':'Làng đã góp đủ hàng.';
