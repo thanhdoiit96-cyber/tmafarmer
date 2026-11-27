@@ -964,13 +964,14 @@ function critter(c,a,t){
   const x=snapPixel(a.x+(motion.offset??0)),y=snapPixel(a.y);
   const [sx,sy,sw,sh]=additionalFrame??livestockFrame??frames[visual];
   const poses=additionalLivestockAtlas.poses[visual]??progressionLivestockAtlas.poses[visual];
+  const sourceFacing=additionalLivestockAtlas.sourceFacing?.[visual]??progressionLivestockAtlas.sourceFacing?.[visual]??livestockAtlas.sourceFacing?.[visual]??1;
   if(poses){
     const [px,py,pw,ph]=poses[animalPose(motion,large?9:7.5)];
     const bob=walking?Math.abs(step)*.35*size:Math.sin((foraging?motion.elapsed:t)*2.2+index)*.22*size;
     shade(c,x,y,w*.48,walking?3.2:3.8);
     c.save();
     c.translate(x,y);
-    if(spriteFlip(motion.facing,1))c.scale(-1,1);
+    if(spriteFlip(motion.facing,sourceFacing))c.scale(-1,1);
     c.drawImage(art,px,py,pw,ph,-w/2,snapPixel(-h-bob),w,h);
     c.restore();
     return;
@@ -981,7 +982,7 @@ function critter(c,a,t){
   shade(c,x,y,w*.48,walking?3.2:3.8);
   c.save();
   c.translate(x,y);
-  if(spriteFlip(motion.facing,1))c.scale(-1,1);
+  if(spriteFlip(motion.facing,sourceFacing))c.scale(-1,1);
   if(rabbit&&walking){
     const hop=Math.max(0,Math.sin(phase))*3.5*size;
     c.drawImage(art,sx,sy,sw,sh,-w/2,snapPixel(-h-hop),w,h);

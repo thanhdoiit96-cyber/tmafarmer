@@ -2,11 +2,30 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createCoopHerd} from '../public/coop-motion.mjs';
 import {coopPosition,coopAnimalScale,coopYards} from '../public/coop-layout.mjs';
+import {additionalLivestockAtlas} from '../public/pixel/frames.mjs';
+import {spriteFlip} from '../public/world-motion.mjs';
 
 const actors=(kind='buffalo',count=16)=>Array.from({length:count},(_,index)=>({
   ...coopPosition(index),type:'animal',index,visualScale:coopAnimalScale(kind),data:{id:index,kind},
 }));
 const snap=n=>Math.round(n/.75)*.75;
+
+test('pig and duck authored left-facing poses turn toward the actual horizontal stroll',()=>{
+  for(const kind of ['pig','duck']){
+    const source=additionalLivestockAtlas.sourceFacing[kind];assert.equal(source,-1);
+    const herd=createCoopHerd(),input=actors(kind,2),seen=new Set();let previous;
+    for(let step=0;step<1600;step++){
+      const output=herd.update(input,step/20);
+      if(previous)output.forEach((a,i)=>{
+        const dx=a.x-previous[i].x;if(Math.abs(dx)<.0001)return;
+        const heading=spriteFlip(a.motion.facing,source)?-source:source;
+        assert.equal(heading,Math.sign(dx));seen.add(heading);
+      });
+      previous=output;
+    }
+    assert.deepEqual([...seen].sort(),[-1,1]);
+  }
+});
 
 test('full coop animals stroll across the yard without leaving it or overlapping rendered bodies',()=>{
   for(const [kind,width,height,speed] of [['buffalo',47,33,10],['quail',23,21,14]]){

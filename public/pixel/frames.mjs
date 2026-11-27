@@ -51,6 +51,7 @@ export const progressionLivestockAtlas={
 };
 export const additionalLivestockAtlas={
   source:'/pixel/additional-livestock-v1.png',columns:2,rows:4,cellWidth:56,cellHeight:48,
+  sourceFacing:{pig:-1,duck:-1},
   frames:Object.fromEntries(Object.entries(additionalLivestockFrames).map(([kind,poses])=>[kind,poses.idle])),
   poses:additionalLivestockFrames,
 };

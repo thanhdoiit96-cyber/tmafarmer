@@ -1,5 +1,9 @@
 # Kế hoạch chuyển đổi Pixel Art
 
+### 27/11/2026 — Sửa hướng chuyển động heo/vịt
+
+Atlas `additional-livestock-v1.png` có đầu heo/vịt quay trái ở cả bốn pose, nhưng bộ vẽ mặc định ảnh gốc quay phải. Thêm metadata `sourceFacing` cho hai loài và cho `critter()` dùng hướng gốc của từng atlas khi lật sprite. Giữ nguyên hình, tốc độ, đường đi, kích thước và dữ liệu nuôi. Đã kiểm Canvas thật: idle, walkA, walkB, feed với trái/phải ([đối chiếu](assets/pig-facing-fix-v1.png)); kiểm thử đàn đi cả hai hướng, 215 test và build/asset audit đạt.
+
 ### Ao làng: tỉ lệ và chòi giữa sân V3
 
 26/11/2026: dùng lại artwork đã có, khôi phục tỉ lệ render chung, chuyển chòi/Ông Sáu lên sân đá giữa bờ nam; đồng bộ hitbox, tiếp cận và viewport ngang. Không thêm PNG. Canvas desktop và chạm 844×390/568×320 đã kiểm tra; 192 tests/build đạt. Xem [chi tiết V3](LAKE_LAYOUT_SCALE_V3.md).
