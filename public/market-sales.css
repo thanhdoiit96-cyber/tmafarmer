@@ -1,41 +1,26 @@
-﻿/* Six sale slots; widen this book rather than shrinking artwork and names. */
-.layout[data-quick-sales]{grid-template-columns:minmax(0,1fr) 480px}
-.market-sales-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-.market-sale-card{min-width:0;padding:6px;border:2px solid #ae8c54;border-radius:6px;background:#f4e7c4;box-shadow:inset 0 0 0 1px #fff4d8,0 2px #80613d;display:flex;flex-direction:column;gap:5px;color:#493b29}
-.panel-body .market-sale-info.btn{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;border:0;background:none;box-shadow:none;color:#493b29;padding:0;min-height:0}
-.market-sale-art{display:grid;place-items:center;width:100%;height:48px;flex:none}
-.market-sale-art .animal-icon{margin:0;flex:none}.market-sale-art .crop-item-icon{margin:0;transform:scale(2)}.market-sale-art .recipe-symbol{font-size:38px;line-height:1}
-.market-sale-info strong{font-size:12px;line-height:15px;min-height:30px;white-space:normal;overflow-wrap:anywhere;text-align:center;width:100%}
-.market-sale-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:3px}
-.market-sale-owned{display:flex;align-items:center;gap:3px;font-size:10px;min-height:19px}.market-sale-owned .coop-count{margin:0;font-size:11px;min-width:20px;text-align:center}.market-sale-owned small{display:none}
-.market-sale-price{display:flex;align-items:baseline;gap:3px;color:#795b2d;font-size:10px}.market-sale-price b{font-size:12px}.market-sale-price span{font-size:9px}
-.market-sale-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:auto}.panel-body .market-sale-actions .btn{min-height:32px;padding:4px 2px;font-size:10px;white-space:normal;border-radius:4px}
-.market-sales-book .task-book-pager{margin-top:7px;color:#fff0cd}.market-sales-grid>p{grid-column:1/-1}
-#market-sales h2{font-size:17px;line-height:1.2;margin:0}#market-sales>.row{margin-bottom:4px}#market-sales .market-search{margin:4px 0}#market-sales .market-search input{min-height:31px;padding:5px 7px}.panel-body:has(#market-sales) .market-tabs .btn{min-height:30px;padding-block:4px;font-size:10px;line-height:1.25}
-@media(max-width:760px) and (min-height:601px){.layout[data-quick-sales]{grid-template-columns:1fr}}
+﻿/* Approved compact cards: art/name, stock/price, then two sale actions. */
+.market-sales-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.market-sale-card{min-width:0;padding:4px;border:2px solid #ae8c54;border-radius:6px;background:#f4e7c4;box-shadow:inset 0 0 0 1px #fff4d8,0 2px #80613d;display:flex;flex-direction:column;gap:3px;color:#493b29}
+.panel-body .market-sale-info.btn{display:flex;align-items:center;gap:5px;width:100%;min-width:0;min-height:36px;border:0;background:none;box-shadow:none;color:inherit;padding:0}
+.market-sale-art{display:grid;place-items:center;width:34px;height:36px;flex:none}
+.market-sale-art .animal-icon{margin:0;flex:none;transform:scale(.7);transform-origin:center}.market-sale-art .crop-item-icon{margin:0;transform:scale(1.333333);transform-origin:center}.market-sale-art .recipe-symbol{font-size:24px;line-height:1}
+.market-sale-info strong{min-width:0;flex:1;margin:0;font-size:10px;line-height:13px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.market-sale-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px;min-width:0}
+.market-sale-owned{display:flex;align-items:center;gap:3px;font-size:9px;min-height:18px}.market-sale-owned .coop-count{margin:0;font-size:10px;min-width:19px;text-align:center}.market-sale-owned small{display:none}
+.market-sale-price{display:flex;align-items:baseline;gap:2px;color:#795b2d;line-height:13px}.market-sale-price b{font-size:11px}.market-sale-price span{font-size:8px}
+.market-sale-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:auto;min-width:0}.panel-body .market-sale-actions .btn{min-width:0;min-height:28px;padding:4px 1px;font-size:10px;line-height:13px;white-space:normal;border-radius:4px;overflow:visible;text-overflow:clip}
+.market-sales-book .task-book-pager{margin-top:6px;color:#fff0cd}.market-sales-grid>p{grid-column:1/-1}
+#market-sales>.row{display:none}#market-sales .market-search{margin:3px 0}#market-sales .market-search input{min-height:31px;padding:5px 7px}.panel-body:has(#market-sales) .market-tabs .btn{min-height:30px;padding-block:4px;font-size:10px;line-height:1.25}
 @media(orientation:landscape) and (min-width:500px) and (max-width:1100px) and (max-height:600px){
- .layout[data-quick-sales][data-panel-open] .control-panel{width:min(540px,82vw)}
- .layout[data-quick-sales][data-panel-open] .world-hud,.layout[data-quick-sales][data-panel-open] .world-footer{right:calc(min(540px,82vw) + env(safe-area-inset-right,0px) + 6px)}
- #market-sales>.row{display:none}.market-sales-book{padding:4px}.market-sale-card{padding:4px;gap:3px}.market-sales-grid{gap:5px}
- .panel-body .market-sale-info.btn{flex-direction:row;gap:5px;min-height:44px}.market-sale-info .market-sale-art{width:44px;height:44px}.market-sale-info strong{font-size:11px;line-height:14px;min-height:0;width:auto;flex:1;text-align:left}
- .market-sale-art .crop-item-icon{transform:scale(1.75)}.market-sale-art .recipe-symbol{font-size:34px}.market-sale-meta{gap:2px}.market-sale-owned{font-size:9px;min-height:17px}.market-sale-price b{font-size:11px}.market-sale-price span{font-size:8px}
- .panel-body .market-sale-actions .btn{min-height:28px;padding:3px 1px}.market-sales-book .task-book-pager{margin-top:4px}
+ .layout[data-quick-sales] .panel-subtabs{display:none}.market-sales-book{padding:4px;margin-bottom:0}.market-sales-grid{gap:5px}
+ .market-sale-art{width:38px;height:38px}.panel-body .market-sale-info.btn{min-height:38px}.market-sale-card{padding:4px;gap:3px}.panel-body .market-sale-actions .btn{min-height:30px}
+ .market-sales-book .task-book-pager .btn{min-height:30px}
 }
 @media(orientation:landscape) and (max-height:340px){
- .layout[data-quick-sales] .panel-body{padding:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
- #market-sales .market-search{margin:2px 0}.market-sale-card{gap:2px;padding:3px}.market-sales-grid{gap:4px}
- .market-sale-info .market-sale-art{width:38px;height:38px}.panel-body .market-sale-info.btn{min-height:38px;gap:3px}.market-sale-art .crop-item-icon{transform:scale(1.5)}
- .market-sale-info strong{font-size:10px;line-height:12px}.market-sale-meta{gap:1px}.market-sale-owned{min-height:15px}.market-sale-owned .coop-count{font-size:10px}.market-sale-price b{font-size:10px}
- .panel-body .market-sale-actions .btn{min-height:26px;font-size:9px}.market-sales-book .task-book-pager .btn{min-height:25px}.market-sales-book .task-book-pager{margin-top:3px}
+ .market-sale-art{width:34px;height:36px}.panel-body .market-sale-info.btn{gap:4px}.market-sale-info strong{font-size:10px;line-height:13px}
+ .market-sale-actions{gap:3px}.panel-body .market-sale-actions .btn{font-size:9px;min-height:32px}.market-sales-book .task-book-pager .btn{min-height:30px}#market-sales .market-search{margin:2px 0}
 }
-@media(min-height:601px){.layout[data-quick-sales] .control-panel{max-height:calc(100dvh - 170px);min-height:min(590px,calc(100dvh - 170px))}}
-@media(orientation:landscape) and (min-width:500px) and (max-width:1100px) and (max-height:600px){
- .layout[data-quick-sales] .panel-subtabs{display:none}
- .market-sale-card{padding:3px;gap:2px}.panel-body .market-sale-info.btn{min-height:38px}.market-sale-info .market-sale-art{height:38px;width:42px}
+
+@media(orientation:landscape) and (min-width:500px) and (max-width:1100px) and (min-height:341px) and (max-height:600px){
+ .market-sale-art{height:36px}.panel-body .market-sale-info.btn{min-height:36px}.market-sales-book .task-book-pager{margin-top:3px}.market-sales-grid{gap:4px}
 }
-@media(orientation:landscape) and (min-width:500px) and (max-height:340px){
- .layout[data-quick-sales] #panel-nav{display:none}.layout[data-quick-sales] .panel-navigation{height:0;min-height:0;border:0;overflow:visible}
- .layout[data-quick-sales] .market-tabs{padding-right:44px}.layout[data-quick-sales] .panel-close{top:2px;z-index:2}
- .layout[data-quick-sales][data-panel-open] .control-panel{width:calc(100% - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))}
-}
-@media(orientation:landscape) and (min-width:500px) and (max-height:340px){.market-sales-book{margin-bottom:0}.layout[data-quick-sales] #market-results{margin-top:3px}}

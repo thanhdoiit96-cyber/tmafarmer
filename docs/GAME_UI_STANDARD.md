@@ -6,6 +6,8 @@ Ngày chốt: 27/11/2026. Áp dụng cho tính năng mới và các lần sửa 
 
 Các bảng chọn giống, vật nuôi, chăm sóc, kho/túi, cửa hàng, đơn hàng, vật phẩm và công thức ưu tiên **lưới item có phân trang**. Không nối danh sách dài xuống dưới hoặc dùng cuộn vô hạn làm cách duyệt chính.
 
+Theo phản hồi tiếp theo của người dùng, **Bán nhanh được phép dùng danh sách dọc có phân trang** để dành đủ chiều ngang cho ảnh, tên và thao tác bán. Lưới là ưu tiên, không phải ràng buộc bắt buộc khi làm giảm tính dễ dùng. Danh sách vẫn giữ phân trang ở dưới, tách tên/số lượng/giá, mật độ vừa khung và không cuộn dài làm cách duyệt chính.
+
 - Mỗi item ưu tiên hình minh họa, tên, một trạng thái/số lượng chính và hành động cần dùng. Chạm/click hình hoặc nút thông tin để mở chi tiết; không nhét toàn bộ mô tả, công thức và điều kiện vào từng ô.
 - Hiện trang hiện tại/tổng trang, nút trước/sau rõ và vô hiệu đúng ở hai đầu. Lọc hoặc đổi nhóm thì về trang đầu; dữ liệu cập nhật không tự đưa người chơi về trang đầu.
 - Đặt phân trang **dưới lưới**, dùng mẫu mũi tên trước/sau và số trang như Sổ chuồng. Giữ đồng nhất trong Kho, bộ chọn và các sổ chăm sóc; không đặt phân trang xen giữa bộ lọc và item.

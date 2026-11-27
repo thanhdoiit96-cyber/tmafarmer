@@ -636,7 +636,7 @@ function renderMarketResults(farm,pane){
       return '<article class="market-catalog-slot"><div>'+itemLink(key)+'</div><span class="catalog-stock">Túi <b>'+count+'</b></span>'+(locked?(itemUnlockTarget(key)?unlockButton(itemUnlockTarget(key).type,itemUnlockTarget(key).key,'Điều kiện'):'<span>Khóa</span>'):btn('Mua · '+goods[key].buy+' xu','data-shop="'+key+'"','subtle',farm.coins<goods[key].buy||count>=supplyLimit))+'</article>';
     }).join('')||empty)+'</div>'+catalogPager(page,'data-market-catalog-page');
   }
-  const size=6;
+  const size=landscape.matches&&innerHeight<=340?2:4;
   if(size!==marketSalesSize)marketPages.sales=Math.floor(marketPages.sales*marketSalesSize/size);
   marketSalesSize=size;
   const page=catalogPage(Object.keys(goods).filter(key=>matches(key)&&goods[key].sell&&farm.inventory[key]),marketPages.sales,size);marketPages.sales=page.index;
@@ -645,7 +645,7 @@ function renderMarketResults(farm,pane){
     const price=goods[key].sell;
     return '<article class="market-sale-card">'+btn('<span class="market-sale-art">'+saleIllustration(key)+'</span><strong>'+escape(goods[key].name)+'</strong>','data-item-info="'+key+'" aria-label="Chi tiết '+escape(goods[key].name)+'"','market-sale-info')+
       '<div class="market-sale-meta"><div class="market-sale-owned"><span>Kho</span><b class="coop-count ready">'+count+'</b><small>món</small></div><div class="market-sale-price"><b>'+price+'</b><span>xu/món</span></div></div><div class="market-sale-actions">'+
-      btn('Bán…','data-sell="'+key+'" aria-label="Chọn số lượng bán '+escape(goods[key].name)+'"','primary')+btn('Bán hết','data-sell-all="'+key+'" aria-label="Bán hết '+escape(goods[key].name)+'"','gold')+'</div></article>';
+      btn('Bán','data-sell="'+key+'" aria-label="Chọn số lượng bán '+escape(goods[key].name)+'"','primary')+btn('Bán hết','data-sell-all="'+key+'" aria-label="Bán hết '+escape(goods[key].name)+'"','gold')+'</div></article>';
   }).join('')||(query?empty:'<p class="stable-empty">Thu hoạch nông sản để bán lấy xu.</p>'))+'</div>'+taskBookPager(page.index,page.count,'market-catalog-page')+'</section>';
 }
 function saleIllustration(item){return itemIllustration(item)||animalProductIllustration(item)||'<span class="recipe-symbol" aria-hidden="true">'+goods[item].icon+'</span>';}

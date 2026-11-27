@@ -10,8 +10,8 @@ Bản cũ có lưới/phân trang nhưng vẫn dùng `itemLink()` trong thẻ da
 
 - Khung sách giấy/gỗ theo các bảng đã duyệt. Mỗi ô tách hình, tên tự xuống dòng và không cắt chữ, lượng Kho có badge xanh và đơn giá xu/món. Nút Bán mở chọn số lượng; Bán hết giữ bước xác nhận hiện có.
 - Cây trồng dùng frame trưởng thành từ `itemIllustration()`; thủy sản dùng atlas có sẵn; sản phẩm vật nuôi dùng `animalProductIllustration()`/sprite cùng loài như các bảng liên quan. Không vẽ lại hoặc sửa atlas.
-- Cập nhật theo yêu cầu: **6 món/trang, lưới 3×2** ở desktop và mobile ngang. Bảng Bán nhanh rộng 480px trên desktop, tối đa 540px trên mobile ngang; ảnh cây 48px trên desktop, 42px ở 844 ngang và 36px ở 568 ngang. Chỉ mở rộng bảng khi đang ở Bán nhanh, không thay kích thước bảng khác.
-- Mobile đặt hình và tên cạnh nhau. 844 ngang thu gọn hàng điều hướng phụ; màn hình thấp 568 ngang mở bảng gần hết chiều rộng và ẩn điều hướng Công cụ trong lúc mở bảng, giữ các thẻ chợ và nút đóng. Đóng bảng để trở lại map/điều hướng chung. Không bỏ ô tìm kiếm, đơn giá hay nút xác nhận.
+- Điều chỉnh sau phản hồi bảng quá to: bỏ toàn bộ chiều rộng/chiều cao riêng, dùng đúng khung Công cụ chung. Lưới hai cột; desktop và mobile ngang 844 hiển thị 4 món/trang, mobile ngang thấp đến 340px hiển thị 2. Ưu tiên tên đầy đủ và nút vừa khung thay vì phóng to cửa sổ để cố giữ 6 món.
+- Lựa chọn cuối của người dùng: dùng lại bố cục ô trong ảnh `quick-sales-live-1440.png`, không tích hợp prototype danh sách V3 hoặc khay V2. Ảnh bên trái và tên bên phải; hàng Kho/đơn giá tách riêng; hàng cuối có hai nút **Bán** / Bán hết. Bỏ ký tự ba chấm ở nhãn Bán. Tên dài xuống dòng đầy đủ, không line-clamp. Mobile ngang thu gọn hàng điều hướng phụ, giữ hàng điều hướng chính và nút đóng. Không bỏ ô tìm kiếm, đơn giá hay bước xác nhận.
 - Phân trang ở dưới; polling giữ trang, lọc tìm kiếm về đầu, item hết thì trang được kẹp hợp lệ. Không dùng chiều cao cố định hay line-clamp cho tên; ảnh và tên có vùng riêng.
 
 ## Mỹ thuật chưa hoàn tất
@@ -26,4 +26,4 @@ Không lấy hình nguyên liệu để giả làm hình món chế biến, khô
 
 Ảnh runtime: [desktop](assets/quick-sales-live-1100.png), [844 ngang](assets/quick-sales-live-844.png), [568 ngang](assets/quick-sales-live-568.png), [sản phẩm vật nuôi](assets/quick-sales-animal-live-844.png).
 
-Kiểm chứng bản 6 món: production build đạt; kiểm tra Edge tại cả ba kích thước trên, duyệt toàn bộ trang sản phẩm và xác nhận tên không bị cắt, danh sách/phân trang không cần cuộn. Kiểm tra lại tìm kiếm, giữ trang qua polling, bán đúng số lượng/giá và xác nhận bán hết đều đạt. Đây là kiểm tra Chromium mô phỏng kích thước, chưa phải Safari/Android thật.
+Kiểm chứng bản ô đã chọn: đo cả kích thước sprite sau transform, không chỉ khung chứa ảnh; thu icon tạm của món chế biến về 24px để không tràn sang tên. Kiểm tra nhãn Bán không có ba chấm, nút trong thẻ, tên không bị cắt, các trang và giao dịch demo. Ảnh runtime phía trên cập nhật theo lần lựa chọn này. Đây là Chromium mô phỏng kích thước, chưa phải Safari/Android thật.
