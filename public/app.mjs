@@ -1,4 +1,5 @@
 import {createActionFeedback,requestTiming} from './action-feedback.mjs';
+import {createNotices} from './notices.mjs';
 import {recipeView} from './recipe-view.mjs';
 import {catalogPage} from './ui-catalog.mjs';
 import {installScrollIndicators} from './scroll-indicators.mjs';
@@ -36,6 +37,7 @@ import {advanceGardenHelpers, advanceVillage, advanceVillageDrive, animalConditi
 installScrollIndicators();
 const $=selector=>document.querySelector(selector);
 const actionFeedback=createActionFeedback($('[data-action-feedback]'));
+const notices=createNotices($('#toast'));
 window.farmActionDiagnostics=Object.freeze({recent:actionFeedback.recent,clear:actionFeedback.clear});
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={
@@ -57,7 +59,7 @@ const tabs={
 let session=store.read(sessionKey);
 let accountSession=store.read(accountKey);
 let demo;
-let state, tab='field', selected=0, neighborId, busy=false, toastTimer, inviteCode='';
+let state, tab='field', selected=0, neighborId, busy=false, inviteCode='';
 let lakeTab='fishing',helpPage=0,prankPage=0,lastShorePulse=0;
 let visitPane='take',visitSource='garden',visitTakePage=0;
 let revision=-1, receivedAt=Date.now(), villagePage=0, panel='area', orderPane='village', marketPane='orders', pondTab=0, selectedLot=0, plotGroup=-1, visitPond=0, baseDecorOpen=false, showTomorrow=false;
@@ -79,6 +81,9 @@ const worldHud=$('.world-hud'), statusHud=$('.status-hud'), statusSlot=$('#statu
 function placeStatus(){
   if(landscape.matches)worldHud.insertBefore(statusHud,$('#world-weather'));
   else statusSlot.append(statusHud);
+  const dock=$('.world-notices');
+  if(landscape.matches)worldHud.append(dock);
+  else $('.world-footer').prepend(dock);
 }
 placeStatus();
 landscape.addEventListener('change',placeStatus);
@@ -234,11 +239,7 @@ async function apiAccount(path,payload,credentials) {
   return result;
 }
 function showToast(message,error=false) {
-  const toast=$('#toast');
-  toast.textContent=message;
-  toast.className='show'+(error?' error':'');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>toast.className='',4200);
+  notices.show(message,error);
 }
 function boardBar(name,right='') {
   return '<div class="board-bar"><span class="label board-title">'+name+'</span><span class="label">'+right+'</span></div>';
@@ -869,14 +870,14 @@ function renderHome(farm,now){
   return '<section class="home-guide"><div><h2>Chỗ nghỉ</h2><p>'+status+'</p></div>'+
     '<div class="actions">'+btn('Nghỉ ngay','data-recover="rest"','primary',resting||health.stamina>=100)+btn('Ra vườn','data-home-exit','subtle')+'</div></section>'+renderJournal(farm);
 }
-function gardenHelperStatus(farm,now){
+function gardenHelperStatus(farm,now,withWatch=true){
   const job=farm.gardenHelperJob, report=farm.gardenHelperReport;
   if(job){
     const completed=job.processed-job.skipped;
     const work=job.action==='water'?'tưới cây':'thu hoạch';
     return '<div class="helper-status" data-helper-active><strong>'+gardenHelperName+' đang '+work+(job.keepSeeds?' · Giữ giống':'')+'</strong>'+
       '<p>Đã làm '+completed+'/'+job.steps.length+' ô'+(job.skipped?' · Bỏ qua '+job.skipped:'')+
-      ' · Còn <span data-until="'+job.endsAt+'">'+duration(job.endsAt-now)+'</span></p></div>';
+      ' · Còn <span data-until="'+job.endsAt+'">'+duration(job.endsAt-now)+'</span></p>'+(withWatch?btn('Xem '+gardenHelperName+' ›','data-watch-helper','primary'):'')+'</div>';
   }
   if(!report)return '';
   const work=report.action==='water'?'tưới':'thu hoạch';
@@ -907,7 +908,7 @@ function renderTasks(farm,now){
       (groups.length?'<div class="task-book-grid">'+page.entries.map(group=>'<button type="button" class="task-book-task" data-task-group="'+escape(group.key)+'"><span class="task-book-symbol">'+(group.icon?careIcon(group.icon):icon('fish'))+'</span><span><strong>'+escape(group.title)+'</strong><small>'+(group.title==='Cuốc đất'?'ô đất':group.unit)+'</small></span><span class="coop-count '+(group.type==='ready'?'ready':'hungry')+'">'+group.tasks.length+'</span></button>').join('')+'</div>'+taskBookPager(page.index,page.count,'task-book-page'):'<p class="care-note">Vườn đang ổn. Dạo hồ hoặc sang chợ nhé!</p>');
   }
   const counts=Object.entries(gardenHelperActions).map(([action,info])=>{const n=gardenHelperTargets(farm,action,state.weather,now).length;return '<small>'+(action==='water'?'Tưới':'Thu hoạch')+' <b class="coop-count '+(action==='water'?'hungry':'ready')+'">'+n+'</b> ô · '+info.fee+' xu/ô</small>';}).join('');
-  const quick='<section class="task-book-hire"><div><strong>Nhờ '+gardenHelperName+' chăm vườn</strong>'+counts+'</div>'+btn(farm.gardenHelperJob?'Đang chăm vườn':'Thuê chăm vườn ›','data-hire-menu','primary',!!farm.gardenHelperJob)+'</section>'+gardenHelperStatus(farm,now);
+  const quick='<section class="task-book-hire"><div><strong>Nhờ '+gardenHelperName+' chăm vườn</strong>'+(farm.gardenHelperJob?'<small>Đang '+(farm.gardenHelperJob.action==='water'?'tưới cây':'thu hoạch')+'</small>':counts)+'</div>'+btn(farm.gardenHelperJob?'Xem '+gardenHelperName+' ›':'Thuê chăm vườn ›',farm.gardenHelperJob?'data-watch-helper':'data-hire-menu','primary')+'</section>'+gardenHelperStatus(farm,now,false);
   return '<section class="task-book">'+header+'<div class="task-book-page">'+list+quick+'</div></section>';
 }
 function showHireMenu(){
@@ -1087,7 +1088,7 @@ function showRecovery(key,{preserve=false}={}){
     const action=key==='stamina'?(tab==='home'?'data-recover="rest"':'data-rest-home'):
       blockedLocation?'data-recovery-place="'+key+'"':'data-recover="'+info.action+'"';
     const label=resting?'Đang nghỉ · <span data-rest-countdown data-until="'+health.restUntil+'">'+duration(health.restUntil-now)+'</span>':full?'Đã đầy':remaining?'Dùng lại sau · <span data-until="'+health.until[key]+'">'+duration(remaining)+'</span>':
-      key==='stamina'?(blockedLocation?'Về Nhà vườn':'Nghỉ '+duration(restSeconds)):blockedLocation?(key==='water'&&currentWell()?'Đến giếng':'Về Nhà vườn'):title;
+      key==='stamina'?(blockedLocation?'Về Nhà vườn':'Nghỉ '+duration(restSeconds)):blockedLocation?(key==='water'&&currentWell()?'Đến giếng uống nước':key==='water'?'Về nhà uống nước':'Về nhà ăn cơm'):title;
     body='<div class="recovery-hero"><span class="recovery-symbol">'+(key==='water'?careIcon('water'):icon(info.icon))+'</span><div><strong>'+info.label+'</strong><small>'+(resting?'Đang nghỉ tại Nhà vườn':'Giữ sức để chăm vườn')+'</small></div><span class="recovery-points">'+points+'<small>/100</small></span></div>'+valueBar(points,100)+
       '<div class="recovery-gain"><span>'+(key==='stamina'?'Sau '+duration(restSeconds)+' nghỉ':'Một lần hồi')+'</span><strong>+'+gain+' '+info.label.toLowerCase()+'</strong></div>'+btn(label,action,'primary recovery-main',disabled)+
       '<p class="care-note">'+(key==='water'?'Uống ở giếng hoặc Nhà vườn. Mỗi lượt cách '+duration(info.cooldown)+'.':key==='food'?'Ăn tại Nhà vườn. Mỗi lượt cách '+duration(info.cooldown)+'.':'Nghỉ tại Nhà vườn, hồi sức khi nghỉ xong.')+'</p>'+
@@ -1476,24 +1477,30 @@ function goTo(area,arrival,targetPanel='area') {
   if(landscape.matches)setPanelOpen(false);
   tab=area; neighborId=null; panel=targetPanel; render(arrival);
 }
+function recoveryArrival(key,operation){
+  if(key==='water'||key==='food')void perform({action:vitals[key].action},operation);
+  else showRecovery(key??'stamina');
+}
 function guideHome(recovery){
   if(dialog.open)dialog.close();
-  if(tab==='home'){showRecovery(recovery??'stamina');return;}
+  if(tab==='home'){recoveryArrival(recovery);return;}
   const from={coop:[433,198],market:[234,34],lake:[679,402],neighbors:[234,251]}[tab];
   if(tab!=='field')goTo('field',from);
+  const operation=['water','food'].includes(recovery)?actionFeedback.start(vitals[recovery].action,session?'online':'demo'):null;
   const started=world.approach('house',undefined,()=>{
     goTo('home');
-    if(recovery)showRecovery(recovery);
-  });
+    if(recovery)recoveryArrival(recovery,operation);
+  },{onCancel:()=>operation?.finish('cancelled')});
   if(started)reveal('#world');
-  else showToast('Hãy đi theo lối về phía ngôi nhà ở góc trên bên trái.',true);
+  else {operation?.finish('unreachable');showToast('Hãy đi theo lối về phía ngôi nhà ở góc trên bên trái.',true);}
 }
 function guideRecovery(key){
   const well=key==='water'&&currentWell();
   if(!well){guideHome(key);return;}
   dialog.close();
-  if(world.approach(well.type,undefined,()=>showRecovery(key)))reveal('#world');
-  else showToast('Chưa tìm được đường tới giếng.',true);
+  const operation=actionFeedback.start(vitals[key].action,session?'online':'demo');
+  if(world.approach(well.type,undefined,()=>recoveryArrival(key,operation),{onCancel:()=>operation?.finish('cancelled')}))reveal('#world');
+  else {operation?.finish('unreachable');showToast('Chưa tìm được đường tới giếng.',true);}
 }
 function visit(id) {
   if(landscape.matches)setPanelOpen(false);
@@ -1971,9 +1978,23 @@ document.addEventListener('click',async e=>{
   else if('restHome' in d)guideHome('stamina');
   else if('recoveryPlace' in d)guideRecovery(d.recoveryPlace);
   else if('recover' in d){
+    const key=Object.keys(vitals).find(key=>vitals[key].action===d.recover);
+    const previousLabel=el.innerHTML,previousDisabled=el.disabled;
+    el.disabled=true;el.textContent=d.recover==='drink'?'Đang uống nước…':d.recover==='eat'?'Đang ăn cơm…':'Đang bắt đầu nghỉ…';
     const success=await perform({action:d.recover});
-    if(success)dialog.close();
+    if(!success&&el.isConnected){el.innerHTML=previousLabel;el.disabled=previousDisabled;}
+    if(dialog.open&&dialog.dataset.recovery===key){
+      if(success)dialog.close();
+      else {recoveryStamp='';showRecovery(key,{preserve:true});}
+    }
   }
+  else if('watchHelper' in d){
+    if(!state.me.gardenHelperJob){render();return;}
+    if(dialog.open)dialog.close();
+    if(tab!=='field'||neighborId)goTo('field');else if(landscape.matches)setPanelOpen(false);
+    if(world.watchHelper())reveal('#world');else showToast(gardenHelperName+' đã xong việc.');
+  }
+  else if('playerCamera' in d)world.followPlayer();
   else if('taskTab' in d){taskBookTab=d.taskTab==='journal'?'journal':'tasks';render();}
   else if('taskGroup' in d){taskBookGroup=d.taskGroup;taskDetailPage=0;render();}
   else if('taskBack' in d){taskBookGroup=null;render();}
@@ -2098,7 +2119,11 @@ document.addEventListener('click',async e=>{
   else if('itemInfo' in d)showItem(d.itemInfo,'stockItem' in d);
   else if('cropGrowth' in d)showCropGrowth(Number(d.cropGrowth));
   else if('meal' in d){
-    if(await perform({action:'consume',item:d.meal}))dialog.close();
+    const previousLabel=el.innerHTML,previousDisabled=el.disabled,originalContent=dialog.firstElementChild;
+    el.disabled=true;el.textContent='Đang dùng…';
+    const success=await perform({action:'consume',item:d.meal});
+    if(success&&dialog.firstElementChild===originalContent)dialog.close();
+    else if(!success&&el.isConnected){el.innerHTML=previousLabel;el.disabled=previousDisabled;}
   }
   else if('buyStep' in d){
     const input=el.form.elements.qty;

@@ -99,20 +99,28 @@ export function createWorld(root, onInteract, landscape) {
   new ResizeObserver(sizeCanvas).observe(canvas);
   landscape.addEventListener('change',sizeCanvas);
 
+  let watchingHelper=false;
+  function setWatchingHelper(value){
+    watchingHelper=value;canvas.dataset.cameraTarget=value?'helper':'player';
+    const button=root.querySelector('[data-player-camera]');if(button)button.hidden=!value;
+  }
   function shiftCamera(immediate=false){
-    const anchor=(sceneId==='field'||sceneId==='visit') ? .87 : .71;
+    const helper=watchingHelper&&sceneId==='field'?gardenHelperPose(helperJob,helperPaths,Math.max(helperTime,snapshot.now+(performance.now()-observedAt)/1000)):null;
+    if(watchingHelper&&!helper){setWatchingHelper(false);immediate=true;}
+    const focusX=helper?.x??x,focusY=helper?.y??y;
+    const anchor=helper ? .62 : (sceneId==='field'||sceneId==='visit') ? .87 : .71;
     const horizontalInset=view.width*.22;
     const upperInset=view.height*(anchor-.12),lowerInset=view.height*Math.min(anchor+.12,.83);
     let left=camera.x,top=camera.y;
     if(immediate) {
-      left=x-view.width*.5;
-      top=y-view.height*anchor;
+      left=focusX-view.width*.5;
+      top=focusY-view.height*anchor;
     } else {
-      const screenX=x-camera.x,screenY=y-camera.y;
-      if(screenX<horizontalInset)left=x-horizontalInset;
-      else if(screenX>view.width-horizontalInset)left=x-(view.width-horizontalInset);
-      if(screenY<upperInset)top=y-upperInset;
-      else if(screenY>lowerInset)top=y-lowerInset;
+      const screenX=focusX-camera.x,screenY=focusY-camera.y;
+      if(screenX<horizontalInset)left=focusX-horizontalInset;
+      else if(screenX>view.width-horizontalInset)left=focusX-(view.width-horizontalInset);
+      if(screenY<upperInset)top=focusY-upperInset;
+      else if(screenY>lowerInset)top=focusY-lowerInset;
     }
     left=Math.max(0,Math.min(bounds.width-view.width,left));
     top=Math.max(0,Math.min(bounds.height-view.height,top));
@@ -136,6 +144,7 @@ export function createWorld(root, onInteract, landscape) {
   let frameStarted=false;
 
   function setPosition([px,py],dir='down'){
+    setWatchingHelper(false);
     releaseControls();
     delete canvas.dataset.pendingWork;
     x=px;y=py;facing=dir;stop();walkDistance=0;pose='';previewPose=null;effects=[];pointer=null;routeMarker=null;fishingDock=null;
@@ -213,6 +222,7 @@ export function createWorld(root, onInteract, landscape) {
   }
   function use(target=closest()){
     if(!target)return;
+    setWatchingHelper(false);
     holdAnimal(target);
     stop();
     onInteract(target);
@@ -221,6 +231,7 @@ export function createWorld(root, onInteract, landscape) {
   function walkTo(px,py,target,callback) {
     const path=route(scene,[x,y],[px,py]);
     if(!path)return false;
+    setWatchingHelper(false);
     const cancel=onApproachCancel;onApproachCancel=null;cancel?.();
     if(target?.type!=='animal'&&animalHoldUntil===Infinity)animalHoldUntil=performance.now()/1000;
     holdAnimal(target);
@@ -499,7 +510,7 @@ export function createWorld(root, onInteract, landscape) {
     }
     const direction=directions[letter];
     if(!direction)return;
-    event.preventDefault(); stop(); routeMarker=null; keys.add(direction);
+    event.preventDefault();setWatchingHelper(false);stop();routeMarker=null;keys.add(direction);
   };
   window.addEventListener('keydown',down);
   window.addEventListener('keyup',e=>keys.delete(directions[e.key.length===1?e.key.toLowerCase():e.key]));
@@ -526,7 +537,7 @@ export function createWorld(root, onInteract, landscape) {
   });
   const resetJoystick=installJoystick(root.querySelector('[data-joystick]'),{
     enabled:()=>!!scene&&!document.querySelector('dialog[open]'),
-    onStart:()=>{stop();routeMarker=null;},
+    onStart:()=>{setWatchingHelper(false);stop();routeMarker=null;},
     onChange:(dx,dy)=>{stickX=dx;stickY=dy;},
   });
   new MutationObserver(()=>{if(document.querySelector('dialog[open]'))releaseControls();})
@@ -548,5 +559,10 @@ export function createWorld(root, onInteract, landscape) {
     }));
   }
   const position=()=>({x:Math.round(x),y:Math.round(y),facing,walking});
-  return {sync,particle,approach,position,setPeers,setSpeech,startWork:input=>particle(input,{preview:true})};
+  function watchHelper(){
+    if(sceneId!=='field'||!gardenHelperPose(helperJob,helperPaths,Math.max(helperTime,snapshot.now+(performance.now()-observedAt)/1000)))return false;
+    setWatchingHelper(true);shiftCamera(true);return true;
+  }
+  function followPlayer(){setWatchingHelper(false);shiftCamera(true);}
+  return {sync,particle,approach,position,setPeers,setSpeech,watchHelper,followPlayer,startWork:input=>particle(input,{preview:true})};
 }

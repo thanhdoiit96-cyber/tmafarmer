@@ -1,4 +1,4 @@
-const labels={till:'Cuốc đất',plant:'Gieo hạt',water:'Tưới cây',weed:'Nhổ cỏ',spray:'Xịt thuốc',fertilize:'Bón phân',harvest:'Thu hoạch',feed:'Cho ăn',collect:'Thu sản phẩm',aquaFeed:'Cho thủy sản ăn',aquaHarvest:'Thu thủy sản'};
+const labels={till:'Cuốc đất',plant:'Gieo hạt',water:'Tưới cây',weed:'Nhổ cỏ',spray:'Xịt thuốc',fertilize:'Bón phân',harvest:'Thu hoạch',feed:'Cho ăn',collect:'Thu sản phẩm',aquaFeed:'Cho thủy sản ăn',aquaHarvest:'Thu thủy sản',drink:'Uống nước',eat:'Ăn cơm nắm'};
 export function createActionFeedback(node,{clock=()=>performance.now()}={}){
   const records=[];let current;
   function paint(op,text){if(current!==op)return;if(node){node.hidden=!text;if(node.textContent!==text)node.textContent=text;node.dataset.phase=op.phase;}}

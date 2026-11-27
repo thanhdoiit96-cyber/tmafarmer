@@ -198,4 +198,6 @@ Chưa đưa vào đợt này: rút ngắn vụ đầu, hệ analytics/dashboard 
 | 27/11/2026 | P2.3/P2.4 — Sổ góp hàng V1 | Hoàn thiện source, chưa deploy | [Sổ sáu đợt](VILLAGE_DRIVE_HISTORY_V1.md): giải thích kết quả cá nhân, biên nhận, phân trang, 212 kiểm thử; không hoàn hàng/thưởng phần |
 | 27/11/2026 | P1.1 — popup quay lại | Hoàn thiện source theo yêu cầu mới, chưa deploy | [Popup thay thẻ Công cụ](RETURN_SUMMARY_V1.md): hai mục Việc/Kho, một lần mỗi đợt quay lại, chờ hộp thoại hiện có, kiểm desktop/mobile ngang/dọc |
 | 27/11/2026 | UI — Sổ nhà nông / Thuê / Hồi phục | Đã duyệt, hoàn thiện source, chưa deploy | [Phạm vi và ảnh runtime](TASK_BOOK_RECOVERY_UI_V1.md): gom việc, sổ ngày riêng, thuê có hình cây/chọn ô/phí xác nhận, hồi phục dạng lưới; kiểm phí thật trong demo, cooldown và mobile ngang |
+| 27/11/2026 | UI — Thông báo V1 | Hoàn thiện source, chưa deploy | [Vị trí/thời gian/độ trong](GAME_NOTICES_UI_V1.md): một vùng thông báo, desktop ngoài canvas, mobile dưới HUD; 221 kiểm thử và build đạt |
+| 27/11/2026 | UX — Ăn/uống và xem Cô Lan | Hoàn thiện source, chưa deploy | [Phạm vi và kiểm chứng](RECOVERY_AND_HELPER_FOLLOW_V1.md): tự ăn/uống sau approach, phản hồi nút ngay, camera theo NPC và trở lại nhân vật |
 | Chưa bắt đầu | Phần còn lại P0–P7 | Đề xuất | Đánh giá vòng hợp tác trước nội dung P3; pilot chờ người chơi; chưa mở thanh toán |

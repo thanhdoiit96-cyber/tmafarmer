@@ -88,3 +88,7 @@ Các mốc kích thước trên là bộ kiểm tra tối thiểu, không bảo 
 Chuẩn này áp dụng bắt buộc khi xây/sửa tính năng từ thời điểm chốt. Không tự coi mọi UI cũ đã tuân thủ; khi chạm một màn hình cũ, rà lại các mục liên quan và ghi phần còn thiếu. Việc ghi chuẩn này không đồng nghĩa toàn bộ scrollbar/lưới cũ đã được sửa trong runtime.
 
 Tham chiếu hiện có: [Sổ chuồng/Bảng đơn V4](ORDERS_ANIMAL_UI_V4.md), [bản được duyệt](ORDERS_ANIMAL_UI_DRAFT_V4.md), [bộ chọn giống/vật nuôi](GAME_UI_V2.md). Ví dụ cũ không được ưu tiên hơn quy tắc người dùng chốt ở tài liệu này.
+
+## 8. Thông báo trạng thái và công việc
+
+Dùng chung vùng thông báo hiện có: desktop ở thanh dưới map, mobile ngang sát dưới HUD và tránh bảng Công cụ. Không đặt thông báo mới ở giữa map hoặc trên joystick/nút tương tác; không xếp chồng nhiều toast. Nền trong khoảng 70–82%, giữ chữ rõ và không bắt pointer. Kết quả thường 1,8–2,6 giây, lỗi có thời gian đọc dài hơn (tối đa 6 giây), mờ dần 180 ms; tôn trọng giảm chuyển động. Không để thông báo thường ghi đè lỗi đang hiện hoặc lặp lại làm thông báo tồn tại mãi. Trạng thái đang xử lý theo vòng đời thao tác, không báo thành công trước server. Giữ lỗi/điều kiện cần xử lý trong popup tương ứng. Chi tiết và bằng chứng: [Thông báo V1](GAME_NOTICES_UI_V1.md).

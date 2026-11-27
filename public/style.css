@@ -43,9 +43,8 @@ h1{margin:0 0 6px;font:800 clamp(30px,4vw,48px)/.99 var(--display);letter-spacin
 #world[data-scene="lake"] .map-radar{display:none}
 .world-weather{min-height:30px;display:flex;align-items:center;gap:6px;border:1px solid #efe7c3;border-radius:8px;padding:5px 9px;color:#284430;background:#faf5ddec;font-size:11px;font-weight:800;box-shadow:0 2px 6px #314a333e}
 .world-weather:hover{background:#fff6db}
-.action-feedback{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);padding:7px 10px;border:1px solid #cdb47c;border-radius:7px;background:#34563aeb;color:#fff0cc;font-size:11px;font-weight:700;line-height:1.35;text-align:center;pointer-events:none;z-index:3;box-shadow:0 2px 5px #26392444}
+.action-feedback{padding:5px 8px;border-left:2px solid #cdb47c;border-radius:4px;background:#34563ab3;color:#fff0cc;font-size:11px;font-weight:600;line-height:1.35;text-align:left;pointer-events:none}
 .action-feedback[hidden]{display:none}
-@media(max-height:600px) and (orientation:landscape){.action-feedback{max-width:45%;bottom:12px;font-size:10px;padding:5px 7px}.layout[data-panel-open] .action-feedback{left:calc((100% - min(360px,48vw))/2);max-width:calc(52vw - 24px)}}
 .world-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 11px;min-height:48px;background:#253e2e;color:#f7f0d8}
 .map-help{display:flex;align-items:start;gap:8px}
 .map-help svg{width:17px;height:17px;color:#ddc590}
@@ -237,9 +236,15 @@ dialog input,dialog select{width:100%;border:1px solid #d9d2b9;border-radius:9px
 .avatar-options input{position:absolute;opacity:0;width:1px;height:1px;padding:0}
 .avatar-portrait{display:block;width:48px;height:64px;image-rendering:pixelated;background:url('/pixel/characters-v2-hd.png') no-repeat}
 .avatar-portrait[data-avatar="male"]{background-image:url('/pixel/farmer-male-poses.png')}
-#toast{position:fixed;bottom:18px;right:18px;z-index:10;max-width:min(90vw,420px);padding:10px 13px;border-radius:8px;background:#285640;color:white;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast{padding:5px 8px;border-left:2px solid #b7ce8d;border-radius:4px;background:#285640b8;color:#fff6df;font-size:11px;line-height:1.4;opacity:0;pointer-events:none;transition:opacity .18s;overflow-wrap:anywhere}
 #toast.show{opacity:1}
-#toast.error{background:#8b412f}
+#toast.error{background:#763c2bd1;border-left-color:#efbd80}
+.world-notices{display:none;min-width:0;flex:1;pointer-events:none}
+.world-notices:has(#toast.show,#toast.leaving),.world-notices:has(.action-feedback:not([hidden])){display:block}
+.world-notices #toast:not(.show):not(.leaving){display:none}
+.world-notices:has(#toast.show,#toast.leaving) .action-feedback{display:none}
+.world-footer:has(.world-notices #toast.show,.world-notices #toast.leaving) .map-help,.world-footer:has(.world-notices .action-feedback:not([hidden])) .map-help{display:none}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
 @media(max-width:1100px){.top-inner,.shell{padding-inline:20px}.layout{grid-template-columns:minmax(0,1fr) 276px;gap:12px}}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.shell{max-width:680px;padding-top:13px}.plot-select{grid-template-columns:repeat(auto-fit,minmax(60px,1fr))}}
 @media(max-width:760px) and (orientation:portrait){.panel-body{overscroll-behavior-y:auto}}
@@ -647,7 +652,9 @@ dialog .buy-total{display:flex;justify-content:space-between;gap:8px;margin:12px
   .panel-body .btn{min-height:38px}
   dialog{max-width:calc(100% - env(safe-area-inset-left) - env(safe-area-inset-right) - 16px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);overflow:auto;overscroll-behavior:contain;padding:13px}
   dialog input,dialog select,.market-search input{font-size:16px}
-  #toast{right:auto;left:50%;bottom:calc(62px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:min(72vw,420px)}
+  .world-hud .world-notices{order:10;flex:0 0 100%;width:100%;max-width:100%;pointer-events:none}
+  .world-notices #toast,.world-notices .action-feedback{width:fit-content;max-width:min(320px,100%);font-size:10px;padding:4px 7px;text-shadow:0 1px 2px #152c22b3}
+  .world-notices #toast{background:#285640b8}.world-notices #toast.error{background:#763c2bd1}
 }
 @media (orientation:landscape) and (min-width:500px) and (max-height:600px) and (max-width:700px){
   .world-weather .weather-name,.world-weather svg{display:none}
