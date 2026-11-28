@@ -208,7 +208,7 @@ function updateDemo() {
   const started=startVillageSecurity(demo,day);
   const soilStarted=startSoilClock(demo,time);
   const livestockStarted=startLivestockClock(demo,time);
-  const driveUpdated=advanceVillageDrive(demo,time);
+  const driveUpdated=advanceVillageDrive(demo,time,{fairEnabled:true});
   const helpersUpdated=advanceGardenHelpers(demo,time);
   if(advanceVillage(demo,day)||started||soilStarted||livestockStarted||driveUpdated||helpersUpdated)store.write(demoKey,demo);
   setState(snapshot(demo,demo.farms.demo,time));
@@ -1201,11 +1201,29 @@ function renderOrders(farm,now){
 }
 const formatCoins=value=>value.toLocaleString('vi-VN');
 function renderOrderBoard(farm,now){
-  return '<section class="game-book order-book"><header class="game-book-head"><h2>Bảng đơn</h2><span>Cả làng cùng góp</span></header><nav class="game-book-tabs" aria-label="Loại đơn">'+[['market','Đơn chợ'],['village','Góp hàng làng']].map(([id,label])=>btn(label,'data-order-pane="'+id+'" aria-pressed="'+(orderPane===id)+'"',orderPane===id?'primary':'subtle')).join('')+'</nav>'+(orderPane==='village'?renderVillageDrive(farm,now):renderOrders(farm,now))+'</section>';
+  return '<section class="game-book order-book'+(state.villageDrive?.version===3&&orderPane==='village'?' fair-book':'')+'"><header class="game-book-head"><h2>Bảng đơn</h2><span>Cả làng cùng góp</span></header><nav class="game-book-tabs" aria-label="Loại đơn">'+[['market','Đơn chợ'],['village','Góp hàng làng']].map(([id,label])=>btn(label,'data-order-pane="'+id+'" aria-pressed="'+(orderPane===id)+'"',orderPane===id?'primary':'subtle')).join('')+'</nav>'+(orderPane==='village'?renderVillageDrive(farm,now):renderOrders(farm,now))+'</section>';
+}
+let fairStallId='bread';
+function renderVillageFair(farm,now,drive){
+  const stall=drive.stalls.find(s=>s.id===fairStallId)??drive.stalls[0];fairStallId=stall.id;
+  const ended=drive.completed||now>=drive.endsAt;
+  const tabs=drive.stalls.map(s=>btn('<span>'+escape(s.name)+'</span><b class="badge">'+s.credit+'/'+s.required+'</b>','data-fair-stall="'+s.id+'" aria-pressed="'+(s.id===stall.id)+'"',s.id===stall.id?'primary':'subtle')).join('');
+  const choices=stall.choices.map(c=>{
+    const owned=farm.inventory[c.item]??0,maximum=ended?0:Math.min(owned,c.maximum);
+    const pinned=pinnedGoal.kind==='villageGoods'&&pinnedGoal.driveId===drive.id&&pinnedGoal.stallId===stall.id&&pinnedGoal.item===c.item;
+    const illustration=itemIllustration(c.item)||animalProductIllustration(c.item)||'<span class="fair-food-icon" data-food="'+c.item+'" aria-hidden="true"></span>';
+    return '<article class="fair-choice"><button type="button" class="fair-choice-title" data-fair-info="'+c.item+'" data-stall-id="'+stall.id+'" aria-label="Chi tiết '+escape(goods[c.item].name)+'"><span class="drive-art">'+illustration+'</span><strong>'+escape(goods[c.item].name)+'</strong><span aria-hidden="true">ⓘ</span></button><div class="row"><span>Trong kho</span><b>'+owned+'</b></div><small>1 món → '+c.credit+' phần chuẩn bị</small>'+
+      '<div class="actions">'+btn('Góp'+(maximum?' · '+maximum:''),'data-village-goods="'+c.item+'" data-stall-id="'+stall.id+'"','primary',!maximum)+btn(pinned?'Bỏ ghim':'Ghim','data-drive-pin="'+c.item+'" data-stall-id="'+stall.id+'"','subtle',ended||!c.maximum)+btn('Cách có','data-drive-source="'+c.item+'"','subtle')+'</div>'+
+      (!ended&&stall.remaining&&!c.maximum?'<small>Còn '+stall.remaining+' phần; chọn món quy đổi 1 để không góp dư.</small>':'')+'</article>';
+  }).join('');
+  const totals=drive.stalls.reduce((r,s)=>[r[0]+s.credit,r[1]+s.required],[0,0]);
+  const personal=drive.mine.paid?'Đã nhận thưởng':drive.completed?'Chưa đủ mốc nhận thưởng':drive.mine.quantity>=drive.minimum?'Đủ mốc cá nhân':'Còn '+(drive.minimum-drive.mine.quantity)+' món để đủ mốc';
+  return '<section class="village-fair"><header class="drive-heading"><h3>'+escape(drive.title)+'</h3>'+btn('ⓘ','data-drive-rules aria-label="Thông tin phiên chợ, phần thưởng và sổ góp hàng"','fair-help')+'<small>'+(drive.completed?'Phiên chợ đã sẵn sàng':'Còn '+duration(drive.endsAt-now)+' thực')+'</small></header><nav class="fair-stalls" aria-label="Sạp góp hàng">'+tabs+'</nav>'+valueBar(totals[0],totals[1])+'<p class="care-note">'+(stall.remaining?'Sạp '+escape(stall.name)+' còn '+stall.remaining+' phần. Chọn một trong hai cách góp.':'Sạp '+escape(stall.name)+' đã đủ hàng.')+'</p><div class="fair-choices">'+choices+'</div><footer class="drive-reward"><span>Đã góp <b>'+drive.mine.quantity+'</b> món vật lý · '+personal+'</span>'+btn('Quy mô & quà ›','data-drive-rules','subtle')+'</footer><div class="drive-people">'+btn('Người cùng góp','data-drive-people','subtle')+btn('Sổ góp hàng','data-drive-history','subtle')+(drive.completed?btn('Trang kỷ niệm','data-drive-memory="current"','primary'):'')+'</div></section>';
 }
 function renderVillageDrive(farm,now){
   const drive=state.villageDrive;
   if(!drive)return '<p class="care-empty">Chưa có đợt góp hàng.</p>';
+  if(drive.version===3&&drive.stalls)return renderVillageFair(farm,now,drive);
   if(driveSelection?.id!==drive.id||!drive.items.some(r=>r.item===driveSelection.item))driveSelection={id:drive.id,item:drive.items[0]?.item};
   const chosen=driveItem(drive,farm,driveSelection.item,now),ended=drive.completed||now>=drive.endsAt;
   const total=drive.items.reduce((n,r)=>n+r.required,0),delivered=drive.items.reduce((n,r)=>n+r.delivered,0);
@@ -1251,13 +1269,13 @@ function showDriveHistory(id){
   const index=Math.max(0,entries.findIndex(e=>String(e.id)===String(id))),entry=entries[index],result=driveResult(entry);
   const date=new Date((entry.completedAt??entry.endsAt)*1000).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   const people=entry.contributors.map(p=>'<li><span>'+escape(p.name)+'</span><strong>'+p.quantity+' món</strong></li>').join('');
-  modal('Sổ góp hàng','<section class="drive-history"><div class="animal-manage-hero"><div><strong>'+escape(entry.title)+'</strong><p>'+(entry.completedAt!==null?'Làng hoàn thành':'Hết hạn chưa đủ hàng')+' · '+date+'</p></div></div><dl class="animal-manage-facts"><div><dt>Bạn đã góp</dt><dd>'+entry.mine.quantity+' món</dd></div><div><dt>Kết quả cá nhân</dt><dd>'+result.label+'</dd></div></dl><p class="care-note">'+result.reason+'</p>'+(entry.mine.paid?'<p class="drive-history-reward">'+entry.mine.coins+' xu · '+entry.mine.xp+' XP'+(entry.mine.decorVoucher?' · 1 phiếu trang trí':'')+'</p>':'')+'<details class="panel-fold"><summary>Hàng làng đã góp</summary><ul class="recipe-ingredients">'+entry.items.map(row=>'<li><span>'+escape(goods[row.item].name)+'</span><strong>'+row.delivered+' / '+row.required+'</strong></li>').join('')+'</ul></details><details class="panel-fold"><summary>Người góp nhiều nhất · tối đa 12</summary>'+(people?'<ul class="recipe-ingredients">'+people+'</ul>':'<p>Chưa có đóng góp được ghi nhận.</p>')+'</details><footer class="game-book-pager history-pages">'+btn('‹','data-drive-history="'+(entries[index-1]?.id??'')+'" aria-label="Đợt mới hơn"','subtle',index===0)+'<span>'+(index+1)+' / '+entries.length+'</span>'+btn('›','data-drive-history="'+(entries[index+1]?.id??'')+'" aria-label="Đợt cũ hơn"','subtle',index===entries.length-1)+'</footer><p class="care-note">Sáu đợt gần nhất · Chỉ xem kết quả, không cần nhận thưởng lại.</p></section>');
+  modal('Sổ góp hàng','<section class="drive-history"><div class="animal-manage-hero"><div><strong>'+escape(entry.title)+'</strong><p>'+(entry.completedAt!==null?'Làng hoàn thành':'Hết hạn chưa đủ hàng')+' · '+date+'</p></div></div><dl class="animal-manage-facts"><div><dt>Bạn đã góp</dt><dd>'+entry.mine.quantity+' món</dd></div><div><dt>Kết quả cá nhân</dt><dd>'+result.label+'</dd></div></dl><p class="care-note">'+result.reason+'</p>'+(entry.mine.paid?'<p class="drive-history-reward">'+entry.mine.coins+' xu · '+entry.mine.xp+' XP'+(entry.mine.decorVoucher?' · 1 phiếu trang trí':'')+'</p>':'')+'<details class="panel-fold"><summary>Hàng làng đã góp</summary><ul class="recipe-ingredients">'+entry.items.map(row=>'<li><span>'+escape(goods[row.item].name)+(row.stallName?' · '+escape(row.stallName):'')+'</span><strong>'+row.delivered+(row.required===null?' món':' / '+row.required)+'</strong></li>').join('')+'</ul></details><details class="panel-fold"><summary>Người góp nhiều nhất · tối đa 12</summary>'+(people?'<ul class="recipe-ingredients">'+people+'</ul>':'<p>Chưa có đóng góp được ghi nhận.</p>')+'</details><footer class="game-book-pager history-pages">'+btn('‹','data-drive-history="'+(entries[index-1]?.id??'')+'" aria-label="Đợt mới hơn"','subtle',index===0)+'<span>'+(index+1)+' / '+entries.length+'</span>'+btn('›','data-drive-history="'+(entries[index+1]?.id??'')+'" aria-label="Đợt cũ hơn"','subtle',index===entries.length-1)+'</footer><p class="care-note">Sáu đợt gần nhất · Chỉ xem kết quả, không cần nhận thưởng lại.</p></section>');
   if(entry.completedAt!==null)dialog.querySelector('.drive-history').insertAdjacentHTML('afterbegin',btn('Trang kỷ niệm','data-drive-memory="'+entry.id+'"','primary'));
   dialog.classList.add('game-management');
 }
 function animalProductIllustration(item){const kind=Object.keys(animals).find(k=>animals[k].product===item);return kind?animalIllustration(kind):'';}
 function driveScaleLabel(d){return d.version>=2?'Quy mô · '+(d.memberCount<3?d.memberCount:'3–12')+' người':'Định mức đợt cũ';}
-function showDriveRules(){const d=state.villageDrive;if(!d)return;modal('Quy mô & phần thưởng','<p><strong>'+driveScaleLabel(d)+'</strong></p><p>'+(d.version>=2?'Chốt theo '+d.memberCount+' vườn đã tham gia lúc mở đợt; có người vào/rời làng cũng không đổi giữa đợt.':'Đợt đang mở giữ định mức cũ đến hết hạn.')+'</p><p>Góp từ <strong>'+d.minimum+' món</strong> và làng hoàn thành mới có thưởng.</p><p>Xu theo giá trị đã góp · '+d.rewardXp+' XP · 1 phiếu trang trí.</p><p><strong>Hàng đã góp không hoàn lại khi hết hạn.</strong></p><p>Đợt kéo dài 48 giờ thực.</p>'+(d.mine.paid?'<p>Đã nhận '+d.mine.coins+' xu'+(d.mine.decorVoucher?' và phiếu trang trí':'')+'.</p>':''));}
+function showDriveRules(){const d=state.villageDrive;if(!d)return;modal('Quy mô & phần thưởng',(d.version===3?'<p>Phiên chợ · '+(d.completed?'Đã hoàn thành':duration(d.endsAt-currentTime())+' còn lại')+'</p><div class="actions">'+btn('Người cùng góp','data-drive-people','subtle')+btn('Sổ góp hàng','data-drive-history','subtle')+(d.completed?btn('Trang kỷ niệm','data-drive-memory="current"','primary'):'')+'</div><p>Mỗi món vật lý tính một lần vào mốc cá nhân; phần chuẩn bị phụ thuộc lựa chọn. Chạm ảnh món để Ghim hoặc xem Cách có.</p>':'')+'<p><strong>'+driveScaleLabel(d)+'</strong></p><p>'+(d.version>=2?'Chốt theo '+d.memberCount+' vườn đã tham gia lúc mở đợt; có người vào/rời làng cũng không đổi giữa đợt.':'Đợt đang mở giữ định mức cũ đến hết hạn.')+'</p><p>Góp từ <strong>'+d.minimum+' món</strong> và làng hoàn thành mới có thưởng.</p><p>Xu theo giá trị đã góp · '+d.rewardXp+' XP · 1 phiếu trang trí.</p><p><strong>Hàng đã góp không hoàn lại khi hết hạn.</strong></p><p>Đợt kéo dài 48 giờ thực.</p>'+(d.mine.paid?'<p>Đã nhận '+d.mine.coins+' xu'+(d.mine.decorVoucher?' và phiếu trang trí':'')+'.</p>':''));}
 function showDrivePeople(){const d=state.villageDrive;if(!d)return;modal('Người cùng góp',d.contributors.length?'<ol>'+d.contributors.map(r=>'<li>'+escape(r.name)+' · '+r.quantity+' món</li>').join('')+'</ol>':'<p>Chưa có người góp trong đợt này.</p>');}
 function showDriveSource(item){
   if(!Object.hasOwn(goods,item))return;
@@ -1267,24 +1285,24 @@ function showDriveSource(item){
   const copy=crop?'Trồng từ '+goods[crops[crop].seed].name.toLowerCase()+' ở Vườn nhà.':animal?'Nuôi '+animals[animal].name.toLowerCase()+' rồi thu sản phẩm.':recipe?'Chế tạo trong Xưởng máy từ nguyên liệu đang có.':'Xem nguồn và điều kiện trong chi tiết vật phẩm.';
   modal('Chuẩn bị '+escape(goods[item].name.toLowerCase()),'<p>'+copy+'</p><p>Kho bạn có '+(state.me.inventory[item]??0)+' món.</p>'+(guide?.reason?'<p class="care-note">'+escape(guide.reason)+'</p>':'')+'<div class="actions">'+(target?unlockButton(target.type,target.key,'Điều kiện mở'):'')+(crop?btn('Tìm hạt giống','data-drive-buy="'+crops[crop].seed+'"','subtle'):'')+btn(crop?'Tới vườn':animal?'Tới chuồng':recipe?'Tới xưởng':'Xem vật phẩm','data-drive-prepare="'+item+'"','primary')+'</div><p class="care-note">Chỉ dẫn đường, không tự mua hoặc sử dụng vật tư.</p>');
 }
-function requestDrivePin(item){
-  const next=pinVillageGoods({...state,now:currentTime()},item);
+function requestDrivePin(item,stallId){
+  const next=pinVillageGoods({...state,now:currentTime()},item,stallId);
   if(next.kind==='none'){showToast('Món này đã đủ hoặc đợt đã kết thúc.');return;}
-  if(pinnedGoal.kind==='villageGoods'&&pinnedGoal.driveId===next.driveId&&pinnedGoal.item===item){savePinnedGoal(noGoal());render();return;}
+  if(pinnedGoal.kind==='villageGoods'&&pinnedGoal.driveId===next.driveId&&pinnedGoal.item===item&&pinnedGoal.stallId===next.stallId){savePinnedGoal(noGoal());render();return;}
   if(pinnedGoal.kind!=='none'){
-    modal('Thay mục tiêu đang ghim?','<p>Ghim '+escape(goods[item].name.toLowerCase())+' cho đơn làng thay mục tiêu hiện tại. Tiến trình nông trại được giữ nguyên.</p><div class="actions">'+btn('Để sau','data-close','subtle')+btn('Thay mục tiêu','data-goal="villageGoods" data-item="'+item+'"','primary')+'</div>');return;
+    modal('Thay mục tiêu đang ghim?','<p>Ghim '+escape(goods[item].name.toLowerCase())+' cho đơn làng thay mục tiêu hiện tại. Tiến trình nông trại được giữ nguyên.</p><div class="actions">'+btn('Để sau','data-close','subtle')+btn('Thay mục tiêu','data-goal="villageGoods" data-item="'+item+'" data-stall-id="'+(stallId??'')+'"','primary')+'</div>');return;
   }
   savePinnedGoal(next);render();showToast('Đã ghim trong Việc cần làm.');
 }
-function showVillageGoods(item){
+function showVillageGoods(item,stallId){
   const drive=state.villageDrive;
   if(!drive||drive.completed||drive.endsAt<=currentTime())return;
-  const line=drive.items.find(entry=>entry.item===item);
+  const line=drive.items.find(entry=>entry.item===item&&(drive.version!==3||entry.stallId===stallId));
   if(!line)return;
-  const maximum=Math.min(line.required-line.delivered,state.me.inventory[item]??0);
+  const maximum=Math.min(drive.version===3?line.remaining:line.required-line.delivered,state.me.inventory[item]??0);
   if(maximum<1)return;
   modal('Góp '+goods[item].name.toLowerCase(),'<p>Bạn có thể góp tối đa '+maximum+' món. Hàng đã góp sẽ được trừ khỏi kho và không hoàn lại khi hết hạn.</p>'+
-    '<p class="care-note">Bạn đã góp '+drive.mine.quantity+' món; cần tổng từ '+drive.minimum+' món và cả làng hoàn thành mới có thưởng.</p><form data-form="villageGoods" data-item="'+item+'" data-index="'+drive.id+'"><label>Số lượng góp<input name="qty" type="number" min="1" max="'+maximum+'" value="1" required></label>'+
+    (drive.version===3?'<p>1 món = '+line.credit+' phần chuẩn bị · '+escape(drive.stalls.find(s=>s.id===stallId).name)+'</p>':'')+'<p class="care-note">Bạn đã góp '+drive.mine.quantity+' món; cần tổng từ '+drive.minimum+' món và cả làng hoàn thành mới có thưởng.</p><form data-form="villageGoods" data-item="'+item+'" data-index="'+drive.id+'" data-stall-id="'+(stallId??'')+'"><label>Số lượng góp<input name="qty" type="number" min="1" max="'+maximum+'" value="1" required></label>'+
     '<button class="btn primary">Xác nhận góp</button></form><p id="dialog-error" role="status"></p>');
 }
 function renderVillageMembers(farm){
@@ -1442,7 +1460,7 @@ function goToPinnedGoal(){
   renderNextGoal(currentTime());
   const route=pinnedGoalView?.route;
   if(!route)return;
-  if(route.kind==='villageGoods'){orderPane='village';panel='orders';render();reveal('#side');return;}
+  if(route.kind==='villageGoods'){if(pinnedGoal.stallId)fairStallId=pinnedGoal.stallId;orderPane='village';panel='orders';render();reveal('#side');return;}
   if(route.kind==='goodsSource'){showDriveSource(route.item);return;}
   if(route.kind==='choose'){showGoalChoices();return;}
   if(route.kind==='weather'){showWeather();return;}
@@ -1468,7 +1486,7 @@ function goToPinnedGoal(){
     if(!world.approach('market',undefined,()=>reveal('#board'),{style:seed?'red':'gold'}))reveal('#board');
   }
 }
-const focusSelector='[data-activity-page],[data-task-tab],[data-task-group],[data-task-back],[data-task-book-page],[data-task-detail-page],[data-task-ref],[data-hire-menu],[data-drive-history],[data-manage-pond],[data-pond-filter],[data-pond-page],[data-pond-adopt],[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
+const focusSelector='[data-fair-info],[data-fair-open],[data-market-legacy],[data-fair-stall],[data-activity-page],[data-task-tab],[data-task-group],[data-task-back],[data-task-book-page],[data-task-detail-page],[data-task-ref],[data-hire-menu],[data-drive-history],[data-manage-pond],[data-pond-filter],[data-pond-page],[data-pond-adopt],[data-workshop-page],[data-market-catalog-page],[data-recipe-info],[data-coop-filter],[data-coop-page],[data-coop-adopt],[data-market-order-page],[data-drive-select],[data-drive-rules],[data-drive-people],[data-order-pane],[data-drive-pin],[data-drive-source],[data-drive-prepare],[data-drive-buy],[data-fence-info],[data-animal-info],[data-animal-group],[data-animal-page],[data-seed-info],[data-seed-group],[data-seed-page],[data-seed-buy],[data-return-summary],[data-unlock],[data-unlock-route],[data-goal],[data-plot],[data-action],[data-shop],[data-sell],[data-list],[data-room],[data-visit],[data-return],[data-tab],[data-village-page],[data-stock-tab],[data-stock-page],[data-panel],[data-weather],[data-market-pane],[data-pond-tab],[data-pond-go],[data-aqua-stock],[data-land-tab],[data-land-go],[data-crop-group],[data-open-garden],[data-open-pond],[data-visit-pond],[data-vital],[data-task],[data-recover],[data-remove-member],[data-home-exit],[data-village-fund],[data-village-goods],[data-seed-crop],[data-order-preview],[data-market-search],[data-supply-group],[data-sell-all],[data-item-info],[data-workshop-go],[data-workshop-tab],[data-crop-growth],[data-crop-explain],[data-rank-farm],[data-manage-animal],[data-sell-animal],[data-quick-garden],[data-garden-decor],[data-arrange-garden-decor]';
 function focusKey(element) {
   if(element?.matches('[data-panel-fold]>summary'))return 'fold='+element.parentElement.dataset.panelFold;
   if(!element?.matches(focusSelector+', [data-lake-elder], [data-lake-tab], [data-help-page], [data-prank-page], [data-visit-pane], [data-visit-source], [data-visit-take-page]')) return '';
@@ -1690,6 +1708,10 @@ function interactWithWorld(target) {
     reveal(neighborId?'#visit-barn':'.control-panel');
   } else if(target.type==='market') {
     const section=target.style==='green'?'stall':target.style==='gold'?'sales':'supplies';
+    if(state.villageDrive?.version===3){
+      const stall={red:'bread',green:'garden',gold:'drinks'}[target.style];
+      modal(target.label,'<p>'+escape(state.villageDrive.title)+'</p><div class="actions">'+btn('Góp cho '+escape(state.villageDrive.stalls.find(s=>s.id===stall).name),'data-fair-open="'+stall+'"','primary')+btn('Mở '+escape(target.label.toLowerCase()),'data-market-legacy="'+section+'"','subtle')+'</div>');return;
+    }
     panel='area';marketPane=section;render();reveal('.control-panel');
   } else if(target.type==='animal') {
     const pen=state.me.pens[target.index];
@@ -1820,7 +1842,7 @@ async function perform(input,operation) {
   let updateAfter=false,outcome='cancelled',endPreview;
   try {
     let message;
-    const located=needsPlayerLocation(input.action);
+    const located=needsPlayerLocation(input.action)||input.action==='villageGoods'&&!!input.stallId;
     const checkLocation=pose=>{
       const blocked=locationBlock(input,pose);
       if(blocked)throw new GameError(blocked);
@@ -2029,7 +2051,7 @@ document.addEventListener('click',async e=>{
   else if('driveHistory' in d)showDriveHistory(d.driveHistory);
   else if('drivePeople' in d){if(state)showDrivePeople();}
   else if('orderPane' in d){if(['market','village'].includes(d.orderPane)){orderPane=d.orderPane;render();}}
-  else if('drivePin' in d){if(state&&!busy)requestDrivePin(d.drivePin);}
+  else if('drivePin' in d){if(state&&!busy)requestDrivePin(d.drivePin,d.stallId);}
   else if('driveSource' in d){if(state)showDriveSource(d.driveSource);}
   else if('driveBuy' in d){if(state&&Object.hasOwn(goods,d.driveBuy)){dialog.close();marketPane='supplies';supplyGroup='seeds';marketQueries.supplies=goods[d.driveBuy].name;goTo('market');if(!world.approach('market',undefined,()=>reveal('#board'),{style:'red'}))reveal('#board');}}
   else if('drivePrepare' in d){
@@ -2045,7 +2067,7 @@ document.addEventListener('click',async e=>{
     else if(d.goal==='unpin'){savePinnedGoal(noGoal());dialog.close();render();}
     else if(d.goal==='intro'){savePinnedGoal(pinIntro(state));dialog.close();render();}
     else if(d.goal==='building'&&Object.hasOwn(buildings,d.item)){savePinnedGoal(pinBuilding(state.me,d.item));dialog.close();render();}
-    else if(d.goal==='villageGoods'){const next=pinVillageGoods({...state,now:currentTime()},d.item);if(next.kind!=='none'){savePinnedGoal(next);dialog.close();render();}else{dialog.close();showToast('Đợt đã kết thúc hoặc món đã đủ.');}}
+    else if(d.goal==='villageGoods'){const next=pinVillageGoods({...state,now:currentTime()},d.item,d.stallId);if(next.kind!=='none'){savePinnedGoal(next);dialog.close();render();}else{dialog.close();showToast('Đợt đã kết thúc hoặc món đã đủ.');}}
     else if(d.goal==='go')goToPinnedGoal();
     else if(d.goal==='detail')modal('Mục tiêu của bạn','<h3>'+escape(pinnedGoalView?.title??'Chọn mục tiêu')+'</h3><p>'+escape(pinnedGoalView?.copy??'Chọn một mục tiêu để theo dõi.')+'</p><p>'+escape(pinnedGoalView?.meta??'')+'</p><p>Tiến độ dựa trên thao tác thành công và tình trạng vườn. Mục tiêu được lưu riêng theo vườn trên thiết bị này. Bạn có thể đổi hoặc bỏ ghim mà không mất tiến trình nông trại.</p><p>Không có phần thưởng mới; xu và XP vẫn theo các thao tác và Sổ việc hiện có.</p>');
   }else if('guideArea' in d&&Object.hasOwn(tabs,d.guideArea)){
@@ -2176,7 +2198,15 @@ document.addEventListener('click',async e=>{
   else if('supplyGroup' in d) { marketPages.supplies=0;supplyGroup=d.supplyGroup; render(); }
   else if('seedCrop' in d) showSeedCrop(d.seedCrop);
   else if('villageFund' in d) showVillageFund();
-  else if('villageGoods' in d) showVillageGoods(d.villageGoods);
+  else if('fairInfo' in d){
+    const s=state?.villageDrive?.stalls?.find(s=>s.id===d.stallId),c=s?.choices.find(c=>c.item===d.fairInfo);if(!c)return;
+    const maximum=Math.min(c.maximum,state.me.inventory[c.item]??0);
+    modal(goods[c.item].name,'<p>'+escape(s.name)+' · Trong kho <b>'+(state.me.inventory[c.item]??0)+'</b></p><p>1 món = '+c.credit+' phần chuẩn bị. Giá trị góp: '+c.value+' xu/món trước hệ số thưởng; không phải giá bán.</p><div class="actions">'+btn('Góp','data-village-goods="'+c.item+'" data-stall-id="'+s.id+'"','primary',state.villageDrive.completed||!maximum)+btn('Ghim / bỏ ghim','data-drive-pin="'+c.item+'" data-stall-id="'+s.id+'"','subtle',state.villageDrive.completed||!c.maximum)+btn('Cách có','data-drive-source="'+c.item+'"','subtle')+'</div>');
+  }
+  else if('fairOpen' in d){dialog.close();fairStallId=d.fairOpen;orderPane='village';panel='orders';render();reveal('.control-panel');}
+  else if('marketLegacy' in d){dialog.close();panel='area';marketPane=d.marketLegacy;render();reveal('.control-panel');}
+  else if('fairStall' in d){fairStallId=d.fairStall;render();}
+  else if('villageGoods' in d) showVillageGoods(d.villageGoods,d.stallId);
   else if('weather' in d) showWeather();
   else if('room' in d) showRoom();
   else if('avatarMenu' in d) showAvatar();
@@ -2441,7 +2471,12 @@ dialog.addEventListener('submit',async e=>{
     if(mode==='moveAnimal')input.index=Number(values.destination);
     if(await perform(input))dialog.close();
   } else if(mode==='villageGoods'){
-    if(await perform({action:mode,item:form.dataset.item,index:Number(form.dataset.index),qty:Number(values.qty)}))dialog.close();
+    const input={action:mode,item:form.dataset.item,index:Number(form.dataset.index),stallId:form.dataset.stallId,qty:Number(values.qty)};
+    if(input.stallId){
+      dialog.close();goTo('market');
+      const submit=()=>{void perform(input);};
+      if(!world.approach('market',undefined,submit,{style:{bread:'red',garden:'green',drinks:'gold'}[input.stallId]}))submit();
+    }else if(await perform(input))dialog.close();
   } else {
     const success=await perform({action:mode,item:values.item??form.dataset.item,...(mode==='villageFund'?{amount:Number(values.amount)}:{qty:Number(values.qty)}),...(mode==='list'?{price:Number(values.price)}:{}),...(mode==='aquaStock'?{index:Number(form.dataset.pond)}:{})});
     if(success) dialog.close();

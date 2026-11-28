@@ -386,3 +386,7 @@ Hoàn thiện nguồn idle bốn frame từ mẫu NPC riêng bằng imagegen; xu
 ### 26/11/2026 — Chòi Ông Sáu và bố cục/UI Ao V2
 
 Thay chòi cũ lệch trên mặt nước bằng sprite chòi tre mái lá RGBA 106×100, nguồn imagegen tham chiếu plate ao, alpha cứng và tâm/sàn đăng ký riêng; NPC vẫn dùng atlas idle được duyệt. Chòi ở mép cỏ (542,402), NPC (542,398), điểm đứng trước (520,414); lớp sàn nằm sau người, chỉ cột chặn di chuyển. Spawn (365,377) ở lối giữa bờ, không sửa polygon nước/cầu. UI dùng thẻ giấy/viền gỗ và ba tab đều; xưng hô theo avatar. 189 kiểm thử, build/asset audit đạt; đã xem Canvas thực và kiểm tra mobile ngang. [Phạm vi](LAKE_LAYOUT_UI_V2.md).
+
+### 28/11/2026 — Bếp quê ngày chợ V1
+
+Triển khai theo bảng mỹ thuật đã duyệt. Master nền sạch và 16 props RGBA lưu docs/assets; pipeline normalize-village-fair.py xuất plate 800×480 và atlas 256×256, ô 64×64, alpha cứng. Hàng/NPC là lớp động, không chép bảng concept vào game; chỉ bày loại đã góp, giữ tuyến khách và collider. Đã xem Canvas 640×384, desktop/mobile ngang, kiểm mưa/sương/cuối ngày. 245 tests/build/import worker/audit đạt; [phạm vi, ảnh thật, rollout và giới hạn](VILLAGE_FAIR_V1.md). Chưa deploy, chưa thử Safari/Android thật.

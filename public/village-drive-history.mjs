@@ -1,12 +1,13 @@
 import {driveNeeds,driveTemplates} from './village-drive-demand.mjs';
+import {fairItems,fairTitle,isFair} from './village-fair.mjs';
 
 export const driveHistoryLimit=6;
 
 export function archiveDrive(room,drive,{duration,minimum,rewardXp}){
-  const needs=driveNeeds(drive);
-  const entry={id:drive.id,version:drive.version??1,template:drive.template,title:driveTemplates[drive.template].title,
+  const fair=isFair(drive),needs=fair?null:driveNeeds(drive);
+  const entry={id:drive.id,version:drive.version??1,template:drive.template,title:fair?fairTitle:driveTemplates[drive.template].title,
     memberCount:drive.memberCount??null,endsAt:drive.id+duration,completedAt:drive.completedAt??null,minimum,
-    items:Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
+    items:fair?fairItems(drive):Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
     contributors:Object.values(drive.contributors).map(({name,quantity})=>({name,quantity}))
       .sort((a,b)=>b.quantity-a.quantity||a.name.localeCompare(b.name,'vi')).slice(0,12),
     // Keep personal receipts for farms still in this room, at most its 12 members.

@@ -9,6 +9,7 @@ import {size} from './world-layout.mjs';
 import {backgroundOwnsActor,sceneBackgroundAtlases,sceneBackgrounds,sceneBackgroundTone} from './pixel/scene-backgrounds.mjs';
 import {additionalLivestockAtlas,aquaticAtlas,cropStagesAtlas,farmerActionAtlas,gardenDecorAtlas,gardenHelperAtlas,livestockAtlas,maleCharacter,pixelCharacter,pixelSlice,pixelViewport,progressionCropAtlas,progressionLivestockAtlas} from './pixel/frames.mjs';
 import {cropPlacement} from './pixel/crop-layout.mjs';
+import {fairArt,fairCounters,fairDisplayFrame} from './pixel/village-fair-art.mjs';
 import {homesteadWorkshop,parcelShelter} from './pixel/homestead-buildings.mjs';
 import {yardPets,yardPetPose} from './yard-pets.mjs';
 import {fitGateName} from './neighbors-layout.mjs';
@@ -32,6 +33,24 @@ const parcelGroveArt=load('/pixel/parcel-grove-v7.png');
 const pondDockArt=load('/pixel/pond-dock-v5.png');
 const villageWellArt=load('/pixel/village-well-v1.png');
 const marketShopperArt=load('/pixel/market-shoppers-v1.png');
+const fairPlate=load(fairArt.plate),fairProps=load(fairArt.source);
+export function drawVillageFair(c,drive){
+  if(drive?.version!==3||!drive.stalls||!dim(fairPlate)||!dim(fairProps))return;
+  c.save();c.imageSmoothingEnabled=false;
+  c.drawImage(fairPlate,0,0,480,288);
+  c.globalAlpha=sceneBackgroundTone.opacity;c.fillStyle=sceneBackgroundTone.color;c.fillRect(0,0,480,288);c.globalAlpha=1;
+  for(const [i,counter] of fairCounters.entries()){
+    const stall=drive.stalls.find(s=>s.id===counter.id);if(!stall)continue;
+    // Existing authored people, clipped behind counter edge, never baked into plate.
+    if(dim(marketShopperArt)){
+      const [vx,vy]=counter.vendor;c.save();c.beginPath();c.rect(vx-18,vy-40,36,28);c.clip();
+      c.drawImage(marketShopperArt,0,i*64,48,64,vx-15,vy-40,30,40);c.restore();
+    }
+    for(const slot of counter.slots){const f=fairDisplayFrame(stall,slot);c.drawImage(fairProps,f%4*64,Math.floor(f/4)*64,64,64,Math.round(slot.x-19),counter.y-34,38,38);}
+    if(!stall.remaining)c.drawImage(fairProps,128,192,64,64,counter.slots[1].x+9,counter.y-4,14,14);
+  }
+  c.restore();
+}
 const marketBoardArt=load('/pixel/market-order-board-v1.png');
 const neighborHomesArt=load('/pixel/neighbor-homes-v1.png');
 const neighborHallArt=load('/pixel/neighbor-hall-v1.png');

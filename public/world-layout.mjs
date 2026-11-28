@@ -129,7 +129,12 @@ export function drinkingWell(area,hasPublicWell){
 function withinReach(point,pose){
   return !!(point&&pose&&Math.hypot(point.x-pose.x,point.y-pose.y)<=interactionRange);
 }
-export function playerLocationBlock({action,index},area,pose,hasPublicWell=false){
+export function playerLocationBlock({action,index,stallId},area,pose,hasPublicWell=false){
+  if(action==='villageGoods'&&stallId){
+    const style={bread:'red',garden:'green',drinks:'gold'}[stallId];
+    const point=maps.market.objects.find(o=>o.type==='market'&&o.style===style)?.interaction;
+    return area==='market'&&withinReach(point,pose)?'':'Hãy đến gần đúng sạp ở Chợ làng để góp hàng.';
+  }
   if(action==='helpWater'||action==='releasePrank'){
     if(area!=='visit'||!Number.isSafeInteger(index)||index<0)return 'Hãy ghé đúng vườn hàng xóm.';
     const plot=plotPosition(index);

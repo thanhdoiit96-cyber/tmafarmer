@@ -157,7 +157,7 @@ async function logoutAccount(db,request) {
   await db.prepare('DELETE FROM farm_account_sessions WHERE token = ?').bind(token).run();
   return reply({ok:true});
 }
-async function join(db,request,superAdminAccountId) {
+async function join(db,request,superAdminAccountId,fairEnabled=false) {
   const data=await body(request);
   const name=typeof data.name==='string'?data.name.trim().replace(/\s+/g,' '):'';
   const code=typeof data.code==='string'?data.code.trim().toUpperCase():'';
@@ -185,7 +185,7 @@ async function join(db,request,superAdminAccountId) {
       state.ownerId=id;
       if(admin)state.ownerAccountId=admin.account_id;
       state.farms[id]=newFarm(id,name,time,avatar);
-      advanceVillageDrive(state,time);
+      advanceVillageDrive(state,time,{fairEnabled});
       const result=await db.prepare('INSERT OR IGNORE INTO farm_rooms(code,state) VALUES (?,?)').bind(newCode,JSON.stringify(state)).run();
       if(result.meta.changes===1) return joined(state,newCode,id,time,201);
       continue;
@@ -196,7 +196,7 @@ async function join(db,request,superAdminAccountId) {
     const id=linked&&has(state.farms,linked.farm_id)?linked.farm_id:await farmIdFor(code);
     const jobsUpdated=advanceGardenHelpers(state,time);
     if(admin&&has(state.farms,id)){
-      if(advanceVillageDrive(state,time)||jobsUpdated){
+      if(advanceVillageDrive(state,time,{fairEnabled})||jobsUpdated){
         const saved=await save(db,code,row.revision,state);
         if(saved.meta.changes!==1)continue;
       }
@@ -208,7 +208,7 @@ async function join(db,request,superAdminAccountId) {
     startSoilClock(state,time);
     startLivestockClock(state,time);
     state.farms[id]=newFarm(id,name,time,avatar);
-    advanceVillageDrive(state,time);
+    advanceVillageDrive(state,time,{fairEnabled});
     const result=await save(db,code,row.revision,state);
     if(result.meta.changes===1) return joined(state,code,id,time,201);
   }
@@ -226,7 +226,7 @@ async function handleFarmRequest(request,env,metrics) {
       if(pathname==='/api/account/login'&&method==='POST') return await loginAccount(db,request);
       if(pathname==='/api/account/logout'&&method==='POST') return await logoutAccount(db,request);
       if(pathname==='/api/account/me'&&method==='GET') return await accountProfile(db,request);
-      if(pathname==='/api/join'&&method==='POST') return await join(db,request,env.SUPER_ADMIN_ACCOUNT_ID);
+      if(pathname==='/api/join'&&method==='POST') return await join(db,request,env.SUPER_ADMIN_ACCOUNT_ID,env.VILLAGE_FAIR_ENABLED===true||env.VILLAGE_FAIR_ENABLED==='true');
       const socialAction=pathname==='/api/scene'?'scene':pathname==='/api/chat'?'chat':null;
       if(!socialAction&&!['/api/state','/api/action'].includes(pathname)) return reply({error:'Đường dẫn không tồn tại.'},404);
       if(pathname==='/api/state'&&method!=='GET'||(socialAction||pathname==='/api/action')&&method!=='POST') return reply({error:'Phương thức không hợp lệ.'},405);
@@ -267,7 +267,7 @@ async function handleFarmRequest(request,env,metrics) {
         const securityStarted=startVillageSecurity(state,dayAt(state,time));
         const soilStarted=startSoilClock(state,time);
         const livestockStarted=startLivestockClock(state,time);
-        const driveUpdated=advanceVillageDrive(state,time);
+        const driveUpdated=advanceVillageDrive(state,time,{fairEnabled:env.VILLAGE_FAIR_ENABLED===true||env.VILLAGE_FAIR_ENABLED==='true'});
         const prior=input&&farm.recent.find(r=>r.id===input.requestId);
         if(!input||prior) {
           const jobsUpdated=advanceGardenHelpers(state,time);
@@ -279,7 +279,7 @@ async function handleFarmRequest(request,env,metrics) {
           continue;
         }
         let area;
-        if(needsPlayerLocation(input.action)){
+        if(needsPlayerLocation(input.action)||input.action==='villageGoods'&&state.villageDrive?.version===3){
           const here=await db.prepare('SELECT scene,x,y,walking FROM farm_presence WHERE room=? AND player=? AND seen>=?')
             .bind(code,id,time-recentSeconds).first();
           area=['field','home','market','lake'].find(name=>here?.scene===sceneKey(state.farms,id,name));

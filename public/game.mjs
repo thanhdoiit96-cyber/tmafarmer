@@ -3,6 +3,7 @@ import {restSeconds,spendWork,vitals,wellnessAt,workBlock,workCost} from './well
 import {parcelCoopUpgrade,coopCapacity,cropIndexes,fenceAt,fences,gardenDecorAt,gardenDecorItems,gardenDecorRecommendedSpots,gardenDecorSpots,gardenPlotId,gardenUpgradeCost,getLand,landTypes,lotCount,lotPrice,mainPlotId,mainPlotSlot,plotAt,plotOffset,pondCapacity,pondIndexes,pondLotKind} from './land.mjs';
 import {aquatic, aquaGoods, aquaRequirement, aquaSupplyRequirement, canCatch, fishing, fishingState, pondFood, pondReady, pondYield, projectPond, publicCatch} from './aqua.mjs';
 import {driveTemplates,driveNeeds,scaleDriveNeeds} from './village-drive-demand.mjs';
+import {createFair,fairComplete,fairItems,fairStalls,isFair,fairTitle} from './village-fair.mjs';
 import {porchThemes} from './porch-themes.mjs';
 import {archiveDrive,driveHistoryFor} from './village-drive-history.mjs';
 import {gardenHelperActions,gardenHelperLimit,gardenHelperName,gardenHelperSchedule} from './garden-helper.mjs';
@@ -533,13 +534,13 @@ function driveRanking(drive){
   return Object.values(drive.contributors).map(({name,quantity})=>({name,quantity}))
     .sort((a,b)=>b.quantity-a.quantity||a.name.localeCompare(b.name,'vi'));
 }
-export function advanceVillageDrive(room,time){
+export function advanceVillageDrive(room,time,{fairEnabled=false}={}){
   const farms=Object.values(room.farms);
   if(!farms.length)return false;
   const current=room.villageDrive;
   const steps=current?Math.floor((time-current.id)/driveDuration):0;
   if(current&&steps<=0)return false;
-  const first=current?(current.template+steps)%driveTemplates.length:1;
+  const first=current&&!isFair(current)?(current.template+steps)%driveTemplates.length:1;
   const rotation=driveTemplates.map((_,offset)=>(first+offset)%driveTemplates.length);
   const template=rotation.find(index=>index===0||Object.keys(driveTemplates[index].needs).every(item=>{
     if(has(crops,item))return farms.some(farm=>!cropRequirement(farm,item));
@@ -547,9 +548,10 @@ export function advanceVillageDrive(room,time){
     return farms.some(farm=>!animalRequirement(farm,kind));
   }));
   const previous=current?{
-    title:driveTemplates[current.template].title,completed:current.completedAt!==undefined,top:driveRanking(current)[0]??null
+    title:isFair(current)?fairTitle:driveTemplates[current.template].title,completed:current.completedAt!==undefined,top:driveRanking(current)[0]??null
   }:null;
   if(current)archiveDrive(room,current,{duration:driveDuration,minimum:driveMinimum,rewardXp:driveXp});
+  if(fairEnabled){room.villageDrive=createFair(current?current.id+steps*driveDuration:time,farms.length,previous);return true;}
   room.villageDrive={id:current?current.id+steps*driveDuration:time,template,version:2,memberCount:farms.length,
     needs:scaleDriveNeeds(driveTemplates[template].needs,farms.length),delivered:{},contributors:{},previous};
   return true;
@@ -558,11 +560,12 @@ const driveReward=value=>Math.ceil(value*1.25);
 function villageDriveSnapshot(room,farm,time){
   const drive=room.villageDrive;
   if(!drive||time>=drive.id+driveDuration)return null;
-  const {title}=driveTemplates[drive.template],needs=driveNeeds(drive);
+  const fair=isFair(drive),title=fair?fairTitle:driveTemplates[drive.template].title,needs=fair?null:driveNeeds(drive);
   const me=drive.contributors[farm.id];
   return {
     id:drive.id,title,version:drive.version??1,memberCount:drive.version>=2?drive.memberCount:null,endsAt:drive.id+driveDuration,completed:drive.completedAt!==undefined,
-    items:Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
+    ...(fair?{themeId:drive.themeId,stalls:fairStalls(drive)}:{}),
+    items:fair?fairItems(drive):Object.entries(needs).map(([item,required])=>({item,required,delivered:drive.delivered[item]??0})),
     minimum:driveMinimum,rewardXp:driveXp,completedAt:drive.completedAt??null,contributors:driveRanking(drive),previous:drive.previous,history:driveHistoryFor(room,farm),
     mine:{quantity:me?.quantity??0,coins:me?.quantity>=driveMinimum?driveReward(me.value):0,paid:!!me?.paid,decorVoucher:!!me?.decorVoucher},
   };
@@ -571,18 +574,21 @@ function donateVillageGoods(room,farm,input,time){
   const drive=room.villageDrive;
   check(drive&&input.index===drive.id&&time<drive.id+driveDuration,'Đợt góp hàng đã hết hạn. Hãy xem đơn mới.');
   check(drive.completedAt===undefined,'Làng đã góp đủ hàng cho đợt này.');
-  const needs=driveNeeds(drive);
   const {item,qty}=input;
-  check(has(needs,item),'Mặt hàng này không thuộc đợt góp hàng.');
   check(Number.isSafeInteger(qty)&&qty>0,'Số lượng góp phải là số nguyên dương.');
-  const remaining=needs[item]-(drive.delivered[item]??0);
+  const fair=isFair(drive),needs=fair?null:driveNeeds(drive);
+  const stall=fair?drive.stalls.find(s=>s.id===input.stallId):null;
+  const choice=stall?.choices.find(c=>c.item===item);
+  check(fair?!!choice:has(needs,item),fair?'Hãy cập nhật game và chọn đúng sạp, mặt hàng của phiên chợ.':'Mặt hàng này không thuộc đợt góp hàng.');
+  const remaining=fair?fairStalls(drive).find(s=>s.id===stall.id).choices.find(c=>c.item===item).maximum:needs[item]-(drive.delivered[item]??0);
   check(qty<=remaining,'Làng chỉ còn cần '+remaining+' món này.');
   use(farm,item,qty);
-  drive.delivered[item]=(drive.delivered[item]??0)+qty;
+  if(fair)stall.delivered[item]=(stall.delivered[item]??0)+qty;
+  else drive.delivered[item]=(drive.delivered[item]??0)+qty;
   const entry=drive.contributors[farm.id]??={name:farm.name,quantity:0,value:0};
   entry.quantity+=qty;
-  entry.value+=qty*goods[item].sell;
-  if(!Object.entries(needs).every(([key,required])=>drive.delivered[key]===required)){
+  entry.value+=qty*(fair?choice.value:goods[item].sell);
+  if(!(fair?fairComplete(drive):Object.entries(needs).every(([key,required])=>drive.delivered[key]===required))){
     return 'Đã góp '+qty+' '+goods[item].name.toLowerCase()+'.';
   }
   drive.completedAt=time;

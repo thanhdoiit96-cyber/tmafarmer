@@ -1,5 +1,7 @@
 # Pilot tương tác hàng xóm và Hồ làng
 
+Cập nhật 27/11: [Pilot P4 toàn vòng chơi](P4_PLAYER_PILOT_V1.md) mở rộng chính bộ ghi nhận lên schema 3/P01–P40, thêm decor/kỷ niệm và báo cáo UX. Các mục quy mô 5–12/schema 2 bên dưới là phạm vi đợt Ao/xã hội trước; luật gameplay vẫn tham chiếu tài liệu runtime hiện hành. Chưa có kết quả pilot người chơi.
+
 26/11/2026. **Kế hoạch thử với người chơi, chưa chạy và chưa có kết quả.** Mục đích là đánh giá cảm giác chơi và mức dùng phần thưởng, không phải kiểm thử tải. Phạm vi source: [Ao/giúp tưới](SOCIAL_LAKE_V1.md), [sâu nghịch](PRANK_PLAY_V1.md).
 
 Đã chuẩn bị [bộ ghi nhận offline](assets/social-lake-pilot-kit-v1.html), mở trực tiếp trong trình duyệt. Không nằm trong game, không gọi API, không tự thu dữ liệu hay lưu xuống đĩa. Có checklist, form quan sát, xuất CSV/JSON và nhập lại JSON để tiếp tục ngày sau. Không có dữ liệu người chơi mẫu.

@@ -24,6 +24,7 @@ await cp('public/wellness.mjs','dist/server/wellness.mjs');
 await cp('public/home-rules.mjs','dist/server/home-rules.mjs');
 await cp('public/village.mjs','dist/server/village.mjs');
 await cp('public/village-drive-demand.mjs','dist/server/village-drive-demand.mjs');
+await cp('public/village-fair.mjs','dist/server/village-fair.mjs');
 await cp('public/village-drive-history.mjs','dist/server/village-drive-history.mjs');
 await writeFile('dist/server/engine.mjs',"export * from './game.mjs';\n");
 await cp('public','dist/client',{recursive:true});

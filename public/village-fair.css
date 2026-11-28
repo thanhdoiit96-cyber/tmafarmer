@@ -1,0 +1,27 @@
+.fair-stalls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:7px 0}
+.fair-stalls button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;padding:6px 3px;white-space:normal}
+.fair-stalls .badge{font-size:11px;background:#e7d3aa;color:#453923}
+.fair-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.fair-choice{min-width:0;border:1px solid #b69a6b;border-radius:8px;padding:8px;background:#f7eacb;display:flex;flex-direction:column;gap:7px}
+.fair-choice-title{display:flex;gap:5px;align-items:center;min-height:38px}
+.fair-choice-title strong{font-size:12px;overflow-wrap:anywhere}
+.fair-choice-title{border:0;background:transparent;color:inherit;padding:0;text-align:left;cursor:pointer;width:100%}.fair-choice-title>span:last-child{font-size:10px;color:#6c5a39}
+.fair-choice small{font-size:10px;line-height:1.4;color:#665339}
+.fair-choice .row{font-size:11px;margin:0}.fair-choice .row b{background:#e0d0ab;border-radius:4px;padding:2px 6px}
+.fair-choice .actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0}
+.fair-choice .actions .primary{grid-column:1/-1}.fair-choice .actions .btn{font-size:11px;padding:5px;white-space:normal;min-width:0}
+.fair-food-icon{display:inline-block;flex:none;width:32px;height:32px;background:url('/pixel/village-fair-props-v1.png');background-size:128px 128px;image-rendering:pixelated}
+.fair-food-icon[data-food="bread"]{background-position:-96px -96px}.fair-food-icon[data-food="carrotJuice"]{background-position:0 -96px}
+.fair-book{background:#f2e5c7!important;padding:7px!important}.fair-book>.game-book-head{display:none}
+.village-fair .drive-heading{margin:3px 0;display:block}.village-fair .drive-heading h3{margin:0}.village-fair .drive-heading small{font-size:10px}
+.village-fair .drive-heading{position:relative;padding-right:30px}.village-fair .drive-heading .fair-help{position:absolute;right:0;top:0;width:26px;min-height:26px;padding:2px;border:1px solid #ac9567;border-radius:5px;background:#e6d6b0;color:#36513c}
+.fair-choice .drive-art{width:28px;height:32px;flex:0 0 28px;display:flex;align-items:center;justify-content:center}
+.fair-choice-title strong{line-height:1.25}.fair-choice{gap:4px;padding:6px}.fair-choice .actions .btn{font-size:10px;min-height:29px;padding:4px 2px}.fair-choice .row{font-size:10px}
+.village-fair .care-note{font-size:10px;margin:5px 0;line-height:1.35}.village-fair .drive-reward{padding:5px 0;margin-top:4px;font-size:10px}.village-fair .drive-reward .btn{min-height:25px;font-size:9px;padding:3px 5px}.village-fair .drive-people{margin-top:3px;gap:3px}.panel-body .village-fair .drive-people .btn{font-size:9px;min-height:26px;padding:3px 5px}
+.village-fair .drive-heading h3{font-size:17px}.village-fair .drive-people{flex-wrap:wrap;margin-top:6px}
+@media(max-height:450px) and (orientation:landscape){.fair-choice{padding:5px;gap:4px}.fair-choice-title{min-height:30px}.fair-choice .actions .btn{min-height:30px}.fair-stalls button{min-height:36px;padding:3px}.village-fair .care-note{margin:4px 0}.village-fair .drive-reward{margin-top:5px}.village-fair .drive-heading h3{font-size:15px}}
+@media(max-height:450px) and (orientation:landscape){
+ .fair-book{padding:4px!important}.fair-book>.game-book-tabs{margin:0 0 3px}.village-fair .drive-heading small,.village-fair>.progress,.village-fair>.care-note,.village-fair>.drive-people,.village-fair>.drive-reward{display:none}
+ .village-fair .drive-heading{margin:3px 0}.fair-stalls{margin:4px 0;gap:3px}.fair-stalls button{flex-direction:row;justify-content:center;min-height:29px;font-size:10px;gap:3px}.fair-stalls .badge{font-size:9px;padding:2px 4px}
+ .fair-choice .actions .subtle{display:none}.fair-choice .actions{grid-template-columns:1fr}.fair-choice{padding:4px;gap:3px}.fair-choice-title{min-height:26px}.fair-choice-title strong{font-size:11px}.fair-choice .drive-art{width:26px;height:26px;flex-basis:26px}.fair-choice .fair-food-icon{transform:scale(.8)}.fair-choice .actions .primary{min-height:30px}.village-fair .drive-reward{margin-top:3px;padding:3px 0;font-size:9px}
+}

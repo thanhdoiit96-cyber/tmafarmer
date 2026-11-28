@@ -32,7 +32,7 @@ const server=createServer(async(incoming,outgoing)=>{
         options.body=Readable.toWeb(incoming);
         options.duplex='half';
       }
-      const response=await worker.fetch(new Request(url,options),{DB,CHAT,SUPER_ADMIN_ACCOUNT_ID});
+      const response=await worker.fetch(new Request(url,options),{DB,CHAT,SUPER_ADMIN_ACCOUNT_ID,VILLAGE_FAIR_ENABLED:process.env.VILLAGE_FAIR_ENABLED});
       outgoing.writeHead(response.status,Object.fromEntries(response.headers));
       if(response.body) Readable.fromWeb(response.body).pipe(outgoing);
       else outgoing.end();

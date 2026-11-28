@@ -2,10 +2,10 @@ import {buildingUpgrade,buildings,capacity,cropGoal,cropYield,crops,gameDay,good
 import {plotAt} from './land.mjs';
 
 const version=1;
-export function pinVillageGoods(snapshot,item){
+export function pinVillageGoods(snapshot,item,stallId){
   const drive=snapshot.villageDrive;
-  return drive&&!drive.completed&&snapshot.now<drive.endsAt&&drive.items.some(r=>r.item===item&&r.delivered<r.required)
-    ?{version,kind:'villageGoods',driveId:drive.id,item}:noGoal();
+  return drive&&!drive.completed&&snapshot.now<drive.endsAt&&drive.items.some(r=>r.item===item&&(drive.version===3?r.stallId===stallId&&r.remaining>0:r.delivered<r.required))
+    ?{version,kind:'villageGoods',driveId:drive.id,item,...(drive.version===3?{stallId}:{})}:noGoal();
 }
 const stages=['plant','water','grow','sell','done'];
 export const goalStorageKey=(snapshot,session)=>'mua-vui-goal:1:'+JSON.stringify([session?'online':'demo',session?.code??'',snapshot.me.id]);
@@ -79,10 +79,10 @@ export function goalView(goal,snapshot){
   const f=snapshot.me;
   if(goal.kind==='none')return null;
   if(goal.kind==='villageGoods'){
-    const drive=snapshot.villageDrive,row=drive?.id===goal.driveId&&drive.items.find(r=>r.item===goal.item);
+    const drive=snapshot.villageDrive,row=drive?.id===goal.driveId&&drive.items.find(r=>r.item===goal.item&&(drive.version!==3||r.stallId===goal.stallId));
     const title='Chuẩn bị '+goods[goal.item].name.toLowerCase();
     if(!row||snapshot.now>=drive.endsAt)return {title,copy:'Đợt đang theo dõi đã hết hạn hoặc được thay thế.',meta:'Mục tiêu không tự đổi sang đợt mới.',cta:'Chọn mục tiêu khác',route:{kind:'choose'},done:true};
-    const remaining=Math.max(0,row.required-row.delivered),owned=f.inventory[goal.item]??0;
+    const remaining=drive.version===3?row.remaining:Math.max(0,row.required-row.delivered),owned=f.inventory[goal.item]??0;
     if(drive.completed||!remaining)return {title,copy:drive.completed?'Làng đã hoàn thành đợt góp hàng.':'Làng đã đủ món đang ghim.',meta:'Có thể bỏ ghim hoặc chọn món khác.',cta:'Xem đơn làng',route:{kind:'villageGoods'},done:true};
     return {title,copy:'Góp từng phần cùng làng; xác nhận trước khi trừ kho.',meta:'Làng thiếu '+remaining+' · Kho bạn '+owned,cta:owned?'Tới đơn góp hàng':'Xem cách có',route:owned?{kind:'villageGoods'}:{kind:'goodsSource',item:goal.item}};
   }

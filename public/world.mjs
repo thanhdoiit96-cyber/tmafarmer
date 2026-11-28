@@ -14,7 +14,7 @@ import {yardPetPose} from './yard-pets.mjs';
 import {createCoopHerd} from './coop-motion.mjs';
 import {marketShoppers,marketShopperPose} from './market-life.mjs';
 import {actionPoseSeconds, facingFromDelta, fishingBobber, gardenHelperPose, playerSpeed} from './world-motion.mjs';
-import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
+import {actor, artReady, atmosphere, backgroundOwnsActor, coopForeground, createMapCursor, drawFishing, drawGardenDecor, drawGardenHelper, drawMapPointer, drawSpeech, drawTask, drawVillageFair, grass, hasSceneBackground, landscapeEntity, landscapeLife, drawPerson, water} from './world-art.mjs';
 
 const directions={w:'up',ArrowUp:'up',s:'down',ArrowDown:'down',a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right'};
 const deltas={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]};
@@ -392,6 +392,7 @@ export function createWorld(root, onInteract, landscape) {
     const frameX=Math.round(cameraX*scale),frameY=Math.round(cameraY*scale);
     context.drawImage(terrain,frameX,frameY,canvas.width,canvas.height,0,0,view.width,view.height);
     context.save();context.translate(-cameraX,-cameraY);
+    if(sceneId==='market')drawVillageFair(context,snapshot.villageDrive);
     const wind=snapshot.weather.id==='storm'?2.5:snapshot.weather.id==='wind'?1.8:1;
     water(context,scene,ambient,wind);
     const hovered=pointer?targetAt(cameraX+pointer.x,cameraY+pointer.y):null;
@@ -434,7 +435,9 @@ export function createWorld(root, onInteract, landscape) {
     const observed=snapshot.now+(now-observedAt)/1000;
     helperTime=Math.max(helperTime,observed);
     const helper=gardenHelperPose(helperJob,helperPaths,helperTime);
-    const shoppers=sceneId==='market'?marketShoppers.map(shopper=>({...marketShopperPose(shopper,ambient,reduce.matches),type:'market-shopper'})):[];
+    const fair=snapshot.villageDrive;
+    const visitors=fair?.version===3?marketShoppers.slice(0,fair.completed?3:fair.stalls.some(s=>s.credit>0)?2:1):marketShoppers;
+    const shoppers=sceneId==='market'?visitors.map(shopper=>({...marketShopperPose(shopper,ambient,reduce.matches),type:'market-shopper'})):[];
     const sprites=[...scene.actors.filter(item=>!backgroundOwnsActor(sceneId,item.type)).map(item=>item.type==='yard-pet'?{...item,...yardPetPose(item.species,ambient,reduce.matches)}:item),...shoppers,...scenery,...peers.values(),player,...(helper?[helper]:[])].sort((a,b)=>a.y-b.y);
     const gameNow=snapshot.now+Math.floor((now-observedAt)/1000);
     const daylight=Math.max(0,Math.min(1,1-(snapshot.dayEnds-gameNow)/snapshot.dayLength));
